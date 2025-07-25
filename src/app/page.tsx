@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { auth } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, Menu, Crown, Banknote, MessageSquare, Phone } from 'lucide-react';
+import { LogOut, Menu, Crown, Banknote, MessageSquare, Phone, PlayCircle, Clock } from 'lucide-react';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -99,8 +99,37 @@ export default function Home() {
             <CardHeader>
                 <CardTitle className="text-xl">Matka Games</CardTitle>
             </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">More games coming soon...</p>
+            <CardContent className="space-y-4">
+                <div className="rounded-lg border border-primary/50 bg-card/50 p-4">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-bold text-primary">Milan Night</h3>
+                        <div className="text-lg font-bold text-white">123-6-789</div>
+                    </div>
+                    <p className="text-sm text-yellow-400 mt-2">Betting will open soon</p>
+                    <div className="flex items-center text-xs text-muted-foreground mt-2">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>Open: 08:50 PM | Close: 10:50 PM</span>
+                    </div>
+                    <Button className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+                        <PlayCircle className="mr-2 h-5 w-5" />
+                        Play Now
+                    </Button>
+                </div>
+                <div className="rounded-lg border border-primary/50 bg-card/50 p-4">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-bold text-primary">Milan Day</h3>
+                        <div className="text-lg font-bold text-white">456-5-128</div>
+                    </div>
+                    <p className="text-sm text-yellow-400 mt-2">Betting will open soon</p>
+                    <div className="flex items-center text-xs text-muted-foreground mt-2">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>Open: 02:15 PM | Close: 04:15 PM</span>
+                    </div>
+                    <Button className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+                        <PlayCircle className="mr-2 h-5 w-5" />
+                        Play Now
+                    </Button>
+                </div>
             </CardContent>
         </Card>
 
