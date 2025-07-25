@@ -7,10 +7,11 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, DocumentData } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, limit } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogOut, Menu, Crown, Banknote, MessageSquare, Phone, Clock, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Game extends DocumentData {
     id: string;
@@ -65,6 +66,7 @@ export default function Home() {
   }
 
   const isAdmin = user && user.email === '8080601370@authcanvas.dev';
+  const latestResults = games.slice(0, 5);
 
   return (
     <div className="dark min-h-screen bg-background text-foreground">
@@ -99,8 +101,34 @@ export default function Home() {
         </Card>
         
         <Card className="bg-card/80 border-white/10 shadow-lg">
-            <CardContent className="p-4">
-                <Button variant="ghost" className="w-full h-12 text-lg">Latest Results</Button>
+            <CardHeader>
+                <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {gamesLoading ? (
+                     <div className="flex justify-center items-center h-24">
+                        <Loader className="h-8 w-8 text-primary" />
+                    </div>
+                ) : latestResults.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="text-white">Game Name</TableHead>
+                                <TableHead className="text-right text-white">Result</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {latestResults.map((game) => (
+                                <TableRow key={game.id}>
+                                    <TableCell className="font-medium">{game.name}</TableCell>
+                                    <TableCell className="text-right font-bold text-primary">{game.result}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <p className="text-center text-muted-foreground">No results available right now.</p>
+                )}
             </CardContent>
         </Card>
 
