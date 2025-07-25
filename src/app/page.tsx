@@ -54,7 +54,7 @@ export default function Home() {
       <main className="flex flex-col gap-4 p-4">
         <Card className="bg-card/80 border-white/10 shadow-lg">
             <CardContent className="p-6 text-center">
-                <h1 className="text-3xl font-bold">Welcome to <span className="text-primary">MATKA KING</span></h1>
+                <h1 className="text-3xl font-bold animate-pulse">Welcome to <span className="text-primary">MATKA KING</span></h1>
                 <p className="text-muted-foreground mt-2">Get the latest game reviews, breaking news, in-depth guides, and join a thriving community of gamers!</p>
                 <Button className="mt-6 w-full max-w-xs bg-primary text-primary-foreground font-bold text-lg h-12 rounded-lg shadow-[0_4px_20px_theme(colors.primary/40%)]">Explore Latest Articles</Button>
             </CardContent>
