@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 
 import { Button } from '@/components/ui/button';
@@ -88,7 +88,22 @@ export function AuthForm({ mode }: AuthFormProps) {
         });
 
       } else {
-        await signInWithEmailAndPassword(auth, email, values.password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, values.password);
+        const user = userCredential.user;
+        
+        // Check if user exists in Firestore, if not, create them.
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+          const displayName = user.displayName || values.mobile; // Fallback to mobile if display name is not set
+          await setDoc(userDocRef, {
+            displayName: displayName,
+            mobile: values.mobile,
+            email: user.email,
+            createdAt: serverTimestamp(),
+          });
+        }
       }
       router.push('/');
     } catch (error: any) {
