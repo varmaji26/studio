@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Gamepad2, Hand, Landmark, IndianRupee, Wallet, ArrowLeftRight, Clock } from 'lucide-react';
+import { Users, Gamepad2 } from 'lucide-react';
 import { Loader } from '@/components/loader';
 
 interface StatCardProps {
@@ -77,42 +77,6 @@ export default function AdminDashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard title="Total Users" value={totalUsers.toString()} icon={Users} color="#8b5cf6" />
             <StatCard title="Total Games" value={totalGames.toString()} icon={Gamepad2} color="#ec4899" />
-            <StatCard title="Total Bids" value="125" icon={Hand} color="#f97316" />
-            <StatCard title="Total Market" value="11" icon={Landmark} color="#22c55e" />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Today's Deposits" value="₹5,420" icon={Wallet} color="#14b8a6"/>
-            <StatCard title="Withdrawls Given Today" value="₹1,250" icon={ArrowLeftRight} color="#f43f5e" />
-            <StatCard title="Yesterday's Deposits" value="₹8,760" icon={Clock} color="#14b8a6" />
-            <StatCard title="Withdrawal Given Yesterday" value="₹4,465" icon={Clock} color="#f43f5e" />
-        </div>
-        
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <StatCard 
-                title="Today's Bidding" 
-                value="₹68,619" 
-                icon={IndianRupee} 
-                change="+10% increase"
-                changeType="increase"
-                color="#3b82f6"
-            />
-            <StatCard 
-                title="Today Winning" 
-                value="₹76,400" 
-                icon={IndianRupee}
-                change="-12% decrease"
-                changeType="decrease"
-                color="#16a34a"
-            />
-            <StatCard 
-                title="Today's Profit / Loss" 
-                value="-₹7,781" 
-                icon={IndianRupee}
-                change="-15% decrease"
-                changeType="decrease"
-                color="#ef4444"
-            />
         </div>
     </div>
   );
