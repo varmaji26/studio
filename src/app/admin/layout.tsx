@@ -9,11 +9,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
   SidebarProvider,
   SidebarTrigger,
-  SidebarMenuSubItem,
   SidebarGroup,
   SidebarFooter
 } from '@/components/ui/sidebar';
@@ -41,6 +38,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
+import { auth } from '@/lib/firebase';
 
 export default function AdminLayout({
   children,
@@ -52,6 +50,15 @@ export default function AdminLayout({
   const { user } = useAuth();
   
   const isActive = (path: string) => pathname === path;
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -176,7 +183,7 @@ export default function AdminLayout({
                         <span className="text-sm font-semibold">{user?.displayName ?? 'Admin'}</span>
                         <span className="text-xs text-muted-foreground">Admin</span>
                     </div>
-                    <Button variant="ghost" size="icon" className="ml-auto">
+                    <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
                         <LogOut />
                     </Button>
                 </div>
@@ -185,8 +192,10 @@ export default function AdminLayout({
         </Sidebar>
         <SidebarInset>
            <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
-                <SidebarTrigger />
-                <h2 className="text-xl font-semibold capitalize">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
+                <div className="flex items-center gap-2">
+                  <SidebarTrigger />
+                  <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
+                </div>
                 <div className="flex items-center gap-4">
                   <Button variant="ghost" size="icon">
                     <Settings />

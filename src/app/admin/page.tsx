@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, DocumentData, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Gamepad2, Hand, Landmark, IndianRupee, TrendingUp, TrendingDown, ArrowLeftRight, Clock, Wallet } from 'lucide-react';
+import { Users, Gamepad2, Hand, Landmark, IndianRupee, Wallet, ArrowLeftRight, Clock } from 'lucide-react';
 import { Loader } from '@/components/loader';
 
 interface StatCardProps {
@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
 
     if (loading) {
         return (
-          <div className="flex h-full w-full items-center justify-center bg-background p-8">
+          <div className="flex h-full flex-1 items-center justify-center bg-background p-8">
             <Loader className="h-10 w-10 text-primary" />
           </div>
         );
