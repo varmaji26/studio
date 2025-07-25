@@ -1,16 +1,17 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 
@@ -24,9 +25,17 @@ const gameSchema = z.object({
 
 type GameFormValues = z.infer<typeof gameSchema>;
 
+interface User extends DocumentData {
+    id: string;
+    displayName: string;
+    mobile: string;
+}
+
 export default function AdminPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
 
   const form = useForm<GameFormValues>({
     resolver: zodResolver(gameSchema),
@@ -38,6 +47,20 @@ export default function AdminPage() {
       closeTime: '',
     },
   });
+
+   useEffect(() => {
+    const q = query(collection(db, "users"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const usersData: User[] = [];
+      querySnapshot.forEach((doc) => {
+        usersData.push({ id: doc.id, ...doc.data() } as User);
+      });
+      setUsers(usersData);
+      setUsersLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const onSubmit = async (values: GameFormValues) => {
     setIsSubmitting(true);
@@ -67,10 +90,10 @@ export default function AdminPage() {
     <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-8">
       <header className="mb-8">
         <h1 className="text-4xl font-bold text-primary">Admin Panel</h1>
-        <p className="text-muted-foreground">Add and manage Matka games.</p>
+        <p className="text-muted-foreground">Add and manage Matka games and view users.</p>
       </header>
-      <main>
-        <Card className="max-w-2xl mx-auto bg-card/80 border-white/10 shadow-lg">
+      <main className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl">Add New Game</CardTitle>
           </CardHeader>
@@ -150,6 +173,36 @@ export default function AdminPage() {
                 </Button>
               </form>
             </Form>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl">Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {usersLoading ? (
+                <div className="flex justify-center items-center h-48">
+                    <Loader className="h-8 w-8 text-primary" />
+                </div>
+            ) : (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Username</TableHead>
+                            <TableHead>Mobile Number</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {users.map((user) => (
+                            <TableRow key={user.id}>
+                                <TableCell>{user.displayName}</TableCell>
+                                <TableCell>{user.mobile}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
           </CardContent>
         </Card>
       </main>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -6,7 +7,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,6 +77,14 @@ export function AuthForm({ mode }: AuthFormProps) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
         await updateProfile(userCredential.user, {
             displayName: values.username
+        });
+
+        // Save user data to Firestore
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+            displayName: values.username,
+            mobile: values.mobile,
+            email: email,
+            createdAt: serverTimestamp(),
         });
 
       } else {
