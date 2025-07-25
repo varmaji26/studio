@@ -119,7 +119,7 @@ export default function Home() {
                         <HomeIcon className="h-5 w-5 text-primary" />
                         <span>Home</span>
                     </Link>
-                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="/contact" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <BookUser className="h-5 w-5 text-primary" />
                         <span>Contact</span>
                     </Link>
@@ -127,7 +127,7 @@ export default function Home() {
                         <Star className="h-5 w-5 text-primary" />
                         <span>Rate Card</span>
                     </Link>
-                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="/profile" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <UserIcon className="h-5 w-5 text-primary" />
                         <span>Profile</span>
                     </Link>
