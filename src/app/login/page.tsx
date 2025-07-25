@@ -1,0 +1,32 @@
+'use client';
+
+import { AuthForm } from '@/components/auth-form';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Loader } from '@/components/loader';
+
+export default function LoginPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.replace('/');
+    }
+  }, [user, router]);
+
+  if (loading || user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader className="h-10 w-10 text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
+      <AuthForm mode="login" />
+    </main>
+  );
+}
