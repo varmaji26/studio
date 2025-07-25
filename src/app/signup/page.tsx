@@ -25,7 +25,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-4">
+    <main className="dark flex min-h-screen items-center justify-center bg-background p-4 perspective">
       <AuthForm mode="signup" />
     </main>
   );

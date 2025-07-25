@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -15,7 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
-import { Phone, Lock } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import React from 'react';
 
 const formSchema = z.object({
   mobile: z.string().min(10, { message: 'Please enter a valid mobile number.' }),
@@ -29,6 +29,7 @@ type AuthFormProps = {
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,8 +45,6 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Firebase's email/password auth requires an email format.
-      // We'll create a fake email from the mobile number to use the feature.
       const email = `${values.mobile.replace(/\s/g, '')}@authcanvas.dev`;
 
       if (mode === 'signup') {
@@ -54,10 +53,6 @@ export function AuthForm({ mode }: AuthFormProps) {
         await signInWithEmailAndPassword(auth, email, values.password);
       }
       router.push('/');
-      toast({
-        title: 'Success!',
-        description: mode === 'signup' ? 'Your account has been created.' : 'You are now logged in.',
-      });
     } catch (error: any) {
       console.error(error);
       let errorMessage = error.message || 'An unexpected error occurred.';
@@ -78,32 +73,30 @@ export function AuthForm({ mode }: AuthFormProps) {
   };
 
   const title = mode === 'login' ? 'Welcome Back' : 'Create an Account';
-  const description = mode === 'login' ? 'Sign in with your mobile number.' : 'Enter your details to get started.';
-  const buttonText = mode === 'login' ? 'Login' : 'Sign Up';
+  const description = mode === 'login' ? 'Sign in to your account' : 'Enter your details to get started.';
+  const buttonText = mode === 'login' ? 'Sign In' : 'Create Account';
   const switchLinkText = mode === 'login' ? "Don't have an account?" : 'Already have an account?';
   const switchLinkHref = mode === 'login' ? '/signup' : '/login';
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-primary">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+    <Card className="w-full max-w-sm bg-card/80 backdrop-blur-sm border-white/10 rounded-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/20 animate-in fade-in-0 slide-in-from-bottom-10 rotate-x-[-20deg] hover:rotate-x-0 backface-hidden">
+      <div className="absolute top-0 left-0 right-0 h-1 bg-primary shadow-[0_0_20px_theme(colors.primary),0_0_40px_theme(colors.primary)] rounded-t-2xl"></div>
+      <CardHeader className="text-center pt-8">
+        <CardTitle className="text-3xl font-bold text-foreground">{title}</CardTitle>
+        <CardDescription className="text-muted-foreground">{description}</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <FormField
               control={form.control}
               name="mobile"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Mobile Number</FormLabel>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <FormControl>
-                      <Input type="tel" placeholder="+1 123 456 7890" {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
+                  <FormControl>
+                    <Input type="tel" placeholder="Enter your mobile number" {...field} className="bg-input h-12 rounded-lg" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -114,26 +107,33 @@ export function AuthForm({ mode }: AuthFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                   <div className="relative">
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} className="pl-10" />
+                      <Input type={showPassword ? "text" : "password"} placeholder="Enter your password" {...field} className="bg-input h-12 rounded-lg pr-10" />
                     </FormControl>
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
                   </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </CardContent>
-          <CardFooter className="flex flex-col">
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? <Loader className="mr-2 h-4 w-4" /> : null}
+          <CardFooter className="flex flex-col pt-2">
+            <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_20px_theme(colors.primary/40%)]" disabled={isSubmitting}>
+              {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
               {buttonText}
             </Button>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            <p className="mt-6 text-center text-sm text-muted-foreground">
               {switchLinkText}{' '}
               <Link href={switchLinkHref} className="font-semibold text-primary hover:underline">
-                {mode === 'login' ? 'Sign up' : 'Login'}
+                {mode === 'login' ? 'Create Account' : 'Sign In'}
               </Link>
             </p>
           </CardFooter>
