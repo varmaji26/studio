@@ -96,62 +96,65 @@ export default function Home() {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="bg-card border-r-0 text-foreground">
-            <SheetHeader>
-              <SheetTitle className="text-primary text-2xl flex items-center gap-2">
-                 <Crown className="h-7 w-7" />
-                 MATKA KING
-              </SheetTitle>
-            </SheetHeader>
-            <div className="py-4">
-              <div className="flex flex-col items-center space-y-2">
-                 <div className="p-3 bg-primary/20 rounded-full">
-                    <UserIcon className="h-10 w-10 text-primary" />
-                 </div>
-                 <p className="font-bold text-lg">{user.displayName}</p>
-                 <p className="text-muted-foreground">+91 {mobileNumber}</p>
-              </div>
+          <SheetContent side="left" className="bg-card border-r-0 text-foreground flex flex-col p-0">
+             <div className="flex-1 overflow-y-auto">
+                <SheetHeader className="p-6">
+                <SheetTitle className="text-primary text-2xl flex items-center gap-2">
+                    <Crown className="h-7 w-7" />
+                    MATKA KING
+                </SheetTitle>
+                </SheetHeader>
+                <div className="py-4">
+                <div className="flex flex-col items-center space-y-2">
+                    <div className="p-3 bg-primary/20 rounded-full">
+                        <UserIcon className="h-10 w-10 text-primary" />
+                    </div>
+                    <p className="font-bold text-lg">{user.displayName}</p>
+                    <p className="text-muted-foreground">+91 {mobileNumber}</p>
+                </div>
+                </div>
+                <Separator className="bg-white/10 my-2" />
+                <nav className="flex flex-col gap-2 p-4">
+                    <Link href="/" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <HomeIcon className="h-5 w-5 text-primary" />
+                        <span>Home</span>
+                    </Link>
+                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <BookUser className="h-5 w-5 text-primary" />
+                        <span>Contact</span>
+                    </Link>
+                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Star className="h-5 w-5 text-primary" />
+                        <span>Rate Card</span>
+                    </Link>
+                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <UserIcon className="h-5 w-5 text-primary" />
+                        <span>Profile</span>
+                    </Link>
+                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Trophy className="h-5 w-5 text-primary" />
+                        <span>Win History</span>
+                    </Link>
+                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <History className="h-5 w-5 text-primary" />
+                        <span>Bids History</span>
+                    </Link>
+                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <BarChart2 className="h-5 w-5 text-primary" />
+                        <span>Chart</span>
+                    </Link>
+                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Wallet className="h-5 w-5 text-primary" />
+                        <span>Point Funds</span>
+                    </Link>
+                </nav>
             </div>
-            <Separator className="bg-white/10 my-2" />
-            <nav className="flex flex-col gap-2 p-2">
-                <Link href="/" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                    <HomeIcon className="h-5 w-5 text-primary" />
-                    <span>Home</span>
-                </Link>
-                <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                    <BookUser className="h-5 w-5 text-primary" />
-                    <span>Contact</span>
-                </Link>
-                 <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                    <Star className="h-5 w-5 text-primary" />
-                    <span>Rate Card</span>
-                </Link>
-                 <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                    <UserIcon className="h-5 w-5 text-primary" />
-                    <span>Profile</span>
-                </Link>
-                 <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    <span>Win History</span>
-                </Link>
-                 <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                    <History className="h-5 w-5 text-primary" />
-                    <span>Bids History</span>
-                </Link>
-                 <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                    <BarChart2 className="h-5 w-5 text-primary" />
-                    <span>Chart</span>
-                </Link>
-                 <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                    <Wallet className="h-5 w-5 text-primary" />
-                    <span>Point Funds</span>
-                </Link>
-            </nav>
-             <Separator className="bg-white/10 my-2" />
-             <Button onClick={handleLogout} variant="ghost" className="w-full justify-start gap-3 p-3 text-red-500 hover:bg-red-500/10 hover:text-red-400">
-                <LogOut className="h-5 w-5" />
-                <span>Logout</span>
-            </Button>
+            <div className="p-4 border-t border-white/10">
+                <Button onClick={handleLogout} variant="ghost" className="w-full justify-start gap-3 p-3 text-red-500 hover:bg-red-500/10 hover:text-red-400">
+                    <LogOut className="h-5 w-5" />
+                    <span>Logout</span>
+                </Button>
+            </div>
           </SheetContent>
         </Sheet>
         <div className="flex items-center gap-2 rounded-lg bg-black/30 px-3 py-1.5 border border-white/10">
