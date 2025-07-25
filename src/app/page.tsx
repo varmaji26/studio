@@ -97,38 +97,32 @@ export default function Home() {
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
             <CardHeader>
-                <CardTitle className="text-xl">Matka Games</CardTitle>
+                <CardTitle className="text-xl text-center">Matka Games</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="rounded-lg border border-primary/50 bg-card/50 p-4">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-bold text-primary">Milan Night</h3>
-                        <div className="text-lg font-bold text-white">123-6-789</div>
-                    </div>
-                    <p className="text-sm text-yellow-400 mt-2">Betting will open soon</p>
-                    <div className="flex items-center text-xs text-muted-foreground mt-2">
-                        <Clock className="h-3 w-3 mr-1" />
+                <div className="rounded-lg bg-slate-800/80 p-4 text-center space-y-3">
+                    <h3 className="text-xl font-bold text-white">Milan Night</h3>
+                    <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">123-6-789</div>
+                    <p className="text-sm text-yellow-300">Betting will open soon</p>
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
+                        Play Now
+                    </Button>
+                    <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
+                        <Clock className="h-4 w-4 mr-2" />
                         <span>Open: 08:50 PM | Close: 10:50 PM</span>
                     </div>
-                    <Button className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
-                        <PlayCircle className="mr-2 h-5 w-5" />
+                </div>
+                <div className="rounded-lg bg-slate-800/80 p-4 text-center space-y-3">
+                    <h3 className="text-xl font-bold text-white">Milan Day</h3>
+                    <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">456-5-128</div>
+                    <p className="text-sm text-yellow-300">Betting will open soon</p>
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
                         Play Now
                     </Button>
-                </div>
-                <div className="rounded-lg border border-primary/50 bg-card/50 p-4">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-bold text-primary">Milan Day</h3>
-                        <div className="text-lg font-bold text-white">456-5-128</div>
-                    </div>
-                    <p className="text-sm text-yellow-400 mt-2">Betting will open soon</p>
-                    <div className="flex items-center text-xs text-muted-foreground mt-2">
-                        <Clock className="h-3 w-3 mr-1" />
+                    <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
+                        <Clock className="h-4 w-4 mr-2" />
                         <span>Open: 02:15 PM | Close: 04:15 PM</span>
                     </div>
-                    <Button className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
-                        <PlayCircle className="mr-2 h-5 w-5" />
-                        Play Now
-                    </Button>
                 </div>
             </CardContent>
         </Card>
