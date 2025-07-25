@@ -1,24 +1,50 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { collection, query, onSnapshot, orderBy, DocumentData } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, Menu, Crown, Banknote, MessageSquare, Phone, PlayCircle, Clock } from 'lucide-react';
+import { LogOut, Menu, Crown, Banknote, MessageSquare, Phone, Clock } from 'lucide-react';
+
+interface Game extends DocumentData {
+    id: string;
+    name: string;
+    result: string;
+    status: string;
+    openTime: string;
+    closeTime: string;
+}
 
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [games, setGames] = useState<Game[]>([]);
+  const [gamesLoading, setGamesLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    const q = query(collection(db, "games"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const gamesData: Game[] = [];
+      querySnapshot.forEach((doc) => {
+        gamesData.push({ id: doc.id, ...doc.data() } as Game);
+      });
+      setGames(gamesData);
+      setGamesLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -100,30 +126,28 @@ export default function Home() {
                 <CardTitle className="text-xl text-center">Matka Games</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="rounded-lg bg-slate-800/80 p-4 text-center space-y-3">
-                    <h3 className="text-xl font-bold text-white">Milan Night</h3>
-                    <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">123-6-789</div>
-                    <p className="text-sm text-yellow-300">Betting will open soon</p>
-                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
-                        Play Now
-                    </Button>
-                    <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
-                        <Clock className="h-4 w-4 mr-2" />
-                        <span>Open: 08:50 PM | Close: 10:50 PM</span>
+                {gamesLoading ? (
+                    <div className="flex justify-center items-center h-24">
+                        <Loader className="h-8 w-8 text-primary" />
                     </div>
-                </div>
-                <div className="rounded-lg bg-slate-800/80 p-4 text-center space-y-3">
-                    <h3 className="text-xl font-bold text-white">Milan Day</h3>
-                    <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">456-5-128</div>
-                    <p className="text-sm text-yellow-300">Betting will open soon</p>
-                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
-                        Play Now
-                    </Button>
-                    <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
-                        <Clock className="h-4 w-4 mr-2" />
-                        <span>Open: 02:15 PM | Close: 04:15 PM</span>
-                    </div>
-                </div>
+                ) : games.length > 0 ? (
+                    games.map((game) => (
+                        <div key={game.id} className="rounded-lg bg-slate-800/80 p-4 text-center space-y-3">
+                            <h3 className="text-xl font-bold text-white">{game.name}</h3>
+                            <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">{game.result}</div>
+                            <p className="text-sm text-yellow-300">{game.status}</p>
+                            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
+                                Play Now
+                            </Button>
+                            <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
+                                <Clock className="h-4 w-4 mr-2" />
+                                <span>Open: {game.openTime} | Close: {game.closeTime}</span>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                   <p className="text-center text-muted-foreground">No games available right now.</p>
+                )}
             </CardContent>
         </Card>
 
