@@ -74,9 +74,16 @@ export default function Home() {
             <Crown className="h-5 w-5 text-primary" />
             <span className="font-bold text-lg text-white">MATKA <span className="text-primary">KING</span></span>
         </div>
-        <Button onClick={handleLogout} variant="ghost" size="icon">
-            <LogOut className="h-6 w-6" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href="/admin">
+            <Button variant="ghost" size="icon" aria-label="Admin Panel">
+                <ShieldCheck className="h-6 w-6" />
+            </Button>
+          </Link>
+          <Button onClick={handleLogout} variant="ghost" size="icon" aria-label="Logout">
+              <LogOut className="h-6 w-6" />
+          </Button>
+        </div>
       </header>
       <main className="flex flex-col gap-4 p-4">
         <Card className="bg-card/80 border-white/10 shadow-lg">
@@ -151,15 +158,6 @@ export default function Home() {
                 )}
             </CardContent>
         </Card>
-        
-        <div className="mt-8 flex justify-center">
-          <Link href="/admin">
-            <Button variant="secondary" className="gap-2">
-                <ShieldCheck className="h-5 w-5" />
-                Go to Admin Panel
-            </Button>
-          </Link>
-        </div>
 
       </main>
     </div>
