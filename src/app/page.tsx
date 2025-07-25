@@ -9,7 +9,8 @@ import { Loader } from '@/components/loader';
 import { auth, db } from '@/lib/firebase';
 import { collection, query, onSnapshot, orderBy, DocumentData } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, Menu, Crown, Banknote, MessageSquare, Phone, Clock } from 'lucide-react';
+import { LogOut, Menu, Crown, Banknote, MessageSquare, Phone, Clock, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 
 interface Game extends DocumentData {
     id: string;
@@ -150,6 +151,15 @@ export default function Home() {
                 )}
             </CardContent>
         </Card>
+        
+        <div className="mt-8 flex justify-center">
+          <Link href="/admin">
+            <Button variant="secondary" className="gap-2">
+                <ShieldCheck className="h-5 w-5" />
+                Go to Admin Panel
+            </Button>
+          </Link>
+        </div>
 
       </main>
     </div>
