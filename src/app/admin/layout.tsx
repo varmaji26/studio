@@ -62,7 +62,7 @@ export default function AdminLayout({
 
   return (
     <SidebarProvider>
-      <div className="dark min-h-screen bg-background text-foreground">
+      <div className="dark min-h-screen bg-background text-foreground flex">
         <Sidebar variant="sidebar" collapsible="icon">
           <SidebarHeader>
               <div className="flex items-center gap-2 p-2">
@@ -190,7 +190,7 @@ export default function AdminLayout({
             </SidebarGroup>
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset>
+        <div className="flex-1 flex flex-col">
            <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
                 <div className="flex items-center gap-2">
                   <SidebarTrigger />
@@ -203,8 +203,10 @@ export default function AdminLayout({
                   <Button onClick={() => router.push('/')}>Go to User Panel</Button>
                 </div>
             </header>
-          {children}
-        </SidebarInset>
+          <SidebarInset>
+            {children}
+          </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );
