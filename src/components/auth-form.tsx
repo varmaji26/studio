@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -15,7 +14,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { CanvasDraw } from './canvas-draw';
 import { Loader } from './loader';
 import { Phone, Lock } from 'lucide-react';
 
@@ -31,7 +29,6 @@ type AuthFormProps = {
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [isCanvasSigned, setIsCanvasSigned] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -127,14 +124,9 @@ export function AuthForm({ mode }: AuthFormProps) {
                 </FormItem>
               )}
             />
-            <div>
-              <FormLabel>Signature</FormLabel>
-              <CanvasDraw onDraw={() => setIsCanvasSigned(true)} onClear={() => setIsCanvasSigned(false)} />
-              <p className="text-xs text-muted-foreground mt-1">Please provide a signature to proceed.</p>
-            </div>
           </CardContent>
           <CardFooter className="flex flex-col">
-            <Button type="submit" className="w-full" disabled={isSubmitting || !isCanvasSigned}>
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? <Loader className="mr-2 h-4 w-4" /> : null}
               {buttonText}
             </Button>
