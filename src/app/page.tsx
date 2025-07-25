@@ -64,7 +64,7 @@ export default function Home() {
     );
   }
 
-  const isAdmin = user && user.email === 'admin@authcanvas.dev';
+  const isAdmin = user && user.email === '8080601370@authcanvas.dev';
 
   return (
     <div className="dark min-h-screen bg-background text-foreground">
