@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { sendPasswordResetEmail, type User } from 'firebase/auth';
@@ -36,7 +36,13 @@ export default function ProfilePage() {
   const { user: authUser, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [user, setUser] = useState<User | null>(authUser);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (authUser) {
+      setUser(authUser);
+    }
+  }, [authUser]);
 
   if (loading || !user) {
     return (
