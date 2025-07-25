@@ -64,6 +64,8 @@ export default function Home() {
     );
   }
 
+  const isAdmin = user && user.email === 'admin@authcanvas.dev';
+
   return (
     <div className="dark min-h-screen bg-background text-foreground">
       <header className="flex items-center justify-between p-4 bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10">
@@ -75,11 +77,13 @@ export default function Home() {
             <span className="font-bold text-lg text-white">MATKA <span className="text-primary">KING</span></span>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/admin">
-            <Button variant="ghost" size="icon" aria-label="Admin Panel">
-                <ShieldCheck className="h-6 w-6" />
-            </Button>
-          </Link>
+          {isAdmin && (
+            <Link href="/admin">
+              <Button variant="ghost" size="icon" aria-label="Admin Panel">
+                  <ShieldCheck className="h-6 w-6" />
+              </Button>
+            </Link>
+          )}
           <Button onClick={handleLogout} variant="ghost" size="icon" aria-label="Logout">
               <LogOut className="h-6 w-6" />
           </Button>
