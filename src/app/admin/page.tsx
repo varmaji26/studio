@@ -2,210 +2,118 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { collection, addDoc, serverTimestamp, query, onSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, onSnapshot, DocumentData, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
+import { Users, Gamepad2, Hand, Landmark, IndianRupee, TrendingUp, TrendingDown, ArrowLeftRight, Clock, Wallet } from 'lucide-react';
 import { Loader } from '@/components/loader';
 
-const gameSchema = z.object({
-  name: z.string().min(1, 'Game name is required.'),
-  result: z.string().min(1, 'Result is required.'),
-  status: z.string().min(1, 'Status is required.'),
-  openTime: z.string().min(1, 'Open time is required.'),
-  closeTime: z.string().min(1, 'Close time is required.'),
-});
-
-type GameFormValues = z.infer<typeof gameSchema>;
-
-interface User extends DocumentData {
-    id: string;
-    displayName: string;
-    mobile: string;
+interface StatCardProps {
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  change?: string;
+  changeType?: 'increase' | 'decrease';
+  color?: string;
 }
 
-export default function AdminPage() {
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
-  const [usersLoading, setUsersLoading] = useState(true);
+const StatCard = ({ title, value, icon: Icon, change, changeType, color }: StatCardProps) => (
+    <Card className="bg-card/80 border-white/10 shadow-lg" style={{ borderLeft: `4px solid ${color}`}}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <Icon className="h-5 w-5 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        {change && (
+           <p className={`text-xs ${changeType === 'increase' ? 'text-green-500' : 'text-red-500'}`}>
+            {change}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+);
 
-  const form = useForm<GameFormValues>({
-    resolver: zodResolver(gameSchema),
-    defaultValues: {
-      name: '',
-      result: '',
-      status: 'Betting will open soon',
-      openTime: '',
-      closeTime: '',
-    },
-  });
 
-   useEffect(() => {
-    const q = query(collection(db, "users"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const usersData: User[] = [];
-      querySnapshot.forEach((doc) => {
-        usersData.push({ id: doc.id, ...doc.data() } as User);
-      });
-      setUsers(usersData);
-      setUsersLoading(false);
-    });
+export default function AdminDashboardPage() {
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [totalGames, setTotalGames] = useState(0);
+    const [loading, setLoading] = useState(true);
 
-    return () => unsubscribe();
-  }, []);
+    useEffect(() => {
+        const fetchStats = async () => {
+            setLoading(true);
+            try {
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                setTotalUsers(usersSnapshot.size);
 
-  const onSubmit = async (values: GameFormValues) => {
-    setIsSubmitting(true);
-    try {
-      await addDoc(collection(db, 'games'), {
-        ...values,
-        createdAt: serverTimestamp(),
-      });
-      toast({
-        title: 'Success!',
-        description: 'New game has been added.',
-      });
-      form.reset();
-    } catch (error) {
-      console.error('Error adding document: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to add the game. Please try again.',
-      });
-    } finally {
-      setIsSubmitting(false);
+                const gamesSnapshot = await getDocs(collection(db, "games"));
+                setTotalGames(gamesSnapshot.size);
+            } catch (error) {
+                console.error("Error fetching stats: ", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    if (loading) {
+        return (
+          <div className="flex h-full w-full items-center justify-center bg-background p-8">
+            <Loader className="h-10 w-10 text-primary" />
+          </div>
+        );
     }
-  };
-
+  
   return (
-    <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-8">
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold text-primary">Admin Panel</h1>
-        <p className="text-muted-foreground">Add and manage Matka games and view users.</p>
-      </header>
-      <main className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">Add New Game</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Game Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Milan Night" {...field} className="bg-input h-12 rounded-lg" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="result"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Game Result</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 123-6-789" {...field} className="bg-input h-12 rounded-lg" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Betting Status</FormLabel>
-                      <FormControl>
-                        <Input {...field} className="bg-input h-12 rounded-lg" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   <FormField
-                    control={form.control}
-                    name="openTime"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Open Time</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., 08:50 PM" {...field} className="bg-input h-12 rounded-lg" />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="closeTime"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Close Time</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., 10:50 PM" {...field} className="bg-input h-12 rounded-lg" />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                </div>
-                <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_20px_theme(colors.primary/40%)]" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
-                  Add Game
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+    <div className="flex-1 space-y-4 p-4 sm:p-8">
+        <div className="bg-teal-500 text-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-3xl font-bold">Welcome to your Admin Panel!</h2>
+            <p className="mt-1">Here's a detailed overview of your application's status and performance.</p>
+        </div>
 
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {usersLoading ? (
-                <div className="flex justify-center items-center h-48">
-                    <Loader className="h-8 w-8 text-primary" />
-                </div>
-            ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Username</TableHead>
-                            <TableHead>Mobile Number</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {users.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell>{user.displayName}</TableCell>
-                                <TableCell>{user.mobile}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard title="Total Users" value={totalUsers.toString()} icon={Users} color="#8b5cf6" />
+            <StatCard title="Total Games" value={totalGames.toString()} icon={Gamepad2} color="#ec4899" />
+            <StatCard title="Total Bids" value="125" icon={Hand} color="#f97316" />
+            <StatCard title="Total Market" value="11" icon={Landmark} color="#22c55e" />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard title="Today's Deposits" value="₹5,420" icon={Wallet} color="#14b8a6"/>
+            <StatCard title="Withdrawls Given Today" value="₹1,250" icon={ArrowLeftRight} color="#f43f5e" />
+            <StatCard title="Yesterday's Deposits" value="₹8,760" icon={Clock} color="#14b8a6" />
+            <StatCard title="Withdrawal Given Yesterday" value="₹4,465" icon={Clock} color="#f43f5e" />
+        </div>
+        
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <StatCard 
+                title="Today's Bidding" 
+                value="₹68,619" 
+                icon={IndianRupee} 
+                change="+10% increase"
+                changeType="increase"
+                color="#3b82f6"
+            />
+            <StatCard 
+                title="Today Winning" 
+                value="₹76,400" 
+                icon={IndianRupee}
+                change="-12% decrease"
+                changeType="decrease"
+                color="#16a34a"
+            />
+            <StatCard 
+                title="Today's Profit / Loss" 
+                value="-₹7,781" 
+                icon={IndianRupee}
+                change="-15% decrease"
+                changeType="decrease"
+                color="#ef4444"
+            />
+        </div>
     </div>
   );
 }
