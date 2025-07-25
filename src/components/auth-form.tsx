@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
@@ -14,10 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, User } from 'lucide-react';
 import React from 'react';
 
 const formSchema = z.object({
+  username: z.string().optional(),
   mobile: z.string().min(10, { message: 'Please enter a valid mobile number.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
@@ -32,8 +33,22 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [showPassword, setShowPassword] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(
+      formSchema.refine(
+        (data) => {
+          if (mode === 'signup') {
+            return !!data.username && data.username.length >= 3;
+          }
+          return true;
+        },
+        {
+          message: 'Username must be at least 3 characters.',
+          path: ['username'],
+        }
+      )
+    ),
     defaultValues: {
+      username: '',
       mobile: '',
       password: '',
     },
@@ -48,7 +63,19 @@ export function AuthForm({ mode }: AuthFormProps) {
       const email = `${values.mobile.replace(/\s/g, '')}@authcanvas.dev`;
 
       if (mode === 'signup') {
-        await createUserWithEmailAndPassword(auth, email, values.password);
+        if (!values.username) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Failed',
+                description: 'Please enter a username.',
+            });
+            return;
+        }
+        const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
+        await updateProfile(userCredential.user, {
+            displayName: values.username
+        });
+
       } else {
         await signInWithEmailAndPassword(auth, email, values.password);
       }
@@ -88,6 +115,24 @@ export function AuthForm({ mode }: AuthFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
+            {mode === 'signup' && (
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="Enter your username" {...field} className="bg-input h-12 rounded-lg pl-10" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="mobile"

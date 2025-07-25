@@ -29,7 +29,7 @@ export default function Home() {
     }
   };
 
-  if (loading || !user || !user.email) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 text-primary" />
@@ -37,13 +37,14 @@ export default function Home() {
     );
   }
 
-  const mobileNumber = user.email.split('@')[0];
+  const mobileNumber = user.email ? user.email.split('@')[0] : 'N/A';
+  const displayName = user.displayName;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold tracking-tight text-primary">Welcome to Auth Canvas</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight text-primary">Welcome, {displayName || 'User'}!</CardTitle>
           <CardDescription>You are successfully logged in.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
