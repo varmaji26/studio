@@ -48,20 +48,21 @@ export default function ManageUsersPage() {
    useEffect(() => {
     setUsersLoading(true);
     const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+    
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const usersData: User[] = [];
       querySnapshot.forEach((doc) => {
         usersData.push({ id: doc.id, ...doc.data() } as User);
       });
       setUsers(usersData);
-      setFilteredUsers(usersData);
+      setFilteredUsers(usersData); // Initialize filtered users with all users
       setUsersLoading(false);
     }, (error) => {
         console.error("Error fetching users: ", error);
         toast({
             variant: 'destructive',
             title: 'Error fetching users',
-            description: 'Could not fetch user data from the database.'
+            description: 'Could not fetch user data from the database. Please check console for details.'
         });
         setUsersLoading(false);
     });
@@ -87,8 +88,12 @@ export default function ManageUsersPage() {
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
     if (!timestamp || typeof timestamp.seconds !== 'number') return 'N/A';
-    const date = new Date(timestamp.seconds * 1000);
-    return date.toLocaleDateString('en-GB');
+    try {
+      const date = new Date(timestamp.seconds * 1000);
+      return date.toLocaleDateString('en-GB');
+    } catch (e) {
+      return 'Invalid Date';
+    }
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -124,7 +129,7 @@ export default function ManageUsersPage() {
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">All Users</h3>
+                <h3 className="text-xl font-semibold">All Users ({users.length})</h3>
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
@@ -199,7 +204,9 @@ export default function ManageUsersPage() {
                 </div>
             )}
             {filteredUsers.length === 0 && !usersLoading && (
-                <p className="text-center text-muted-foreground mt-4">No users found.</p>
+                <p className="text-center text-muted-foreground mt-4">
+                  {searchTerm ? `No users found for "${searchTerm}".` : "No users found in the database."}
+                </p>
             )}
           </CardContent>
         </Card>
