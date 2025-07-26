@@ -125,10 +125,12 @@ export default function AdminLayout({
             </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "View All Load"}}>
-              <BarChart2 />
-              <span>View All Load</span>
-            </SidebarMenuButton>
+            <Link href="/admin/charts" passHref>
+                <SidebarMenuButton isActive={isActive('/admin/charts')} tooltip={{children: "Game Charts"}}>
+                  <BarChart2 />
+                  <span>Game Charts</span>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
             <SidebarMenuButton tooltip={{children: "Market-wise Load"}}>
