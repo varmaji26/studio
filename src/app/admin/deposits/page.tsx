@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, DocumentData } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, DocumentData, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -26,7 +26,7 @@ export default function DepositsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const q = query(collection(db, "deposits"));
+    const q = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const requestsData: DepositRequest[] = [];
       querySnapshot.forEach((doc) => {
