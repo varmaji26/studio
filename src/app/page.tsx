@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, DocumentData } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, where } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   LogOut,
@@ -54,7 +54,8 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, 'games'), orderBy('createdAt', 'desc'));
+    // Only fetch games that are active
+    const q = query(collection(db, 'games'), where('active', '==', true), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const gamesData: Game[] = [];
       querySnapshot.forEach((doc) => {
@@ -259,7 +260,7 @@ export default function Home() {
                   <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">{game.result}</div>
                   <p className="text-sm text-yellow-300">{game.status}</p>
                   <Link href={`/games/${game.id}`} passHref>
-                    <Button asChild className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
                         <span>Play Now</span>
                     </Button>
                   </Link>
