@@ -15,9 +15,8 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Loader } from '@/components/loader';
-import { ArrowLeft, Edit, PlusCircle, KeyRound } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -39,10 +38,13 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    if (authUser) {
+    if (loading) return;
+    if (!authUser) {
+      router.replace('/login');
+    } else {
       setUser(authUser);
     }
-  }, [authUser]);
+  }, [authUser, loading, router]);
 
   if (loading || !user) {
     return (
@@ -76,125 +78,107 @@ export default function ProfilePage() {
     setUser(updatedUser);
   };
 
-
   const mobileNumber = user.email?.split('@')[0];
   const creationDate = user.metadata.creationTime
     ? new Date(user.metadata.creationTime).toLocaleDateString()
     : 'N/A';
-  const userInitial = user.displayName?.charAt(0).toUpperCase() ?? 'U';
-
+  
   return (
     <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-primary mb-6 hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Home</span>
-        </Link>
-
+      <div className="max-w-2xl mx-auto">
         <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
+          <CardHeader className="text-center">
             <CardTitle className="text-2xl sm:text-3xl">My Profile</CardTitle>
             <CardDescription>
               View and update your profile information.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-8">
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <Avatar className="h-24 w-24 text-4xl">
-                <AvatarImage src={`https://placehold.co/100x100.png`} />
-                <AvatarFallback className="bg-primary/20 text-primary">
-                  {userInitial}
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-center sm:text-left">
-                <h2 className="text-2xl font-bold">{user.displayName}</h2>
-                <p className="text-muted-foreground">+91 {mobileNumber}</p>
-              </div>
+          <CardContent className="pt-0">
+            <div className="text-center mb-6">
+                <Link href="/" className="inline-flex items-center gap-2 text-primary hover:underline">
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Back to Home</span>
+                </Link>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Username
-                  </label>
-                  <p className="text-lg font-semibold">{user.displayName}</p>
+    
+            <div className="border border-white/20 rounded-lg p-6 space-y-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                        Username
+                        </label>
+                        <p className="text-lg font-semibold">{user.displayName}</p>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                        Mobile Number
+                        </label>
+                        <p className="text-lg font-semibold">+91 {mobileNumber}</p>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                        Current Balance
+                        </label>
+                        <p className="text-lg font-semibold">₹0</p>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                        Joined
+                        </label>
+                        <p className="text-lg font-semibold">{creationDate}</p>
+                    </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Mobile Number
-                  </label>
-                  <p className="text-lg font-semibold">+91 {mobileNumber}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Current Balance
-                  </label>
-                  <p className="text-lg font-semibold">₹0</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Joined
-                  </label>
-                  <p className="text-lg font-semibold">{creationDate}</p>
-                </div>
-              </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10">
-              <UpdateProfileDialog user={user} onUserUpdate={handleUserUpdate}>
-                 <Button variant="outline" className="h-12">
-                    <Edit className="mr-2 h-4 w-4" /> Edit Profile
-                </Button>
-              </UpdateProfileDialog>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="h-12">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Points
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>How to Add Points?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      To add points to your wallet, please contact our support
-                      team via WhatsApp or call us directly.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Close</AlertDialogCancel>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="h-12">
-                    <KeyRound className="mr-2 h-4 w-4" /> Change Password
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Change Password?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      A password reset link will be sent to your registered
-                      email address. Are you sure you want to continue?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handlePasswordReset}>
-                      Continue
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+    
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <UpdateProfileDialog user={user} onUserUpdate={handleUserUpdate}>
+                        <Button className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-base">
+                            Edit Profile
+                        </Button>
+                    </UpdateProfileDialog>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                        <Button className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-bold text-base">
+                            Add Points
+                        </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>How to Add Points?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                To add points to your wallet, please contact our support
+                                team via WhatsApp or call us directly.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Close</AlertDialogCancel>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="w-full h-12 text-base">
+                        Change Password
+                    </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Change Password?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                        A password reset link will be sent to your registered
+                        email address. Are you sure you want to continue?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handlePasswordReset}>
+                        Continue
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
           </CardContent>
         </Card>
