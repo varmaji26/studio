@@ -10,7 +10,10 @@ import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { UpdateBalanceDialog } from '@/components/update-balance-dialog';
+
 
 interface User extends DocumentData {
     id: string;
@@ -25,7 +28,9 @@ interface User extends DocumentData {
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
    useEffect(() => {
     const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
@@ -40,6 +45,19 @@ export default function ManageUsersPage() {
 
     return () => unsubscribe();
   }, []);
+  
+  useEffect(() => {
+    if (searchTerm === '') {
+      setFilteredUsers(users);
+    } else {
+      setFilteredUsers(
+        users.filter((user) =>
+          user.mobile.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
+  }, [searchTerm, users]);
+
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null) => {
     if (!timestamp) return 'N/A';
@@ -61,7 +79,19 @@ export default function ManageUsersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <h3 className="text-xl font-semibold mb-4">All Users</h3>
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">All Users</h3>
+                <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by mobile number..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-input h-10 rounded-lg pl-10"
+                    />
+                </div>
+            </div>
+
             {usersLoading ? (
                 <div className="flex justify-center items-center h-48">
                     <Loader className="h-8 w-8 text-primary" />
@@ -81,7 +111,7 @@ export default function ManageUsersPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {users.map((user, index) => (
+                            {filteredUsers.map((user, index) => (
                                 <TableRow key={user.id}>
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>{user.displayName}</TableCell>
@@ -95,7 +125,9 @@ export default function ManageUsersPage() {
                                     <TableCell>{formatDate(user.createdAt)}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex gap-2 justify-end">
-                                            <Button size="sm" variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400">Edit</Button>
+                                            <UpdateBalanceDialog user={user}>
+                                                <Button size="sm" variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400">Add/Remove Balance</Button>
+                                            </UpdateBalanceDialog>
                                             <Button size="sm" variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10 hover:text-green-400">View</Button>
                                             <Button size="sm" variant="destructive">Delete</Button>
                                         </div>
@@ -106,7 +138,7 @@ export default function ManageUsersPage() {
                     </Table>
                 </div>
             )}
-            {users.length === 0 && !usersLoading && (
+            {filteredUsers.length === 0 && !usersLoading && (
                 <p className="text-center text-muted-foreground mt-4">No users found.</p>
             )}
           </CardContent>
