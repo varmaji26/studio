@@ -68,7 +68,7 @@ export default function DepositsPage() {
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'Failed to update request status.'
+            description: 'Failed to update request status. User document might be missing.',
         });
     }
   };
