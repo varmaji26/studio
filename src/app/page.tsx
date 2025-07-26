@@ -260,7 +260,7 @@ export default function Home() {
                   <p className="text-sm text-yellow-300">{game.status}</p>
                   <Link href={`/games/${game.id}`} passHref>
                     <Button asChild className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
-                        <a>Play Now</a>
+                        <span>Play Now</span>
                     </Button>
                   </Link>
                   <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
