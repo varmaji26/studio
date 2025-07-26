@@ -61,137 +61,143 @@ export default function AdminLayout({
     }
   };
 
+  const sidebarContent = (
+    <>
+      <SidebarHeader>
+          <div className="flex items-center gap-2 p-2">
+            <div className="p-1.5 rounded-lg bg-primary">
+                <Trophy className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <h1 className="text-xl font-bold text-primary-foreground">Matka Genius</h1>
+          </div>
+      </SidebarHeader>
+      <SidebarContent className="p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <Link href="/admin" passHref>
+              <SidebarMenuButton isActive={isActive('/admin')} tooltip={{children: "Dashboard"}}>
+                <Home />
+                <span>Dashboard</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+             <Link href="/admin/manage-users" passHref>
+                <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Manage Users"}}>
+                  <Users />
+                  <span>Manage Users</span>
+                </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "Market"}}>
+              <Building />
+              <span>Market</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+             <Link href="/admin/manage-games" passHref>
+                <SidebarMenuButton isActive={isActive('/admin/manage-games')} tooltip={{children: "Manage Games"}}>
+                  <Gamepad />
+                  <span>Manage Games</span>
+                </SidebarMenuButton>
+             </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "Update Result (Open)"}}>
+              <CheckCircle />
+              <span>Update Result (Open)</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "Update Result (Close)"}}>
+              <XCircle />
+              <span>Update Result (Close)</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "View All Load"}}>
+              <BarChart2 />
+              <span>View All Load</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "Market-wise Load"}}>
+              <LineChart />
+              <span>Market-wise Load</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+            <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "Bid History"}}>
+              <History />
+              <span>Bid History</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "Win History"}}>
+              <Trophy />
+              <span>Win History</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "Find Password"}}>
+              <KeyRound />
+              <span>Find Password</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/admin/deposits" passHref>
+              <SidebarMenuButton isActive={isActive('/admin/deposits')} tooltip={{children: "Deposits/Withdrawals"}}>
+                <ArrowLeftRight />
+                <span>Deposits/Withdrawals</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "220 Matka Pana List"}}>
+              <ClipboardList />
+              <span>220 Matka Pana List</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "Registered Users"}}>
+              <UserCheck />
+              <span>Registered Users</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: "Payment"}}>
+              <CreditCard />
+              <span>Payment</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarGroup>
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-card">
+                <Avatar className="h-12 w-12">
+                    <AvatarImage src="https://placehold.co/48x48.png" />
+                    <AvatarFallback>{user?.displayName?.charAt(0) ?? 'A'}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                    <span className="text-sm font-semibold">{user?.displayName ?? 'Admin'}</span>
+                    <span className="text-xs text-muted-foreground">Admin</span>
+                </div>
+                <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
+                    <LogOut />
+                </Button>
+            </div>
+        </SidebarGroup>
+      </SidebarFooter>
+    </>
+  );
+
   return (
     <SidebarProvider>
       <div className="dark min-h-screen bg-background text-foreground flex">
         <Sidebar variant="sidebar" collapsible="icon">
-          <SidebarHeader>
-              <div className="flex items-center gap-2 p-2">
-                <div className="p-1.5 rounded-lg bg-primary">
-                    <Trophy className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <h1 className="text-xl font-bold text-primary-foreground">Matka Genius</h1>
-              </div>
-          </SidebarHeader>
-          <SidebarContent className="p-2">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <Link href="/admin" passHref>
-                  <SidebarMenuButton isActive={isActive('/admin')} tooltip={{children: "Dashboard"}}>
-                    <Home />
-                    <span>Dashboard</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                 <Link href="/admin/manage-users" passHref>
-                    <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Manage Users"}}>
-                      <Users />
-                      <span>Manage Users</span>
-                    </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Market"}}>
-                  <Building />
-                  <span>Market</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                 <Link href="/admin/manage-games" passHref>
-                    <SidebarMenuButton isActive={isActive('/admin/manage-games')} tooltip={{children: "Manage Games"}}>
-                      <Gamepad />
-                      <span>Manage Games</span>
-                    </SidebarMenuButton>
-                 </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Update Result (Open)"}}>
-                  <CheckCircle />
-                  <span>Update Result (Open)</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Update Result (Close)"}}>
-                  <XCircle />
-                  <span>Update Result (Close)</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "View All Load"}}>
-                  <BarChart2 />
-                  <span>View All Load</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Market-wise Load"}}>
-                  <LineChart />
-                  <span>Market-wise Load</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-                <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Bid History"}}>
-                  <History />
-                  <span>Bid History</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Win History"}}>
-                  <Trophy />
-                  <span>Win History</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Find Password"}}>
-                  <KeyRound />
-                  <span>Find Password</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link href="/admin/deposits" passHref>
-                  <SidebarMenuButton isActive={isActive('/admin/deposits')} tooltip={{children: "Deposits/Withdrawals"}}>
-                    <ArrowLeftRight />
-                    <span>Deposits/Withdrawals</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "220 Matka Pana List"}}>
-                  <ClipboardList />
-                  <span>220 Matka Pana List</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Registered Users"}}>
-                  <UserCheck />
-                  <span>Registered Users</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Payment"}}>
-                  <CreditCard />
-                  <span>Payment</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter>
-            <SidebarGroup>
-                <div className="flex items-center gap-3 p-2 rounded-lg bg-card">
-                    <Avatar className="h-12 w-12">
-                        <AvatarImage src="https://placehold.co/48x48.png" />
-                        <AvatarFallback>{user?.displayName?.charAt(0) ?? 'A'}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-semibold">{user?.displayName ?? 'Admin'}</span>
-                        <span className="text-xs text-muted-foreground">Admin</span>
-                    </div>
-                    <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
-                        <LogOut />
-                    </Button>
-                </div>
-            </SidebarGroup>
-          </SidebarFooter>
+          {sidebarContent}
         </Sidebar>
         <SidebarInset>
            <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
@@ -200,10 +206,11 @@ export default function AdminLayout({
                       <SheetTriggerComponent asChild>
                           <SidebarTrigger />
                       </SheetTriggerComponent>
-                      <SheetContent side="left" className="p-0">
-                          <SheetHeader className="p-0 border-none">
-                              <SheetTitle className="sr-only">Admin Menu</SheetTitle>
+                      <SheetContent side="left" className="p-0 flex flex-col">
+                          <SheetHeader className="p-0 border-none sr-only">
+                              <SheetTitle>Admin Menu</SheetTitle>
                           </SheetHeader>
+                          {sidebarContent}
                       </SheetContent>
                   </Sheet>
                   <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
