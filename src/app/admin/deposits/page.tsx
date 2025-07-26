@@ -66,6 +66,7 @@ export default function DepositsPage() {
           const newBalance = currentBalance + request.amount;
           transaction.update(userDocRef, { balance: newBalance });
         }
+        
         transaction.update(requestDocRef, { status: status });
       });
 
