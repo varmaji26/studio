@@ -61,7 +61,7 @@ export default function AdminLayout({
     }
   };
 
-  const sidebarContent = (
+  const sidebarItems = (
     <>
       <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
@@ -197,7 +197,7 @@ export default function AdminLayout({
     <SidebarProvider>
       <div className="dark min-h-screen bg-background text-foreground flex">
         <Sidebar variant="sidebar" collapsible="icon">
-          {sidebarContent}
+          {sidebarItems}
         </Sidebar>
         <SidebarInset>
            <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
@@ -207,10 +207,10 @@ export default function AdminLayout({
                           <SidebarTrigger />
                       </SheetTriggerComponent>
                       <SheetContent side="left" className="p-0 flex flex-col">
-                          <SheetHeader className="p-4 border-b">
+                          <SheetHeader className="p-4 border-b sr-only">
                             <SheetTitle>Admin Menu</SheetTitle>
                           </SheetHeader>
-                          {sidebarContent}
+                          {sidebarItems}
                       </SheetContent>
                   </Sheet>
                   <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
