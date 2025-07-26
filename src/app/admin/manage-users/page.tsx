@@ -85,8 +85,8 @@ export default function ManageUsersPage() {
   }, [searchTerm, users]);
 
 
-  const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null) => {
-    if (!timestamp) return 'N/A';
+  const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
+    if (!timestamp || typeof timestamp.seconds !== 'number') return 'N/A';
     const date = new Date(timestamp.seconds * 1000);
     return date.toLocaleDateString('en-GB');
   };
