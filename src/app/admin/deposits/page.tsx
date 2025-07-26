@@ -33,7 +33,13 @@ export default function DepositsPage() {
       querySnapshot.forEach((doc) => {
         requestsData.push({ id: doc.id, ...doc.data() } as DepositRequest);
       });
-      setRequests(requestsData.sort((a, b) => (a.status === 'pending' ? -1 : 1)));
+      // Sort to show pending requests first
+      requestsData.sort((a, b) => {
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        return 0;
+      });
+      setRequests(requestsData);
       setLoading(false);
     });
 
@@ -45,19 +51,17 @@ export default function DepositsPage() {
     const userDocRef = doc(db, 'users', request.userId);
 
     try {
-      if (status === 'approved') {
-          await runTransaction(db, async (transaction) => {
-              const userDoc = await transaction.get(userDocRef);
-              if (!userDoc.exists()) {
-                  throw new Error("User document does not exist!");
-              }
-              const newBalance = (userDoc.data().balance || 0) + request.amount;
-              transaction.update(userDocRef, { balance: newBalance });
-              transaction.update(requestDocRef, { status: 'approved' });
-          });
-      } else {
-        await updateDoc(requestDocRef, { status });
-      }
+      await runTransaction(db, async (transaction) => {
+        if (status === 'approved') {
+          const userDoc = await transaction.get(userDocRef);
+          if (!userDoc.exists()) {
+            throw new Error("User document does not exist!");
+          }
+          const newBalance = (userDoc.data().balance || 0) + request.amount;
+          transaction.update(userDocRef, { balance: newBalance });
+        }
+        transaction.update(requestDocRef, { status: status });
+      });
 
       toast({
           title: 'Success!',
@@ -68,7 +72,7 @@ export default function DepositsPage() {
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'Failed to update request status. User document might be missing.',
+            description: String(error) || 'Failed to update request status. User document might be missing.',
         });
     }
   };
