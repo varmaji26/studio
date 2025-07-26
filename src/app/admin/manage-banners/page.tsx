@@ -22,7 +22,7 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 
 const bannerSchema = z.object({
   bannerImage: z
-    .instanceof(FileList)
+    .any()
     .refine((files) => files?.length === 1, 'Banner image is required.')
     .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
     .refine(
