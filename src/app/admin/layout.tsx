@@ -201,10 +201,9 @@ export default function AdminLayout({
                           <SidebarTrigger />
                       </SheetTriggerComponent>
                       <SheetContent side="left" className="p-0">
-                          <SheetHeader>
+                           <SheetHeader>
                               <SheetTitle className="sr-only">Admin Menu</SheetTitle>
                           </SheetHeader>
-                          {/* The mobile sidebar content is injected here by the Sidebar component, which already contains the necessary headers and content. */}
                       </SheetContent>
                   </Sheet>
                   <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
