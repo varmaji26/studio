@@ -177,8 +177,8 @@ export default function AdminLayout({
           <SidebarFooter>
             <SidebarGroup>
                 <div className="flex items-center gap-3 p-2 rounded-lg bg-card">
-                    <Avatar>
-                        <AvatarImage src="https://placehold.co/40x40.png" />
+                    <Avatar className="h-12 w-12">
+                        <AvatarImage src="https://placehold.co/48x48.png" />
                         <AvatarFallback>{user?.displayName?.charAt(0) ?? 'A'}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
