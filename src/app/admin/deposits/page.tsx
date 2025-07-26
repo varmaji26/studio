@@ -115,7 +115,7 @@ export default function DepositsPage() {
                                     <TableCell>{request.paymentMethod}</TableCell>
                                     <TableCell>{request.transactionId}</TableCell>
                                     <TableCell>
-                                        <Badge variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'secondary' : 'destructive'} className={request.status === 'approved' ? 'bg-green-500' : ''}>
+                                        <Badge variant={request.status === 'pending' ? 'default' : request.status === 'approved' ? 'secondary' : 'destructive'} className={request.status === 'approved' ? 'bg-green-500 text-white' : ''}>
                                             {request.status}
                                         </Badge>
                                     </TableCell>
