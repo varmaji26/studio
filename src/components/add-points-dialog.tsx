@@ -31,7 +31,8 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
+import { Label } from '@/components/ui/label';
 
 const addPointsSchema = z.object({
   amount: z.preprocess(
