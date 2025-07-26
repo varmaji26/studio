@@ -47,22 +47,26 @@ export default function ManageUsersPage() {
 
    useEffect(() => {
     setUsersLoading(true);
+    // This query will only return documents that have a 'createdAt' field.
     const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const usersData: User[] = [];
       querySnapshot.forEach((doc) => {
-        usersData.push({ id: doc.id, ...doc.data() } as User);
+        // Ensure that we only push valid user data
+        if (doc.data().displayName && doc.data().mobile) {
+            usersData.push({ id: doc.id, ...doc.data() } as User);
+        }
       });
       setUsers(usersData);
-      setFilteredUsers(usersData); // Initialize filtered users with all users
+      setFilteredUsers(usersData);
       setUsersLoading(false);
     }, (error) => {
         console.error("Error fetching users: ", error);
         toast({
             variant: 'destructive',
             title: 'Error fetching users',
-            description: 'Could not fetch user data from the database. Please check console for details.'
+            description: 'Could not fetch user data. Please check Firestore rules and console for errors.'
         });
         setUsersLoading(false);
     });
@@ -87,11 +91,13 @@ export default function ManageUsersPage() {
 
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
+    // Make the function safer by checking if timestamp and timestamp.seconds exist.
     if (!timestamp || typeof timestamp.seconds !== 'number') return 'N/A';
     try {
       const date = new Date(timestamp.seconds * 1000);
-      return date.toLocaleDateString('en-GB');
+      return date.toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
     } catch (e) {
+      console.error("Error formatting date: ", e);
       return 'Invalid Date';
     }
   };
@@ -129,7 +135,7 @@ export default function ManageUsersPage() {
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">All Users ({users.length})</h3>
+                <h3 className="text-xl font-semibold">All Users ({filteredUsers.length})</h3>
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
@@ -205,7 +211,7 @@ export default function ManageUsersPage() {
             )}
             {filteredUsers.length === 0 && !usersLoading && (
                 <p className="text-center text-muted-foreground mt-4">
-                  {searchTerm ? `No users found for "${searchTerm}".` : "No users found in the database."}
+                  {searchTerm ? `No users found for "${searchTerm}".` : "No users found. Ensure user documents in Firestore have 'createdAt', 'displayName', and 'mobile' fields."}
                 </p>
             )}
           </CardContent>
