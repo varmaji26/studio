@@ -143,7 +143,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <Card className="w-full max-w-sm bg-card/80 backdrop-blur-sm border-white/10 rounded-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/20 animate-in fade-in-0 slide-in-from-bottom-10 rotate-x-[-20deg] hover:rotate-x-0 backface-hidden">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-primary shadow-[0_0_20px_theme(colors.primary),0_0_40px_theme(colors.primary)] rounded-t-2xl"></div>
+      <div className="absolute top-0 left-0 right-0 h-1 bg-primary shadow-[0_0_20px_hsl(var(--primary)),_0_0_40px_hsl(var(--primary))] rounded-t-2xl"></div>
       <CardHeader className="text-center pt-8">
         <CardTitle className="text-3xl font-bold text-foreground">{title}</CardTitle>
         <CardDescription className="text-muted-foreground">{description}</CardDescription>
