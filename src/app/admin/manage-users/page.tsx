@@ -46,6 +46,7 @@ export default function ManageUsersPage() {
   const { toast } = useToast();
 
    useEffect(() => {
+    setUsersLoading(true);
     const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const usersData: User[] = [];
@@ -53,17 +54,27 @@ export default function ManageUsersPage() {
         usersData.push({ id: doc.id, ...doc.data() } as User);
       });
       setUsers(usersData);
+      setFilteredUsers(usersData);
       setUsersLoading(false);
     }, (error) => {
         console.error("Error fetching users: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error fetching users',
+            description: 'Could not fetch user data from the database.'
+        });
         setUsersLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
   
   useEffect(() => {
-    const lowercasedFilter = searchTerm.toLowerCase();
+    const lowercasedFilter = searchTerm.toLowerCase().trim();
+    if (!lowercasedFilter) {
+        setFilteredUsers(users);
+        return;
+    }
     const filteredData = users.filter((user) => {
       return (
         user.displayName?.toLowerCase().includes(lowercasedFilter) ||
