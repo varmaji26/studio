@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -28,8 +28,12 @@ import {
   Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import Autoplay from "embla-carousel-autoplay"
+
 
 interface Game extends DocumentData {
   id: string;
@@ -45,6 +49,7 @@ export default function Home() {
   const router = useRouter();
   const [games, setGames] = useState<Game[]>([]);
   const [gamesLoading, setGamesLoading] = useState(true);
+  const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
 
   useEffect(() => {
     if (!loading && !user) {
@@ -178,6 +183,34 @@ export default function Home() {
         </div>
       </header>
       <main className="flex flex-col gap-4 p-4">
+        <Carousel 
+            plugins={[autoplayPlugin.current]}
+            className="w-full"
+            onMouseEnter={autoplayPlugin.current.stop}
+            onMouseLeave={autoplayPlugin.current.reset}
+        >
+            <CarouselContent>
+                {Array.from({ length: 3 }).map((_, index) => (
+                    <CarouselItem key={index}>
+                    <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+                        <CardContent className="p-0">
+                            <Image 
+                                src={`https://placehold.co/1200x400.png`}
+                                alt={`Banner ${index + 1}`}
+                                width={1200}
+                                height={400}
+                                className="w-full h-auto object-cover"
+                                data-ai-hint="casino banner"
+                            />
+                        </CardContent>
+                    </Card>
+                    </CarouselItem>
+                ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-4" />
+            <CarouselNext className="right-4" />
+        </Carousel>
+
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardContent className="p-6 text-center">
             <h1 className="text-3xl font-bold animate-pulse">

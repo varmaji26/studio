@@ -238,7 +238,6 @@ export default function ManageGamesPage() {
                                 <TableHead>Open Time</TableHead>
                                 <TableHead>Close Time</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Active/Inactive</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -250,24 +249,17 @@ export default function ManageGamesPage() {
                                     <TableCell>{game.openTime}</TableCell>
                                     <TableCell>{game.closeTime}</TableCell>
                                     <TableCell>
-                                        <Badge className={game.status.toLowerCase().includes('betting is running') ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'}>
-                                            {game.status}
+                                        <Badge variant={game.active ? 'default' : 'destructive'} className={game.active ? 'bg-green-500 text-white' : ''}>
+                                            {game.active ? 'ACTIVE' : 'INACTIVE'}
                                         </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center space-x-2">
-                                            <Switch
-                                                id={`status-switch-${game.id}`}
-                                                checked={game.active}
-                                                onCheckedChange={() => handleStatusToggle(game.id, game.active)}
-                                            />
-                                            <Label htmlFor={`status-switch-${game.id}`}>
-                                                {game.active ? 'Active' : 'Inactive'}
-                                            </Label>
-                                        </div>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex gap-2 justify-end">
+                                            <Switch
+                                                checked={game.active}
+                                                onCheckedChange={() => handleStatusToggle(game.id, game.active)}
+                                                aria-label={`Toggle game status for ${game.name}`}
+                                            />
                                             <EditGameDialog game={game}>
                                                  <Button size="sm" variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400">Edit</Button>
                                             </EditGameDialog>
