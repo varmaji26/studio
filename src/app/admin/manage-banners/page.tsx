@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, deleteDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Progress } from '@/components/ui/progress';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -44,6 +45,7 @@ export default function ManageBannersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const form = useForm<BannerFormValues>({
     resolver: zodResolver(bannerSchema),
@@ -67,38 +69,54 @@ export default function ManageBannersPage() {
 
   const onSubmit = async (values: BannerFormValues) => {
     setIsSubmitting(true);
+    setUploadProgress(0);
     const file = values.bannerImage[0];
     const storagePath = `banners/${Date.now()}_${file.name}`;
     const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
-    try {
-      // Upload file to Firebase Storage
-      const snapshot = await uploadBytes(storageRef, file);
-      // Get download URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
+    uploadTask.on('state_changed', 
+        (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(progress);
+        }, 
+        (error) => {
+            console.error('Upload failed:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Upload Error',
+                description: 'Failed to upload the banner. Please try again.',
+            });
+            setIsSubmitting(false);
+            setUploadProgress(null);
+        }, 
+        async () => {
+            try {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                await addDoc(collection(db, 'banners'), {
+                    imageUrl: downloadURL,
+                    storagePath: storagePath,
+                    createdAt: serverTimestamp(),
+                });
 
-      // Add banner info to Firestore
-      await addDoc(collection(db, 'banners'), {
-        imageUrl: downloadURL,
-        storagePath: storagePath,
-        createdAt: serverTimestamp(),
-      });
-
-      toast({
-        title: 'Success!',
-        description: 'New banner has been added.',
-      });
-      form.reset();
-    } catch (error) {
-      console.error('Error adding banner: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to add the banner. Please try again.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+                toast({
+                    title: 'Success!',
+                    description: 'New banner has been added.',
+                });
+                form.reset();
+            } catch (error) {
+                 console.error('Error adding banner to Firestore: ', error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: 'Failed to save the banner. Please try again.',
+                });
+            } finally {
+                setIsSubmitting(false);
+                setUploadProgress(null);
+            }
+        }
+    );
   };
   
   const handleDeleteBanner = async (banner: Banner) => {
@@ -139,7 +157,7 @@ export default function ManageBannersPage() {
                     <FormItem>
                       <FormLabel>Banner Image</FormLabel>
                       <FormControl>
-                        <Input type="file" {...imageRef} className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} />
+                        <Input type="file" {...imageRef} className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={isSubmitting} />
                       </FormControl>
                       <FormDescriptionComponent>
                         Recommended size: 1200x400 pixels. Max file size: 5MB.
@@ -148,9 +166,15 @@ export default function ManageBannersPage() {
                     </FormItem>
                   )}
                 />
+                {isSubmitting && uploadProgress !== null && (
+                    <div className="space-y-2">
+                        <Progress value={uploadProgress} className="w-full" />
+                        <p className="text-sm text-center text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
+                    </div>
+                )}
                 <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_20px_theme(colors.primary/40%)]" disabled={isSubmitting}>
                   {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
-                  Add Banner
+                  {isSubmitting ? 'Uploading...' : 'Add Banner'}
                 </Button>
               </form>
             </Form>
@@ -201,4 +225,5 @@ export default function ManageBannersPage() {
         </Card>
     </div>
   );
-}
+
+    
