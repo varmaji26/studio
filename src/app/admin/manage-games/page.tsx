@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { EditGameDialog } from '@/components/edit-game-dialog';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 
 const gameSchema = z.object({
@@ -35,6 +37,7 @@ interface Game extends DocumentData {
     openTime: string;
     closeTime: string;
     status: string;
+    active: boolean;
 }
 
 export default function ManageGamesPage() {
@@ -73,6 +76,7 @@ export default function ManageGamesPage() {
     try {
       await addDoc(collection(db, 'games'), {
         ...values,
+        active: true, // Default to active
         createdAt: serverTimestamp(),
       });
       toast({
@@ -105,6 +109,26 @@ export default function ManageGamesPage() {
             variant: 'destructive',
             title: 'Error',
             description: 'Failed to delete game. Please try again.',
+        });
+    }
+  };
+
+  const handleStatusToggle = async (gameId: string, currentStatus: boolean) => {
+    const gameDocRef = doc(db, "games", gameId);
+    try {
+        await updateDoc(gameDocRef, {
+            active: !currentStatus
+        });
+        toast({
+            title: 'Status Updated',
+            description: `Game status has been changed to ${!currentStatus ? 'Active' : 'Inactive'}.`
+        });
+    } catch (error) {
+        console.error("Error updating status: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to update game status. Please try again.'
         });
     }
   };
@@ -214,6 +238,7 @@ export default function ManageGamesPage() {
                                 <TableHead>Open Time</TableHead>
                                 <TableHead>Close Time</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Active/Inactive</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -225,9 +250,21 @@ export default function ManageGamesPage() {
                                     <TableCell>{game.openTime}</TableCell>
                                     <TableCell>{game.closeTime}</TableCell>
                                     <TableCell>
-                                        <Badge className={game.status.toLowerCase() === 'active' ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'}>
+                                        <Badge className={game.status.toLowerCase().includes('betting is running') ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'}>
                                             {game.status}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                id={`status-switch-${game.id}`}
+                                                checked={game.active}
+                                                onCheckedChange={() => handleStatusToggle(game.id, game.active)}
+                                            />
+                                            <Label htmlFor={`status-switch-${game.id}`}>
+                                                {game.active ? 'Active' : 'Inactive'}
+                                            </Label>
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex gap-2 justify-end">
