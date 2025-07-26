@@ -4,8 +4,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { sendPasswordResetEmail, type User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { sendPasswordResetEmail, type User as FirebaseAuthUser } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -32,11 +33,16 @@ import {
 import { UpdateProfileDialog } from '@/components/update-profile-dialog';
 import { AddPointsDialog } from '@/components/add-points-dialog';
 
+interface UserProfile extends DocumentData {
+  balance?: number;
+}
+
 export default function ProfilePage() {
   const { user: authUser, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseAuthUser | null>(null);
+  const [profile, setProfile] = useState<UserProfile>({});
 
   useEffect(() => {
     if (loading) return;
@@ -46,6 +52,19 @@ export default function ProfilePage() {
       setUser(authUser);
     }
   }, [authUser, loading, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    const userDocRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(userDocRef, (doc) => {
+      if (doc.exists()) {
+        setProfile(doc.data() as UserProfile);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [user]);
 
   if (loading || !user) {
     return (
@@ -75,7 +94,7 @@ export default function ProfilePage() {
     }
   };
   
-  const handleUserUpdate = (updatedUser: User) => {
+  const handleUserUpdate = (updatedUser: FirebaseAuthUser) => {
     setUser(updatedUser);
   };
 
@@ -120,7 +139,7 @@ export default function ProfilePage() {
                         <label className="text-sm font-medium text-muted-foreground">
                         Current Balance
                         </label>
-                        <p className="text-lg font-semibold">₹0</p>
+                        <p className="text-lg font-semibold">₹{profile.balance || 0}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-muted-foreground">

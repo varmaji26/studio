@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, DocumentData, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, updateDoc, DocumentData, orderBy, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface DepositRequest extends DocumentData {
     id: string;
+    userId: string;
     displayName: string;
     amount: number;
     paymentMethod: string;
@@ -39,14 +40,29 @@ export default function DepositsPage() {
     return () => unsubscribe();
   }, []);
 
-  const handleUpdateRequest = async (id: string, status: 'approved' | 'rejected') => {
-    const requestDocRef = doc(db, 'deposits', id);
+  const handleUpdateRequest = async (request: DepositRequest, status: 'approved' | 'rejected') => {
+    const requestDocRef = doc(db, 'deposits', request.id);
+    const userDocRef = doc(db, 'users', request.userId);
+
     try {
+      if (status === 'approved') {
+          await runTransaction(db, async (transaction) => {
+              const userDoc = await transaction.get(userDocRef);
+              if (!userDoc.exists()) {
+                  throw new Error("User document does not exist!");
+              }
+              const newBalance = (userDoc.data().balance || 0) + request.amount;
+              transaction.update(userDocRef, { balance: newBalance });
+              transaction.update(requestDocRef, { status: 'approved' });
+          });
+      } else {
         await updateDoc(requestDocRef, { status });
-        toast({
-            title: 'Success!',
-            description: `Request has been ${status}.`
-        });
+      }
+
+      toast({
+          title: 'Success!',
+          description: `Request has been ${status}.`
+      });
     } catch (error) {
         console.error("Error updating request: ", error);
         toast({
@@ -96,8 +112,8 @@ export default function DepositsPage() {
                                     <TableCell className="text-right">
                                         {request.status === 'pending' && (
                                             <div className="flex gap-2 justify-end">
-                                                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleUpdateRequest(request.id, 'approved')}>Approve</Button>
-                                                <Button size="sm" variant="destructive" onClick={() => handleUpdateRequest(request.id, 'rejected')}>Reject</Button>
+                                                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleUpdateRequest(request, 'approved')}>Approve</Button>
+                                                <Button size="sm" variant="destructive" onClick={() => handleUpdateRequest(request, 'rejected')}>Reject</Button>
                                             </div>
                                         )}
                                     </TableCell>
