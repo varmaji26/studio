@@ -16,7 +16,7 @@ import { Loader } from '@/components/loader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const resultSchema = z.object({
-  result: z.string().regex(/^\d{3}-\d{1,2}-\d{3}$/, 'Result must be in format XXX-XX-XXX or XXX-X-XXX'),
+  result: z.string().min(1, 'Result is required.'),
 });
 
 const formSchema = z.object({
@@ -72,16 +72,11 @@ export default function UpdateResultsPage() {
     const game = form.getValues(`games.${gameIndex}`);
     const newResult = game.newResult;
 
-    if (!newResult) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please enter a result to update.' });
-        return;
-    }
-
     const resultValidation = resultSchema.safeParse({ result: newResult });
     if (!resultValidation.success) {
       form.setError(`games.${gameIndex}.newResult`, {
         type: 'manual',
-        message: 'Result must be in format XXX-XX-XXX or XXX-X-XXX',
+        message: resultValidation.error.errors[0].message,
       });
       return;
     }
