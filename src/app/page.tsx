@@ -55,7 +55,7 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     // Only fetch games that are active
-    const q = query(collection(db, 'games'), where('active', '==', true), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'games'), where('active', '==', true));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const gamesData: Game[] = [];
       querySnapshot.forEach((doc) => {
