@@ -30,6 +30,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { UpdateProfileDialog } from '@/components/update-profile-dialog';
+import { AddPointsDialog } from '@/components/add-points-dialog';
 
 export default function ProfilePage() {
   const { user: authUser, loading } = useAuth();
@@ -137,25 +138,11 @@ export default function ProfilePage() {
                             Edit Profile
                         </Button>
                     </UpdateProfileDialog>
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                    <AddPointsDialog user={user}>
                         <Button className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-bold text-base">
                             Add Points
                         </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>How to Add Points?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                To add points to your wallet, please contact our support
-                                team via WhatsApp or call us directly.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Close</AlertDialogCancel>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                    </AddPointsDialog>
                 </div>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>

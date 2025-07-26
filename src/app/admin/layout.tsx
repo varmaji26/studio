@@ -147,10 +147,12 @@ export default function AdminLayout({
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{children: "Deposits/Withdrawals"}}>
-                  <ArrowLeftRight />
-                  <span>Deposits/Withdrawals</span>
-                </SidebarMenuButton>
+                <Link href="/admin/deposits" passHref>
+                  <SidebarMenuButton isActive={isActive('/admin/deposits')} tooltip={{children: "Deposits/Withdrawals"}}>
+                    <ArrowLeftRight />
+                    <span>Deposits/Withdrawals</span>
+                  </SidebarMenuButton>
+                </Link>
               </SidebarMenuItem>
                <SidebarMenuItem>
                 <SidebarMenuButton tooltip={{children: "220 Matka Pana List"}}>
