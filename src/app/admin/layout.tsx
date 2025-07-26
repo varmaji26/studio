@@ -207,8 +207,8 @@ export default function AdminLayout({
                           <SidebarTrigger />
                       </SheetTriggerComponent>
                       <SheetContent side="left" className="p-0 flex flex-col">
-                          <SheetHeader className="p-0 border-none sr-only">
-                              <SheetTitle>Admin Menu</SheetTitle>
+                          <SheetHeader className="p-4 border-b">
+                            <SheetTitle>Admin Menu</SheetTitle>
                           </SheetHeader>
                           {sidebarContent}
                       </SheetContent>
