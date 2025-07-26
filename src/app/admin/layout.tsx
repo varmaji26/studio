@@ -220,6 +220,9 @@ export default function AdminLayout({
                           <SidebarTrigger />
                       </SheetTriggerComponent>
                       <SheetContent side="left" className="p-0 flex flex-col">
+                           <SheetHeader>
+                             <SheetTitle className="sr-only">Sidebar Menu</SheetTitle>
+                           </SheetHeader>
                            {sidebarItems}
                       </SheetContent>
                   </Sheet>
