@@ -16,7 +16,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Loader } from '@/components/loader';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -110,7 +110,7 @@ export default function ProfilePage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl sm:text-3xl">My Profile</CardTitle>
             <CardDescription>
-              View and update your profile information.
+              View your profile, manage funds, and update your settings.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -137,54 +137,55 @@ export default function ProfilePage() {
                     </div>
                     <div>
                         <label className="text-sm font-medium text-muted-foreground">
-                        Current Balance
-                        </label>
-                        <p className="text-lg font-semibold">₹{profile.balance || 0}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-muted-foreground">
                         Joined
                         </label>
                         <p className="text-lg font-semibold">{creationDate}</p>
+                    </div>
+                     <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                        Current Balance
+                        </label>
+                        <p className="text-2xl font-bold text-primary">₹{profile.balance || 0}</p>
                     </div>
                 </div>
             </div>
     
             <div className="space-y-4">
+                <AddPointsDialog user={user}>
+                    <Button className="w-full h-16 bg-green-500 hover:bg-green-600 text-white font-bold text-lg flex items-center gap-3">
+                        <Wallet className="h-7 w-7" />
+                        Add Points (Fund Wallet)
+                    </Button>
+                </AddPointsDialog>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <UpdateProfileDialog user={user} onUserUpdate={handleUserUpdate}>
-                        <Button className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-base">
+                        <Button variant="outline" className="w-full h-12 text-base">
                             Edit Profile
                         </Button>
                     </UpdateProfileDialog>
-                    <AddPointsDialog user={user}>
-                        <Button className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-bold text-base">
-                            Add Points
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                        <Button variant="outline" className="w-full h-12 text-base">
+                            Change Password
                         </Button>
-                    </AddPointsDialog>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Change Password?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                            A password reset link will be sent to your registered
+                            email address. Are you sure you want to continue?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handlePasswordReset}>
+                            Continue
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                    <Button variant="outline" className="w-full h-12 text-base">
-                        Change Password
-                    </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Change Password?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                        A password reset link will be sent to your registered
-                        email address. Are you sure you want to continue?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handlePasswordReset}>
-                        Continue
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
             </div>
           </CardContent>
         </Card>

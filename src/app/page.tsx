@@ -143,7 +143,7 @@ export default function Home() {
                         <BarChart2 className="h-5 w-5 text-primary" />
                         <span>Chart</span>
                     </Link>
-                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="/profile" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <Wallet className="h-5 w-5 text-primary" />
                         <span>Point Funds</span>
                     </Link>
