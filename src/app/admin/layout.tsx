@@ -113,10 +113,12 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Update Result (Open)"}}>
-              <CheckCircle />
-              <span>Update Result (Open)</span>
-            </SidebarMenuButton>
+            <Link href="/admin/update-results" passHref>
+              <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result"}}>
+                <CheckCircle />
+                <span>Update Result</span>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
             <SidebarMenuButton tooltip={{children: "Update Result (Close)"}}>
@@ -188,7 +190,7 @@ export default function AdminLayout({
         <SidebarGroup>
             <div className="flex items-center gap-3 p-2 rounded-lg bg-card">
                 <Avatar className="h-12 w-12">
-                    <AvatarImage src="https://placehold.co/48x48.png" />
+                    <AvatarImage src="https://placehold.co/48x48.png" data-ai-hint="avatar" />
                     <AvatarFallback>{user?.displayName?.charAt(0) ?? 'A'}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
