@@ -2,11 +2,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData, doc, getDoc, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Gamepad2, Wallet } from 'lucide-react';
 import { Loader } from '@/components/loader';
+import { useAuth } from '@/hooks/use-auth';
 
 interface StatCardProps {
   title: string;
@@ -36,12 +37,11 @@ const StatCard = ({ title, value, icon: Icon, change, changeType, color }: StatC
 
 
 export default function AdminDashboardPage() {
+    const { user } = useAuth();
     const [stats, setStats] = useState({ totalUsers: 0, totalGames: 0, totalBalance: 0 });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setLoading(true);
-
         const usersQuery = query(collection(db, "users"));
         const gamesQuery = query(collection(db, "games"));
 
@@ -55,10 +55,10 @@ export default function AdminDashboardPage() {
                 totalUsers: snapshot.size,
                 totalBalance: totalBalance,
             }));
-            setLoading(false);
+             if(loading) setLoading(false);
         }, (error) => {
             console.error("Error fetching users: ", error);
-            setLoading(false);
+             if(loading) setLoading(false);
         });
         
         const unsubscribeGames = onSnapshot(gamesQuery, (snapshot) => {
@@ -70,11 +70,35 @@ export default function AdminDashboardPage() {
             console.error("Error fetching games: ", error);
         });
 
+        // One-time check to set admin balance
+        const setAdminBalance = async () => {
+          if (user && user.email === '8080601370@authcanvas.dev') {
+            const adminUserRef = doc(db, 'users', user.uid);
+            try {
+              await runTransaction(db, async (transaction) => {
+                const adminDoc = await transaction.get(adminUserRef);
+                if (adminDoc.exists()) {
+                  const currentBalance = adminDoc.data().balance || 0;
+                  if (currentBalance === 0) {
+                     transaction.update(adminUserRef, { balance: 50000 });
+                  }
+                }
+              });
+            } catch (e) {
+              console.error("Failed to set admin balance", e);
+            }
+          }
+        };
+
+        if(user) {
+          setAdminBalance();
+        }
+
         return () => {
             unsubscribeUsers();
             unsubscribeGames();
         };
-    }, []);
+    }, [user]);
 
     if (loading) {
         return (
