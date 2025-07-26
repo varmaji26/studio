@@ -39,7 +39,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
-import { SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger as SheetTriggerComponent } from '@/components/ui/sheet';
 
 export default function AdminLayout({
   children,
@@ -65,7 +65,6 @@ export default function AdminLayout({
     <SidebarProvider>
       <div className="dark min-h-screen bg-background text-foreground flex">
         <Sidebar variant="sidebar" collapsible="icon">
-           <SheetTitle className="sr-only">Admin Menu</SheetTitle>
           <SidebarHeader>
               <div className="flex items-center gap-2 p-2">
                 <div className="p-1.5 rounded-lg bg-primary">
@@ -197,7 +196,17 @@ export default function AdminLayout({
         <SidebarInset>
            <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
                 <div className="flex items-center gap-2">
-                  <SidebarTrigger />
+                  <Sheet>
+                      <SheetTriggerComponent asChild>
+                          <SidebarTrigger />
+                      </SheetTriggerComponent>
+                      <SheetContent side="left" className="p-0">
+                          <SheetHeader>
+                              <SheetTitle className="sr-only">Admin Menu</SheetTitle>
+                          </SheetHeader>
+                          {/* The mobile sidebar content will be injected here by the Sidebar component */}
+                      </SheetContent>
+                  </Sheet>
                   <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
                 </div>
                 <div className="flex items-center gap-4">
