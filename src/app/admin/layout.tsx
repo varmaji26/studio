@@ -31,7 +31,8 @@ import {
   UserCheck,
   CreditCard,
   LogOut,
-  Settings
+  Settings,
+  ImageIcon
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -102,6 +103,14 @@ export default function AdminLayout({
                   <span>Manage Games</span>
                 </SidebarMenuButton>
              </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/admin/manage-banners" passHref>
+                <SidebarMenuButton isActive={isActive('/admin/manage-banners')} tooltip={{children: "Manage Banners"}}>
+                    <ImageIcon />
+                    <span>Manage Banners</span>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip={{children: "Update Result (Open)"}}>
@@ -207,10 +216,7 @@ export default function AdminLayout({
                           <SidebarTrigger />
                       </SheetTriggerComponent>
                       <SheetContent side="left" className="p-0 flex flex-col">
-                          <SheetHeader className="p-4 border-b sr-only">
-                            <SheetTitle>Admin Menu</SheetTitle>
-                          </SheetHeader>
-                          {sidebarItems}
+                           {sidebarItems}
                       </SheetContent>
                   </Sheet>
                   <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>

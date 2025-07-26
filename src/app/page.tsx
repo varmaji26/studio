@@ -44,11 +44,18 @@ interface Game extends DocumentData {
   closeTime: string;
 }
 
+interface Banner extends DocumentData {
+    id: string;
+    imageUrl: string;
+}
+
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [games, setGames] = useState<Game[]>([]);
   const [gamesLoading, setGamesLoading] = useState(true);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
 
   useEffect(() => {
@@ -59,9 +66,10 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) return;
-    // Only fetch games that are active
-    const q = query(collection(db, 'games'), where('active', '==', true));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    
+    // Fetch active games
+    const gamesQuery = query(collection(db, 'games'), where('active', '==', true));
+    const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
       const gamesData: Game[] = [];
       querySnapshot.forEach((doc) => {
         gamesData.push({ id: doc.id, ...doc.data() } as Game);
@@ -70,7 +78,22 @@ export default function Home() {
       setGamesLoading(false);
     });
 
-    return () => unsubscribe();
+    // Fetch banners
+    const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"));
+    const unsubscribeBanners = onSnapshot(bannersQuery, (querySnapshot) => {
+        const bannersData: Banner[] = [];
+        querySnapshot.forEach((doc) => {
+            bannersData.push({ id: doc.id, ...doc.data() } as Banner);
+        });
+        setBanners(bannersData);
+        setBannersLoading(false);
+    });
+
+
+    return () => {
+        unsubscribeGames();
+        unsubscribeBanners();
+    };
   }, [user]);
 
   const handleLogout = async () => {
@@ -183,33 +206,38 @@ export default function Home() {
         </div>
       </header>
       <main className="flex flex-col gap-4 p-4">
-        <Carousel 
-            plugins={[autoplayPlugin.current]}
-            className="w-full"
-            onMouseEnter={autoplayPlugin.current.stop}
-            onMouseLeave={autoplayPlugin.current.reset}
-        >
-            <CarouselContent>
-                {Array.from({ length: 3 }).map((_, index) => (
-                    <CarouselItem key={index}>
-                    <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-                        <CardContent className="p-0">
-                            <Image 
-                                src={`https://placehold.co/1200x400.png`}
-                                alt={`Banner ${index + 1}`}
-                                width={1200}
-                                height={400}
-                                className="w-full h-auto object-cover"
-                                data-ai-hint="casino banner"
-                            />
-                        </CardContent>
-                    </Card>
-                    </CarouselItem>
-                ))}
-            </CarouselContent>
-            <CarouselPrevious className="left-4" />
-            <CarouselNext className="right-4" />
-        </Carousel>
+        {bannersLoading ? (
+            <Card className="bg-card/80 border-white/10 shadow-lg flex items-center justify-center h-[200px]">
+                <Loader />
+            </Card>
+        ) : banners.length > 0 && (
+            <Carousel 
+                plugins={[autoplayPlugin.current]}
+                className="w-full"
+                onMouseEnter={autoplayPlugin.current.stop}
+                onMouseLeave={autoplayPlugin.current.reset}
+            >
+                <CarouselContent>
+                    {banners.map((banner) => (
+                        <CarouselItem key={banner.id}>
+                        <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+                            <CardContent className="p-0">
+                                <Image 
+                                    src={banner.imageUrl}
+                                    alt={`Banner`}
+                                    width={1200}
+                                    height={400}
+                                    className="w-full h-auto max-h-[250px] object-cover"
+                                />
+                            </CardContent>
+                        </Card>
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-4" />
+                <CarouselNext className="right-4" />
+            </Carousel>
+        )}
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardContent className="p-6 text-center">
