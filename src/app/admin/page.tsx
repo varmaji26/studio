@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Gamepad2 } from 'lucide-react';
+import { Users, Gamepad2, Wallet } from 'lucide-react';
 import { Loader } from '@/components/loader';
 
 interface StatCardProps {
@@ -36,27 +36,44 @@ const StatCard = ({ title, value, icon: Icon, change, changeType, color }: StatC
 
 
 export default function AdminDashboardPage() {
-    const [totalUsers, setTotalUsers] = useState(0);
-    const [totalGames, setTotalGames] = useState(0);
+    const [stats, setStats] = useState({ totalUsers: 0, totalGames: 0, totalBalance: 0 });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStats = async () => {
-            setLoading(true);
-            try {
-                const usersSnapshot = await getDocs(collection(db, "users"));
-                setTotalUsers(usersSnapshot.size);
+        setLoading(true);
 
-                const gamesSnapshot = await getDocs(collection(db, "games"));
-                setTotalGames(gamesSnapshot.size);
-            } catch (error) {
-                console.error("Error fetching stats: ", error);
-            } finally {
-                setLoading(false);
-            }
+        const usersQuery = query(collection(db, "users"));
+        const gamesQuery = query(collection(db, "games"));
+
+        const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+            let totalBalance = 0;
+            snapshot.forEach((doc: DocumentData) => {
+                totalBalance += doc.data().balance || 0;
+            });
+            setStats(prevStats => ({
+                ...prevStats,
+                totalUsers: snapshot.size,
+                totalBalance: totalBalance,
+            }));
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching users: ", error);
+            setLoading(false);
+        });
+        
+        const unsubscribeGames = onSnapshot(gamesQuery, (snapshot) => {
+            setStats(prevStats => ({
+                ...prevStats,
+                totalGames: snapshot.size,
+            }));
+        }, (error) => {
+            console.error("Error fetching games: ", error);
+        });
+
+        return () => {
+            unsubscribeUsers();
+            unsubscribeGames();
         };
-
-        fetchStats();
     }, []);
 
     if (loading) {
@@ -75,8 +92,9 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Total Users" value={totalUsers.toString()} icon={Users} color="#8b5cf6" />
-            <StatCard title="Total Games" value={totalGames.toString()} icon={Gamepad2} color="#ec4899" />
+            <StatCard title="Total Users" value={stats.totalUsers.toString()} icon={Users} color="#8b5cf6" />
+            <StatCard title="Total Games" value={stats.totalGames.toString()} icon={Gamepad2} color="#ec4899" />
+            <StatCard title="Total Balance" value={`₹${stats.totalBalance.toLocaleString()}`} icon={Wallet} color="#22c55e" />
         </div>
     </div>
   );

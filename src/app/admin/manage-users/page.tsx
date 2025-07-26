@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, DocumentData, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,6 +13,18 @@ import Link from 'next/link';
 import { ArrowLeft, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { UpdateBalanceDialog } from '@/components/update-balance-dialog';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 
 interface User extends DocumentData {
@@ -31,6 +43,7 @@ export default function ManageUsersPage() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
 
    useEffect(() => {
     const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
@@ -41,21 +54,23 @@ export default function ManageUsersPage() {
       });
       setUsers(usersData);
       setUsersLoading(false);
+    }, (error) => {
+        console.error("Error fetching users: ", error);
+        setUsersLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
   
   useEffect(() => {
-    if (searchTerm === '') {
-      setFilteredUsers(users);
-    } else {
-      setFilteredUsers(
-        users.filter((user) =>
-          user.mobile.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+    const lowercasedFilter = searchTerm.toLowerCase();
+    const filteredData = users.filter((user) => {
+      return (
+        user.displayName?.toLowerCase().includes(lowercasedFilter) ||
+        user.mobile?.toLowerCase().includes(lowercasedFilter)
       );
-    }
+    });
+    setFilteredUsers(filteredData);
   }, [searchTerm, users]);
 
 
@@ -64,6 +79,24 @@ export default function ManageUsersPage() {
     const date = new Date(timestamp.seconds * 1000);
     return date.toLocaleDateString('en-GB');
   };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+        await deleteDoc(doc(db, "users", userId));
+        toast({
+            title: 'Success!',
+            description: 'User has been deleted.'
+        });
+    } catch (error) {
+        console.error("Error deleting user: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to delete user. Please try again.',
+        });
+    }
+  };
+
 
   return (
      <div className="flex-1 space-y-4 p-4 sm:p-8">
@@ -84,7 +117,7 @@ export default function ManageUsersPage() {
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
-                        placeholder="Search by mobile number..."
+                        placeholder="Search by name or mobile..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="bg-input h-10 rounded-lg pl-10"
@@ -129,7 +162,23 @@ export default function ManageUsersPage() {
                                                 <Button size="sm" variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400">Add/Remove Balance</Button>
                                             </UpdateBalanceDialog>
                                             <Button size="sm" variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10 hover:text-green-400">View</Button>
-                                            <Button size="sm" variant="destructive">Delete</Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button size="sm" variant="destructive">Delete</Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete the user account.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>Continue</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     </TableCell>
                                 </TableRow>
