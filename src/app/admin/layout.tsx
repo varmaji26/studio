@@ -39,6 +39,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
+import { SheetTitle } from '@/components/ui/sheet';
 
 export default function AdminLayout({
   children,
@@ -64,6 +65,7 @@ export default function AdminLayout({
     <SidebarProvider>
       <div className="dark min-h-screen bg-background text-foreground flex">
         <Sidebar variant="sidebar" collapsible="icon">
+           <SheetTitle className="sr-only">Admin Menu</SheetTitle>
           <SidebarHeader>
               <div className="flex items-center gap-2 p-2">
                 <div className="p-1.5 rounded-lg bg-primary">
