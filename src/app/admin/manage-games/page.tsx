@@ -19,6 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { EditGameDialog } from '@/components/edit-game-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { formatTime } from '@/lib/utils';
 
 
 const gameSchema = z.object({
@@ -264,8 +265,8 @@ export default function ManageGamesPage() {
                                 <TableRow key={game.id}>
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>{game.name}</TableCell>
-                                    <TableCell>{game.openTime}</TableCell>
-                                    <TableCell>{game.closeTime}</TableCell>
+                                    <TableCell>{formatTime(game.openTime)}</TableCell>
+                                    <TableCell>{formatTime(game.closeTime)}</TableCell>
                                     <TableCell>
                                         <Badge variant={game.active ? 'default' : 'destructive'} className={game.active ? 'bg-green-500 text-white' : ''}>
                                             {game.active ? 'ACTIVE' : 'INACTIVE'}

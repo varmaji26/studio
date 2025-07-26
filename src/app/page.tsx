@@ -33,6 +33,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay"
+import { formatTime } from '@/lib/utils';
 
 
 interface Game extends DocumentData {
@@ -265,7 +266,7 @@ export default function Home() {
                     <span className="text-sm font-medium text-white">{game.name}</span>
                     <div className="text-right">
                       <span className="text-sm font-bold text-primary">{game.result}</span>
-                      <span className="text-xs text-muted-foreground ml-2">({game.closeTime})</span>
+                      <span className="text-xs text-muted-foreground ml-2">({formatTime(game.closeTime)})</span>
                     </div>
                   </div>
                 ))}
@@ -327,7 +328,7 @@ export default function Home() {
                   </Link>
                   <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
                     <Clock className="h-4 w-4 mr-2" />
-                    <span>Open: {game.openTime} | Close: {game.closeTime}</span>
+                    <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
                   </div>
                 </div>
               ))

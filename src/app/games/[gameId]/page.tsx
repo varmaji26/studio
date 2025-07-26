@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatTime } from '@/lib/utils';
 
 interface Game extends DocumentData {
   id: string;
@@ -82,7 +83,7 @@ export default function GamePage() {
             Place Your Bet - <span className="text-primary bg-primary/20 px-2 rounded-md">{game.name}</span>
           </h1>
           <p className="text-muted-foreground mt-2">
-            Open: {game.openTime} | Close: {game.closeTime}
+            Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}
           </p>
            <p className="text-muted-foreground mt-1">
             Choose a bet type to start placing your bids.
