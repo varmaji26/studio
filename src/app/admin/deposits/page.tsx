@@ -62,7 +62,8 @@ export default function DepositsPage() {
           if (!userDoc.exists()) {
             throw new Error(`User document for UID ${request.userId} does not exist!`);
           }
-          const newBalance = (userDoc.data().balance || 0) + request.amount;
+          const currentBalance = userDoc.data().balance || 0;
+          const newBalance = currentBalance + request.amount;
           transaction.update(userDocRef, { balance: newBalance });
         }
         transaction.update(requestDocRef, { status: status });

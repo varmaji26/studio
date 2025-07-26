@@ -84,6 +84,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             displayName: values.username,
             mobile: values.mobile,
             email: email,
+            balance: 0,
             createdAt: serverTimestamp(),
         });
 
@@ -101,6 +102,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             displayName: displayName,
             mobile: values.mobile,
             email: user.email,
+            balance: 0,
             createdAt: serverTimestamp(),
           });
         }
