@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, doc, updateDoc, DocumentData, orderBy, runTransaction } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -52,10 +52,15 @@ export default function DepositsPage() {
 
     try {
       await runTransaction(db, async (transaction) => {
+        const requestDoc = await transaction.get(requestDocRef);
+        if (!requestDoc.exists() || requestDoc.data().status !== 'pending') {
+          throw new Error("This request has already been processed.");
+        }
+
         if (status === 'approved') {
           const userDoc = await transaction.get(userDocRef);
           if (!userDoc.exists()) {
-            throw new Error("User document does not exist!");
+            throw new Error(`User document for UID ${request.userId} does not exist!`);
           }
           const newBalance = (userDoc.data().balance || 0) + request.amount;
           transaction.update(userDocRef, { balance: newBalance });
@@ -67,12 +72,12 @@ export default function DepositsPage() {
           title: 'Success!',
           description: `Request has been ${status}.`
       });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error updating request: ", error);
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: String(error) || 'Failed to update request status. User document might be missing.',
+            description: error.message || 'Failed to update request status. Please try again.',
         });
     }
   };
