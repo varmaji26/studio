@@ -47,17 +47,19 @@ export default function ManageUsersPage() {
 
    useEffect(() => {
     setUsersLoading(true);
-    // This query will only return documents that have a 'createdAt' field.
-    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+    // This query will fetch all documents in the 'users' collection.
+    const q = query(collection(db, "users"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const usersData: User[] = [];
       querySnapshot.forEach((doc) => {
-        // Ensure that we only push valid user data
+        // Ensure that we only push valid user data to avoid rendering issues
         if (doc.data().displayName && doc.data().mobile) {
             usersData.push({ id: doc.id, ...doc.data() } as User);
         }
       });
+      // Sort users by creation date client-side to handle missing fields gracefully
+      usersData.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
       setUsers(usersData);
       setFilteredUsers(usersData);
       setUsersLoading(false);
@@ -211,7 +213,7 @@ export default function ManageUsersPage() {
             )}
             {filteredUsers.length === 0 && !usersLoading && (
                 <p className="text-center text-muted-foreground mt-4">
-                  {searchTerm ? `No users found for "${searchTerm}".` : "No users found. Ensure user documents in Firestore have 'createdAt', 'displayName', and 'mobile' fields."}
+                  {searchTerm ? `No users found for "${searchTerm}".` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
                 </p>
             )}
           </CardContent>
