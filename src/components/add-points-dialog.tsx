@@ -66,6 +66,11 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
 
   const form = useForm<AddPointsFormValues>({
     resolver: zodResolver(addPointsSchema),
+    defaultValues: {
+      amount: 0,
+      paymentMethod: undefined,
+      transactionId: '',
+    },
   });
 
   const onSubmit = async (values: AddPointsFormValues) => {
@@ -118,7 +123,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 <FormItem>
                   <FormLabel>Amount (₹)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Enter amount (Min: ₹10)" {...field} onChange={e => field.onChange(e.target.value)} />
+                    <Input type="number" placeholder="Enter amount (Min: ₹10)" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
