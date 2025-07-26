@@ -11,7 +11,7 @@ import { db, storage } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescriptionComponent } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import Image from 'next/image';
@@ -141,6 +141,9 @@ export default function ManageBannersPage() {
                       <FormControl>
                         <Input type="file" {...imageRef} className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} />
                       </FormControl>
+                      <FormDescriptionComponent>
+                        Recommended size: 1200x400 pixels. Max file size: 5MB.
+                      </FormDescriptionComponent>
                       <FormMessage />
                     </FormItem>
                   )}
