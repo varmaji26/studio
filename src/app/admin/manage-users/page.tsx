@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, DocumentData, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -47,19 +47,15 @@ export default function ManageUsersPage() {
 
    useEffect(() => {
     setUsersLoading(true);
-    // This query will fetch all documents in the 'users' collection.
-    const q = query(collection(db, "users"));
+    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const usersData: User[] = [];
       querySnapshot.forEach((doc) => {
-        // Ensure that we only push valid user data to avoid rendering issues
         if (doc.data().displayName && doc.data().mobile) {
             usersData.push({ id: doc.id, ...doc.data() } as User);
         }
       });
-      // Sort users by creation date client-side to handle missing fields gracefully
-      usersData.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
       setUsers(usersData);
       setFilteredUsers(usersData);
       setUsersLoading(false);
@@ -93,7 +89,6 @@ export default function ManageUsersPage() {
 
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
-    // Make the function safer by checking if timestamp and timestamp.seconds exist.
     if (!timestamp || typeof timestamp.seconds !== 'number') return 'N/A';
     try {
       const date = new Date(timestamp.seconds * 1000);
@@ -104,9 +99,20 @@ export default function ManageUsersPage() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
+  const handleDeleteUser = async (user: User) => {
     try {
-        await deleteDoc(doc(db, "users", userId));
+        const batch = writeBatch(db);
+        const userDocRef = doc(db, "users", user.id);
+        batch.delete(userDocRef);
+
+        const statsDocRef = doc(db, 'app-stats', 'dashboard');
+        batch.update(statsDocRef, { 
+            totalUsers: increment(-1),
+            totalBalance: increment(-(user.balance || 0))
+        });
+        
+        await batch.commit();
+
         toast({
             title: 'Success!',
             description: 'User has been deleted.'
@@ -199,7 +205,7 @@ export default function ManageUsersPage() {
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>Continue</AlertDialogAction>
+                                                    <AlertDialogAction onClick={() => handleDeleteUser(user)}>Continue</AlertDialogAction>
                                                 </AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>

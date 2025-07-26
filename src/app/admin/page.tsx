@@ -2,23 +2,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, DocumentData, doc, getDoc, runTransaction } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Gamepad2, Wallet } from 'lucide-react';
 import { Loader } from '@/components/loader';
 import { useAuth } from '@/hooks/use-auth';
+import { setInitialStats } from '@/lib/stats-helper';
 
 interface StatCardProps {
   title: string;
   value: string;
   icon: React.ElementType;
-  change?: string;
-  changeType?: 'increase' | 'decrease';
   color?: string;
 }
 
-const StatCard = ({ title, value, icon: Icon, change, changeType, color }: StatCardProps) => (
+const StatCard = ({ title, value, icon: Icon, color }: StatCardProps) => (
     <Card className="bg-card/80 border-white/10 shadow-lg" style={{ borderLeft: `4px solid ${color}`}}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
@@ -26,78 +25,41 @@ const StatCard = ({ title, value, icon: Icon, change, changeType, color }: StatC
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {change && (
-           <p className={`text-xs ${changeType === 'increase' ? 'text-green-500' : 'text-red-500'}`}>
-            {change}
-          </p>
-        )}
       </CardContent>
     </Card>
 );
 
+interface AppStats {
+    totalUsers: number;
+    totalGames: number;
+    totalBalance: number;
+}
 
 export default function AdminDashboardPage() {
     const { user } = useAuth();
-    const [stats, setStats] = useState({ totalUsers: 0, totalGames: 0, totalBalance: 0 });
+    const [stats, setStats] = useState<AppStats>({ totalUsers: 0, totalGames: 0, totalBalance: 0 });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const usersQuery = query(collection(db, "users"));
-        const gamesQuery = query(collection(db, "games"));
-
-        const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-            let totalBalance = 0;
-            snapshot.forEach((doc: DocumentData) => {
-                totalBalance += doc.data().balance || 0;
-            });
-            setStats(prevStats => ({
-                ...prevStats,
-                totalUsers: snapshot.size,
-                totalBalance: totalBalance,
-            }));
-             if(loading) setLoading(false);
-        }, (error) => {
-            console.error("Error fetching users: ", error);
-             if(loading) setLoading(false);
-        });
+        // Run this once to initialize stats if they don't exist
+        setInitialStats().catch(console.error);
         
-        const unsubscribeGames = onSnapshot(gamesQuery, (snapshot) => {
-            setStats(prevStats => ({
-                ...prevStats,
-                totalGames: snapshot.size,
-            }));
+        const statsDocRef = doc(db, "app-stats", "dashboard");
+
+        const unsubscribe = onSnapshot(statsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setStats(docSnap.data() as AppStats);
+            } else {
+                console.log("No stats document! Initializing...");
+                // The setInitialStats function will handle creation.
+            }
+            setLoading(false);
         }, (error) => {
-            console.error("Error fetching games: ", error);
+            console.error("Error fetching stats: ", error);
+            setLoading(false);
         });
 
-        // One-time check to set admin balance
-        const setAdminBalance = async () => {
-          if (user && user.email === '8080601370@authcanvas.dev') {
-            const adminUserRef = doc(db, 'users', user.uid);
-            try {
-              await runTransaction(db, async (transaction) => {
-                const adminDoc = await transaction.get(adminUserRef);
-                if (adminDoc.exists()) {
-                  const currentBalance = adminDoc.data().balance || 0;
-                  if (currentBalance === 0) {
-                     transaction.update(adminUserRef, { balance: 50000 });
-                  }
-                }
-              });
-            } catch (e) {
-              console.error("Failed to set admin balance", e);
-            }
-          }
-        };
-
-        if(user) {
-          setAdminBalance();
-        }
-
-        return () => {
-            unsubscribeUsers();
-            unsubscribeGames();
-        };
+        return () => unsubscribe();
     }, [user]);
 
     if (loading) {

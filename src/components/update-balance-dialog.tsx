@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, runTransaction } from 'firebase/firestore';
+import { doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -60,6 +60,7 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
   const onSubmit = async (values: BalanceFormValues) => {
     setIsSubmitting(true);
     const userDocRef = doc(db, 'users', user.id);
+    const statsDocRef = doc(db, 'app-stats', 'dashboard');
 
     try {
       await runTransaction(db, async (transaction) => {
@@ -76,6 +77,7 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
         }
 
         transaction.update(userDocRef, { balance: newBalance });
+        transaction.update(statsDocRef, { totalBalance: increment(values.amount) });
       });
 
       toast({

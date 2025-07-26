@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment } from 'firebase/firestore';
 
 
 import { Button } from '@/components/ui/button';
@@ -78,26 +78,31 @@ export function AuthForm({ mode }: AuthFormProps) {
         await updateProfile(userCredential.user, {
             displayName: values.username
         });
+        
+        const userDocRef = doc(db, "users", userCredential.user.uid);
+        const statsDocRef = doc(db, 'app-stats', 'dashboard');
 
-        // Save user data to Firestore
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-            displayName: values.username,
-            mobile: values.mobile,
-            email: email,
-            balance: 0,
-            createdAt: serverTimestamp(),
+        // Save user data and update stats in a transaction
+        await runTransaction(db, async (transaction) => {
+            transaction.set(userDocRef, {
+                displayName: values.username,
+                mobile: values.mobile,
+                email: email,
+                balance: 0,
+                createdAt: serverTimestamp(),
+            });
+            transaction.set(statsDocRef, { totalUsers: increment(1) }, { merge: true });
         });
 
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, values.password);
         const user = userCredential.user;
         
-        // Check if user exists in Firestore, if not, create them.
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
-          const displayName = user.displayName || values.mobile; // Fallback to mobile if display name is not set
+          const displayName = user.displayName || values.mobile;
           await setDoc(userDocRef, {
             displayName: displayName,
             mobile: values.mobile,
@@ -105,6 +110,9 @@ export function AuthForm({ mode }: AuthFormProps) {
             balance: 0,
             createdAt: serverTimestamp(),
           });
+          // Also increment user count if a logged-in user doc is created for the first time
+           const statsDocRef = doc(db, 'app-stats', 'dashboard');
+           await setDoc(statsDocRef, { totalUsers: increment(1) }, { merge: true });
         }
       }
       router.push('/');

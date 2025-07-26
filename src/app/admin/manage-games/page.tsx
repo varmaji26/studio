@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, deleteDoc, doc, updateDoc, writeBatch, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,11 +74,21 @@ export default function ManageGamesPage() {
   const onSubmit = async (values: GameFormValues) => {
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'games'), {
+      const batch = writeBatch(db);
+      const gamesCollection = collection(db, 'games');
+      const newGameRef = doc(gamesCollection);
+      
+      batch.set(newGameRef, {
         ...values,
         active: true, // Default to active
         createdAt: serverTimestamp(),
       });
+      
+      const statsDocRef = doc(db, 'app-stats', 'dashboard');
+      batch.set(statsDocRef, { totalGames: increment(1) }, { merge: true });
+
+      await batch.commit();
+
       toast({
         title: 'Success!',
         description: 'New game has been added.',
@@ -98,7 +108,15 @@ export default function ManageGamesPage() {
   
   const handleDeleteGame = async (gameId: string) => {
     try {
-        await deleteDoc(doc(db, "games", gameId));
+        const batch = writeBatch(db);
+        const gameDocRef = doc(db, "games", gameId);
+        batch.delete(gameDocRef);
+
+        const statsDocRef = doc(db, 'app-stats', 'dashboard');
+        batch.update(statsDocRef, { totalGames: increment(-1) });
+
+        await batch.commit();
+
         toast({
             title: 'Success!',
             description: 'Game has been deleted.'

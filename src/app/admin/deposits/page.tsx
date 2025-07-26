@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -49,6 +49,7 @@ export default function DepositsPage() {
   const handleUpdateRequest = async (request: DepositRequest, status: 'approved' | 'rejected') => {
     const requestDocRef = doc(db, 'deposits', request.id);
     const userDocRef = doc(db, 'users', request.userId);
+    const statsDocRef = doc(db, 'app-stats', 'dashboard');
 
     try {
       await runTransaction(db, async (transaction) => {
@@ -65,6 +66,8 @@ export default function DepositsPage() {
           const currentBalance = userDoc.data().balance || 0;
           const newBalance = currentBalance + request.amount;
           transaction.update(userDocRef, { balance: newBalance });
+          // Also update the total balance in stats
+          transaction.update(statsDocRef, { totalBalance: increment(request.amount) });
         }
         
         transaction.update(requestDocRef, { status: status });
