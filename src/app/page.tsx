@@ -33,7 +33,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay"
-import { formatTime } from '@/lib/utils';
+import { formatTime, cn } from '@/lib/utils';
 
 
 interface Game extends DocumentData {
@@ -59,6 +59,7 @@ export default function Home() {
   const [bannersLoading, setBannersLoading] = useState(true);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
+  const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -109,6 +110,13 @@ export default function Home() {
 
   const handleLinkClick = () => {
     setIsSheetOpen(false);
+  };
+  
+  const handleGameClick = (gameId: string) => {
+    setAnimatingGameId(gameId);
+    setTimeout(() => {
+        setAnimatingGameId(null);
+    }, 500); // Duration of the animation
   };
 
   if (loading || !user) {
@@ -322,7 +330,14 @@ export default function Home() {
               </div>
             ) : games.length > 0 ? (
               games.map((game) => (
-                <div key={game.id} className="rounded-lg bg-slate-800/80 p-4 text-center space-y-3">
+                <div 
+                    key={game.id} 
+                    className={cn(
+                        "rounded-lg bg-slate-800/80 p-4 text-center space-y-3 cursor-pointer",
+                        animatingGameId === game.id && 'animate-pulse-once'
+                    )}
+                    onClick={() => handleGameClick(game.id)}
+                >
                   <h3 className="text-xl font-bold text-white">{game.name}</h3>
                   <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">{game.result}</div>
                   <p className="text-sm text-yellow-300">{game.status}</p>
