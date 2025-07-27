@@ -41,7 +41,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger as SheetTriggerComponent } from '@/components/ui/sheet';
 
 
 export default function AdminLayout({
@@ -66,7 +66,7 @@ export default function AdminLayout({
   };
 
   const handleLinkClick = () => {
-    setSidebarOpen(false);
+    // This will be handled by the sidebar provider now
   };
 
   const sidebarItems = (
@@ -222,20 +222,8 @@ export default function AdminLayout({
         <SidebarInset>
            <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
                 <div className="flex items-center gap-2">
-                    <div className="md:hidden">
-                        <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
-                            <SheetTrigger asChild>
-                                <SidebarTrigger />
-                            </SheetTrigger>
-                            <SheetContent side="left" className="p-0 w-[var(--sidebar-width-mobile)]">
-                                <SheetHeader className="sr-only">
-                                  <SheetTitle>Admin Menu</SheetTitle>
-                                </SheetHeader>
-                                {sidebarItems}
-                            </SheetContent>
-                        </Sheet>
-                    </div>
-                  <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
+                    <SidebarTrigger />
+                    <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
                 </div>
                 <div className="flex items-center gap-4">
                   <Button variant="ghost" size="icon">
