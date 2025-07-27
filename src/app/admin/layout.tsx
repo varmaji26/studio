@@ -1,20 +1,4 @@
-
-'use client';
-
-import React, { useState } from 'react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarGroup,
-  SidebarFooter
-} from '@/components/ui/sidebar';
+import React from 'react';
 import {
   Home,
   Users,
@@ -31,17 +15,10 @@ import {
   ClipboardList,
   UserCheck,
   CreditCard,
-  LogOut,
   Settings,
   ImageIcon
 } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/hooks/use-auth';
-import { auth } from '@/lib/firebase';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger as SheetTriggerComponent } from '@/components/ui/sheet';
+import { LayoutProvider } from '@/components/layout-provider';
 
 
 export default function AdminLayout({
@@ -49,192 +26,123 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { user } = useAuth();
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-  
-  const isActive = (path: string) => pathname === path;
-
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      router.replace('/login');
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
-  };
-
-  const handleLinkClick = () => {
-    // This will be handled by the sidebar provider now
-  };
-
   const sidebarItems = (
     <>
-      <SidebarHeader>
-          <div className="flex items-center gap-2 p-2">
-            <div className="p-1.5 rounded-lg bg-primary">
-                <Trophy className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <h1 className="text-xl font-bold text-primary-foreground">Matka Genius</h1>
-          </div>
-      </SidebarHeader>
-      <SidebarContent className="p-2">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <Link href="/admin" passHref onClick={handleLinkClick}>
-              <SidebarMenuButton isActive={isActive('/admin')} tooltip={{children: "Dashboard"}}>
-                <Home />
-                <span>Dashboard</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-             <Link href="/admin/manage-users" passHref onClick={handleLinkClick}>
-                <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Manage Users"}}>
-                  <Users />
-                  <span>Manage Users</span>
-                </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Market"}}>
+      <div className="flex items-center gap-2 p-4">
+        <div className="p-1.5 rounded-lg bg-primary">
+            <Trophy className="h-6 w-6 text-primary-foreground" />
+        </div>
+        <h1 className="text-xl font-bold text-primary-foreground">Matka Genius</h1>
+      </div>
+      <div className="flex-1 overflow-y-auto p-2">
+        <ul className="flex flex-col gap-1">
+          <li>
+            <a href="/admin" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
+              <Home />
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/manage-users" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
+              <Users />
+              <span>Manage Users</span>
+            </a>
+          </li>
+           <li>
+            <a href="#" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
               <Building />
               <span>Market</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-             <Link href="/admin/manage-games" passHref onClick={handleLinkClick}>
-                <SidebarMenuButton isActive={isActive('/admin/manage-games')} tooltip={{children: "Manage Games"}}>
-                  <Gamepad />
-                  <span>Manage Games</span>
-                </SidebarMenuButton>
-             </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/admin/manage-banners" passHref onClick={handleLinkClick}>
-                <SidebarMenuButton isActive={isActive('/admin/manage-banners')} tooltip={{children: "Manage Banners"}}>
-                    <ImageIcon />
-                    <span>Manage Banners</span>
-                </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/admin/update-results" passHref onClick={handleLinkClick}>
-              <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result"}}>
-                <CheckCircle />
-                <span>Update Result</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Update Result (Close)"}}>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/manage-games" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
+              <Gamepad />
+              <span>Manage Games</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/manage-banners" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
+              <ImageIcon />
+              <span>Manage Banners</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/update-results" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
+              <CheckCircle />
+              <span>Update Result</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
               <XCircle />
               <span>Update Result (Close)</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <Link href="/admin/charts" passHref onClick={handleLinkClick}>
-                <SidebarMenuButton isActive={isActive('/admin/charts')} tooltip={{children: "Game Charts"}}>
-                  <BarChart2 />
-                  <span>Game Charts</span>
-                </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Market-wise Load"}}>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/charts" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
+              <BarChart2 />
+              <span>Game Charts</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
               <LineChart />
               <span>Market-wise Load</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-            <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Bid History"}}>
+            </a>
+          </li>
+          <li>
+            <a href="#" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
               <History />
               <span>Bid History</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Win History"}}>
+            </a>
+          </li>
+          <li>
+            <a href="#" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
               <Trophy />
               <span>Win History</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Find Password"}}>
+            </a>
+          </li>
+          <li>
+            <a href="#" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
               <KeyRound />
               <span>Find Password</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/admin/deposits" passHref onClick={handleLinkClick}>
-              <SidebarMenuButton isActive={isActive('/admin/deposits')} tooltip={{children: "Deposits/Withdrawals"}}>
-                <ArrowLeftRight />
-                <span>Deposits/Withdrawals</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "220 Matka Pana List"}}>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/deposits" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
+              <ArrowLeftRight />
+              <span>Deposits/Withdrawals</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
               <ClipboardList />
               <span>220 Matka Pana List</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Registered Users"}}>
+            </a>
+          </li>
+          <li>
+            <a href="#" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
               <UserCheck />
               <span>Registered Users</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Payment"}}>
+            </a>
+          </li>
+          <li>
+            <a href="#" className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 transition-colors text-sm">
               <CreditCard />
               <span>Payment</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarGroup>
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-card">
-                <Avatar className="h-12 w-12">
-                    <AvatarImage src="https://placehold.co/48x48.png" data-ai-hint="avatar" />
-                    <AvatarFallback>{user?.displayName?.charAt(0) ?? 'A'}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                    <span className="text-sm font-semibold">{user?.displayName ?? 'Admin'}</span>
-                    <span className="text-xs text-muted-foreground">Admin</span>
-                </div>
-                <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
-                    <LogOut />
-                </Button>
-            </div>
-        </SidebarGroup>
-      </SidebarFooter>
+            </a>
+          </li>
+        </ul>
+      </div>
+       <div className="p-2">
+        {/* User profile section will be handled by the client component */}
+      </div>
     </>
   );
 
   return (
-    <SidebarProvider>
-      <div className="dark min-h-screen bg-background text-foreground flex">
-        <Sidebar variant="sidebar" collapsible="icon">
-          {sidebarItems}
-        </Sidebar>
-        <SidebarInset>
-           <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
-                <div className="flex items-center gap-2">
-                    <SidebarTrigger />
-                    <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Button variant="ghost" size="icon">
-                    <Settings />
-                  </Button>
-                  <Button onClick={() => router.push('/')}>Go to User Panel</Button>
-                </div>
-            </header>
-            {children}
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+    <LayoutProvider sidebarContent={sidebarItems}>
+      {children}
+    </LayoutProvider>
   );
 }
