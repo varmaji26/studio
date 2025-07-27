@@ -1,6 +1,7 @@
 
 'use client';
 
+import React, { useState } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -40,7 +41,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
-import React from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 
 export default function AdminLayout({
@@ -51,6 +52,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   
   const isActive = (path: string) => pathname === path;
 
@@ -61,6 +63,10 @@ export default function AdminLayout({
     } catch (error) {
       console.error('Logout failed', error);
     }
+  };
+
+  const handleLinkClick = () => {
+    setSidebarOpen(false);
   };
 
   const sidebarItems = (
@@ -76,7 +82,7 @@ export default function AdminLayout({
       <SidebarContent className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="/admin" passHref>
+            <Link href="/admin" passHref onClick={handleLinkClick}>
               <SidebarMenuButton isActive={isActive('/admin')} tooltip={{children: "Dashboard"}}>
                 <Home />
                 <span>Dashboard</span>
@@ -84,7 +90,7 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-             <Link href="/admin/manage-users" passHref>
+             <Link href="/admin/manage-users" passHref onClick={handleLinkClick}>
                 <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Manage Users"}}>
                   <Users />
                   <span>Manage Users</span>
@@ -98,7 +104,7 @@ export default function AdminLayout({
             </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
-             <Link href="/admin/manage-games" passHref>
+             <Link href="/admin/manage-games" passHref onClick={handleLinkClick}>
                 <SidebarMenuButton isActive={isActive('/admin/manage-games')} tooltip={{children: "Manage Games"}}>
                   <Gamepad />
                   <span>Manage Games</span>
@@ -106,7 +112,7 @@ export default function AdminLayout({
              </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/admin/manage-banners" passHref>
+            <Link href="/admin/manage-banners" passHref onClick={handleLinkClick}>
                 <SidebarMenuButton isActive={isActive('/admin/manage-banners')} tooltip={{children: "Manage Banners"}}>
                     <ImageIcon />
                     <span>Manage Banners</span>
@@ -114,7 +120,7 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/admin/update-results" passHref>
+            <Link href="/admin/update-results" passHref onClick={handleLinkClick}>
               <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result"}}>
                 <CheckCircle />
                 <span>Update Result</span>
@@ -128,7 +134,7 @@ export default function AdminLayout({
             </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href="/admin/charts" passHref>
+            <Link href="/admin/charts" passHref onClick={handleLinkClick}>
                 <SidebarMenuButton isActive={isActive('/admin/charts')} tooltip={{children: "Game Charts"}}>
                   <BarChart2 />
                   <span>Game Charts</span>
@@ -160,7 +166,7 @@ export default function AdminLayout({
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/admin/deposits" passHref>
+            <Link href="/admin/deposits" passHref onClick={handleLinkClick}>
               <SidebarMenuButton isActive={isActive('/admin/deposits')} tooltip={{children: "Deposits/Withdrawals"}}>
                 <ArrowLeftRight />
                 <span>Deposits/Withdrawals</span>
@@ -216,7 +222,19 @@ export default function AdminLayout({
         <SidebarInset>
            <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
                 <div className="flex items-center gap-2">
-                  <SidebarTrigger className="md:hidden"/>
+                    <div className="md:hidden">
+                        <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon"><SidebarTrigger /></Button>
+                            </SheetTrigger>
+                            <SheetContent side="left" className="p-0 w-[var(--sidebar-width-mobile)]">
+                                <SheetHeader className="sr-only">
+                                  <SheetTitle>Admin Menu</SheetTitle>
+                                </SheetHeader>
+                                {sidebarItems}
+                            </SheetContent>
+                        </Sheet>
+                    </div>
                   <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
                 </div>
                 <div className="flex items-center gap-4">

@@ -57,6 +57,7 @@ export default function Home() {
   const [gamesLoading, setGamesLoading] = useState(true);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(true);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
 
   useEffect(() => {
@@ -106,6 +107,10 @@ export default function Home() {
     }
   };
 
+  const handleLinkClick = () => {
+    setIsSheetOpen(false);
+  };
+
   if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -120,7 +125,7 @@ export default function Home() {
   return (
     <div className="dark min-h-screen bg-background text-foreground">
       <header className="flex items-center justify-between p-4 bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10">
-        <Sheet>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">
               <Menu className="h-6 w-6" />
@@ -145,35 +150,35 @@ export default function Home() {
                 </div>
                 <Separator className="bg-white/10 my-2" />
                 <nav className="flex flex-col gap-2 p-4">
-                    <Link href="/" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <HomeIcon className="h-5 w-5 text-primary" />
                         <span>Home</span>
                     </Link>
-                    <Link href="/contact" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <BookUser className="h-5 w-5 text-primary" />
                         <span>Contact</span>
                     </Link>
-                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <Star className="h-5 w-5 text-primary" />
                         <span>Rate Card</span>
                     </Link>
-                    <Link href="/profile" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <UserIcon className="h-5 w-5 text-primary" />
                         <span>Profile</span>
                     </Link>
-                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <Trophy className="h-5 w-5 text-primary" />
                         <span>Win History</span>
                     </Link>
-                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <History className="h-5 w-5 text-primary" />
                         <span>Bids History</span>
                     </Link>
-                    <Link href="#" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <BarChart2 className="h-5 w-5 text-primary" />
                         <span>Chart</span>
                     </Link>
-                    <Link href="/profile" className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                    <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <Wallet className="h-5 w-5 text-primary" />
                         <span>Point Funds</span>
                     </Link>
