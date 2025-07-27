@@ -225,7 +225,7 @@ export default function AdminLayout({
                     <div className="md:hidden">
                         <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon"><SidebarTrigger /></Button>
+                                <SidebarTrigger />
                             </SheetTrigger>
                             <SheetContent side="left" className="p-0 w-[var(--sidebar-width-mobile)]">
                                 <SheetHeader className="sr-only">
