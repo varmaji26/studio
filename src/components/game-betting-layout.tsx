@@ -19,6 +19,7 @@ const betTypes = [
     { title: 'Jodi Digit', href: (gameId: string) => `/games/${gameId}/jodi-digit` },
     { title: 'Single Pana', href: (gameId: string) => `/games/${gameId}/single-pana` },
     { title: 'Double Pana', href: (gameId: string) => `/games/${gameId}/double-pana` },
+    { title: 'Triple Pana', href: (gameId: string) => `/games/${gameId}/triple-pana` },
 ];
 
 export function GameBettingLayout({ gameName, gameId, activeBetType, children }: GameBettingLayoutProps) {
