@@ -119,16 +119,20 @@ export default function AdminLayout({
             </SidebarMenuButton>
           </SidebarMenuItem>
             <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Bid History"}}>
-              <History />
-              <span>Bid History</span>
-            </SidebarMenuButton>
+              <Link href="/admin/bid-history" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/bid-history')} tooltip={{children: "Bid History"}}>
+                  <History />
+                  <span>Bid History</span>
+                </SidebarMenuButton>
+              </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Win History"}}>
-             <Trophy />
-             <span>Win History</span>
-            </SidebarMenuButton>
+              <Link href="/admin/win-history" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/win-history')} tooltip={{children: "Win History"}}>
+                 <Trophy />
+                 <span>Win History</span>
+                </SidebarMenuButton>
+              </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip={{children: "Find Password"}}>
