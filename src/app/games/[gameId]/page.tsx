@@ -20,11 +20,11 @@ interface Game extends DocumentData {
 }
 
 const betTypes = [
-    { title: 'Single Digit', description: 'Bet on a single digit from 0-9.', href: (gameId: string) => `/games/${gameId}/single-digit` },
-    { title: 'Jodi Digit', description: 'Bet on a two-digit pair from 00-99.', href: (gameId: string) => `/games/${gameId}/jodi-digit` },
-    { title: 'Single Pana', description: 'Bet on a three-digit single pana.', href: (gameId: string) => `/games/${gameId}/single-pana` },
-    { title: 'Double Pana', description: 'Bet on a three-digit double pana.', href: (gameId: string) => `/games/${gameId}/double-pana` },
-    { title: 'Triple Pana', description: 'Bet on a three-digit triple pana.', href: (gameId: string) => `/games/${gameId}/triple-pana` },
+    { title: 'Single Digit', href: (gameId: string) => `/games/${gameId}/single-digit` },
+    { title: 'Jodi Digit', href: (gameId: string) => `/games/${gameId}/jodi-digit` },
+    { title: 'Single Pana', href: (gameId: string) => `/games/${gameId}/single-pana` },
+    { title: 'Double Pana', href: (gameId: string) => `/games/${gameId}/double-pana` },
+    { title: 'Triple Pana', href: (gameId: string) => `/games/${gameId}/triple-pana` },
 ];
 
 export default function GamePage() {
@@ -120,13 +120,12 @@ export default function GamePage() {
                   return (
                     <Wrapper key={betType.title} {...props} onClick={() => handleBetTypeClick(betType.title)}>
                       <Card className={cn(
-                        "bg-slate-800/80 border-slate-700 h-full",
+                        "bg-slate-800/80 border-slate-700 h-full flex items-center justify-center",
                         isClickable ? 'hover:border-primary hover:bg-primary/10 transition-all cursor-pointer' : 'cursor-not-allowed opacity-50',
                         animatingBetType === betType.title && 'animate-pulse-once'
                         )}>
                           <CardHeader>
-                              <CardTitle className="text-primary">{betType.title}</CardTitle>
-                              <CardDescription>{betType.description}</CardDescription>
+                              <CardTitle className="text-primary text-center">{betType.title}</CardTitle>
                           </CardHeader>
                       </Card>
                     </Wrapper>
