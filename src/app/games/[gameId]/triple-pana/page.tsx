@@ -72,7 +72,7 @@ export default function TriplePanaPage() {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
       // Assuming a rate of 600 for Triple Pana wins
-      setPotentialWin(parsedAmount * 600);
+      setPotentialWin(parsedAmount * 6000);
     } else {
       setTotalAmount(0);
       setPotentialWin(0);
@@ -85,6 +85,15 @@ export default function TriplePanaPage() {
       toast({ variant: 'destructive', title: 'Invalid Pana', description: 'Please enter a valid 3-digit number.' });
       return;
     }
+
+    const digits = currentPana.split('');
+    const isTriplePana = digits[0] === digits[1] && digits[1] === digits[2];
+
+    if (!isTriplePana) {
+        toast({ variant: 'destructive', title: 'Invalid Triple Pana', description: 'All three digits must be the same (e.g., 111, 222).' });
+        return;
+    }
+
     if (selectedPana.includes(currentPana)) {
       toast({ variant: 'destructive', title: 'Duplicate Pana', description: 'This number has already been added.' });
       return;
