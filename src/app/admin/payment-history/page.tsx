@@ -8,9 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, ArrowDown, ArrowUp } from 'lucide-react';
+import { Search, ArrowDown, ArrowUp, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface Transaction extends DocumentData {
     id: string;
@@ -21,6 +24,13 @@ interface Transaction extends DocumentData {
     type: 'deposit' | 'withdrawal';
     paymentMethod?: string;
     withdrawalMethod?: string;
+}
+
+// Extend jsPDF with autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
 }
 
 export default function AdminPaymentHistoryPage() {
@@ -87,6 +97,36 @@ export default function AdminPaymentHistoryPage() {
             return 'default';
     }
   };
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Admin Payment History", 14, 16);
+
+    const tableColumn = ["Date", "Username", "Type", "Amount", "Method", "Status"];
+    const tableRows: (string | number)[][] = [];
+
+    const dataToExport = searchTerm ? filteredTransactions : transactions;
+
+    dataToExport.forEach(t => {
+        const transactionData = [
+            formatDate(t.createdAt),
+            t.displayName,
+            t.type,
+            `₹${t.amount}`,
+            t.paymentMethod || t.withdrawalMethod || 'N/A',
+            t.status,
+        ];
+        tableRows.push(transactionData);
+    });
+
+    doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+    });
+
+    doc.save('admin-payment-history.pdf');
+  };
   
   const renderTable = (data: Transaction[]) => (
      <div className="overflow-x-auto mt-4">
@@ -141,8 +181,16 @@ export default function AdminPaymentHistoryPage() {
      <div className="flex-1 space-y-4 p-4 sm:p-8">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-3xl font-bold">Payment History</CardTitle>
-            <CardDescription>View all deposit and withdrawal history for all users.</CardDescription>
+            <div className="flex justify-between items-start">
+                <div>
+                    <CardTitle className="text-3xl font-bold">Payment History</CardTitle>
+                    <CardDescription>View all deposit and withdrawal history for all users.</CardDescription>
+                </div>
+                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={transactions.length === 0}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
