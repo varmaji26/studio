@@ -71,8 +71,8 @@ export default function JodiDigitPage() {
     if (!isNaN(parsedAmount) && parsedAmount > 0 && numSelected > 0) {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
-      // Assuming a rate of 10 for Jodi wins
-      setPotentialWin(parsedAmount * 10);
+      // Assuming a rate of 100 for Jodi wins
+      setPotentialWin(parsedAmount * 100);
     } else {
       setTotalAmount(0);
       setPotentialWin(0);
