@@ -85,6 +85,15 @@ export default function DoublePanaPage() {
       toast({ variant: 'destructive', title: 'Invalid Pana', description: 'Please enter a valid 3-digit number.' });
       return;
     }
+    
+    const digits = currentPana.split('');
+    const uniqueDigits = new Set(digits);
+
+    if (uniqueDigits.size !== 2) {
+        toast({ variant: 'destructive', title: 'Invalid Double Pana', description: 'Double Pana must have exactly two identical digits (e.g., 112, 355).' });
+        return;
+    }
+
     if (selectedPana.includes(currentPana)) {
       toast({ variant: 'destructive', title: 'Duplicate Pana', description: 'This number has already been added.' });
       return;
