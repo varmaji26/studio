@@ -162,6 +162,14 @@ export default function AdminLayout({
               <span>Payment</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
+           <SidebarMenuItem>
+            <Link href="/admin/settings" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin/settings')} tooltip={{children: "Settings"}}>
+                <Settings />
+                <span>Settings</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
     </>

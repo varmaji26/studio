@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, DocumentData, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   LogOut,
@@ -36,7 +36,6 @@ import Autoplay from "embla-carousel-autoplay"
 import { formatTime, cn } from '@/lib/utils';
 import { AddPointsDialog } from '@/components/add-points-dialog';
 
-
 interface Game extends DocumentData {
   id: string;
   name: string;
@@ -51,6 +50,10 @@ interface Banner extends DocumentData {
     imageUrl: string;
 }
 
+interface AppSettings extends DocumentData {
+    whatsappNumber?: string;
+}
+
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -58,6 +61,7 @@ export default function Home() {
   const [gamesLoading, setGamesLoading] = useState(true);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(true);
+  const [settings, setSettings] = useState<AppSettings>({});
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
@@ -92,11 +96,20 @@ export default function Home() {
         setBanners(bannersData);
         setBannersLoading(false);
     });
+    
+    // Fetch settings
+    const settingsDocRef = doc(db, 'settings', 'app-settings');
+    const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setSettings(docSnap.data() as AppSettings);
+        }
+    });
 
 
     return () => {
         unsubscribeGames();
         unsubscribeBanners();
+        unsubscribeSettings();
     };
   }, [user]);
 
@@ -106,6 +119,12 @@ export default function Home() {
       router.replace('/login');
     } catch (error) {
       console.error('Logout failed', error);
+    }
+  };
+
+  const handleWhatsAppSupport = () => {
+    if (settings.whatsappNumber) {
+        window.open(`https://wa.me/${settings.whatsappNumber}`, '_blank');
     }
   };
 
@@ -302,7 +321,11 @@ export default function Home() {
                     <span className="text-xs">Deposit Funds</span>
                 </Button>
              </AddPointsDialog>
-            <Button className="h-16 flex-col gap-1 bg-green-500 text-white hover:bg-green-600">
+            <Button 
+                className="h-16 flex-col gap-1 bg-green-500 text-white hover:bg-green-600"
+                onClick={handleWhatsAppSupport}
+                disabled={!settings.whatsappNumber}
+            >
               <MessageSquare className="h-6 w-6" />
               <span className="text-xs">WhatsApp Support</span>
             </Button>
