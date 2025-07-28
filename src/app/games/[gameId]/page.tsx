@@ -20,7 +20,7 @@ interface Game extends DocumentData {
 }
 
 const betTypes = [
-    { title: 'Single Digit', description: 'Bet on a single digit from 0-9.' },
+    { title: 'Single Digit', description: 'Bet on a single digit from 0-9.', href: (gameId: string) => `/games/${gameId}/single-digit` },
     { title: 'Jodi Digit', description: 'Bet on a two-digit pair from 00-99.' },
     { title: 'Single Pana', description: 'Bet on a three-digit single pana.' },
     { title: 'Double Pana', description: 'Bet on a three-digit double pana.' },
@@ -104,16 +104,22 @@ export default function GamePage() {
                 <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-               {betTypes.map((betType) => (
-                    <button key={betType.title} className="text-left w-full">
-                        <Card className="bg-slate-800/80 border-slate-700 hover:border-primary hover:bg-primary/10 transition-all">
-                            <CardHeader>
-                                <CardTitle className="text-primary">{betType.title}</CardTitle>
-                                <CardDescription>{betType.description}</CardDescription>
-                            </CardHeader>
-                        </Card>
-                    </button>
-               ))}
+               {betTypes.map((betType) => {
+                  const isClickable = !!betType.href;
+                  const Wrapper = isClickable ? Link : 'div';
+                  const props = isClickable ? { href: betType.href(game.id as string) } : {};
+
+                  return (
+                    <Wrapper key={betType.title} {...props}>
+                      <Card className={`bg-slate-800/80 border-slate-700 h-full ${isClickable ? 'hover:border-primary hover:bg-primary/10 transition-all cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
+                          <CardHeader>
+                              <CardTitle className="text-primary">{betType.title}</CardTitle>
+                              <CardDescription>{betType.description}</CardDescription>
+                          </CardHeader>
+                      </Card>
+                    </Wrapper>
+                  )
+               })}
             </CardContent>
         </Card>
       </div>
