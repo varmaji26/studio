@@ -345,13 +345,15 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl">Notice</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.</p>
-          </CardContent>
+        <Card className="bg-card/80 border-white/10 shadow-lg animated-border" style={{ '--angle': '0deg' } as React.CSSProperties}>
+            <div className="relative z-10">
+                <CardHeader>
+                    <CardTitle className="text-xl">Notice</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.</p>
+                </CardContent>
+            </div>
         </Card>
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
