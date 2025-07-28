@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader as SheetHeaderComponent } from '@/components/ui/sheet';
 import Link from 'next/link';
 
 export function LayoutProvider({
@@ -84,6 +84,9 @@ export function LayoutProvider({
                                 <SidebarTrigger className="h-7 w-7" />
                             </SheetTrigger>
                             <SheetContent side="left" className="p-0 w-72">
+                                <SheetHeaderComponent>
+                                    <SheetTitle className="sr-only">Sidebar Menu</SheetTitle>
+                                </SheetHeaderComponent>
                                {sidebarContent}
                                 <SidebarFooter>
                                     <div className="flex items-center gap-3 p-2 rounded-lg bg-card">
@@ -115,9 +118,11 @@ export function LayoutProvider({
                       Go to User Panel
                     </Button>
                   </Link>
-                  <Button variant="ghost" size="icon">
-                    <Settings />
-                  </Button>
+                  <Link href="/admin/settings">
+                      <Button variant="ghost" size="icon">
+                        <Settings />
+                      </Button>
+                  </Link>
                 </div>
             </header>
             <main>{children}</main>
