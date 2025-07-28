@@ -52,6 +52,7 @@ interface Banner extends DocumentData {
 
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
+    callSupportNumber?: string;
 }
 
 export default function Home() {
@@ -125,6 +126,12 @@ export default function Home() {
   const handleWhatsAppSupport = () => {
     if (settings.whatsappNumber) {
         window.open(`https://wa.me/${settings.whatsappNumber}`, '_blank');
+    }
+  };
+
+  const handleCallSupport = () => {
+    if (settings.callSupportNumber) {
+        window.location.href = `tel:${settings.callSupportNumber}`;
     }
   };
 
@@ -329,7 +336,11 @@ export default function Home() {
               <MessageSquare className="h-6 w-6" />
               <span className="text-xs">WhatsApp Support</span>
             </Button>
-            <Button className="h-16 flex-col gap-1 bg-red-500 text-white hover:bg-red-600">
+            <Button 
+              className="h-16 flex-col gap-1 bg-red-500 text-white hover:bg-red-600"
+              onClick={handleCallSupport}
+              disabled={!settings.callSupportNumber}
+            >
               <Phone className="h-6 w-6" />
               <span className="text-xs">Call Support</span>
             </Button>

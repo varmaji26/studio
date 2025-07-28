@@ -16,6 +16,7 @@ import { Loader } from '@/components/loader';
 
 const settingsSchema = z.object({
   whatsappNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
+  callSupportNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -29,6 +30,7 @@ export default function SettingsPage() {
     resolver: zodResolver(settingsSchema),
     defaultValues: {
       whatsappNumber: '',
+      callSupportNumber: '',
     },
   });
 
@@ -39,8 +41,11 @@ export default function SettingsPage() {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         const docSnap = await getDoc(settingsDocRef);
         if (docSnap.exists()) {
-          const data = docSnap.data() as SettingsFormValues;
-          form.reset(data);
+          const data = docSnap.data() as DocumentData;
+          form.reset({
+            whatsappNumber: data.whatsappNumber || '',
+            callSupportNumber: data.callSupportNumber || '',
+          });
         }
       } catch (error) {
         console.error("Error fetching settings: ", error);
@@ -98,6 +103,19 @@ export default function SettingsPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>WhatsApp Support Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 919876543210" {...field} className="bg-input h-12 rounded-lg" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="callSupportNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Call Support Number</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., 919876543210" {...field} className="bg-input h-12 rounded-lg" />
                       </FormControl>
