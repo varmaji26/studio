@@ -152,6 +152,24 @@ export default function ManageGamesPage() {
     }
   };
 
+  const handleBettingStatusChange = async (gameId: string, newStatus: string) => {
+    const gameDocRef = doc(db, "games", gameId);
+    try {
+      await updateDoc(gameDocRef, { status: newStatus });
+      toast({
+        title: 'Betting Status Updated',
+        description: `Betting status has been changed to "${newStatus}".`
+      });
+    } catch (error) {
+       console.error("Error updating betting status: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to update betting status. Please try again.'
+        });
+    }
+  };
+
   return (
     <div className="flex-1 space-y-8 p-4 sm:p-8">
       <Card className="bg-card/80 border-white/10 shadow-lg max-w-2xl mx-auto">
@@ -254,9 +272,8 @@ export default function ManageGamesPage() {
                             <TableRow>
                                 <TableHead>ID</TableHead>
                                 <TableHead>Game Name</TableHead>
-                                <TableHead>Open Time</TableHead>
-                                <TableHead>Close Time</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>Game Status</TableHead>
+                                <TableHead>Betting Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -264,16 +281,17 @@ export default function ManageGamesPage() {
                             {games.map((game, index) => (
                                 <TableRow key={game.id}>
                                     <TableCell>{index + 1}</TableCell>
-                                    <TableCell>{game.name}</TableCell>
-                                    <TableCell>{formatTime(game.openTime)}</TableCell>
-                                    <TableCell>{formatTime(game.closeTime)}</TableCell>
+                                    <TableCell>{game.name}<br/><span className="text-xs text-muted-foreground">{formatTime(game.openTime)} - {formatTime(game.closeTime)}</span></TableCell>
                                     <TableCell>
                                         <Badge variant={game.active ? 'default' : 'destructive'} className={game.active ? 'bg-green-500 text-white' : ''}>
                                             {game.active ? 'ACTIVE' : 'INACTIVE'}
                                         </Badge>
                                     </TableCell>
+                                    <TableCell>{game.status}</TableCell>
                                     <TableCell className="text-right">
-                                        <div className="flex gap-2 justify-end">
+                                        <div className="flex flex-wrap gap-2 justify-end">
+                                            <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleBettingStatusChange(game.id, 'Betting is Open')}>Open Betting</Button>
+                                            <Button size="sm" variant="destructive" onClick={() => handleBettingStatusChange(game.id, 'Betting is Closed')}>Close Betting</Button>
                                             <Switch
                                                 checked={game.active}
                                                 onCheckedChange={() => handleStatusToggle(game.id, game.active)}
