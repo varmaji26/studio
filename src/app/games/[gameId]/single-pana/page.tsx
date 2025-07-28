@@ -72,7 +72,7 @@ export default function SinglePanaPage() {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
       // Assuming a rate of 150 for Single Pana wins
-      setPotentialWin(parsedAmount * 150);
+      setPotentialWin(parsedAmount * 1500);
     } else {
       setTotalAmount(0);
       setPotentialWin(0);
@@ -85,10 +85,20 @@ export default function SinglePanaPage() {
       toast({ variant: 'destructive', title: 'Invalid Pana', description: 'Please enter a valid 3-digit number.' });
       return;
     }
+    
+    const digits = currentPana.split('');
+    const hasDuplicates = new Set(digits).size !== digits.length;
+
+    if (hasDuplicates) {
+        toast({ variant: 'destructive', title: 'Invalid Pana', description: 'Single Pana cannot have repeating digits. Please use Double or Triple Pana for repeated numbers.' });
+        return;
+    }
+
     if (selectedPana.includes(currentPana)) {
       toast({ variant: 'destructive', title: 'Duplicate Pana', description: 'This number has already been added.' });
       return;
     }
+
     setSelectedPana((prev) => [...prev, currentPana]);
     setCurrentPana('');
   };
