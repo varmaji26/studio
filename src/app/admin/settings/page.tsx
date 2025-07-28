@@ -13,10 +13,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 
 const settingsSchema = z.object({
   whatsappNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
   callSupportNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
+  upiId: z.string().optional(),
+  bankDetails: z.string().optional(),
+  paytmNumber: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -31,6 +36,9 @@ export default function SettingsPage() {
     defaultValues: {
       whatsappNumber: '',
       callSupportNumber: '',
+      upiId: '',
+      bankDetails: '',
+      paytmNumber: '',
     },
   });
 
@@ -45,6 +53,9 @@ export default function SettingsPage() {
           form.reset({
             whatsappNumber: data.whatsappNumber || '',
             callSupportNumber: data.callSupportNumber || '',
+            upiId: data.paymentDetails?.UPI?.details || '',
+            bankDetails: data.paymentDetails?.['Bank Transfer']?.details || '',
+            paytmNumber: data.paymentDetails?.['Paytm/PhonePe']?.details || '',
           });
         }
       } catch (error) {
@@ -65,7 +76,18 @@ export default function SettingsPage() {
     setIsSubmitting(true);
     try {
       const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await setDoc(settingsDocRef, values, { merge: true });
+      
+      const dataToSave = {
+          whatsappNumber: values.whatsappNumber,
+          callSupportNumber: values.callSupportNumber,
+          paymentDetails: {
+              'UPI': { title: "UPI Payment", details: values.upiId },
+              'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
+              'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
+          }
+      };
+
+      await setDoc(settingsDocRef, dataToSave, { merge: true });
       toast({
         title: 'Success!',
         description: 'Settings have been updated.',
@@ -97,6 +119,8 @@ export default function SettingsPage() {
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                
+                <h3 className="text-lg font-semibold">Support Details</h3>
                 <FormField
                   control={form.control}
                   name="whatsappNumber"
@@ -123,6 +147,50 @@ export default function SettingsPage() {
                     </FormItem>
                   )}
                 />
+                
+                <Separator />
+                
+                <h3 className="text-lg font-semibold">Payment Details</h3>
+                 <FormField
+                  control={form.control}
+                  name="upiId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>UPI ID</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., yourname@upi" {...field} className="bg-input h-12 rounded-lg" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="bankDetails"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bank Account Details</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Enter full bank account details (Account Name, Number, IFSC, etc.)" {...field} className="bg-input rounded-lg" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="paytmNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Paytm/PhonePe Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 9876543210" {...field} className="bg-input h-12 rounded-lg" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting}>
                   {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                   Save Settings

@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { type User } from 'firebase/auth';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { Card, CardContent } from './ui/card';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from './ui/skeleton';
 
 const addPointsSchema = z.object({
   amount: z.preprocess(
@@ -52,17 +53,19 @@ interface AddPointsDialogProps {
   children: React.ReactNode;
 }
 
-const paymentDetails = {
-    UPI: { title: "UPI Payment", details: "Pay using UPI ID: admin@paytm" },
-    'Bank Transfer': { title: "Bank Transfer", details: "Account: 1234567890, IFSC: SBIN0001234" },
-    'Paytm/PhonePe': { title: "Paytm/PhonePe", details: "Mobile: +91 9876543210" },
-};
-
+type PaymentDetails = {
+    [key: string]: {
+        title: string;
+        details: string;
+    }
+}
 
 export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(true);
 
   const form = useForm<AddPointsFormValues>({
     resolver: zodResolver(addPointsSchema),
@@ -72,6 +75,28 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
       transactionId: '',
     },
   });
+
+  useEffect(() => {
+    if (!open) return;
+    
+    setLoadingDetails(true);
+    const settingsDocRef = doc(db, 'settings', 'app-settings');
+    const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data() as DocumentData;
+            setPaymentDetails(data.paymentDetails || {});
+        } else {
+            setPaymentDetails({});
+        }
+        setLoadingDetails(false);
+    }, (error) => {
+        console.error("Error fetching payment details: ", error);
+        setLoadingDetails(false);
+    });
+
+    return () => unsubscribe();
+
+  }, [open]);
 
   const onSubmit = async (values: AddPointsFormValues) => {
     if (!user) return;
@@ -103,6 +128,8 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
       setIsSubmitting(false);
     }
   };
+
+  const selectedMethod = form.watch('paymentMethod');
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -137,33 +164,40 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 <FormItem className="space-y-3">
                   <FormLabel>Select Payment Method</FormLabel>
                    <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-                    >
-                      {Object.keys(paymentDetails).map((method) => (
-                         <FormItem key={method}>
-                           <FormControl>
-                            <RadioGroupItem value={method} className="peer sr-only" id={method} />
-                           </FormControl>
-                           <Label htmlFor={method} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                {paymentDetails[method as keyof typeof paymentDetails].title}
-                           </Label>
-                         </FormItem>
-                      ))}
-                    </RadioGroup>
+                    {loadingDetails ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-20 w-full" />
+                        </div>
+                    ) : (
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                        >
+                          {paymentDetails && Object.keys(paymentDetails).map((method) => (
+                             <FormItem key={method}>
+                               <FormControl>
+                                <RadioGroupItem value={method} className="peer sr-only" id={method} />
+                               </FormControl>
+                               <Label htmlFor={method} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    {paymentDetails[method as keyof typeof paymentDetails].title}
+                               </Label>
+                             </FormItem>
+                          ))}
+                        </RadioGroup>
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {form.watch('paymentMethod') && (
+            {selectedMethod && paymentDetails?.[selectedMethod] && (
                 <Card className="bg-muted/50">
                     <CardContent className="p-4">
-                        <p className="text-sm font-semibold">{paymentDetails[form.watch('paymentMethod') as keyof typeof paymentDetails].title}</p>
-                        <p className="text-sm text-muted-foreground">{paymentDetails[form.watch('paymentMethod') as keyof typeof paymentDetails].details}</p>
+                        <p className="text-sm font-semibold">{paymentDetails[selectedMethod].title}</p>
+                        <p className="text-sm text-muted-foreground break-words">{paymentDetails[selectedMethod].details || "Details not available."}</p>
                     </CardContent>
                 </Card>
             )}
@@ -187,7 +221,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                     Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || loadingDetails}>
                 {isSubmitting ? <Loader className="mr-2" /> : null}
                 Submit Request
               </Button>
