@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,9 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const resultSchema = z.object({
   result: z.string().min(1, 'Result is required.'),
+  session: z.enum(['Open', 'Close']),
 });
 
 const formSchema = z.object({
@@ -26,6 +28,7 @@ const formSchema = z.object({
       name: z.string(),
       result: z.string(),
       newResult: z.string().optional(),
+      session: z.enum(['Open', 'Close']).optional(),
     })
   ),
 });
@@ -38,10 +41,18 @@ interface Game extends DocumentData {
     result: string;
 }
 
+const WIN_RATES = {
+  'Single Digit': 9.5,
+  'Jodi Digit': 95,
+  'Single Pana': 140,
+  'Double Pana': 290,
+  'Triple Pana': 700,
+};
+
 export default function UpdateResultsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
 
   const form = useForm<GameResultFormValues>({
     defaultValues: {
@@ -61,7 +72,7 @@ export default function UpdateResultsPage() {
       querySnapshot.forEach((doc) => {
         gamesData.push({ id: doc.id, ...doc.data() } as Game);
       });
-      replace(gamesData.map(g => ({...g, newResult: ''})));
+      replace(gamesData.map(g => ({...g, newResult: '', session: 'Open'})));
       setLoading(false);
     });
 
@@ -71,8 +82,14 @@ export default function UpdateResultsPage() {
   const handleUpdateResult = async (gameIndex: number) => {
     const game = form.getValues(`games.${gameIndex}`);
     const newResult = game.newResult;
+    const session = game.session;
 
-    const resultValidation = resultSchema.safeParse({ result: newResult });
+    if (!session) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please select a session.' });
+      return;
+    }
+
+    const resultValidation = resultSchema.safeParse({ result: newResult, session });
     if (!resultValidation.success) {
       form.setError(`games.${gameIndex}.newResult`, {
         type: 'manual',
@@ -80,18 +97,59 @@ export default function UpdateResultsPage() {
       });
       return;
     }
-
-    setIsSubmitting(true);
+    
+    setIsSubmitting(game.id);
+    
     try {
+      const batch = writeBatch(db);
       const gameDocRef = doc(db, 'games', game.id);
-      await writeBatch(db).update(gameDocRef, { result: newResult }).commit();
+      
+      // 1. Update the game result itself
+      batch.update(gameDocRef, { result: newResult });
+
+      // 2. Find all relevant bids
+      const bidsQuery = query(
+        collection(db, 'bids'),
+        where('gameId', '==', game.id),
+        where('session', '==', session),
+        where('status', '==', 'running')
+      );
+      const bidsSnapshot = await getDocs(bidsQuery);
+      
+      let winnersFound = 0;
+
+      bidsSnapshot.forEach(bidDoc => {
+        const bid = bidDoc.data();
+        const bidNumbers = bid.numbers as string[];
+        
+        // This is a simplified check. A real-world scenario might need more complex logic.
+        const isWinner = bidNumbers.some(num => newResult?.includes(num));
+        
+        if (isWinner) {
+          winnersFound++;
+          const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
+          const winningAmount = bid.amountPerBet * winRate;
+          
+          // Update bid status to 'won'
+          batch.update(bidDoc.ref, { status: 'won', winningAmount });
+          
+          // Update user's balance
+          const userDocRef = doc(db, 'users', bid.userId);
+          batch.update(userDocRef, { balance: increment(winningAmount) });
+        } else {
+          // Update bid status to 'lost'
+          batch.update(bidDoc.ref, { status: 'lost' });
+        }
+      });
+      
+      await batch.commit();
       
       form.setValue(`games.${gameIndex}.newResult`, '');
       form.clearErrors(`games.${gameIndex}.newResult`);
 
       toast({
-        title: 'Success!',
-        description: `Result for ${game.name} has been updated.`,
+        title: 'Result Published!',
+        description: `Result for ${game.name} updated. ${winnersFound} winner(s) found and paid.`,
       });
     } catch (error) {
       console.error('Error updating result: ', error);
@@ -101,7 +159,7 @@ export default function UpdateResultsPage() {
         description: 'Failed to update result. Please try again.',
       });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(null);
     }
   };
 
@@ -111,7 +169,7 @@ export default function UpdateResultsPage() {
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl">Update Game Results</CardTitle>
-          <CardDescription>Update the results for all available games here.</CardDescription>
+          <CardDescription>Update the results for all available games here. This will also process payouts.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -126,6 +184,7 @@ export default function UpdateResultsPage() {
                             <TableRow>
                                 <TableHead>Game Name</TableHead>
                                 <TableHead>Current Result</TableHead>
+                                <TableHead>Session</TableHead>
                                 <TableHead>New Result</TableHead>
                                 <TableHead className="text-right">Action</TableHead>
                             </TableRow>
@@ -135,6 +194,28 @@ export default function UpdateResultsPage() {
                                 <TableRow key={field.id}>
                                     <TableCell>{field.name}</TableCell>
                                     <TableCell>{field.result}</TableCell>
+                                    <TableCell>
+                                        <FormField
+                                            control={form.control}
+                                            name={`games.${index}.session`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select session" />
+                                                        </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="Open">Open</SelectItem>
+                                                            <SelectItem value="Close">Close</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </TableCell>
                                     <TableCell>
                                         <FormField
                                             control={form.control}
@@ -157,9 +238,9 @@ export default function UpdateResultsPage() {
                                         <Button 
                                             size="sm" 
                                             onClick={() => handleUpdateResult(index)}
-                                            disabled={isSubmitting}
+                                            disabled={!!isSubmitting}
                                         >
-                                          {isSubmitting ? <Loader className="h-4 w-4" /> : 'Update'}
+                                          {isSubmitting === field.id ? <Loader className="h-4 w-4" /> : 'Update'}
                                         </Button>
                                     </TableCell>
                                 </TableRow>
