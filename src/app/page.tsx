@@ -34,6 +34,7 @@ import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay"
 import { formatTime, cn } from '@/lib/utils';
+import { AddPointsDialog } from '@/components/add-points-dialog';
 
 
 interface Game extends DocumentData {
@@ -295,10 +296,12 @@ export default function Home() {
             <CardTitle className="text-xl">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-3 gap-2 sm:gap-4">
-            <Button className="h-16 flex-col gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
-              <Banknote className="h-6 w-6" />
-              <span className="text-xs">Deposit Funds</span>
-            </Button>
+             <AddPointsDialog user={user}>
+                <Button className="h-16 flex-col gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
+                    <Banknote className="h-6 w-6" />
+                    <span className="text-xs">Deposit Funds</span>
+                </Button>
+             </AddPointsDialog>
             <Button className="h-16 flex-col gap-1 bg-green-500 text-white hover:bg-green-600">
               <MessageSquare className="h-6 w-6" />
               <span className="text-xs">WhatsApp Support</span>

@@ -1,3 +1,6 @@
+
+'use client';
+
 import React from 'react';
 import {
   Home,
@@ -21,13 +24,22 @@ import {
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import Link from 'next/link';
-
+import { usePathname } from 'next/navigation';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
+  const isActive = (path: string) => pathname === path;
+  
+  const handleLinkClick = () => {
+    setIsSidebarOpen(false);
+  };
+
   const sidebarItems = (
     <>
       <SidebarHeader>
@@ -41,16 +53,16 @@ export default function AdminLayout({
       <SidebarContent className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="/admin" passHref>
-              <SidebarMenuButton tooltip={{children: "Dashboard"}}>
+            <Link href="/admin" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin')} tooltip={{children: "Dashboard"}}>
                 <Home />
                 <span>Dashboard</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-             <Link href="/admin/manage-users" passHref>
-                <SidebarMenuButton tooltip={{children: "Manage Users"}}>
+             <Link href="/admin/manage-users" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Manage Users"}}>
                   <Users />
                   <span>Manage Users</span>
                 </SidebarMenuButton>
@@ -63,24 +75,24 @@ export default function AdminLayout({
             </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
-             <Link href="/admin/manage-games" passHref>
-                <SidebarMenuButton tooltip={{children: "Manage Games"}}>
+             <Link href="/admin/manage-games" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/manage-games')} tooltip={{children: "Manage Games"}}>
                     <Gamepad />
                     <span>Manage Games</span>
                 </SidebarMenuButton>
              </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/admin/manage-banners" passHref>
-                <SidebarMenuButton tooltip={{children: "Manage Banners"}}>
+            <Link href="/admin/manage-banners" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/manage-banners')} tooltip={{children: "Manage Banners"}}>
                     <ImageIcon />
                     <span>Manage Banners</span>
                 </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/admin/update-results" passHref>
-              <SidebarMenuButton tooltip={{children: "Update Result"}}>
+            <Link href="/admin/update-results" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result"}}>
                 <CheckCircle />
                 <span>Update Result</span>
               </SidebarMenuButton>
@@ -93,8 +105,8 @@ export default function AdminLayout({
             </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href="/admin/charts" passHref>
-                <SidebarMenuButton tooltip={{children: "Game Charts"}}>
+            <Link href="/admin/charts" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/charts')} tooltip={{children: "Game Charts"}}>
                     <BarChart2 />
                     <span>Game Charts</span>
                 </SidebarMenuButton>
@@ -125,8 +137,8 @@ export default function AdminLayout({
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/admin/deposits" passHref>
-              <SidebarMenuButton tooltip={{children: "Deposits/Withdrawals"}}>
+            <Link href="/admin/deposits" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin/deposits')} tooltip={{children: "Deposits/Withdrawals"}}>
                 <ArrowLeftRight />
                 <span>Deposits/Withdrawals</span>
               </SidebarMenuButton>
@@ -156,7 +168,11 @@ export default function AdminLayout({
   );
 
   return (
-    <LayoutProvider sidebarContent={sidebarItems}>
+    <LayoutProvider 
+        sidebarContent={sidebarItems}
+        isSidebarOpen={isSidebarOpen}
+        setSidebarOpen={setIsSidebarOpen}
+    >
       {children}
     </LayoutProvider>
   );
