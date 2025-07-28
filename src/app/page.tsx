@@ -24,6 +24,7 @@ import {
   History,
   BarChart2,
   Wallet,
+  Landmark,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -33,6 +34,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import Autoplay from "embla-carousel-autoplay"
 import { formatTime, cn } from '@/lib/utils';
 import { AddPointsDialog } from '@/components/add-points-dialog';
+import { WithdrawFundsDialog } from '@/components/withdraw-funds-dialog';
 
 interface Game extends DocumentData {
   id: string;
@@ -182,6 +184,12 @@ export default function Home() {
                         <BookUser className="h-5 w-5 text-primary" />
                         <span>Contact</span>
                     </Link>
+                    <WithdrawFundsDialog user={user}>
+                        <button className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
+                            <Landmark className="h-5 w-5 text-primary" />
+                            <span>Withdraw Funds</span>
+                        </button>
+                    </WithdrawFundsDialog>
                     <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <Star className="h-5 w-5 text-primary" />
                         <span>Rate Card</span>
