@@ -71,8 +71,8 @@ export default function DoublePanaPage() {
     if (!isNaN(parsedAmount) && parsedAmount > 0 && numSelected > 0) {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
-      // Assuming a rate of 290 for Double Pana wins
-      setPotentialWin(parsedAmount * 290);
+      // Assuming a rate of 300 for Double Pana wins
+      setPotentialWin(parsedAmount * 300);
     } else {
       setTotalAmount(0);
       setPotentialWin(0);

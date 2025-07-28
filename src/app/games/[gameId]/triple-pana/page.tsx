@@ -71,8 +71,8 @@ export default function TriplePanaPage() {
     if (!isNaN(parsedAmount) && parsedAmount > 0 && numSelected > 0) {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
-      // Assuming a rate of 700 for Triple Pana wins
-      setPotentialWin(parsedAmount * 700);
+      // Assuming a rate of 600 for Triple Pana wins
+      setPotentialWin(parsedAmount * 600);
     } else {
       setTotalAmount(0);
       setPotentialWin(0);
