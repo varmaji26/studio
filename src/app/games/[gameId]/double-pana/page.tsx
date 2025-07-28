@@ -86,11 +86,20 @@ export default function DoublePanaPage() {
       return;
     }
     
-    const digits = currentPana.split('');
-    const uniqueDigits = new Set(digits);
+    const digits = currentPana.split('').map(Number);
+    const first = digits[0];
+    const second = digits[1];
+    const third = digits[2];
 
-    if (uniqueDigits.size !== 2) {
-        toast({ variant: 'destructive', title: 'Invalid Double Pana', description: 'Double Pana must have exactly two identical digits (e.g., 112, 355).' });
+    const isDoublePanaFormat = (first === second && second !== third);
+    
+    if (!isDoublePanaFormat) {
+        toast({ variant: 'destructive', title: 'Invalid Double Pana', description: 'Double Pana must be in AAB format (e.g., 112, 334). The first two digits must be the same and different from the third.' });
+        return;
+    }
+
+    if (third <= first) {
+        toast({ variant: 'destructive', title: 'Invalid Double Pana', description: 'The third digit must be greater than the first two digits (e.g., for 33?, the next digit must be 4 or higher).' });
         return;
     }
 
