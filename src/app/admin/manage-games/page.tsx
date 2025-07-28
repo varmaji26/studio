@@ -152,24 +152,6 @@ export default function ManageGamesPage() {
     }
   };
 
-  const handleBettingStatusChange = async (gameId: string, newStatus: string) => {
-    const gameDocRef = doc(db, "games", gameId);
-    try {
-      await updateDoc(gameDocRef, { status: newStatus });
-      toast({
-        title: 'Betting Status Updated',
-        description: `Betting status has been changed to "${newStatus}".`
-      });
-    } catch (error) {
-       console.error("Error updating betting status: ", error);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Failed to update betting status. Please try again.'
-        });
-    }
-  };
-
   return (
     <div className="flex-1 space-y-8 p-4 sm:p-8">
       <Card className="bg-card/80 border-white/10 shadow-lg max-w-2xl mx-auto">
@@ -284,10 +266,6 @@ export default function ManageGamesPage() {
                                     <TableCell>
                                         <div className="flex flex-col gap-2">
                                             <span>{game.name}</span>
-                                            <div className="flex flex-wrap gap-2">
-                                                <Button size="sm" className="bg-green-600 hover:bg-green-700 h-7 text-xs px-2" onClick={() => handleBettingStatusChange(game.id, 'Betting is Open')}>Open Betting</Button>
-                                                <Button size="sm" variant="destructive" className="h-7 text-xs px-2" onClick={() => handleBettingStatusChange(game.id, 'Betting is Closed')}>Close Betting</Button>
-                                            </div>
                                             <span className="text-xs text-muted-foreground">{formatTime(game.openTime)} - {formatTime(game.closeTime)}</span>
                                         </div>
                                     </TableCell>
