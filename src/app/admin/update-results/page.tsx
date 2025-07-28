@@ -42,11 +42,11 @@ interface Game extends DocumentData {
 }
 
 const WIN_RATES = {
-  'Single Digit': 9.5,
-  'Jodi Digit': 95,
-  'Single Pana': 140,
-  'Double Pana': 290,
-  'Triple Pana': 700,
+  'Single Digit': 10,
+  'Jodi Digit': 100,
+  'Single Pana': 150,
+  'Double Pana': 300,
+  'Triple Pana': 600,
 };
 
 export default function UpdateResultsPage() {
