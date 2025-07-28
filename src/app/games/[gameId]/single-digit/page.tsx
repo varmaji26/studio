@@ -7,14 +7,12 @@ import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { GameBettingLayout } from '@/components/game-betting-layout';
 
 interface Game extends DocumentData {
   id: string;
@@ -34,7 +32,7 @@ export default function SingleDigitPage() {
 
   const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
   const [amount, setAmount] = useState<string>('');
-  const [session, setSession] = useState<'Open' | 'Close' | null>(null);
+  const [session, setSession] = useState<'Open' | 'Close'>('Close');
   
   const [totalAmount, setTotalAmount] = useState(0);
   const [potentialWin, setPotentialWin] = useState(0);
@@ -115,7 +113,7 @@ export default function SingleDigitPage() {
     // Reset form
     setSelectedNumbers([]);
     setAmount('');
-    setSession(null);
+    setSession('Close');
   };
   
   if (loading) {
@@ -135,23 +133,8 @@ export default function SingleDigitPage() {
   }
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold">
-            Place Your Bet - <span className="text-primary">{game.name}</span>
-          </h1>
-          <p className="text-xl text-muted-foreground mt-1">Single Digit Betting</p>
-        </div>
-
-        <Button asChild variant="link" className="mb-4 p-0 h-auto">
-            <Link href={`/games/${gameId}`} className="flex items-center gap-2 text-primary">
-                <ArrowLeft className="h-4 w-4"/>
-                <span>Back to Options</span>
-            </Link>
-        </Button>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Single Digit">
+        <div className="space-y-6">
             <Card className="bg-card/80 border-white/10">
                 <CardHeader>
                     <CardTitle>Select Number(s):</CardTitle>
@@ -170,7 +153,7 @@ export default function SingleDigitPage() {
                 </CardContent>
             </Card>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
                  <div className="space-y-2">
                     <Label htmlFor="bet-amount" className="text-lg">Bet Amount (₹):</Label>
                     <Input 
@@ -205,47 +188,46 @@ export default function SingleDigitPage() {
                      </RadioGroup>
                 </div>
             </div>
-        </div>
         
-        <Card className="bg-card/80 border-white/10 mt-8">
-            <CardHeader>
-                <CardTitle className="text-xl">Bet Summary:</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-lg">
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Game:</span>
-                    <span className="font-semibold">{game.name}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Type:</span>
-                    <span className="font-semibold">Single Digit</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Numbers:</span>
-                    <span className="font-semibold">{selectedNumbers.join(', ') || '-'}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Amount:</span>
-                    <span className="font-semibold">₹{totalAmount}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Session:</span>
-                    <span className="font-semibold">{session || '-'}</span>
-                </div>
-                <div className="flex justify-between text-primary">
-                    <span className="text-primary/80">Potential Win:</span>
-                    <span className="font-bold">₹{potentialWin.toFixed(2)}</span>
-                </div>
-            </CardContent>
-        </Card>
-        
-        <div className="mt-6">
-            <p className="text-center text-muted-foreground mb-2">Total Bids: {selectedNumbers.length}</p>
-            <Button className="w-full h-16 text-xl font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0}>
-                Place Bet - ₹{totalAmount}
-            </Button>
+            <Card className="bg-card/80 border-white/10">
+                <CardHeader>
+                    <CardTitle className="text-xl">Bet Summary:</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-lg">
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Game:</span>
+                        <span className="font-semibold">{game.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Type:</span>
+                        <span className="font-semibold">Single Digit</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Numbers:</span>
+                        <span className="font-semibold">{selectedNumbers.join(', ') || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className="font-semibold">₹{totalAmount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Session:</span>
+                        <span className="font-semibold">{session || '-'}</span>
+                    </div>
+                    <div className="flex justify-between text-primary">
+                        <span className="text-primary/80">Potential Win:</span>
+                        <span className="font-bold">₹{potentialWin.toFixed(2)}</span>
+                    </div>
+                </CardContent>
+            </Card>
+            
+            <div className="mt-6">
+                <p className="text-center text-muted-foreground mb-2">Total Bids: {selectedNumbers.length}</p>
+                <Button className="w-full h-16 text-xl font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0}>
+                    Place Bet - ₹{totalAmount}
+                </Button>
+            </div>
         </div>
-      </div>
-    </div>
+    </GameBettingLayout>
   );
 }
