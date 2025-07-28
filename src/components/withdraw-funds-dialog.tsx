@@ -58,6 +58,11 @@ export function WithdrawFundsDialog({ user, children }: WithdrawFundsDialogProps
 
   const form = useForm<WithdrawalFormValues>({
     resolver: zodResolver(withdrawalSchema),
+    defaultValues: {
+      amount: undefined,
+      withdrawalMethod: undefined,
+      withdrawalDetails: '',
+    },
   });
 
   const onSubmit = async (values: WithdrawalFormValues) => {
@@ -126,7 +131,7 @@ export function WithdrawFundsDialog({ user, children }: WithdrawFundsDialogProps
                 <FormItem>
                   <FormLabel>Amount to Withdraw (₹)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Enter amount" {...field} />
+                    <Input type="number" placeholder="Enter amount" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.value)} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
