@@ -112,15 +112,6 @@ export default function Home() {
     };
   }, [user]);
 
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      router.replace('/login');
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
-  };
-
   const handleWhatsAppSupport = () => {
     if (settings.whatsappNumber) {
         window.open(`https://wa.me/${settings.whatsappNumber}`, '_blank');
@@ -223,8 +214,8 @@ export default function Home() {
         </Sheet>
         <div className="flex items-center gap-2 rounded-lg bg-black/30 px-3 py-1.5 border border-white/10">
           <Crown className="h-6 w-6 text-primary" />
-          <span className="font-bold text-2xl text-white">
-            MATKA <span className="text-primary">KING</span>
+          <span className="font-bold text-2xl text-white [text-shadow:0_0_5px_rgba(255,255,255,0.3),_2px_2px_5px_rgba(0,0,0,0.5)] transition-transform duration-300 hover:scale-105">
+            MATKA <span className="text-primary [text-shadow:0_0_5px_hsl(var(--primary)),_2px_2px_5px_rgba(0,0,0,0.5)]">KING</span>
           </span>
         </div>
         <div className="flex items-center gap-2">
