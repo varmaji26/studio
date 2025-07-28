@@ -281,7 +281,16 @@ export default function ManageGamesPage() {
                             {games.map((game, index) => (
                                 <TableRow key={game.id}>
                                     <TableCell>{index + 1}</TableCell>
-                                    <TableCell>{game.name}<br/><span className="text-xs text-muted-foreground">{formatTime(game.openTime)} - {formatTime(game.closeTime)}</span></TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-2">
+                                            <span>{game.name}</span>
+                                            <div className="flex flex-wrap gap-2">
+                                                <Button size="sm" className="bg-green-600 hover:bg-green-700 h-7 text-xs px-2" onClick={() => handleBettingStatusChange(game.id, 'Betting is Open')}>Open Betting</Button>
+                                                <Button size="sm" variant="destructive" className="h-7 text-xs px-2" onClick={() => handleBettingStatusChange(game.id, 'Betting is Closed')}>Close Betting</Button>
+                                            </div>
+                                            <span className="text-xs text-muted-foreground">{formatTime(game.openTime)} - {formatTime(game.closeTime)}</span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell>
                                         <Badge variant={game.active ? 'default' : 'destructive'} className={game.active ? 'bg-green-500 text-white' : ''}>
                                             {game.active ? 'ACTIVE' : 'INACTIVE'}
@@ -290,8 +299,6 @@ export default function ManageGamesPage() {
                                     <TableCell>{game.status}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex flex-wrap gap-2 justify-end">
-                                            <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleBettingStatusChange(game.id, 'Betting is Open')}>Open Betting</Button>
-                                            <Button size="sm" variant="destructive" onClick={() => handleBettingStatusChange(game.id, 'Betting is Closed')}>Close Betting</Button>
                                             <Switch
                                                 checked={game.active}
                                                 onCheckedChange={() => handleStatusToggle(game.id, game.active)}
