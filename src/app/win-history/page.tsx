@@ -42,14 +42,21 @@ export default function WinHistoryPage() {
         const winsQuery = query(
             collection(db, 'bids'),
             where('userId', '==', user.uid),
-            where('status', '==', 'won'),
-            orderBy('createdAt', 'desc')
+            where('status', '==', 'won')
+            // The orderBy clause is removed to prevent the composite index error.
+            // We will sort the data on the client-side.
         );
 
         const unsubscribe = onSnapshot(winsQuery, (querySnapshot) => {
             const winsData: Win[] = [];
             querySnapshot.forEach((doc) => {
                 winsData.push({ id: doc.id, ...doc.data() } as Win);
+            });
+            // Sort wins by creation date in descending order on the client
+            winsData.sort((a, b) => {
+                const dateA = a.createdAt?.toMillis() || 0;
+                const dateB = b.createdAt?.toMillis() || 0;
+                return dateB - dateA;
             });
             setWins(winsData);
             setLoading(false);
@@ -125,7 +132,7 @@ export default function WinHistoryPage() {
                                 </TableBody>
                             </Table>
                         </div>
-                        {wins.length === 0 && (
+                        {wins.length === 0 && !loading && (
                             <div className="text-center py-10">
                                 <Trophy className="mx-auto h-12 w-12 text-muted-foreground" />
                                 <p className="mt-4 text-muted-foreground">You haven't won any bids yet. Keep playing!</p>
