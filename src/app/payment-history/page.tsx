@@ -10,10 +10,13 @@ import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, CreditCard, ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowLeft, CreditCard, ArrowDown, ArrowUp, Download } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 interface Transaction extends DocumentData {
     id: string;
@@ -23,6 +26,13 @@ interface Transaction extends DocumentData {
     type: 'deposit' | 'withdrawal';
     paymentMethod?: string;
     withdrawalMethod?: string;
+}
+
+// Extend jsPDF with autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
 }
 
 export default function PaymentHistoryPage() {
@@ -81,6 +91,33 @@ export default function PaymentHistoryPage() {
                 return 'default';
         }
     }
+
+    const handleDownloadPDF = () => {
+        const doc = new jsPDF();
+        doc.text("Payment History", 14, 16);
+
+        const tableColumn = ["Date", "Type", "Amount", "Method", "Status"];
+        const tableRows: (string | number)[][] = [];
+
+        transactions.forEach(t => {
+            const transactionData = [
+                formatDate(t.createdAt),
+                t.type,
+                `₹${t.amount}`,
+                t.paymentMethod || t.withdrawalMethod || 'N/A',
+                t.status,
+            ];
+            tableRows.push(transactionData);
+        });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 20,
+        });
+
+        doc.save('payment-history.pdf');
+    };
     
     const renderTable = (data: Transaction[]) => (
         <div className="overflow-x-auto">
@@ -142,11 +179,19 @@ export default function PaymentHistoryPage() {
             <div className="max-w-4xl mx-auto">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader>
-                        <CardTitle className="text-2xl sm:text-3xl flex items-center gap-2">
-                            <CreditCard />
-                            Payment History
-                        </CardTitle>
-                        <CardDescription>View your deposit and withdrawal history.</CardDescription>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-2xl sm:text-3xl flex items-center gap-2">
+                                    <CreditCard />
+                                    Payment History
+                                </CardTitle>
+                                <CardDescription>View your deposit and withdrawal history.</CardDescription>
+                            </div>
+                             <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={transactions.length === 0}>
+                                <Download className="h-4 w-4 mr-2" />
+                                Download PDF
+                            </Button>
+                        </div>
                          <div className="pt-4">
                             <Button asChild variant="ghost" className="pl-0">
                                 <Link href="/" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
