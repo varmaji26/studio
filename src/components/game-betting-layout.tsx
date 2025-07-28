@@ -17,6 +17,7 @@ interface GameBettingLayoutProps {
 const betTypes = [
     { title: 'Single Digit', href: (gameId: string) => `/games/${gameId}/single-digit` },
     { title: 'Jodi Digit', href: (gameId: string) => `/games/${gameId}/jodi-digit` },
+    { title: 'Single Pana', href: (gameId: string) => `/games/${gameId}/single-pana` },
 ];
 
 export function GameBettingLayout({ gameName, gameId, activeBetType, children }: GameBettingLayoutProps) {
