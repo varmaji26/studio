@@ -147,7 +147,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                            <FormControl>
                             <RadioGroupItem value={method} className="peer sr-only" id={method} />
                            </FormControl>
-                           <Label htmlFor={method} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                           <Label htmlFor={method} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                 {paymentDetails[method as keyof typeof paymentDetails].title}
                            </Label>
                          </FormItem>
