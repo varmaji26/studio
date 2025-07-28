@@ -79,9 +79,7 @@ export function LayoutProvider({
                     <div className="md:hidden">
                         <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                    <SidebarTrigger />
-                                </Button>
+                                <SidebarTrigger className="h-7 w-7" />
                             </SheetTrigger>
                             <SheetContent side="left" className="p-0 w-72">
                                {sidebarContent}
