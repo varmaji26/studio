@@ -21,10 +21,6 @@ interface Game extends DocumentData {
 
 const betTypes = [
     { title: 'Single Digit', description: 'Bet on a single digit from 0-9.', href: (gameId: string) => `/games/${gameId}/single-digit` },
-    { title: 'Jodi Digit', description: 'Bet on a two-digit pair from 00-99.' },
-    { title: 'Single Pana', description: 'Bet on a three-digit single pana.' },
-    { title: 'Double Pana', description: 'Bet on a three-digit double pana.' },
-    { title: 'Triple Pana', description: 'Bet on a three-digit triple pana.' },
 ];
 
 export default function GamePage() {
