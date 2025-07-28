@@ -10,11 +10,9 @@ import { auth, db } from '@/lib/firebase';
 import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  LogOut,
   Menu,
   Crown,
   Banknote,
-  MessageSquare,
   Phone,
   Clock,
   ShieldCheck,
@@ -220,16 +218,12 @@ export default function Home() {
                 </nav>
             </div>
             <div className="p-4 border-t border-white/10">
-                <Button onClick={handleLogout} variant="ghost" className="w-full justify-start gap-3 p-3 text-red-500 hover:bg-red-500/10 hover:text-red-400">
-                    <LogOut className="h-5 w-5" />
-                    <span>Logout</span>
-                </Button>
             </div>
           </SheetContent>
         </Sheet>
         <div className="flex items-center gap-2 rounded-lg bg-black/30 px-3 py-1.5 border border-white/10">
-          <Crown className="h-5 w-5 text-primary" />
-          <span className="font-bold text-lg text-white">
+          <Crown className="h-6 w-6 text-primary" />
+          <span className="font-bold text-2xl text-white">
             MATKA <span className="text-primary">KING</span>
           </span>
         </div>
