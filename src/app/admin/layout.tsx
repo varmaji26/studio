@@ -148,6 +148,14 @@ export default function AdminLayout({
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/admin/payment-history" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin/payment-history')} tooltip={{children: "Payment History"}}>
+                <CreditCard />
+                <span>Payment History</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
            <SidebarMenuItem>
             <SidebarMenuButton tooltip={{children: "220 Matka Pana List"}}>
              <ClipboardList />
