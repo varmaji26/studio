@@ -3,8 +3,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, DocumentData } from 'firebase/firestore';
+import { doc, getDoc, DocumentData, collection, addDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -26,6 +27,7 @@ export default function SingleDigitPage() {
   const router = useRouter();
   const { gameId } = params;
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +38,7 @@ export default function SingleDigitPage() {
   
   const [totalAmount, setTotalAmount] = useState(0);
   const [potentialWin, setPotentialWin] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (typeof gameId !== 'string') return;
@@ -80,7 +83,11 @@ export default function SingleDigitPage() {
     );
   };
 
-  const handlePlaceBet = () => {
+  const handlePlaceBet = async () => {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to place a bet.' });
+        return;
+    }
     if (selectedNumbers.length === 0) {
       toast({ variant: 'destructive', title: 'Error', description: 'Please select at least one number.' });
       return;
@@ -93,27 +100,60 @@ export default function SingleDigitPage() {
       toast({ variant: 'destructive', title: 'Error', description: 'Please select a session.' });
       return;
     }
-    
-    // Placeholder for actual bet placement logic
-    console.log({
-      gameId,
-      gameName: game?.name,
-      betType: 'Single Digit',
-      numbers: selectedNumbers,
-      amount: parseInt(amount),
-      session,
-      totalAmount,
-    });
-    
-    toast({
-      title: 'Bet Placed Successfully!',
-      description: `Your bet of ₹${totalAmount} has been placed for ${game?.name}.`,
-    });
 
-    // Reset form
-    setSelectedNumbers([]);
-    setAmount('');
-    setSession('Close');
+    setIsSubmitting(true);
+    const userDocRef = doc(db, 'users', user.uid);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userDocRef);
+            if (!userDoc.exists()) {
+                throw new Error("User document does not exist!");
+            }
+
+            const currentBalance = userDoc.data().balance || 0;
+            if (currentBalance < totalAmount) {
+                throw new Error("Insufficient balance.");
+            }
+
+            const newBalance = currentBalance - totalAmount;
+            transaction.update(userDocRef, { balance: newBalance });
+
+            const bidsCollectionRef = collection(db, 'bids');
+            transaction.set(doc(bidsCollectionRef), {
+                userId: user.uid,
+                displayName: user.displayName,
+                gameId,
+                gameName: game?.name,
+                betType: 'Single Digit',
+                session,
+                numbers: selectedNumbers,
+                amountPerBet: parseInt(amount),
+                totalAmount: totalAmount,
+                status: 'running',
+                createdAt: serverTimestamp(),
+            });
+        });
+
+        toast({
+            title: 'Bet Placed Successfully!',
+            description: `Your bet of ₹${totalAmount} has been placed for ${game?.name}.`,
+        });
+
+        // Reset form
+        setSelectedNumbers([]);
+        setAmount('');
+        setSession('Close');
+    } catch (error: any) {
+        console.error('Error placing bet:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Bet Failed',
+            description: error.message || 'Could not place your bet. Please try again.',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
   if (loading) {
@@ -223,8 +263,9 @@ export default function SingleDigitPage() {
             
             <div className="mt-6">
                 <p className="text-center text-muted-foreground mb-2">Total Bids: {selectedNumbers.length}</p>
-                <Button className="w-full h-16 text-xl font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0}>
-                    Place Bet - ₹{totalAmount}
+                <Button className="w-full h-16 text-xl font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting}>
+                    {isSubmitting ? <Loader className="mr-2" /> : null}
+                    {isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
                 </Button>
             </div>
         </div>
