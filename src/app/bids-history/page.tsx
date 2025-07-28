@@ -40,14 +40,21 @@ export default function BidsHistoryPage() {
 
         const bidsQuery = query(
             collection(db, 'bids'),
-            where('userId', '==', user.uid),
-            orderBy('createdAt', 'desc')
+            where('userId', '==', user.uid)
+            // The orderBy clause is removed to prevent the composite index error.
+            // We will sort the data on the client-side.
         );
 
         const unsubscribe = onSnapshot(bidsQuery, (querySnapshot) => {
             const bidsData: Bid[] = [];
             querySnapshot.forEach((doc) => {
                 bidsData.push({ id: doc.id, ...doc.data() } as Bid);
+            });
+            // Sort bids by creation date in descending order on the client
+            bidsData.sort((a, b) => {
+                const dateA = a.createdAt?.toMillis() || 0;
+                const dateB = b.createdAt?.toMillis() || 0;
+                return dateB - dateA;
             });
             setBids(bidsData);
             setLoading(false);
