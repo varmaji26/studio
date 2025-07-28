@@ -61,7 +61,7 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
                 </Card>
 
                  <Button asChild variant="outline" className="w-full">
-                    <Link href={`/games/${gameId}`} className="flex items-center gap-2">
+                    <Link href={`/games/${gameId}`} className="flex items-center justify-center gap-2">
                         <ArrowLeft className="h-4 w-4"/>
                         <span>Back to Options</span>
                     </Link>
