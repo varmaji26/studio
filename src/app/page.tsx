@@ -351,7 +351,7 @@ export default function Home() {
                         clipRule="evenodd"
                     />
                 </svg>
-              <span className="text-xs">WhatsApp Support</span>
+              <span className="text-xs">WhatsApp</span>
             </Button>
             <Button 
               className="h-16 flex-col gap-1 bg-red-500 text-white hover:bg-red-600"
