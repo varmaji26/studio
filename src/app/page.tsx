@@ -241,8 +241,9 @@ export default function Home() {
               </Button>
             </Link>
           )}
-          <Button onClick={handleLogout} variant="ghost" size="icon" aria-label="Logout">
-            <LogOut className="h-6 w-6" />
+          <Button onClick={handleLogout} variant="ghost" className="text-red-500 hover:text-red-400 hover:bg-red-500/10">
+            <LogOut className="h-5 w-5 mr-2" />
+            <span>Logout</span>
           </Button>
         </div>
       </header>
