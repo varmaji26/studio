@@ -14,18 +14,10 @@ interface GameBettingLayoutProps {
   children: React.ReactNode;
 }
 
-const betTypes = [
-    { title: 'Single Digit', href: (gameId: string) => `/games/${gameId}/single-digit` },
-    { title: 'Jodi Digit', href: (gameId: string) => `/games/${gameId}/jodi-digit` },
-    { title: 'Single Pana', href: (gameId: string) => `/games/${gameId}/single-pana` },
-    { title: 'Double Pana', href: (gameId: string) => `/games/${gameId}/double-pana` },
-    { title: 'Triple Pana', href: (gameId: string) => `/games/${gameId}/triple-pana` },
-];
-
 export function GameBettingLayout({ gameName, gameId, activeBetType, children }: GameBettingLayoutProps) {
   return (
     <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold">
             Place Your Bet - <span className="text-primary">{gameName}</span>
@@ -33,52 +25,19 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
           <p className="text-xl text-muted-foreground mt-1">{activeBetType}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Left Column - Bet Types */}
-            <div className="md:col-span-1 space-y-4 flex flex-col">
-                <Card className="bg-card/80 border-white/10">
-                    <CardHeader>
-                        <CardTitle>Bet Types</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-2">
-                        {betTypes.map((bet) => {
-                             const isClickable = !!bet.href;
-                             const isActive = bet.title === activeBetType;
-
-                             return (
-                                <Link key={bet.title} href={isClickable ? bet.href(gameId) : '#'} passHref>
-                                    <Button
-                                        variant={isActive ? "default" : "outline"}
-                                        className={cn(
-                                            "w-full justify-start",
-                                            !isClickable && "cursor-not-allowed opacity-50"
-                                        )}
-                                        disabled={!isClickable}
-                                        aria-current={isActive ? "page" : undefined}
-                                    >
-                                        {bet.title}
-                                    </Button>
-                                </Link>
-                             )
-                        })}
-                    </CardContent>
-                </Card>
-
-                 <div className="flex-grow flex items-end justify-center">
-                    <Button asChild variant="outline" className="w-full">
-                        <Link href={`/games/${gameId}`} className="flex items-center justify-center gap-2">
-                            <ArrowLeft className="h-4 w-4"/>
-                            <span>Back to Options</span>
-                        </Link>
-                    </Button>
-                 </div>
-            </div>
-
-            {/* Right Column - Betting Form */}
-            <div className="md:col-span-3">
-                {children}
-            </div>
+        <div className="my-6">
+            <Button asChild variant="outline" className="w-full">
+                <Link href={`/games/${gameId}`} className="flex items-center gap-2">
+                    <ArrowLeft className="h-4 w-4"/>
+                    <span>Back to Game Options</span>
+                </Link>
+            </Button>
         </div>
+        
+        <div className="w-full">
+            {children}
+        </div>
+
       </div>
     </div>
   );
