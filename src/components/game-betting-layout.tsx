@@ -16,6 +16,7 @@ interface GameBettingLayoutProps {
 
 const betTypes = [
     { title: 'Single Digit', href: (gameId: string) => `/games/${gameId}/single-digit` },
+    { title: 'Jodi Digit', href: (gameId: string) => `/games/${gameId}/jodi-digit` },
 ];
 
 export function GameBettingLayout({ gameName, gameId, activeBetType, children }: GameBettingLayoutProps) {
@@ -31,14 +32,14 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Left Column - Bet Types */}
-            <div className="md:col-span-1 space-y-4">
+            <div className="md:col-span-1 space-y-4 flex flex-col">
                 <Card className="bg-card/80 border-white/10">
                     <CardHeader>
                         <CardTitle>Bet Types</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2">
                         {betTypes.map((bet) => {
-                             const isClickable = bet.href !== '#';
+                             const isClickable = !!bet.href;
                              const isActive = bet.title === activeBetType;
 
                              return (
@@ -60,12 +61,14 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
                     </CardContent>
                 </Card>
 
-                 <Button asChild variant="outline" className="w-full">
-                    <Link href={`/games/${gameId}`} className="flex items-center justify-center gap-2">
-                        <ArrowLeft className="h-4 w-4"/>
-                        <span>Back to Options</span>
-                    </Link>
-                </Button>
+                 <div className="flex-grow flex items-end justify-center">
+                    <Button asChild variant="outline" className="w-full">
+                        <Link href={`/games/${gameId}`} className="flex items-center justify-center gap-2">
+                            <ArrowLeft className="h-4 w-4"/>
+                            <span>Back to Options</span>
+                        </Link>
+                    </Button>
+                 </div>
             </div>
 
             {/* Right Column - Betting Form */}
