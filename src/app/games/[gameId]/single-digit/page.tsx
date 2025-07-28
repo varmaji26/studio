@@ -68,8 +68,8 @@ export default function SingleDigitPage() {
     if (!isNaN(parsedAmount) && parsedAmount > 0 && numSelected > 0) {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
-      // Assuming a rate of 9.5 for single digit wins
-      setPotentialWin(parsedAmount * 9.5);
+      // Assuming a rate of 10 for single digit wins
+      setPotentialWin(parsedAmount * 10);
     } else {
       setTotalAmount(0);
       setPotentialWin(0);
