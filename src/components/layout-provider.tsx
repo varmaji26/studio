@@ -110,7 +110,6 @@ export function LayoutProvider({
                   <Button variant="ghost" size="icon">
                     <Settings />
                   </Button>
-                  <Button onClick={() => router.push('/')}>Go to User Panel</Button>
                 </div>
             </header>
             <main>{children}</main>
