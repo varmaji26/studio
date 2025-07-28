@@ -241,10 +241,6 @@ export default function Home() {
               </Button>
             </Link>
           )}
-          <Button onClick={handleLogout} variant="ghost" className="text-red-500 hover:text-red-400 hover:bg-red-500/10">
-            <LogOut className="h-5 w-5 mr-2" />
-            <span>Logout</span>
-          </Button>
         </div>
       </header>
       <main className="flex flex-col gap-4 p-4">
