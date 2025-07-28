@@ -17,6 +17,7 @@ import {
 import {
   LogOut,
   Settings,
+  Home,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import Link from 'next/link';
 
 export function LayoutProvider({
   children,
@@ -107,6 +109,12 @@ export function LayoutProvider({
                     <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
                 </div>
                 <div className="flex items-center gap-4">
+                  <Link href="/">
+                    <Button variant="outline">
+                      <Home className="mr-2 h-4 w-4" />
+                      Go to User Panel
+                    </Button>
+                  </Link>
                   <Button variant="ghost" size="icon">
                     <Settings />
                   </Button>
