@@ -150,4 +150,35 @@ body {
       transform: scale(1);
     }
   }
+
+  .animated-border {
+    @apply relative overflow-hidden;
+  }
+
+  .animated-border::before {
+    content: '';
+    @apply absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-no-repeat;
+    background-image: conic-gradient(
+      from var(--angle),
+      transparent 50%,
+      hsl(var(--primary)) 60%,
+      transparent 70%
+    );
+    animation: rotate 4s linear infinite;
+  }
+  
+  .animated-border::after {
+    content: '';
+    @apply absolute inset-0.5 rounded-lg bg-slate-800/80;
+  }
+
+  @keyframes rotate {
+    0% {
+      --angle: 0deg;
+    }
+    100% {
+      --angle: 360deg;
+    }
+  }
+
 }

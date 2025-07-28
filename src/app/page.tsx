@@ -368,22 +368,25 @@ export default function Home() {
                 <div 
                     key={game.id} 
                     className={cn(
-                        "rounded-lg bg-slate-800/80 p-4 text-center space-y-3 cursor-pointer",
+                        "rounded-lg p-4 text-center space-y-3 cursor-pointer animated-border",
                         animatingGameId === game.id && 'animate-pulse-once'
                     )}
                     onClick={() => handleGameClick(game.id)}
+                    style={{ '--angle': '0deg' } as React.CSSProperties}
                 >
-                  <h3 className="text-xl font-bold text-white">{game.name}</h3>
-                  <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">{game.result}</div>
-                  <p className="text-sm text-yellow-300">{game.status}</p>
-                  <Link href={`/games/${game.id}`} passHref>
-                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
-                        <span>Play Now</span>
-                    </Button>
-                  </Link>
-                  <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+                  <div className="relative z-10 space-y-3">
+                    <h3 className="text-xl font-bold text-white">{game.name}</h3>
+                    <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">{game.result}</div>
+                    <p className="text-sm text-yellow-300">{game.status}</p>
+                    <Link href={`/games/${game.id}`} passHref>
+                      <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
+                          <span>Play Now</span>
+                      </Button>
+                    </Link>
+                    <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
+                      <Clock className="h-4 w-4 mr-2" />
+                      <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+                    </div>
                   </div>
                 </div>
               ))
