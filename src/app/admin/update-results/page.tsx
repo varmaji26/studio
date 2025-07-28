@@ -44,7 +44,7 @@ interface Game extends DocumentData {
 const WIN_RATES = {
   'Single Digit': 10,
   'Jodi Digit': 100,
-  'Single Pana': 150,
+  'Single Pana': 100,
   'Double Pana': 300,
   'Triple Pana': 600,
 };

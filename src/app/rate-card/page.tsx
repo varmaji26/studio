@@ -99,7 +99,7 @@ export default function RateCardPage() {
                                             <TableCell>{formatTime(game.closeTime)}</TableCell>
                                             <TableCell>₹10 - ₹100</TableCell>
                                             <TableCell>₹10 - ₹1000</TableCell>
-                                            <TableCell>₹10 - ₹1500</TableCell>
+                                            <TableCell>₹10 - ₹1000</TableCell>
                                             <TableCell>₹10 - ₹3000</TableCell>
                                             <TableCell>₹10 - ₹6000</TableCell>
                                             <TableCell>₹10 - ₹5000</TableCell>

@@ -71,8 +71,8 @@ export default function SinglePanaPage() {
     if (!isNaN(parsedAmount) && parsedAmount > 0 && numSelected > 0) {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
-      // Assuming a rate of 150 for Single Pana wins
-      setPotentialWin(parsedAmount * 1500);
+      // Assuming a rate of 100 for Single Pana wins
+      setPotentialWin(parsedAmount * 100);
     } else {
       setTotalAmount(0);
       setPotentialWin(0);
