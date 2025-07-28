@@ -34,13 +34,14 @@ import { Loader } from '@/components/loader';
 import { Card, CardContent } from './ui/card';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from './ui/skeleton';
+import Image from 'next/image';
 
 const addPointsSchema = z.object({
   amount: z.preprocess(
     (a) => parseInt(z.string().parse(a), 10),
     z.number().min(10, 'Minimum deposit amount is ₹10.')
   ),
-  paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe'], {
+  paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe', 'Scan QR Code'], {
     required_error: 'You need to select a payment method.',
   }),
   transactionId: z.string().min(1, 'Transaction ID is required.'),
@@ -56,7 +57,8 @@ interface AddPointsDialogProps {
 type PaymentDetails = {
     [key: string]: {
         title: string;
-        details: string;
+        details?: string;
+        imageUrl?: string;
     }
 }
 
@@ -130,6 +132,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   };
 
   const selectedMethod = form.watch('paymentMethod');
+  const selectedPaymentDetail = selectedMethod && paymentDetails ? paymentDetails[selectedMethod] : null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -175,16 +178,20 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                           defaultValue={field.value}
                           className="grid grid-cols-1 sm:grid-cols-2 gap-4"
                         >
-                          {paymentDetails && Object.keys(paymentDetails).map((method) => (
+                          {paymentDetails && Object.keys(paymentDetails).map((method) => {
+                            const detail = paymentDetails[method as keyof typeof paymentDetails];
+                            if (!detail.details && !detail.imageUrl) return null; // Don't show if no details or QR
+                            return (
                              <FormItem key={method}>
                                <FormControl>
                                 <RadioGroupItem value={method} className="peer sr-only" id={method} />
                                </FormControl>
-                               <Label htmlFor={method} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                    {paymentDetails[method as keyof typeof paymentDetails].title}
+                               <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    {detail.title}
                                </Label>
                              </FormItem>
-                          ))}
+                            )
+                          })}
                         </RadioGroup>
                     )}
                   </FormControl>
@@ -193,11 +200,21 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
               )}
             />
 
-            {selectedMethod && paymentDetails?.[selectedMethod] && (
+            {selectedPaymentDetail && (
                 <Card className="bg-muted/50">
                     <CardContent className="p-4">
-                        <p className="text-sm font-semibold">{paymentDetails[selectedMethod].title}</p>
-                        <p className="text-sm text-muted-foreground break-words">{paymentDetails[selectedMethod].details || "Details not available."}</p>
+                        <p className="text-sm font-semibold">{selectedPaymentDetail.title}</p>
+                        {selectedPaymentDetail.details && (
+                             <p className="text-sm text-muted-foreground break-words">{selectedPaymentDetail.details}</p>
+                        )}
+                        {selectedPaymentDetail.imageUrl && (
+                            <div className="mt-2 flex justify-center">
+                                <Image src={selectedPaymentDetail.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" />
+                            </div>
+                        )}
+                        { !selectedPaymentDetail.details && !selectedPaymentDetail.imageUrl && (
+                             <p className="text-sm text-muted-foreground">Details not available.</p>
+                        )}
                     </CardContent>
                 </Card>
             )}
