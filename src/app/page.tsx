@@ -259,7 +259,7 @@ export default function Home() {
               Welcome to <span className="text-primary">MATKA KING</span>
             </h1>
             <p className="text-muted-foreground mt-2">Get the latest game reviews, breaking news, in-depth guides, and join a thriving community of gamers!</p>
-            <Button className="mt-6 w-full max-w-xs bg-primary text-primary-foreground font-bold text-lg h-12 rounded-lg shadow-[0_4px_20px_theme(colors.primary/40%)]">Explore Latest Articles</Button>
+            <Button className="mt-6 w-full max-w-xs bg-primary text-primary-foreground font-bold text-lg h-12 rounded-lg">Explore Latest Articles</Button>
           </CardContent>
         </Card>
 

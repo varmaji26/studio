@@ -228,7 +228,7 @@ export default function ManageGamesPage() {
                     )}
                     />
                 </div>
-                <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_20px_theme(colors.primary/40%)]" disabled={isSubmitting}>
+                <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting}>
                   {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                   Add Game
                 </Button>
