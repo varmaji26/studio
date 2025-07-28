@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatTime } from '@/lib/utils';
+import { formatTime, cn } from '@/lib/utils';
 
 interface Game extends DocumentData {
   id: string;
@@ -33,6 +33,7 @@ export default function GamePage() {
   const { gameId } = params;
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
+  const [animatingBetType, setAnimatingBetType] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof gameId !== 'string') return;
@@ -58,6 +59,13 @@ export default function GamePage() {
 
     fetchGame();
   }, [gameId, router]);
+
+  const handleBetTypeClick = (betTypeTitle: string) => {
+    setAnimatingBetType(betTypeTitle);
+    setTimeout(() => {
+        setAnimatingBetType(null);
+    }, 500); // Duration of the animation
+  };
 
   if (loading) {
     return (
@@ -110,8 +118,12 @@ export default function GamePage() {
                   const props = isClickable ? { href: betType.href(game.id as string) } : {};
 
                   return (
-                    <Wrapper key={betType.title} {...props}>
-                      <Card className={`bg-slate-800/80 border-slate-700 h-full ${isClickable ? 'hover:border-primary hover:bg-primary/10 transition-all cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
+                    <Wrapper key={betType.title} {...props} onClick={() => handleBetTypeClick(betType.title)}>
+                      <Card className={cn(
+                        "bg-slate-800/80 border-slate-700 h-full",
+                        isClickable ? 'hover:border-primary hover:bg-primary/10 transition-all cursor-pointer' : 'cursor-not-allowed opacity-50',
+                        animatingBetType === betType.title && 'animate-pulse-once'
+                        )}>
                           <CardHeader>
                               <CardTitle className="text-primary">{betType.title}</CardTitle>
                               <CardDescription>{betType.description}</CardDescription>
