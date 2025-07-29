@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,10 +24,10 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 
 const bannerSchema = z.object({
   bannerImage: z.any()
-    .refine((file) => file, 'Banner image is required.')
-    .refine((file) => file?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine((files) => files?.length == 1, 'Banner image is required.')
+    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
     .refine(
-      (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+      (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
 });
@@ -46,13 +46,13 @@ export default function ManageBannersPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<BannerFormValues>({
     resolver: zodResolver(bannerSchema),
   });
   
+  const fileInputRef = form.register("bannerImage");
+
   useEffect(() => {
     const q = query(collection(db, "banners"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -66,29 +66,11 @@ export default function ManageBannersPage() {
 
     return () => unsubscribe();
   }, []);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-        setSelectedFile(file);
-        form.setValue('bannerImage', file);
-        form.clearErrors('bannerImage');
-    }
-  }
-
-  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const validation = await form.trigger();
-    if (!validation) return;
-
-    if (!selectedFile) {
-        form.setError('bannerImage', { type: 'manual', message: 'Banner image is required.' });
-        return;
-    }
-
+  
+  const onSubmit = async (values: BannerFormValues) => {
     setIsSubmitting(true);
     setUploadProgress(0);
-    const file = selectedFile;
+    const file = values.bannerImage[0];
     const storagePath = `banners/${Date.now()}_${file.name}`;
     const storageRef = ref(storage, storagePath);
     const uploadTask = uploadBytesResumable(storageRef, file);
@@ -121,11 +103,7 @@ export default function ManageBannersPage() {
                     title: 'Success!',
                     description: 'New banner has been added.',
                 });
-                form.reset();
-                setSelectedFile(null);
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                }
+                form.reset({ bannerImage: undefined });
             } catch (error) {
                  console.error('Error adding banner to Firestore: ', error);
                 toast({
@@ -169,11 +147,11 @@ export default function ManageBannersPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={handleFormSubmit} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="bannerImage"
-                  render={() => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>Banner Image</FormLabel>
                       <FormControl>
@@ -182,8 +160,7 @@ export default function ManageBannersPage() {
                             className="bg-input h-12 rounded-lg" 
                             accept={ACCEPTED_IMAGE_TYPES.join(',')} 
                             disabled={isSubmitting}
-                            onChange={handleFileChange}
-                            ref={fileInputRef}
+                            {...fileInputRef}
                          />
                       </FormControl>
                       <FormDescriptionComponent>

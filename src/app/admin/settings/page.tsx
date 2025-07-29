@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, getDoc, setDoc, DocumentData, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, DocumentData } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Button } from '@/components/ui/button';
@@ -30,9 +30,9 @@ const settingsSchema = z.object({
   paytmNumber: z.string().optional(),
   qrCodeImage: z.any()
     .optional()
-    .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
     .refine(
-      (file) => !file || ACCEPTED_IMAGE_TYPES.includes(file.type),
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
 });
@@ -46,8 +46,6 @@ export default function SettingsPage() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [existingQrUrl, setExistingQrUrl] = useState<string | null>(null);
   const [existingQrStoragePath, setExistingQrStoragePath] = useState<string | null>(null);
-  const qrFileInputRef = useRef<HTMLInputElement>(null);
-
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -59,6 +57,8 @@ export default function SettingsPage() {
       paytmNumber: '',
     },
   });
+
+  const qrCodeImageRef = form.register("qrCodeImage");
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -96,7 +96,7 @@ export default function SettingsPage() {
 
   const onSubmit = async (values: SettingsFormValues) => {
     setIsSubmitting(true);
-    let qrUploadPromise: Promise<void> | null = null;
+    setUploadProgress(null);
 
     try {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
@@ -111,7 +111,6 @@ export default function SettingsPage() {
             }
         };
 
-        // If a QR code image URL already exists, preserve it unless a new one is uploaded.
         if (existingQrUrl) {
             dataToSave.paymentDetails['Scan QR Code'] = {
                 title: 'Scan QR Code',
@@ -120,12 +119,10 @@ export default function SettingsPage() {
             };
         }
 
-        // Handle QR Code Upload
-        const qrFile = values.qrCodeImage;
+        const qrFile = values.qrCodeImage?.[0];
         if (qrFile) {
             setUploadProgress(0);
             
-            // If an old QR exists, delete it first
             if (existingQrStoragePath) {
                 const oldStorageRef = ref(storage, existingQrStoragePath);
                 try {
@@ -139,7 +136,7 @@ export default function SettingsPage() {
             const storageRef = ref(storage, storagePath);
             const uploadTask = uploadBytesResumable(storageRef, qrFile);
 
-            qrUploadPromise = new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                  uploadTask.on('state_changed', 
                     (snapshot) => {
                         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -149,25 +146,24 @@ export default function SettingsPage() {
                         reject(new Error("QR Code upload failed."));
                     },
                     async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        dataToSave.paymentDetails['Scan QR Code'] = {
-                            title: 'Scan QR Code',
-                            imageUrl: downloadURL,
-                            storagePath: storagePath,
-                        };
-                        setExistingQrUrl(downloadURL);
-                        setExistingQrStoragePath(storagePath);
-                        resolve();
+                        try {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            dataToSave.paymentDetails['Scan QR Code'] = {
+                                title: 'Scan QR Code',
+                                imageUrl: downloadURL,
+                                storagePath: storagePath,
+                            };
+                            setExistingQrUrl(downloadURL);
+                            setExistingQrStoragePath(storagePath);
+                            resolve();
+                        } catch(e) {
+                            reject(e);
+                        }
                     }
                 );
             });
         }
         
-        // Wait for upload to complete if it exists
-        if(qrUploadPromise) {
-            await qrUploadPromise;
-        }
-
         await setDoc(settingsDocRef, dataToSave, { merge: true });
 
         toast({
@@ -175,10 +171,8 @@ export default function SettingsPage() {
             description: 'Settings have been saved.',
         });
 
-        // Reset file input after successful submission
         if (qrFile) {
-            if (qrFileInputRef.current) qrFileInputRef.current.value = "";
-            form.setValue('qrCodeImage', null);
+            form.reset({ ...values, qrCodeImage: undefined });
             setUploadProgress(null);
         }
 
@@ -300,8 +294,7 @@ export default function SettingsPage() {
                             type="file" 
                             className="bg-input h-12 rounded-lg" 
                             accept={ACCEPTED_IMAGE_TYPES.join(',')} 
-                            ref={qrFileInputRef}
-                            onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
+                            {...qrCodeImageRef}
                          />
                       </FormControl>
                        <FormDescriptionComponent>
