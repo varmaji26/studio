@@ -96,71 +96,92 @@ export default function SettingsPage() {
 
   const onSubmit = async (values: SettingsFormValues) => {
     setIsSubmitting(true);
-    try {
-      const settingsDocRef = doc(db, 'settings', 'app-settings');
-      
-      const dataToSave = {
-          whatsappNumber: values.whatsappNumber,
-          callSupportNumber: values.callSupportNumber,
-          paymentDetails: {
-              'UPI': { title: "UPI Payment", details: values.upiId },
-              'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
-              'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
-          }
-      };
-      
-      // We handle QR code separately because it involves file upload.
-      await setDoc(settingsDocRef, dataToSave, { merge: true });
+    let qrUploadPromise: Promise<void> | null = null;
 
-      // Handle QR Code Upload
-      const qrFile = values.qrCodeImage;
-      if (qrFile) {
-        setUploadProgress(0);
+    try {
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
         
-        // If an old QR exists, delete it first
-        if(existingQrStoragePath) {
-            const oldStorageRef = ref(storage, existingQrStoragePath);
-            try {
-                await deleteObject(oldStorageRef);
-            } catch (e) {
-                console.warn("Could not delete old QR code, it might not exist:", e);
+        const dataToSave: any = {
+            whatsappNumber: values.whatsappNumber,
+            callSupportNumber: values.callSupportNumber,
+            paymentDetails: {
+                'UPI': { title: "UPI Payment", details: values.upiId },
+                'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
+                'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
             }
+        };
+
+        // If a QR code image URL already exists, preserve it unless a new one is uploaded.
+        if (existingQrUrl) {
+            dataToSave.paymentDetails['Scan QR Code'] = {
+                title: 'Scan QR Code',
+                imageUrl: existingQrUrl,
+                storagePath: existingQrStoragePath
+            };
         }
 
-        const storagePath = `qrcodes/${Date.now()}_${qrFile.name}`;
-        const storageRef = ref(storage, storagePath);
-        const uploadTask = uploadBytesResumable(storageRef, qrFile);
-
-        uploadTask.on('state_changed', 
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(progress);
-            },
-            (error) => {
-                throw new Error("QR Code upload failed.");
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                await updateDoc(settingsDocRef, {
-                    'paymentDetails.Scan QR Code': {
-                        title: 'Scan QR Code',
-                        imageUrl: downloadURL,
-                        storagePath: storagePath,
-                    }
-                });
-                setExistingQrUrl(downloadURL);
-                setExistingQrStoragePath(storagePath);
-                setUploadProgress(null);
-                if (qrFileInputRef.current) qrFileInputRef.current.value = "";
-                form.setValue('qrCodeImage', null);
+        // Handle QR Code Upload
+        const qrFile = values.qrCodeImage;
+        if (qrFile) {
+            setUploadProgress(0);
+            
+            // If an old QR exists, delete it first
+            if (existingQrStoragePath) {
+                const oldStorageRef = ref(storage, existingQrStoragePath);
+                try {
+                    await deleteObject(oldStorageRef);
+                } catch (e) {
+                    console.warn("Could not delete old QR code, it might not exist:", e);
+                }
             }
-        );
-      }
 
-      toast({
-        title: 'Success!',
-        description: 'Settings have been saved.',
-      });
+            const storagePath = `qrcodes/${Date.now()}_${qrFile.name}`;
+            const storageRef = ref(storage, storagePath);
+            const uploadTask = uploadBytesResumable(storageRef, qrFile);
+
+            qrUploadPromise = new Promise((resolve, reject) => {
+                 uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        setUploadProgress(progress);
+                    },
+                    (error) => {
+                        reject(new Error("QR Code upload failed."));
+                    },
+                    async () => {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        dataToSave.paymentDetails['Scan QR Code'] = {
+                            title: 'Scan QR Code',
+                            imageUrl: downloadURL,
+                            storagePath: storagePath,
+                        };
+                        setExistingQrUrl(downloadURL);
+                        setExistingQrStoragePath(storagePath);
+                        resolve();
+                    }
+                );
+            });
+        }
+        
+        // Wait for upload to complete if it exists
+        if(qrUploadPromise) {
+            await qrUploadPromise;
+        }
+
+        await setDoc(settingsDocRef, dataToSave, { merge: true });
+
+        toast({
+            title: 'Success!',
+            description: 'Settings have been saved.',
+        });
+
+        // Reset file input after successful submission
+        if (qrFile) {
+            if (qrFileInputRef.current) qrFileInputRef.current.value = "";
+            form.setValue('qrCodeImage', null);
+            setUploadProgress(null);
+        }
+
     } catch (error: any) {
       console.error('Error updating settings: ', error);
       toast({
