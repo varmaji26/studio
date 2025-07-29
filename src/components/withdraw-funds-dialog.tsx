@@ -38,7 +38,7 @@ const withdrawalSchema = z.object({
     (a) => parseInt(z.string().parse(a), 10),
     z.number().min(10, 'Minimum withdrawal amount is ₹10.')
   ),
-  withdrawalMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe'], {
+  withdrawalMethod: z.enum(['UPI', 'Bank Transfer', 'PhonePe/GPay'], {
     required_error: 'You need to select a withdrawal method.',
   }),
   withdrawalDetails: z.string().min(1, 'Please enter your withdrawal details (e.g., UPI ID, Bank Account).'),
@@ -159,8 +159,8 @@ export function WithdrawFundsDialog({ user, children }: WithdrawFundsDialogProps
                                 <Label htmlFor="bank" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Bank</Label>
                             </FormItem>
                              <FormItem>
-                                <FormControl><RadioGroupItem value="Paytm/PhonePe" className="peer sr-only" id="wallet" /></FormControl>
-                                <Label htmlFor="wallet" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Wallet</Label>
+                                <FormControl><RadioGroupItem value="PhonePe/GPay" className="peer sr-only" id="wallet" /></FormControl>
+                                <Label htmlFor="wallet" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">PhonePe/GPay</Label>
                             </FormItem>
                         </RadioGroup>
                   </FormControl>
