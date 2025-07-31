@@ -155,7 +155,7 @@ export default function Home() {
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">
-              <Menu className="h-8 w-8" strokeWidth={3} />
+              <Menu className="h-8 w-8 text-green-500" strokeWidth={3} />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="bg-card border-r-0 text-foreground flex flex-col p-0">
