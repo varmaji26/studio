@@ -7,7 +7,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -16,9 +17,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Progress } from '@/components/ui/progress';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const bannerSchema = z.object({
-  imageUrl: z.string().url({ message: 'Please enter a valid image URL.' }),
+  bannerImage: z
+    .any()
+    .refine((files) => files?.length == 1, "Image is required.")
+    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
 });
 
 type BannerFormValues = z.infer<typeof bannerSchema>;
@@ -33,13 +45,16 @@ export default function ManageBannersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const form = useForm<BannerFormValues>({
     resolver: zodResolver(bannerSchema),
     defaultValues: {
-        imageUrl: '',
+        bannerImage: undefined,
     },
   });
+
+  const bannerImageRef = form.register("bannerImage");
 
   useEffect(() => {
     const q = query(collection(db, "banners"), orderBy("createdAt", "desc"));
@@ -57,26 +72,55 @@ export default function ManageBannersPage() {
   
   const onSubmit = async (values: BannerFormValues) => {
     setIsSubmitting(true);
-    try {
-        await addDoc(collection(db, 'banners'), {
-            imageUrl: values.imageUrl,
-            createdAt: serverTimestamp(),
-        });
+    setUploadProgress(0);
+    const file = values.bannerImage[0] as File;
 
-        toast({
-            title: 'Success!',
-            description: 'New banner has been added.',
-        });
-        form.reset();
+    try {
+        const storageRef = ref(storage, `banners/${Date.now()}_${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(progress);
+            },
+            (error) => {
+                 console.error('Upload failed:', error);
+                 toast({
+                    variant: 'destructive',
+                    title: 'Upload Error',
+                    description: 'Failed to upload the banner image.',
+                });
+                setIsSubmitting(false);
+                setUploadProgress(null);
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                
+                await addDoc(collection(db, 'banners'), {
+                    imageUrl: downloadURL,
+                    createdAt: serverTimestamp(),
+                });
+
+                toast({
+                    title: 'Success!',
+                    description: 'New banner has been added.',
+                });
+                form.reset();
+                setUploadProgress(null);
+                setIsSubmitting(false);
+            }
+        );
+
     } catch (error) {
-         console.error('Error adding banner to Firestore: ', error);
+         console.error('Error adding banner: ', error);
         toast({
             variant: 'destructive',
             title: 'Error',
             description: 'Failed to save the banner. Please try again.',
         });
-    } finally {
         setIsSubmitting(false);
+        setUploadProgress(null);
     }
   };
   
@@ -108,25 +152,33 @@ export default function ManageBannersPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="imageUrl"
+                  name="bannerImage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Banner Image URL</FormLabel>
+                      <FormLabel>Banner Image</FormLabel>
                       <FormControl>
                         <Input 
-                            placeholder="https://example.com/banner-image.png" 
+                            type="file"
                             className="bg-input h-12 rounded-lg" 
+                            accept={ACCEPTED_IMAGE_TYPES.join(",")}
                             disabled={isSubmitting}
-                            {...field}
+                            {...bannerImageRef}
                          />
                       </FormControl>
                       <FormDescriptionComponent>
-                        Paste the URL of an image hosted online.
+                        Upload an image from your computer (max 5MB).
                       </FormDescriptionComponent>
                        <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {isSubmitting && uploadProgress !== null && (
+                    <div className="space-y-2">
+                        <Progress value={uploadProgress} className="w-full" />
+                        <p className="text-sm text-center text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
+                    </div>
+                )}
                 
                 <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting}>
                   {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
