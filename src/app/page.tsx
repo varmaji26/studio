@@ -234,7 +234,7 @@ export default function Home() {
         <div className="flex items-center gap-2">
           {isAdmin && (
             <Link href="/admin">
-              <Button variant="ghost" size="icon" aria-label="Admin Panel">
+              <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600">
                 <ShieldCheck className="h-6 w-6" strokeWidth={2.5} />
               </Button>
             </Link>
