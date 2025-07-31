@@ -47,7 +47,7 @@ export default function AdminLayout({
             <div className="p-1.5 rounded-lg bg-primary">
                 <Trophy className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-bold text-primary-foreground">Matka Genius</h1>
+            <h1 className="text-xl font-bold text-primary-foreground">Matka King</h1>
           </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
