@@ -22,9 +22,16 @@ import {
   ImageIcon
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
-import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/hooks/use-auth';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+
 
 export default function AdminLayout({
   children,
@@ -33,12 +40,27 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
+
 
   const isActive = (path: string) => pathname === path;
   
   const handleLinkClick = () => {
-    setIsSidebarOpen(false);
+    if (isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
   };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
+
 
   const sidebarItems = (
     <>
@@ -184,6 +206,21 @@ export default function AdminLayout({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter>
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-card">
+                <Avatar className="h-12 w-12">
+                    <AvatarImage src="https://placehold.co/48x48.png" data-ai-hint="avatar" />
+                    <AvatarFallback>{user?.displayName?.charAt(0) ?? 'A'}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                    <span className="text-sm font-semibold">{user?.displayName ?? 'Admin'}</span>
+                    <span className="text-xs text-muted-foreground">Admin</span>
+                </div>
+                <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
+                    <LogOut />
+                </Button>
+            </div>
+      </SidebarFooter>
     </>
   );
 
