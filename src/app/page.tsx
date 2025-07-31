@@ -235,7 +235,7 @@ export default function Home() {
           {isAdmin && (
             <Link href="/admin">
               <Button variant="ghost" size="icon" aria-label="Admin Panel">
-                <ShieldCheck className="h-6 w-6" />
+                <ShieldCheck className="h-6 w-6" strokeWidth={2.5} />
               </Button>
             </Link>
           )}
