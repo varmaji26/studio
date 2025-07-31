@@ -258,13 +258,10 @@ export default function Home() {
                         <CarouselItem key={banner.id}>
                         <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
                             <CardContent className="p-0">
-                                <Image 
+                                <img 
                                     src={banner.imageUrl}
                                     alt={`Banner`}
-                                    width={1200}
-                                    height={400}
                                     className="w-full h-auto max-h-[250px] object-cover"
-                                    unoptimized
                                 />
                             </CardContent>
                         </Card>
