@@ -23,13 +23,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const bannerSchema = z.object({
-  bannerImage: z.any()
-    .refine((files) => files?.length == 1, 'Banner image is required.')
-    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png and .webp files are accepted."
-    ),
+  // We will handle file validation manually now
 });
 
 type BannerFormValues = z.infer<typeof bannerSchema>;
@@ -46,13 +40,31 @@ export default function ManageBannersPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const form = useForm<BannerFormValues>({
     resolver: zodResolver(bannerSchema),
-    defaultValues: {
-      bannerImage: undefined,
-    }
   });
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Manual validation
+      if (file.size > MAX_FILE_SIZE) {
+        setFileError('Max file size is 5MB.');
+        setSelectedFile(null);
+        return;
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        setFileError('.jpg, .jpeg, .png and .webp files are accepted.');
+        setSelectedFile(null);
+        return;
+      }
+      setFileError(null);
+      setSelectedFile(file);
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, "banners"), orderBy("createdAt", "desc"));
@@ -68,13 +80,17 @@ export default function ManageBannersPage() {
     return () => unsubscribe();
   }, []);
   
-  const onSubmit = async (values: BannerFormValues) => {
+  const onSubmit = async () => {
+    if (!selectedFile) {
+      setFileError('Banner image is required.');
+      return;
+    }
+    
     setIsSubmitting(true);
     setUploadProgress(0);
-    const file = values.bannerImage[0];
-    const storagePath = `banners/${Date.now()}_${file.name}`;
+    const storagePath = `banners/${Date.now()}_${selectedFile.name}`;
     const storageRef = ref(storage, storagePath);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const uploadTask = uploadBytesResumable(storageRef, selectedFile);
 
     uploadTask.on('state_changed', 
         (snapshot) => {
@@ -105,6 +121,12 @@ export default function ManageBannersPage() {
                     description: 'New banner has been added.',
                 });
                 form.reset();
+                setSelectedFile(null);
+                const fileInput = document.getElementById('banner-image-input') as HTMLInputElement;
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+
             } catch (error) {
                  console.error('Error adding banner to Firestore: ', error);
                 toast({
@@ -149,28 +171,24 @@ export default function ManageBannersPage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="bannerImage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Banner Image</FormLabel>
-                      <FormControl>
-                        <Input 
-                            type="file" 
-                            className="bg-input h-12 rounded-lg" 
-                            accept={ACCEPTED_IMAGE_TYPES.join(',')} 
-                            disabled={isSubmitting}
-                            onChange={(e) => field.onChange(e.target.files)}
-                         />
-                      </FormControl>
-                      <FormDescriptionComponent>
-                        Recommended size: 1200x400 pixels. Max file size: 5MB.
-                      </FormDescriptionComponent>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormItem>
+                  <FormLabel>Banner Image</FormLabel>
+                  <FormControl>
+                    <Input 
+                        id="banner-image-input"
+                        type="file" 
+                        className="bg-input h-12 rounded-lg" 
+                        accept={ACCEPTED_IMAGE_TYPES.join(',')} 
+                        disabled={isSubmitting}
+                        onChange={handleFileChange}
+                     />
+                  </FormControl>
+                  <FormDescriptionComponent>
+                    Recommended size: 1200x400 pixels. Max file size: 5MB.
+                  </FormDescriptionComponent>
+                  {fileError && <p className="text-sm font-medium text-destructive">{fileError}</p>}
+                </FormItem>
+                
                 {isSubmitting && uploadProgress !== null && (
                     <div className="space-y-2">
                         <Progress value={uploadProgress} className="w-full" />
