@@ -143,7 +143,8 @@ export default function SettingsPage() {
                         setUploadProgress(progress);
                     },
                     (error) => {
-                        reject(new Error("QR Code upload failed."));
+                        console.error('Upload failed:', error);
+                        reject(new Error(`QR Code upload failed: ${error.message}`));
                     },
                     async () => {
                         try {
@@ -280,7 +281,7 @@ export default function SettingsPage() {
                 {existingQrUrl && (
                   <div className="flex flex-col items-center">
                     <p className="text-sm text-muted-foreground mb-2">Current QR Code:</p>
-                    <Image src={existingQrUrl} alt="Current QR Code" width={150} height={150} className="rounded-md border p-1" />
+                    <Image src={existingQrUrl} alt="Current QR Code" width={150} height={150} className="rounded-md border p-1" unoptimized />
                   </div>
                 )}
                  <FormField
