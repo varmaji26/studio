@@ -381,7 +381,8 @@ export default function Home() {
                 <div 
                     key={game.id} 
                     className={cn(
-                        "rounded-lg p-4 text-center space-y-3 cursor-pointer animated-border",
+                        "rounded-lg p-4 text-center space-y-3 cursor-pointer relative overflow-hidden",
+                        "bg-slate-800/80 border border-slate-700",
                         animatingGameId === game.id && 'animate-pulse-once'
                     )}
                     onClick={() => handleGameClick(game.id)}
