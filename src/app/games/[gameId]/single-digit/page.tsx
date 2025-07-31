@@ -23,9 +23,8 @@ interface Game extends DocumentData {
 const numbers = Array.from({ length: 10 }, (_, i) => i.toString());
 
 export default function SingleDigitPage() {
-  const params = useParams();
   const router = useRouter();
-  const { gameId } = params;
+  const { gameId } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
 

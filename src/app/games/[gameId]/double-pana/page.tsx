@@ -25,9 +25,8 @@ interface Game extends DocumentData {
 const panaSchema = /^\d{3}$/;
 
 export default function DoublePanaPage() {
-  const params = useParams();
   const router = useRouter();
-  const { gameId } = params;
+  const { gameId } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
 

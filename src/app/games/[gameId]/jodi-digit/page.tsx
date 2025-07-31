@@ -25,9 +25,8 @@ interface Game extends DocumentData {
 const jodiSchema = /^\d{2}$/;
 
 export default function JodiDigitPage() {
-  const params = useParams();
   const router = useRouter();
-  const { gameId } = params;
+  const { gameId } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
 
