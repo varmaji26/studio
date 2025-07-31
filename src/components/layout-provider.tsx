@@ -57,21 +57,6 @@ export function LayoutProvider({
         {/* Desktop Sidebar */}
         <Sidebar variant="sidebar" collapsible="icon" className="hidden md:block">
           {sidebarContent}
-           <SidebarFooter>
-                <div className="flex items-center gap-3 p-2 rounded-lg bg-card">
-                    <Avatar className="h-12 w-12">
-                        <AvatarImage src="https://placehold.co/48x48.png" data-ai-hint="avatar" />
-                        <AvatarFallback>{user?.displayName?.charAt(0) ?? 'A'}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-semibold">{user?.displayName ?? 'Admin'}</span>
-                        <span className="text-xs text-muted-foreground">Admin</span>
-                    </div>
-                    <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
-                        <LogOut />
-                    </Button>
-                </div>
-          </SidebarFooter>
         </Sidebar>
         
         <SidebarInset>
@@ -83,26 +68,8 @@ export function LayoutProvider({
                             <SheetTrigger asChild>
                                 <SidebarTrigger className="h-7 w-7" />
                             </SheetTrigger>
-                            <SheetContent side="left" className="p-0 w-72">
-                                <SheetHeaderComponent>
-                                    <SheetTitle className="sr-only">Sidebar Menu</SheetTitle>
-                                </SheetHeaderComponent>
+                            <SheetContent side="left" className="p-0 w-72 flex flex-col">
                                {sidebarContent}
-                                <SidebarFooter>
-                                    <div className="flex items-center gap-3 p-2 rounded-lg bg-card">
-                                        <Avatar className="h-12 w-12">
-                                            <AvatarImage src="https://placehold.co/48x48.png" data-ai-hint="avatar" />
-                                            <AvatarFallback>{user?.displayName?.charAt(0) ?? 'A'}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold">{user?.displayName ?? 'Admin'}</span>
-                                            <span className="text-xs text-muted-foreground">Admin</span>
-                                        </div>
-                                        <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
-                                            <LogOut />
-                                        </Button>
-                                    </div>
-                                </SidebarFooter>
                             </SheetContent>
                         </Sheet>
                     </div>
