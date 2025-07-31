@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -49,9 +49,10 @@ export default function ManageBannersPage() {
 
   const form = useForm<BannerFormValues>({
     resolver: zodResolver(bannerSchema),
+    defaultValues: {
+      bannerImage: undefined,
+    }
   });
-  
-  const fileInputRef = form.register("bannerImage");
 
   useEffect(() => {
     const q = query(collection(db, "banners"), orderBy("createdAt", "desc"));
@@ -103,7 +104,7 @@ export default function ManageBannersPage() {
                     title: 'Success!',
                     description: 'New banner has been added.',
                 });
-                form.reset({ bannerImage: undefined });
+                form.reset();
             } catch (error) {
                  console.error('Error adding banner to Firestore: ', error);
                 toast({
@@ -160,7 +161,7 @@ export default function ManageBannersPage() {
                             className="bg-input h-12 rounded-lg" 
                             accept={ACCEPTED_IMAGE_TYPES.join(',')} 
                             disabled={isSubmitting}
-                            {...fileInputRef}
+                            onChange={(e) => field.onChange(e.target.files)}
                          />
                       </FormControl>
                       <FormDescriptionComponent>
