@@ -39,7 +39,7 @@ import Image from 'next/image';
 const addPointsSchema = z.object({
   amount: z.preprocess(
     (a) => parseInt(z.string().parse(a), 10),
-    z.number().min(10, 'Minimum deposit amount is ₹10.')
+    z.number().min(100, 'Minimum deposit amount is ₹100.')
   ),
   paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe', 'Scan QR Code'], {
     required_error: 'You need to select a payment method.',
@@ -153,7 +153,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 <FormItem>
                   <FormLabel>Amount (₹)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Enter amount (Min: ₹10)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} />
+                    <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
