@@ -264,6 +264,7 @@ export default function Home() {
                                     width={1200}
                                     height={400}
                                     className="w-full h-auto max-h-[250px] object-cover"
+                                    unoptimized
                                 />
                             </CardContent>
                         </Card>
