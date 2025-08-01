@@ -164,7 +164,7 @@ export default function ManageGamesPage() {
 
   return (
     <div className="flex-1 space-y-8 p-4 sm:p-8">
-      <Card className="bg-card/80 border-white/10 shadow-lg max-w-2xl mx-auto">
+      <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl">Add New Game</CardTitle>
           </CardHeader>

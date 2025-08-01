@@ -148,7 +148,7 @@ export default function ManageBannersPage() {
 
   return (
     <div className="flex-1 space-y-8 p-4 sm:p-8">
-      <Card className="bg-card/80 border-white/10 shadow-lg max-w-2xl mx-auto">
+      <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl">Add New Banner</CardTitle>
           </CardHeader>
@@ -205,7 +205,7 @@ export default function ManageBannersPage() {
                     <Loader className="h-8 w-8 text-primary" />
                 </div>
             ) : banners.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {banners.map((banner) => (
                         <Card key={banner.id} className="overflow-hidden relative group">
                             <Image src={banner.imageUrl} alt="Banner" width={400} height={200} className="w-full h-40 object-cover" unoptimized />

@@ -191,7 +191,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex-1 space-y-8 p-4 sm:p-8">
-      <Card className="bg-card/80 border-white/10 shadow-lg max-w-2xl mx-auto">
+      <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl">Application Settings</CardTitle>
           <CardDescription>Update application-wide settings here.</CardDescription>
