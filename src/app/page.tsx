@@ -28,7 +28,6 @@ import {
   CreditCard,
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -66,7 +65,6 @@ export default function Home() {
   const [settings, setSettings] = useState<AppSettings>({});
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
-  const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -131,12 +129,6 @@ export default function Home() {
     setIsSheetOpen(false);
   };
   
-  const handleGameClick = (gameId: string) => {
-    setAnimatingGameId(gameId);
-    setTimeout(() => {
-        setAnimatingGameId(null);
-    }, 500); // Duration of the animation
-  };
 
   if (loading || !user) {
     return (
@@ -376,30 +368,25 @@ export default function Home() {
               </div>
             ) : games.length > 0 ? (
               games.map((game) => (
-                <div 
-                    key={game.id} 
-                    className={cn(
-                        "rounded-lg p-4 text-center space-y-3 cursor-pointer animated-border",
-                        animatingGameId === game.id && 'animate-pulse-once'
-                    )}
-                    onClick={() => handleGameClick(game.id)}
+                <Link href={`/games/${game.id}`} key={game.id} passHref>
+                  <div
+                    className="rounded-lg p-4 text-center space-y-3 cursor-pointer animated-border"
                     style={{ '--angle': '0deg' } as React.CSSProperties}
-                >
-                  <div className="relative z-10 space-y-3">
-                    <h3 className="text-xl font-bold text-white">{game.name}</h3>
-                    <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">{game.result}</div>
-                    <p className="text-sm text-yellow-300">{game.status}</p>
-                    <Link href={`/games/${game.id}`} passHref>
+                  >
+                    <div className="relative z-10 space-y-3">
+                      <h3 className="text-xl font-bold text-white">{game.name}</h3>
+                      <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">{game.result}</div>
+                      <p className="text-sm text-yellow-300">{game.status}</p>
                       <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
-                          <span>Play Now</span>
+                        <span>Play Now</span>
                       </Button>
-                    </Link>
-                    <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
-                      <Clock className="h-4 w-4 mr-2" />
-                      <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+                      <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
