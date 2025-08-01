@@ -129,7 +129,7 @@ export default function Home() {
     setIsSheetOpen(false);
   };
   
-  const handlePlayNowClick = (e: React.MouseEvent<HTMLAnchorElement>, gameId: string) => {
+  const handlePlayNowClick = (e: React.MouseEvent<HTMLButtonElement>, gameId: string) => {
     e.preventDefault();
     setAnimatingGameId(gameId);
     setTimeout(() => {
@@ -389,12 +389,12 @@ export default function Home() {
                            {`${game.openResult || '***'}-${(game.closeResult || '**').charAt(0)}-${game.closeResult || '**'}`}
                         </div>
                         <p className="text-sm text-yellow-300">{game.status}</p>
-                        <Link href={`/games/${game.id}`} passHref legacyBehavior>
-                           <a onClick={(e) => handlePlayNowClick(e, game.id)}>
-                            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
+                        <Link href={`/games/${game.id}`} passHref>
+                            <Button 
+                                onClick={(e) => handlePlayNowClick(e, game.id)}
+                                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
                                 <span>Play Now</span>
                             </Button>
-                           </a>
                         </Link>
                         <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
                         <Clock className="h-4 w-4 mr-2" />
