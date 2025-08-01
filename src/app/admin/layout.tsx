@@ -137,10 +137,12 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Market-wise Load"}}>
-              <LineChart />
-              <span>Market-wise Load</span>
-            </SidebarMenuButton>
+            <Link href="/admin/market-load" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/market-load')} tooltip={{children: "Market-wise Load"}}>
+                  <LineChart />
+                  <span>Market-wise Load</span>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
             <SidebarMenuItem>
               <Link href="/admin/bid-history" passHref onClick={handleLinkClick}>
