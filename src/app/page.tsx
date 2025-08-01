@@ -40,6 +40,8 @@ interface Game extends DocumentData {
   id: string;
   name: string;
   result: string;
+  openResult?: string;
+  closeResult?: string;
   status: string;
   openTime: string;
   closeTime: string;
@@ -65,6 +67,7 @@ export default function Home() {
   const [settings, setSettings] = useState<AppSettings>({});
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
+  const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -75,7 +78,6 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     
-    // Fetch active games
     const gamesQuery = query(collection(db, 'games'), where('active', '==', true));
     const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
       const gamesData: Game[] = [];
@@ -86,7 +88,6 @@ export default function Home() {
       setGamesLoading(false);
     });
 
-    // Fetch banners
     const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"));
     const unsubscribeBanners = onSnapshot(bannersQuery, (querySnapshot) => {
         const bannersData: Banner[] = [];
@@ -97,7 +98,6 @@ export default function Home() {
         setBannersLoading(false);
     });
     
-    // Fetch settings
     const settingsDocRef = doc(db, 'settings', 'app-settings');
     const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -129,6 +129,14 @@ export default function Home() {
     setIsSheetOpen(false);
   };
   
+  const handlePlayNowClick = (e: React.MouseEvent<HTMLAnchorElement>, gameId: string) => {
+    e.preventDefault();
+    setAnimatingGameId(gameId);
+    setTimeout(() => {
+        router.push(`/games/${gameId}`);
+        setAnimatingGameId(null);
+    }, 500); // Animation duration
+  };
 
   if (loading || !user) {
     return (
@@ -290,7 +298,7 @@ export default function Home() {
                   <div key={game.id} className="flex justify-between items-center bg-slate-800/80 p-3 rounded-lg border border-slate-700">
                     <span className="text-sm font-medium text-white">{game.name}</span>
                     <div className="text-right">
-                      <span className="text-sm font-bold text-primary">{game.result}</span>
+                       <span className="text-sm font-bold text-primary">{`${game.openResult || '***'}-${(game.closeResult || '**').charAt(0)}-${game.closeResult || '**'}`}</span>
                       <span className="text-xs text-muted-foreground ml-2">({formatTime(game.closeTime)})</span>
                     </div>
                   </div>
@@ -368,25 +376,32 @@ export default function Home() {
               </div>
             ) : games.length > 0 ? (
               games.map((game) => (
-                <Link href={`/games/${game.id}`} key={game.id} passHref>
-                  <div
-                    className="rounded-lg p-4 text-center space-y-3 cursor-pointer animated-border"
-                    style={{ '--angle': '0deg' } as React.CSSProperties}
-                  >
+                <div
+                    key={game.id}
+                    className={cn(
+                        "rounded-lg p-4 text-center space-y-3 cursor-pointer animated-border",
+                        animatingGameId === game.id && "animate-pulse-once"
+                    )}
+                >
                     <div className="relative z-10 space-y-3">
-                      <h3 className="text-xl font-bold text-white">{game.name}</h3>
-                      <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">{game.result}</div>
-                      <p className="text-sm text-yellow-300">{game.status}</p>
-                      <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
-                        <span>Play Now</span>
-                      </Button>
-                      <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
+                        <h3 className="text-xl font-bold text-white">{game.name}</h3>
+                        <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">
+                           {`${game.openResult || '***'}-${(game.closeResult || '**').charAt(0)}-${game.closeResult || '**'}`}
+                        </div>
+                        <p className="text-sm text-yellow-300">{game.status}</p>
+                        <Link href={`/games/${game.id}`} passHref legacyBehavior>
+                           <a onClick={(e) => handlePlayNowClick(e, game.id)}>
+                            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
+                                <span>Play Now</span>
+                            </Button>
+                           </a>
+                        </Link>
+                        <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
                         <Clock className="h-4 w-4 mr-2" />
                         <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
-                      </div>
+                        </div>
                     </div>
-                  </div>
-                </Link>
+                </div>
               ))
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>

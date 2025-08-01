@@ -24,7 +24,8 @@ import { formatTime } from '@/lib/utils';
 
 const gameSchema = z.object({
   name: z.string().min(1, 'Game name is required.'),
-  result: z.string().min(1, 'Result is required.'),
+  openResult: z.string().optional(),
+  closeResult: z.string().optional(),
   status: z.string().min(1, 'Status is required.'),
   openTime: z.string().min(1, 'Open time is required.'),
   closeTime: z.string().min(1, 'Close time is required.'),
@@ -51,7 +52,8 @@ export default function ManageGamesPage() {
     resolver: zodResolver(gameSchema),
     defaultValues: {
       name: '',
-      result: '***-*-***',
+      openResult: '***',
+      closeResult: '**',
       status: 'Betting will open soon',
       openTime: '',
       closeTime: '',
@@ -84,8 +86,11 @@ export default function ManageGamesPage() {
       const gamesCollection = collection(db, 'games');
       const newGameRef = doc(gamesCollection);
       
+      const fullResult = `${values.openResult || '***'}-${(values.closeResult || '**').slice(0,1)}-${(values.closeResult || '**')}`;
+
       batch.set(newGameRef, {
         ...values,
+        result: fullResult, // Combined result for compatibility if needed elsewhere
         active: true, // Default to active
         createdAt: serverTimestamp(),
       });
@@ -174,19 +179,6 @@ export default function ManageGamesPage() {
                       <FormLabel>Game Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Milan Night" {...field} className="bg-input h-12 rounded-lg" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="result"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Initial Game Result</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 123-6-789" {...field} className="bg-input h-12 rounded-lg" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

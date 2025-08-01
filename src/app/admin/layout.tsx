@@ -114,17 +114,19 @@ export default function AdminLayout({
           </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/admin/update-results" passHref onClick={handleLinkClick}>
-              <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result"}}>
+              <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result (Open)"}}>
                 <CheckCircle />
-                <span>Update Result</span>
+                <span>Update Result (Open)</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Update Result (Close)"}}>
-              <XCircle />
-              <span>Update Result (Close)</span>
-            </SidebarMenuButton>
+            <Link href="/admin/update-results-close" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/update-results-close')} tooltip={{children: "Update Result (Close)"}}>
+                    <XCircle />
+                    <span>Update Result (Close)</span>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
             <Link href="/admin/charts" passHref onClick={handleLinkClick}>

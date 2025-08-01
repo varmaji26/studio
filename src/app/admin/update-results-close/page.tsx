@@ -24,7 +24,7 @@ const formSchema = z.object({
     z.object({
       id: z.string(),
       name: z.string(),
-      openResult: z.string(),
+      closeResult: z.string(),
       newResult: z.string().optional(),
     })
   ),
@@ -35,7 +35,7 @@ type GameResultFormValues = z.infer<typeof formSchema>;
 interface Game extends DocumentData {
     id: string;
     name: string;
-    openResult: string;
+    closeResult: string;
 }
 
 const WIN_RATES = {
@@ -46,7 +46,7 @@ const WIN_RATES = {
   'Triple Pana': 600,
 };
 
-export default function UpdateResultsPage() {
+export default function UpdateResultsClosePage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
@@ -79,7 +79,7 @@ export default function UpdateResultsPage() {
   const handleUpdateResult = async (gameIndex: number) => {
     const game = form.getValues(`games.${gameIndex}`);
     const newResult = game.newResult;
-    const session = 'Open'; // Hardcoded to Open
+    const session = 'Close'; // Hardcoded to Close
 
     if (!newResult) {
       form.setError(`games.${gameIndex}.newResult`, {
@@ -95,7 +95,7 @@ export default function UpdateResultsPage() {
       const batch = writeBatch(db);
       const gameDocRef = doc(db, 'games', game.id);
       
-      batch.update(gameDocRef, { openResult: newResult });
+      batch.update(gameDocRef, { closeResult: newResult });
 
       const bidsQuery = query(
         collection(db, 'bids'),
@@ -134,7 +134,7 @@ export default function UpdateResultsPage() {
 
       toast({
         title: 'Result Published!',
-        description: `Open result for ${game.name} updated. ${winnersFound} winner(s) found and paid.`,
+        description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found and paid.`,
       });
     } catch (error) {
       console.error('Error updating result: ', error);
@@ -153,8 +153,8 @@ export default function UpdateResultsPage() {
     <div className="flex-1 space-y-8 p-4 sm:p-8">
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl">Update Game Results (Open)</CardTitle>
-          <CardDescription>Update the Open results for all available games here. This will also process payouts.</CardDescription>
+          <CardTitle className="text-2xl">Update Game Results (Close)</CardTitle>
+          <CardDescription>Update the Close results for all available games here. This will also process payouts.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -168,8 +168,8 @@ export default function UpdateResultsPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Game Name</TableHead>
-                                <TableHead>Current Open Result</TableHead>
-                                <TableHead>New Open Result</TableHead>
+                                <TableHead>Current Close Result</TableHead>
+                                <TableHead>New Close Result</TableHead>
                                 <TableHead className="text-right">Action</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -177,7 +177,7 @@ export default function UpdateResultsPage() {
                              {fields.map((field, index) => (
                                 <TableRow key={field.id}>
                                     <TableCell>{field.name}</TableCell>
-                                    <TableCell>{field.openResult || '***'}</TableCell>
+                                    <TableCell>{field.closeResult || '**'}</TableCell>
                                     <TableCell>
                                         <FormField
                                             control={form.control}
@@ -186,7 +186,7 @@ export default function UpdateResultsPage() {
                                                 <FormItem>
                                                     <FormControl>
                                                         <Input 
-                                                            placeholder="e.g. 123"
+                                                            placeholder="e.g. 89"
                                                             {...field} 
                                                             className="bg-input rounded-lg"
                                                          />
