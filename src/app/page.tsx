@@ -311,7 +311,7 @@ export default function Home() {
                   <div key={game.id} className="flex justify-between items-center bg-slate-800/80 p-3 rounded-lg border border-slate-700">
                     <span className="text-sm font-medium text-white">{game.name}</span>
                     <div className="text-right">
-                       <span className="text-sm font-bold text-primary">{`${game.openResult || '***'}-${(game.closeResult || '**').charAt(0)}-${game.closeResult || '**'}`}</span>
+                       <span className="text-sm font-bold text-primary">{game.result || `${game.openResult || '***'}-**-${game.closeResult || '**'}`}</span>
                       <span className="text-xs text-muted-foreground ml-2">({formatTime(game.closeTime)})</span>
                     </div>
                   </div>
@@ -399,7 +399,7 @@ export default function Home() {
                     <div className="relative z-10 space-y-3">
                         <h3 className="text-xl font-bold text-white">{game.name}</h3>
                         <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">
-                           {`${game.openResult || '***'}-${(game.closeResult || '**').charAt(0)}-${game.closeResult || '**'}`}
+                           {game.result || `${game.openResult || '***'}-**-${game.closeResult || '**'}`}
                         </div>
                         <p className="text-sm text-yellow-300">{game.status}</p>
                         <Button 

@@ -33,6 +33,7 @@ interface Game extends DocumentData {
     name: string;
     openResult: string;
     closeResult: string;
+    result: string;
 }
 
 const WIN_RATES = {
@@ -203,7 +204,7 @@ export default function UpdateResultsClosePage() {
                              {fields.map((field, index) => (
                                 <TableRow key={field.id}>
                                     <TableCell>{field.name}</TableCell>
-                                    <TableCell>{`${field.openResult || '***'}-${field.closeResult || '**'}`}</TableCell>
+                                    <TableCell>{field.result || `${field.openResult || '***'}-${'**'}-${field.closeResult || '**'}`}</TableCell>
                                     <TableCell>
                                         <FormField
                                             control={form.control}
