@@ -301,6 +301,20 @@ export default function Home() {
         )}
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardContent className="p-0">
+             <Image
+                src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
+                alt="Welcome Banner"
+                width={1200}
+                height={400}
+                className="w-full h-auto object-cover rounded-lg"
+                data-ai-hint="king"
+                unoptimized
+            />
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl">Quick Actions</CardTitle>
           </CardHeader>
@@ -343,20 +357,6 @@ export default function Home() {
               <Phone className="h-6 w-6" />
               <span className="text-xs">Call Support</span>
             </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardContent className="p-0">
-             <Image
-                src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Welcome Banner"
-                width={1200}
-                height={400}
-                className="w-full h-auto object-cover rounded-lg"
-                data-ai-hint="king"
-                unoptimized
-            />
           </CardContent>
         </Card>
 
