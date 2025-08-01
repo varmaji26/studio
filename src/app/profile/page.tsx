@@ -115,7 +115,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="pt-0">
             <div className="text-center mb-6">
-                <Link href="/" className="inline-flex items-center gap-2 text-primary hover:underline">
+                <Link href="/" className="inline-flex items-center gap-2 text-green-500 hover:underline">
                     <ArrowLeft className="h-4 w-4" />
                     <span>Back to Home</span>
                 </Link>

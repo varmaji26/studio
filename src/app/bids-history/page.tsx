@@ -99,7 +99,7 @@ export default function BidsHistoryPage() {
                         <CardDescription>View all your past and current bids here.</CardDescription>
                          <div className="pt-4">
                             <Button asChild variant="ghost" className="pl-0">
-                                <Link href="/" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                                <Link href="/" className="inline-flex items-center gap-2 text-sm text-green-500 hover:underline">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
                                 </Link>
