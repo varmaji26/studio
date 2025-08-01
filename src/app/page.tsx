@@ -41,6 +41,7 @@ import { AddPointsDialog } from '@/components/add-points-dialog';
 import { WithdrawFundsDialog } from '@/components/withdraw-funds-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { updateProfile } from 'firebase/auth';
 
 
 interface Game extends DocumentData {
@@ -192,13 +193,15 @@ export default function Home() {
         },
         async () => {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            await updateProfile(user, { photoURL: downloadURL });
+            if (auth.currentUser) {
+                await updateProfile(auth.currentUser, { photoURL: downloadURL });
+            }
             await updateDoc(doc(db, 'users', user.uid), { photoURL: downloadURL });
 
             toast({ title: 'Success', description: 'Profile image updated!' });
             setSelectedFile(null);
             setIsUploading(false);
-            // Manually trigger a re-render or state update if needed, e.g., setUser({...user, photoURL: downloadURL})
+            // This will trigger a re-render in useAuth hook and update the UI
         }
     );
   };
@@ -211,13 +214,21 @@ export default function Home() {
     );
   }
 
-  const isAdmin = user && user.email === '8080601370@authcanvas.dev';
+  const isAdmin = user && user.email === 'admin@matkaking.dev';
   const mobileNumber = user.email?.split('@')[0];
   const marqueeTexts = [
     "किसी भी समस्या के लिए संपर्क करें",
     "किसी भी प्रकार की सहायता के लिए हमें कॉल करें",
     "किसी भी समय हमें कॉल करें"
   ];
+
+  const MarqueeContent = () => (
+    <div className="flex">
+        {marqueeTexts.map((text, index) => (
+            <MarqueeItem key={index} text={text} />
+        ))}
+    </div>
+  );
 
   return (
     <div className="dark min-h-screen bg-background text-foreground">
@@ -335,50 +346,28 @@ export default function Home() {
       </header>
 
       <div className="relative flex overflow-x-hidden bg-red-900 text-white py-2">
-        <div className="flex animate-marquee whitespace-nowrap">
-            {marqueeTexts.concat(marqueeTexts).map((text, index) => (
-                <MarqueeItem key={index} text={text} />
-            ))}
-        </div>
-        <div className="absolute top-0 flex animate-marquee whitespace-nowrap" style={{ animationName: 'marquee2', animationDuration: '20s' }}>
-             {marqueeTexts.concat(marqueeTexts).map((text, index) => (
-                <MarqueeItem key={index} text={text} />
-            ))}
+        <div className="animate-marquee whitespace-nowrap flex">
+            <MarqueeContent />
+            <MarqueeContent />
         </div>
       </div>
       
       <main className="flex flex-col gap-4 p-4">
-        {bannersLoading ? (
-            <Card className="bg-card/80 border-white/10 shadow-lg flex items-center justify-center h-[200px]">
-                <Loader />
+        {settings.welcomeBanner?.imageUrl && (
+             <Card className="bg-card/80 border-white/10 shadow-lg">
+                <CardContent className="p-0">
+                    <Image
+                        src={settings.welcomeBanner.imageUrl}
+                        alt="Welcome Banner"
+                        width={1200}
+                        height={400}
+                        className="w-full h-auto object-cover rounded-lg"
+                        data-ai-hint="king"
+                        unoptimized
+                    />
+                </CardContent>
             </Card>
-        ) : banners.length > 0 && (
-            <Carousel 
-                plugins={[autoplayPlugin.current]}
-                className="w-full"
-                onMouseEnter={autoplayPlugin.current.stop}
-                onMouseLeave={autoplayPlugin.current.reset}
-            >
-                <CarouselContent>
-                    {banners.map((banner) => (
-                        <CarouselItem key={banner.id}>
-                        <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-                            <CardContent className="p-0">
-                                <img
-                                    src={banner.imageUrl}
-                                    alt="Banner"
-                                    className="w-full h-auto max-h-[250px] object-cover"
-                                />
-                            </CardContent>
-                        </Card>
-                        </CarouselItem>
-                    ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-4" />
-                <CarouselNext className="right-4" />
-            </Carousel>
         )}
-
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl">Quick Actions</CardTitle>
@@ -425,19 +414,36 @@ export default function Home() {
           </CardContent>
         </Card>
         
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardContent className="p-0">
-             <Image
-                src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Welcome Banner"
-                width={1200}
-                height={400}
-                className="w-full h-auto object-cover rounded-lg"
-                data-ai-hint="king"
-                unoptimized
-            />
-          </CardContent>
-        </Card>
+        {bannersLoading ? (
+            <Card className="bg-card/80 border-white/10 shadow-lg flex items-center justify-center h-[200px]">
+                <Loader />
+            </Card>
+        ) : banners.length > 0 && (
+            <Carousel 
+                plugins={[autoplayPlugin.current]}
+                className="w-full"
+                onMouseEnter={autoplayPlugin.current.stop}
+                onMouseLeave={autoplayPlugin.current.reset}
+            >
+                <CarouselContent>
+                    {banners.map((banner) => (
+                        <CarouselItem key={banner.id}>
+                        <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+                            <CardContent className="p-0">
+                                <img
+                                    src={banner.imageUrl}
+                                    alt="Banner"
+                                    className="w-full h-auto max-h-[250px] object-cover"
+                                />
+                            </CardContent>
+                        </Card>
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-4" />
+                <CarouselNext className="right-4" />
+            </Carousel>
+        )}
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
@@ -520,3 +526,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
