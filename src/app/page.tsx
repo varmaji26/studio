@@ -26,6 +26,7 @@ import {
   Wallet,
   Landmark,
   CreditCard,
+  LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -134,8 +135,16 @@ export default function Home() {
     setAnimatingGameId(gameId);
     setTimeout(() => {
         router.push(`/games/${gameId}`);
-        setAnimatingGameId(null);
     }, 500); // Animation duration
+  };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
   };
 
   if (loading || !user) {
@@ -177,6 +186,10 @@ export default function Home() {
                 </div>
                 <Separator className="bg-white/10 my-2" />
                 <nav className="flex flex-col gap-2 p-4">
+                    <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
+                        <LogOut className="h-5 w-5 text-primary" />
+                        <span>Logout</span>
+                    </button>
                     <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <HomeIcon className="h-5 w-5 text-primary" />
                         <span>Home</span>
@@ -379,7 +392,7 @@ export default function Home() {
                 <div
                     key={game.id}
                     className={cn(
-                        "rounded-lg p-4 text-center space-y-3 cursor-pointer animated-border",
+                        "rounded-lg p-4 text-center space-y-3 animated-border",
                         animatingGameId === game.id && "animate-pulse-once"
                     )}
                 >
@@ -389,13 +402,11 @@ export default function Home() {
                            {`${game.openResult || '***'}-${(game.closeResult || '**').charAt(0)}-${game.closeResult || '**'}`}
                         </div>
                         <p className="text-sm text-yellow-300">{game.status}</p>
-                        <Link href={`/games/${game.id}`} passHref>
-                            <Button 
-                                onClick={(e) => handlePlayNowClick(e, game.id)}
-                                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
-                                <span>Play Now</span>
-                            </Button>
-                        </Link>
+                        <Button 
+                            onClick={(e) => handlePlayNowClick(e, game.id)}
+                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
+                            <span>Play Now</span>
+                        </Button>
                         <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
                         <Clock className="h-4 w-4 mr-2" />
                         <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
