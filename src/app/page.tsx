@@ -215,6 +215,7 @@ export default function Home() {
   }
 
   const mobileNumber = user.email?.split('@')[0];
+  const isAdmin = user.email === '8080601370@authcanvas.dev';
   const marqueeTexts = [
     "किसी भी समस्या के लिए संपर्क करें",
     "किसी भी प्रकार की सहायता के लिए हमें कॉल करें",
@@ -334,11 +335,13 @@ export default function Home() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/admin">
-            <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600">
-              <ShieldCheck className="h-6 w-6" strokeWidth={2.5} />
-            </Button>
-          </Link>
+          {isAdmin && (
+            <Link href="/admin">
+              <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600">
+                <ShieldCheck className="h-6 w-6" strokeWidth={2.5} />
+              </Button>
+            </Link>
+          )}
         </div>
       </header>
       
