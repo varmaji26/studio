@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 
 interface Game extends DocumentData {
@@ -71,6 +71,10 @@ export default function MarketLoadPage() {
     calculateMarketLoad();
   }, []);
 
+  const totalLoad = marketData.reduce((acc, market) => acc + market.load, 0);
+  const totalDistribution = marketData.reduce((acc, market) => acc + market.distribution, 0);
+  const totalProfitLoss = marketData.reduce((acc, market) => acc + market.profitLoss, 0);
+
   return (
     <div className="flex-1 space-y-4 p-4 sm:p-8">
       <Card className="bg-card/80 border-white/10 shadow-lg">
@@ -106,6 +110,16 @@ export default function MarketLoadPage() {
                     </TableRow>
                   ))}
                 </TableBody>
+                <TableFooter>
+                    <TableRow className="bg-muted/50 font-bold">
+                        <TableCell>Total</TableCell>
+                        <TableCell>₹{totalLoad.toFixed(2)}</TableCell>
+                        <TableCell>₹{totalDistribution.toFixed(2)}</TableCell>
+                        <TableCell className={totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
+                          ₹{totalProfitLoss.toFixed(2)}
+                        </TableCell>
+                    </TableRow>
+                </TableFooter>
               </Table>
             </div>
           )}
