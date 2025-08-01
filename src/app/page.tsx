@@ -344,7 +344,7 @@ export default function Home() {
           )}
         </div>
       </header>
-
+      
       <div className="relative flex overflow-x-hidden bg-red-900 text-white py-2">
         <div className="animate-marquee whitespace-nowrap flex">
             <MarqueeContent />
@@ -357,17 +357,18 @@ export default function Home() {
              <Card className="bg-card/80 border-white/10 shadow-lg">
                 <CardContent className="p-0">
                     <Image
-                        src={settings.welcomeBanner.imageUrl}
+                        src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
                         alt="Welcome Banner"
                         width={1200}
                         height={400}
                         className="w-full h-auto object-cover rounded-lg"
-                        data-ai-hint="king"
+                        data-ai-hint="welcome banner"
                         unoptimized
                     />
                 </CardContent>
             </Card>
         )}
+
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl">Quick Actions</CardTitle>
@@ -526,5 +527,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
