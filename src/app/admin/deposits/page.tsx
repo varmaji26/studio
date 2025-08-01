@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,57 +11,68 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
-interface DepositRequest extends DocumentData {
+interface Request extends DocumentData {
     id: string;
     userId: string;
     displayName: string;
+    mobile?: string; // Add mobile number
     amount: number;
-    paymentMethod: string;
-    transactionId: string;
     status: 'pending' | 'approved' | 'rejected';
-}
-
-interface WithdrawalRequest extends DocumentData {
-    id: string;
-    userId: string;
-    displayName: string;
-    amount: number;
-    withdrawalMethod: string;
-    withdrawalDetails: string;
-    status: 'pending' | 'approved' | 'rejected';
+    // Deposit specific
+    paymentMethod?: string;
+    transactionId?: string;
+    // Withdrawal specific
+    withdrawalMethod?: string;
+    withdrawalDetails?: string;
 }
 
 export default function DepositsAndWithdrawalsPage() {
-  const [depositRequests, setDepositRequests] = useState<DepositRequest[]>([]);
-  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [depositRequests, setDepositRequests] = useState<Request[]>([]);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<Request[]>([]);
+  const [filteredDeposits, setFilteredDeposits] = useState<Request[]>([]);
+  const [filteredWithdrawals, setFilteredWithdrawals] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+
+  const fetchUserDetails = async (requests: DocumentData[]): Promise<Request[]> => {
+    const requestsWithUsers = await Promise.all(
+        requests.map(async (request) => {
+            const userDocRef = doc(db, 'users', request.userId);
+            const userDoc = await getDoc(userDocRef);
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            return {
+                ...request,
+                mobile: userData.mobile || 'N/A',
+            } as Request;
+        })
+    );
+    return requestsWithUsers;
+  };
 
   useEffect(() => {
     setLoading(true);
 
     const depositQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
-    const unsubscribeDeposits = onSnapshot(depositQuery, (querySnapshot) => {
-      const requestsData: DepositRequest[] = [];
-      querySnapshot.forEach((doc) => {
-        requestsData.push({ id: doc.id, ...doc.data() } as DepositRequest);
-      });
-      requestsData.sort((a, b) => (a.status === 'pending' ? -1 : 1) - (b.status === 'pending' ? -1 : 1));
-      setDepositRequests(requestsData);
+    const unsubscribeDeposits = onSnapshot(depositQuery, async (querySnapshot) => {
+      const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const depositsWithUsers = await fetchUserDetails(requestsData);
+      depositsWithUsers.sort((a, b) => (a.status === 'pending' ? -1 : 1) - (b.status === 'pending' ? -1 : 1));
+      setDepositRequests(depositsWithUsers);
+      setLoading(false);
     });
 
     const withdrawalQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
-    const unsubscribeWithdrawals = onSnapshot(withdrawalQuery, (querySnapshot) => {
-        const requestsData: WithdrawalRequest[] = [];
-        querySnapshot.forEach((doc) => {
-            requestsData.push({ id: doc.id, ...doc.data() } as WithdrawalRequest);
-        });
-        requestsData.sort((a, b) => (a.status === 'pending' ? -1 : 1) - (b.status === 'pending' ? -1 : 1));
-        setWithdrawalRequests(requestsData);
+    const unsubscribeWithdrawals = onSnapshot(withdrawalQuery, async (querySnapshot) => {
+        const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const withdrawalsWithUsers = await fetchUserDetails(requestsData);
+        withdrawalsWithUsers.sort((a, b) => (a.status === 'pending' ? -1 : 1) - (b.status === 'pending' ? -1 : 1));
+        setWithdrawalRequests(withdrawalsWithUsers);
+        setLoading(false);
     });
-
-    setLoading(false);
 
     return () => {
         unsubscribeDeposits();
@@ -69,7 +80,24 @@ export default function DepositsAndWithdrawalsPage() {
     };
   }, []);
 
-  const handleDepositRequest = async (request: DepositRequest, status: 'approved' | 'rejected') => {
+  useEffect(() => {
+    const lowercasedFilter = searchTerm.toLowerCase().trim();
+    if (!lowercasedFilter) {
+        setFilteredDeposits(depositRequests);
+        setFilteredWithdrawals(withdrawalRequests);
+        return;
+    }
+    const filterRequests = (requests: Request[]) => {
+      return requests.filter((req) => 
+        req.displayName?.toLowerCase().includes(lowercasedFilter) ||
+        req.mobile?.toLowerCase().includes(lowercasedFilter)
+      );
+    }
+    setFilteredDeposits(filterRequests(depositRequests));
+    setFilteredWithdrawals(filterRequests(withdrawalRequests));
+  }, [searchTerm, depositRequests, withdrawalRequests]);
+
+  const handleDepositRequest = async (request: Request, status: 'approved' | 'rejected') => {
     const requestDocRef = doc(db, 'deposits', request.id);
     const userDocRef = doc(db, 'users', request.userId);
     const statsDocRef = doc(db, 'app-stats', 'dashboard');
@@ -99,7 +127,7 @@ export default function DepositsAndWithdrawalsPage() {
     }
   };
 
-  const handleWithdrawalRequest = async (request: WithdrawalRequest, status: 'approved' | 'rejected') => {
+  const handleWithdrawalRequest = async (request: Request, status: 'approved' | 'rejected') => {
     const requestDocRef = doc(db, 'withdrawals', request.id);
     const userDocRef = doc(db, 'users', request.userId);
     const statsDocRef = doc(db, 'app-stats', 'dashboard');
@@ -111,24 +139,20 @@ export default function DepositsAndWithdrawalsPage() {
                 throw new Error("This request has already been processed.");
             }
 
-            // For rejections, we don't need to touch the user's balance.
             if (status === 'rejected') {
                 transaction.update(requestDocRef, { status: 'rejected' });
                 return;
             }
 
-            // For approvals, check balance and deduct
             const userDoc = await transaction.get(userDocRef);
             if (!userDoc.exists()) throw new Error(`User not found!`);
 
             const currentBalance = userDoc.data().balance || 0;
             if (currentBalance < request.amount) {
-                 // If balance is insufficient, we reject the request and refund the user (by doing nothing to their balance).
                  transaction.update(requestDocRef, { status: 'rejected' });
                  throw new Error("Insufficient balance. Request rejected.");
             }
 
-            // Proceed with deduction
             transaction.update(userDocRef, { balance: increment(-request.amount) });
             transaction.update(statsDocRef, { totalBalance: increment(-request.amount) });
             transaction.update(requestDocRef, { status: 'approved' });
@@ -158,6 +182,17 @@ export default function DepositsAndWithdrawalsPage() {
             <CardTitle className="text-2xl">Deposits & Withdrawals</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="flex justify-between items-center mb-4">
+                 <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by name or mobile..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-input h-10 rounded-lg pl-10"
+                    />
+                </div>
+            </div>
             {loading ? (
                 <div className="flex justify-center items-center h-48">
                     <Loader className="h-8 w-8 text-primary" />
@@ -174,6 +209,7 @@ export default function DepositsAndWithdrawalsPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Username</TableHead>
+                                        <TableHead>Mobile</TableHead>
                                         <TableHead>Amount</TableHead>
                                         <TableHead>Method</TableHead>
                                         <TableHead>Transaction ID</TableHead>
@@ -182,9 +218,10 @@ export default function DepositsAndWithdrawalsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {depositRequests.map((request) => (
+                                    {filteredDeposits.map((request) => (
                                         <TableRow key={request.id}>
                                             <TableCell>{request.displayName}</TableCell>
+                                            <TableCell>{request.mobile}</TableCell>
                                             <TableCell>₹{request.amount}</TableCell>
                                             <TableCell>{request.paymentMethod}</TableCell>
                                             <TableCell>{request.transactionId}</TableCell>
@@ -201,7 +238,7 @@ export default function DepositsAndWithdrawalsPage() {
                                     ))}
                                 </TableBody>
                             </Table>
-                            {depositRequests.length === 0 && <p className="text-center text-muted-foreground mt-4">No deposit requests found.</p>}
+                            {filteredDeposits.length === 0 && <p className="text-center text-muted-foreground mt-4">No deposit requests found.</p>}
                         </div>
                     </TabsContent>
                     <TabsContent value="withdrawals">
@@ -210,6 +247,7 @@ export default function DepositsAndWithdrawalsPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Username</TableHead>
+                                        <TableHead>Mobile</TableHead>
                                         <TableHead>Amount</TableHead>
                                         <TableHead>Method</TableHead>
                                         <TableHead>Details (e.g., UPI ID)</TableHead>
@@ -218,9 +256,10 @@ export default function DepositsAndWithdrawalsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {withdrawalRequests.map((request) => (
+                                    {filteredWithdrawals.map((request) => (
                                         <TableRow key={request.id}>
                                             <TableCell>{request.displayName}</TableCell>
+                                            <TableCell>{request.mobile}</TableCell>
                                             <TableCell>₹{request.amount}</TableCell>
                                             <TableCell>{request.withdrawalMethod}</TableCell>
                                             <TableCell>{request.withdrawalDetails}</TableCell>
@@ -237,7 +276,7 @@ export default function DepositsAndWithdrawalsPage() {
                                     ))}
                                 </TableBody>
                             </Table>
-                            {withdrawalRequests.length === 0 && <p className="text-center text-muted-foreground mt-4">No withdrawal requests found.</p>}
+                            {filteredWithdrawals.length === 0 && <p className="text-center text-muted-foreground mt-4">No withdrawal requests found.</p>}
                         </div>
                     </TabsContent>
                 </Tabs>
