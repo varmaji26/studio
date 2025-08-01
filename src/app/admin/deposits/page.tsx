@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, getDoc } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
+import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, getDoc, limit, startAfter, getDocs, Query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,12 +29,24 @@ interface Request extends DocumentData {
     withdrawalDetails?: string;
 }
 
+const PAGE_SIZE = 10;
+
 export default function DepositsAndWithdrawalsPage() {
   const [depositRequests, setDepositRequests] = useState<Request[]>([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState<Request[]>([]);
   const [filteredDeposits, setFilteredDeposits] = useState<Request[]>([]);
   const [filteredWithdrawals, setFilteredWithdrawals] = useState<Request[]>([]);
+  
   const [loading, setLoading] = useState(true);
+  const [loadingMoreDeposits, setLoadingMoreDeposits] = useState(false);
+  const [loadingMoreWithdrawals, setLoadingMoreWithdrawals] = useState(false);
+
+  const [lastDepositDoc, setLastDepositDoc] = useState<DocumentData | null>(null);
+  const [lastWithdrawalDoc, setLastWithdrawalDoc] = useState<DocumentData | null>(null);
+  
+  const [hasMoreDeposits, setHasMoreDeposits] = useState(true);
+  const [hasMoreWithdrawals, setHasMoreWithdrawals] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
@@ -53,32 +65,82 @@ export default function DepositsAndWithdrawalsPage() {
     return requestsWithUsers;
   };
 
-  useEffect(() => {
+  const fetchInitialData = useCallback(async () => {
     setLoading(true);
 
-    const depositQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
-    const unsubscribeDeposits = onSnapshot(depositQuery, async (querySnapshot) => {
-      const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const depositsWithUsers = await fetchUserDetails(requestsData);
-      depositsWithUsers.sort((a, b) => (a.status === 'pending' ? -1 : 1) - (b.status === 'pending' ? -1 : 1));
-      setDepositRequests(depositsWithUsers);
-      setLoading(false);
-    });
+    // Initial Deposits
+    const initialDepositQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
+    const depositSnapshot = await getDocs(initialDepositQuery);
+    const depositDocs = depositSnapshot.docs;
+    const depositsData = depositDocs.map(d => ({ id: d.id, ...d.data() }));
+    const depositsWithUsers = await fetchUserDetails(depositsData);
+    setDepositRequests(depositsWithUsers);
+    setLastDepositDoc(depositDocs[depositDocs.length - 1]);
+    setHasMoreDeposits(depositDocs.length === PAGE_SIZE);
 
-    const withdrawalQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
-    const unsubscribeWithdrawals = onSnapshot(withdrawalQuery, async (querySnapshot) => {
-        const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const withdrawalsWithUsers = await fetchUserDetails(requestsData);
-        withdrawalsWithUsers.sort((a, b) => (a.status === 'pending' ? -1 : 1) - (b.status === 'pending' ? -1 : 1));
-        setWithdrawalRequests(withdrawalsWithUsers);
-        setLoading(false);
-    });
-
-    return () => {
-        unsubscribeDeposits();
-        unsubscribeWithdrawals();
-    };
+    // Initial Withdrawals
+    const initialWithdrawalQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
+    const withdrawalSnapshot = await getDocs(initialWithdrawalQuery);
+    const withdrawalDocs = withdrawalSnapshot.docs;
+    const withdrawalsData = withdrawalDocs.map(d => ({ id: d.id, ...d.data() }));
+    const withdrawalsWithUsers = await fetchUserDetails(withdrawalsData);
+    setWithdrawalRequests(withdrawalsWithUsers);
+    setLastWithdrawalDoc(withdrawalDocs[withdrawalDocs.length - 1]);
+    setHasMoreWithdrawals(withdrawalDocs.length === PAGE_SIZE);
+    
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  const loadMore = async (type: 'deposits' | 'withdrawals') => {
+      if (type === 'deposits') {
+          if (!hasMoreDeposits || loadingMoreDeposits) return;
+          setLoadingMoreDeposits(true);
+
+          let q: Query = query(collection(db, "deposits"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
+          if(lastDepositDoc) {
+            q = query(q, startAfter(lastDepositDoc));
+          }
+
+          const snapshot = await getDocs(q);
+          const newDocs = snapshot.docs;
+          if (newDocs.length > 0) {
+              const newData = newDocs.map(d => ({ id: d.id, ...d.data() }));
+              const newDataWithUsers = await fetchUserDetails(newData);
+              setDepositRequests(prev => [...prev, ...newDataWithUsers]);
+              setLastDepositDoc(newDocs[newDocs.length - 1]);
+              setHasMoreDeposits(newDocs.length === PAGE_SIZE);
+          } else {
+              setHasMoreDeposits(false);
+          }
+          setLoadingMoreDeposits(false);
+      } else {
+          if (!hasMoreWithdrawals || loadingMoreWithdrawals) return;
+          setLoadingMoreWithdrawals(true);
+          
+          let q: Query = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
+          if(lastWithdrawalDoc) {
+            q = query(q, startAfter(lastWithdrawalDoc));
+          }
+
+          const snapshot = await getDocs(q);
+          const newDocs = snapshot.docs;
+          if (newDocs.length > 0) {
+              const newData = newDocs.map(d => ({ id: d.id, ...d.data() }));
+              const newDataWithUsers = await fetchUserDetails(newData);
+              setWithdrawalRequests(prev => [...prev, ...newDataWithUsers]);
+              setLastWithdrawalDoc(newDocs[newDocs.length - 1]);
+              setHasMoreWithdrawals(newDocs.length === PAGE_SIZE);
+          } else {
+              setHasMoreWithdrawals(false);
+          }
+          setLoadingMoreWithdrawals(false);
+      }
+  };
+
 
   useEffect(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();
@@ -119,7 +181,8 @@ export default function DepositsAndWithdrawalsPage() {
         
         transaction.update(requestDocRef, { status: status });
       });
-
+      
+      setDepositRequests(prev => prev.map(r => r.id === request.id ? {...r, status} : r));
       toast({ title: 'Success!', description: `Request has been ${status}.` });
     } catch (error: any) {
         console.error("Error updating request: ", error);
@@ -139,25 +202,23 @@ export default function DepositsAndWithdrawalsPage() {
                 throw new Error("This request has already been processed.");
             }
 
-            if (status === 'rejected') {
-                transaction.update(requestDocRef, { status: 'rejected' });
-                return;
-            }
-
             const userDoc = await transaction.get(userDocRef);
             if (!userDoc.exists()) throw new Error(`User not found!`);
 
-            const currentBalance = userDoc.data().balance || 0;
-            if (currentBalance < request.amount) {
-                 transaction.update(requestDocRef, { status: 'rejected' });
-                 throw new Error("Insufficient balance. Request rejected.");
+            if (status === 'approved') {
+                const currentBalance = userDoc.data().balance || 0;
+                if (currentBalance < request.amount) {
+                     transaction.update(requestDocRef, { status: 'rejected' });
+                     throw new Error("Insufficient balance. Request rejected.");
+                }
+                transaction.update(userDocRef, { balance: increment(-request.amount) });
+                transaction.update(statsDocRef, { totalBalance: increment(-request.amount) });
             }
-
-            transaction.update(userDocRef, { balance: increment(-request.amount) });
-            transaction.update(statsDocRef, { totalBalance: increment(-request.amount) });
-            transaction.update(requestDocRef, { status: 'approved' });
+            
+            transaction.update(requestDocRef, { status: status });
         });
-
+        
+        setWithdrawalRequests(prev => prev.map(r => r.id === request.id ? {...r, status} : r));
         toast({ title: 'Success!', description: `Withdrawal request has been ${status}.` });
     } catch(error: any) {
         console.error("Error processing withdrawal: ", error);
@@ -174,6 +235,9 @@ export default function DepositsAndWithdrawalsPage() {
             return <Badge variant="default">Pending</Badge>;
     }
   };
+
+  const pendingDeposits = depositRequests.filter(r => r.status === 'pending').length;
+  const pendingWithdrawals = withdrawalRequests.filter(r => r.status === 'pending').length;
 
   return (
      <div className="flex-1 space-y-4 p-4 sm:p-8">
@@ -200,8 +264,8 @@ export default function DepositsAndWithdrawalsPage() {
             ) : (
                 <Tabs defaultValue="deposits">
                     <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="deposits">Deposit Requests ({depositRequests.filter(r => r.status === 'pending').length})</TabsTrigger>
-                        <TabsTrigger value="withdrawals">Withdrawal Requests ({withdrawalRequests.filter(r => r.status === 'pending').length})</TabsTrigger>
+                        <TabsTrigger value="deposits">Deposit Requests ({pendingDeposits})</TabsTrigger>
+                        <TabsTrigger value="withdrawals">Withdrawal Requests ({pendingWithdrawals})</TabsTrigger>
                     </TabsList>
                     <TabsContent value="deposits">
                         <div className="overflow-x-auto mt-4">
@@ -240,6 +304,14 @@ export default function DepositsAndWithdrawalsPage() {
                             </Table>
                             {filteredDeposits.length === 0 && <p className="text-center text-muted-foreground mt-4">No deposit requests found.</p>}
                         </div>
+                         {hasMoreDeposits && !searchTerm && (
+                            <div className="text-center mt-4">
+                                <Button onClick={() => loadMore('deposits')} disabled={loadingMoreDeposits}>
+                                    {loadingMoreDeposits ? <Loader className="mr-2" /> : null}
+                                    Load More
+                                </Button>
+                            </div>
+                        )}
                     </TabsContent>
                     <TabsContent value="withdrawals">
                          <div className="overflow-x-auto mt-4">
@@ -278,6 +350,14 @@ export default function DepositsAndWithdrawalsPage() {
                             </Table>
                             {filteredWithdrawals.length === 0 && <p className="text-center text-muted-foreground mt-4">No withdrawal requests found.</p>}
                         </div>
+                        {hasMoreWithdrawals && !searchTerm && (
+                            <div className="text-center mt-4">
+                                <Button onClick={() => loadMore('withdrawals')} disabled={loadingMoreWithdrawals}>
+                                    {loadingMoreWithdrawals ? <Loader className="mr-2" /> : null}
+                                    Load More
+                                </Button>
+                            </div>
+                        )}
                     </TabsContent>
                 </Tabs>
             )}
