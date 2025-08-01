@@ -29,6 +29,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -287,12 +288,15 @@ export default function Home() {
         )}
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardContent className="p-6 text-center">
-            <h1 className="text-3xl font-bold animate-pulse">
-              Welcome to <span className="text-primary">MATKA KING</span>
-            </h1>
-            <p className="text-muted-foreground mt-2">Get the latest game reviews, breaking news, in-depth guides, and join a thriving community of gamers!</p>
-            <Button className="mt-6 w-full max-w-xs bg-primary text-primary-foreground font-bold text-lg h-12 rounded-lg">Explore Latest Articles</Button>
+          <CardContent className="p-0">
+             <Image
+                src="https://placehold.co/1200x400.png"
+                alt="Welcome Banner"
+                width={1200}
+                height={400}
+                className="w-full h-auto object-cover rounded-lg"
+                data-ai-hint="welcome banner"
+            />
           </CardContent>
         </Card>
 
