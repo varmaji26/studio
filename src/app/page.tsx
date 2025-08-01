@@ -214,7 +214,6 @@ export default function Home() {
     );
   }
 
-  const isAdmin = user && user.email === 'admin@matkaking.dev';
   const mobileNumber = user.email?.split('@')[0];
   const marqueeTexts = [
     "किसी भी समस्या के लिए संपर्क करें",
@@ -335,13 +334,11 @@ export default function Home() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Link href="/admin">
-              <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600">
-                <ShieldCheck className="h-6 w-6" strokeWidth={2.5} />
-              </Button>
-            </Link>
-          )}
+          <Link href="/admin">
+            <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600">
+              <ShieldCheck className="h-6 w-6" strokeWidth={2.5} />
+            </Button>
+          </Link>
         </div>
       </header>
       
@@ -357,7 +354,7 @@ export default function Home() {
              <Card className="bg-card/80 border-white/10 shadow-lg">
                 <CardContent className="p-0">
                     <Image
-                        src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
+                        src={settings.welcomeBanner.imageUrl}
                         alt="Welcome Banner"
                         width={1200}
                         height={400}
