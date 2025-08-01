@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -56,7 +56,7 @@ export default function ManageBannersPage() {
 
   const bannerImageRef = form.register("bannerImage");
 
-  useEffect(() => {
+  const fetchBanners = useCallback(() => {
     const q = query(collection(db, "banners"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const bannersData: Banner[] = [];
@@ -67,8 +67,13 @@ export default function ManageBannersPage() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = fetchBanners();
+    return () => unsubscribe();
+  }, [fetchBanners]);
   
   const onSubmit = async (values: BannerFormValues) => {
     setIsSubmitting(true);

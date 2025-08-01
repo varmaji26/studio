@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -45,7 +45,7 @@ export default function ManageUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
-   useEffect(() => {
+   const fetchUsers = useCallback(() => {
     setUsersLoading(true);
     const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
     
@@ -69,8 +69,13 @@ export default function ManageUsersPage() {
         setUsersLoading(false);
     });
 
-    return () => unsubscribe();
+    return unsubscribe;
   }, [toast]);
+
+  useEffect(() => {
+    const unsubscribe = fetchUsers();
+    return () => unsubscribe();
+  }, [fetchUsers]);
   
   useEffect(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -58,7 +58,7 @@ export default function ManageGamesPage() {
     },
   });
   
-   useEffect(() => {
+  const fetchGames = useCallback(() => {
     const q = query(collection(db, "games"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const gamesData: Game[] = [];
@@ -69,8 +69,13 @@ export default function ManageGamesPage() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = fetchGames();
+    return () => unsubscribe();
+  }, [fetchGames]);
 
   const onSubmit = async (values: GameFormValues) => {
     setIsSubmitting(true);
