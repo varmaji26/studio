@@ -298,33 +298,6 @@ export default function Home() {
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {gamesLoading ? (
-              <div className="flex justify-center items-center h-24">
-                <Loader className="h-8 w-8 text-primary" />
-              </div>
-            ) : games.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {games.map((game) => (
-                  <div key={game.id} className="flex justify-between items-center bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-                    <span className="text-sm font-medium text-white">{game.name}</span>
-                    <div className="text-right">
-                       <span className="text-sm font-bold text-primary">{game.result || `${game.openResult || '***'}-**-${game.closeResult || '**'}`}</span>
-                      <span className="text-xs text-muted-foreground ml-2">({formatTime(game.closeTime)})</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground">No results available right now.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
             <CardTitle className="text-xl">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-3 gap-2 sm:gap-4">
@@ -366,6 +339,33 @@ export default function Home() {
               <Phone className="h-6 w-6" />
               <span className="text-xs">Call Support</span>
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {gamesLoading ? (
+              <div className="flex justify-center items-center h-24">
+                <Loader className="h-8 w-8 text-primary" />
+              </div>
+            ) : games.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {games.map((game) => (
+                  <div key={game.id} className="flex justify-between items-center bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+                    <span className="text-sm font-medium text-white">{game.name}</span>
+                    <div className="text-right">
+                       <span className="text-sm font-bold text-primary">{game.result || `${game.openResult || '***'}-**-${game.closeResult || '**'}`}</span>
+                      <span className="text-xs text-muted-foreground ml-2">({formatTime(game.closeTime)})</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground">No results available right now.</p>
+            )}
           </CardContent>
         </Card>
 
