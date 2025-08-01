@@ -35,6 +35,13 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
+  welcomeBannerImage: z.any()
+    .optional()
+    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -44,8 +51,11 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  
   const [existingQrUrl, setExistingQrUrl] = useState<string | null>(null);
   const [existingQrStoragePath, setExistingQrStoragePath] = useState<string | null>(null);
+  const [existingWelcomeBannerUrl, setExistingWelcomeBannerUrl] = useState<string | null>(null);
+  const [existingWelcomeBannerStoragePath, setExistingWelcomeBannerStoragePath] = useState<string | null>(null);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -59,6 +69,7 @@ export default function SettingsPage() {
   });
 
   const qrCodeImageRef = form.register("qrCodeImage");
+  const welcomeBannerImageRef = form.register("welcomeBannerImage");
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -79,6 +90,10 @@ export default function SettingsPage() {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
             setExistingQrStoragePath(data.paymentDetails['Scan QR Code'].storagePath);
           }
+          if (data.welcomeBanner) {
+            setExistingWelcomeBannerUrl(data.welcomeBanner.imageUrl);
+            setExistingWelcomeBannerStoragePath(data.welcomeBanner.storagePath);
+          }
         }
       } catch (error) {
         console.error("Error fetching settings: ", error);
@@ -94,6 +109,42 @@ export default function SettingsPage() {
     fetchSettings();
   }, [form, toast]);
 
+  const uploadFile = async (file: File, path: string, oldStoragePath: string | null): Promise<{ downloadURL: string; storagePath: string }> => {
+    if (oldStoragePath) {
+        const oldStorageRef = ref(storage, oldStoragePath);
+        try {
+            await deleteObject(oldStorageRef);
+        } catch (e) {
+            console.warn("Could not delete old file, it might not exist:", e);
+        }
+    }
+    const storagePath = `${path}/${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    return new Promise((resolve, reject) => {
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(progress);
+            },
+            (error) => {
+                console.error('Upload failed:', error);
+                reject(new Error(`File upload failed: ${error.message}`));
+            },
+            async () => {
+                try {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    resolve({ downloadURL, storagePath });
+                } catch (e) {
+                    reject(e);
+                }
+            }
+        );
+    });
+};
+
+
   const onSubmit = async (values: SettingsFormValues) => {
     setIsSubmitting(true);
     setUploadProgress(null);
@@ -108,7 +159,11 @@ export default function SettingsPage() {
                 'UPI': { title: "UPI Payment", details: values.upiId },
                 'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
                 'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
-            }
+            },
+            welcomeBanner: existingWelcomeBannerUrl ? {
+                imageUrl: existingWelcomeBannerUrl,
+                storagePath: existingWelcomeBannerStoragePath,
+            } : null,
         };
 
         if (existingQrUrl) {
@@ -118,51 +173,30 @@ export default function SettingsPage() {
                 storagePath: existingQrStoragePath
             };
         }
+        
+        setUploadProgress(0);
 
         const qrFile = values.qrCodeImage?.[0];
         if (qrFile) {
-            setUploadProgress(0);
-            
-            if (existingQrStoragePath) {
-                const oldStorageRef = ref(storage, existingQrStoragePath);
-                try {
-                    await deleteObject(oldStorageRef);
-                } catch (e) {
-                    console.warn("Could not delete old QR code, it might not exist:", e);
-                }
-            }
+            const { downloadURL, storagePath } = await uploadFile(qrFile, 'qrcodes', existingQrStoragePath);
+            dataToSave.paymentDetails['Scan QR Code'] = {
+                title: 'Scan QR Code',
+                imageUrl: downloadURL,
+                storagePath: storagePath,
+            };
+            setExistingQrUrl(downloadURL);
+            setExistingQrStoragePath(storagePath);
+        }
 
-            const storagePath = `qrcodes/${Date.now()}_${qrFile.name}`;
-            const storageRef = ref(storage, storagePath);
-            const uploadTask = uploadBytesResumable(storageRef, qrFile);
-
-            await new Promise<void>((resolve, reject) => {
-                 uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        setUploadProgress(progress);
-                    },
-                    (error) => {
-                        console.error('Upload failed:', error);
-                        reject(new Error(`QR Code upload failed: ${error.message}`));
-                    },
-                    async () => {
-                        try {
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            dataToSave.paymentDetails['Scan QR Code'] = {
-                                title: 'Scan QR Code',
-                                imageUrl: downloadURL,
-                                storagePath: storagePath,
-                            };
-                            setExistingQrUrl(downloadURL);
-                            setExistingQrStoragePath(storagePath);
-                            resolve();
-                        } catch(e) {
-                            reject(e);
-                        }
-                    }
-                );
-            });
+        const welcomeBannerFile = values.welcomeBannerImage?.[0];
+        if (welcomeBannerFile) {
+            const { downloadURL, storagePath } = await uploadFile(welcomeBannerFile, 'welcome-banners', existingWelcomeBannerStoragePath);
+            dataToSave.welcomeBanner = {
+                imageUrl: downloadURL,
+                storagePath: storagePath,
+            };
+            setExistingWelcomeBannerUrl(downloadURL);
+            setExistingWelcomeBannerStoragePath(storagePath);
         }
         
         await setDoc(settingsDocRef, dataToSave, { merge: true });
@@ -172,10 +206,8 @@ export default function SettingsPage() {
             description: 'Settings have been saved.',
         });
 
-        if (qrFile) {
-            form.reset({ ...values, qrCodeImage: undefined });
-            setUploadProgress(null);
-        }
+        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined });
+        setUploadProgress(null);
 
     } catch (error: any) {
       console.error('Error updating settings: ', error);
@@ -228,6 +260,37 @@ export default function SettingsPage() {
                       <FormControl>
                         <Input placeholder="e.g., 919876543210" {...field} className="bg-input h-12 rounded-lg" />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <Separator />
+
+                <h3 className="text-lg font-semibold">Welcome Banner</h3>
+                {existingWelcomeBannerUrl && (
+                  <div className="flex flex-col items-center">
+                    <p className="text-sm text-muted-foreground mb-2">Current Welcome Banner:</p>
+                    <Image src={existingWelcomeBannerUrl} alt="Current Welcome Banner" width={400} height={133} className="rounded-md border p-1" unoptimized />
+                  </div>
+                )}
+                 <FormField
+                  control={form.control}
+                  name="welcomeBannerImage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{existingWelcomeBannerUrl ? 'Upload New Welcome Banner' : 'Upload Welcome Banner'}</FormLabel>
+                      <FormControl>
+                        <Input 
+                            type="file" 
+                            className="bg-input h-12 rounded-lg" 
+                            accept={ACCEPTED_IMAGE_TYPES.join(',')} 
+                            {...welcomeBannerImageRef}
+                         />
+                      </FormControl>
+                       <FormDescriptionComponent>
+                        Upload a banner image for the home page (recommended 1200x400).
+                      </FormDescriptionComponent>
                       <FormMessage />
                     </FormItem>
                   )}

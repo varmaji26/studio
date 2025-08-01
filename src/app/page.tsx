@@ -57,6 +57,9 @@ interface Banner extends DocumentData {
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
+    welcomeBanner?: {
+        imageUrl: string;
+    }
 }
 
 export default function Home() {
@@ -290,12 +293,13 @@ export default function Home() {
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardContent className="p-0">
              <Image
-                src="https://placehold.co/1200x400.png"
+                src={settings.welcomeBanner?.imageUrl || "https://placehold.co/1200x400.png"}
                 alt="Welcome Banner"
                 width={1200}
                 height={400}
                 className="w-full h-auto object-cover rounded-lg"
                 data-ai-hint="welcome banner"
+                unoptimized
             />
           </CardContent>
         </Card>
