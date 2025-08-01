@@ -186,7 +186,12 @@ export default function DepositsAndWithdrawalsPage() {
       toast({ title: 'Success!', description: `Request has been ${status}.` });
     } catch (error: any) {
         console.error("Error updating request: ", error);
-        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to update request.' });
+        if (error.message === "This request has already been processed.") {
+            toast({ variant: 'destructive', title: 'Request outdated', description: 'This request was already processed. Refreshing list...' });
+            setDepositRequests(prev => prev.filter(r => r.id !== request.id));
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to update request.' });
+        }
     }
   };
 
@@ -222,7 +227,12 @@ export default function DepositsAndWithdrawalsPage() {
         toast({ title: 'Success!', description: `Withdrawal request has been ${status}.` });
     } catch(error: any) {
         console.error("Error processing withdrawal: ", error);
-        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to process withdrawal.' });
+         if (error.message === "This request has already been processed.") {
+            toast({ variant: 'destructive', title: 'Request outdated', description: 'This request was already processed. Refreshing list...' });
+            setWithdrawalRequests(prev => prev.filter(r => r.id !== request.id));
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to process withdrawal.' });
+        }
     }
   };
   
