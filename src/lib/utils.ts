@@ -11,11 +11,12 @@ export function formatTime(timeString: string | undefined | null): string {
   }
 
   const [hours, minutes] = timeString.split(':');
-  const hour = parseInt(hours, 10);
+  let hour = parseInt(hours, 10);
   
   const ampm = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12; // Convert hour to 12-hour format (0 -> 12)
-  const paddedHour = formattedHour < 10 ? `0${formattedHour}` : formattedHour;
+  hour = hour % 12;
+  hour = hour ? hour : 12; // the hour '0' should be '12'
+  const formattedHour = hour < 10 ? `0${hour}` : hour;
 
-  return `${paddedHour}:${minutes} ${ampm}`;
+  return `${formattedHour}:${minutes} ${ampm}`;
 }
