@@ -111,11 +111,15 @@ export default function UpdateResultsPage() {
       const bidsSnapshot = await getDocs(bidsQuery);
       
       let winnersFound = 0;
+      let totalWinningAmount = 0;
 
       bidsSnapshot.forEach(bidDoc => {
         const bid = bidDoc.data();
         const bidNumbers = bid.numbers as string[];
         let isWinner = false;
+        let winningAmount = 0;
+        const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
+        const amountPerNumber = bid.totalAmount / bidNumbers.length;
 
         if (bid.betType.includes('Pana') && bidNumbers.includes(newOpenPana)) {
             isWinner = true;
@@ -125,15 +129,16 @@ export default function UpdateResultsPage() {
         
         if (isWinner) {
           winnersFound++;
-          const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
-          const winningAmount = (bid.totalAmount / bidNumbers.length) * winRate;
+          winningAmount = amountPerNumber * winRate;
+          totalWinningAmount += winningAmount;
           
           batch.update(bidDoc.ref, { status: 'won', winningAmount });
           
           const userDocRef = doc(db, 'users', bid.userId);
           batch.update(userDocRef, { balance: increment(winningAmount) });
         } else {
-          batch.update(bidDoc.ref, { status: 'lost' });
+          // Note: We don't mark as lost here, as they might win on the close or jodi bet.
+          // This will be handled in the close result update.
         }
       });
       
@@ -144,7 +149,7 @@ export default function UpdateResultsPage() {
 
       toast({
         title: 'Result Published!',
-        description: `Open result for ${game.name} updated. ${winnersFound} winner(s) found and paid.`,
+        description: `Open result for ${game.name} updated. ${winnersFound} winner(s) found and paid out a total of ₹${totalWinningAmount.toFixed(2)}.`,
       });
     } catch (error) {
       console.error('Error updating result: ', error);

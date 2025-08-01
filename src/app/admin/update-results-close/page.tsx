@@ -123,11 +123,15 @@ export default function UpdateResultsClosePage() {
         const bidsSnapshot = await getDocs(bidsQuery);
         
         let winnersFound = 0;
+        let totalWinningAmount = 0;
 
         bidsSnapshot.forEach(bidDoc => {
             const bid = bidDoc.data();
             const bidNumbers = bid.numbers as string[];
             let isWinner = false;
+            let winningAmount = 0;
+            const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
+            const amountPerNumber = bid.totalAmount / bidNumbers.length;
 
             if (bid.session === 'Close') {
                 if (bid.betType.includes('Pana') && bidNumbers.includes(newClosePana)) {
@@ -141,8 +145,8 @@ export default function UpdateResultsClosePage() {
             
             if (isWinner) {
                 winnersFound++;
-                const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
-                const winningAmount = (bid.totalAmount / bidNumbers.length) * winRate;
+                winningAmount = amountPerNumber * winRate;
+                totalWinningAmount += winningAmount;
                 
                 batch.update(bidDoc.ref, { status: 'won', winningAmount });
                 
@@ -160,7 +164,7 @@ export default function UpdateResultsClosePage() {
 
         toast({
             title: 'Result Published!',
-            description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found and paid.`,
+            description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found and paid out a total of ₹${totalWinningAmount.toFixed(2)}.`,
         });
     } catch (error) {
         console.error('Error updating result: ', error);
@@ -204,7 +208,7 @@ export default function UpdateResultsClosePage() {
                              {fields.map((field, index) => (
                                 <TableRow key={field.id}>
                                     <TableCell>{field.name}</TableCell>
-                                    <TableCell>{field.result || `${field.openResult || '***'}-${'**'}-${field.closeResult || '**'}`}</TableCell>
+                                    <TableCell>{field.result || `${field.openResult || '***'}-**-${field.closeResult || '**'}`}</TableCell>
                                     <TableCell>
                                         <FormField
                                             control={form.control}
