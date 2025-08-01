@@ -182,7 +182,7 @@ export default function Home() {
                 <div className="py-4">
                 <div className="flex flex-col items-center space-y-2">
                     <div className="p-3 bg-primary/20 rounded-full">
-                        <UserIcon className="h-10 w-10 text-primary" />
+                         <Image src={user.photoURL || "https://placehold.co/80x80.png"} alt="User Profile" width={80} height={80} className="rounded-full" data-ai-hint="avatar" unoptimized />
                     </div>
                     <p className="font-bold text-lg">{user.displayName}</p>
                     <p className="text-muted-foreground">+91 {mobileNumber}</p>
@@ -293,7 +293,7 @@ export default function Home() {
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardContent className="p-0">
              <Image
-                src={settings.welcomeBanner?.imageUrl || "https://placehold.co/1200x400.png"}
+                src="https://firebasestorage.googleapis.com/v0/b/auth-canvas-4a375.appspot.com/o/matka-king-banner.png?alt=media&token=8e9e422c-a28a-49a0-9721-dba02f37119f"
                 alt="Welcome Banner"
                 width={1200}
                 height={400}
