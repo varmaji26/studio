@@ -3,9 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,17 +13,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-const resultSchema = z.object({
-  result: z.string().min(1, 'Result is required.'),
-});
-
 const formSchema = z.object({
   games: z.array(
     z.object({
       id: z.string(),
       name: z.string(),
+      openResult: z.string(),
       closeResult: z.string(),
-      newResult: z.string().optional(),
+      newClosePana: z.string().optional(),
     })
   ),
 });
@@ -35,6 +30,7 @@ type GameResultFormValues = z.infer<typeof formSchema>;
 interface Game extends DocumentData {
     id: string;
     name: string;
+    openResult: string;
     closeResult: string;
 }
 
@@ -45,6 +41,13 @@ const WIN_RATES = {
   'Double Pana': 300,
   'Triple Pana': 600,
 };
+
+// Helper to calculate jodi from pana
+const calculateJodiDigit = (pana: string): string => {
+    if (!pana || pana.length !== 3 || !/^\d+$/.test(pana)) return '';
+    return (pana.split('').reduce((acc, digit) => acc + parseInt(digit, 10), 0) % 10).toString();
+};
+
 
 export default function UpdateResultsClosePage() {
   const { toast } = useToast();
@@ -69,7 +72,7 @@ export default function UpdateResultsClosePage() {
       querySnapshot.forEach((doc) => {
         gamesData.push({ id: doc.id, ...doc.data() } as Game);
       });
-      replace(gamesData.map(g => ({...g, newResult: ''})));
+      replace(gamesData.map(g => ({...g, newClosePana: ''})));
       setLoading(false);
     });
 
@@ -78,73 +81,94 @@ export default function UpdateResultsClosePage() {
 
   const handleUpdateResult = async (gameIndex: number) => {
     const game = form.getValues(`games.${gameIndex}`);
-    const newResult = game.newResult;
-    const session = 'Close'; // Hardcoded to Close
-
-    if (!newResult) {
-      form.setError(`games.${gameIndex}.newResult`, {
+    const newClosePana = game.newClosePana;
+    
+    if (!newClosePana || newClosePana.length !== 3) {
+      form.setError(`games.${gameIndex}.newClosePana`, {
         type: 'manual',
-        message: 'Result is required.',
+        message: 'Pana must be 3 digits.',
       });
       return;
     }
     
     setIsSubmitting(game.id);
+
+    const closeJodiDigit = calculateJodiDigit(newClosePana);
     
     try {
-      const batch = writeBatch(db);
-      const gameDocRef = doc(db, 'games', game.id);
-      
-      batch.update(gameDocRef, { closeResult: newResult });
-
-      const bidsQuery = query(
-        collection(db, 'bids'),
-        where('gameId', '==', game.id),
-        where('session', '==', session),
-        where('status', '==', 'running')
-      );
-      const bidsSnapshot = await getDocs(bidsQuery);
-      
-      let winnersFound = 0;
-
-      bidsSnapshot.forEach(bidDoc => {
-        const bid = bidDoc.data();
-        const bidNumbers = bid.numbers as string[];
+        const batch = writeBatch(db);
+        const gameDocRef = doc(db, 'games', game.id);
+        const gameDocSnap = await getDoc(gameDocRef);
+        const currentGameData = gameDocSnap.data();
         
-        const isWinner = bidNumbers.some(num => newResult?.includes(num));
-        
-        if (isWinner) {
-          winnersFound++;
-          const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
-          const winningAmount = bid.amountPerBet * winRate;
-          
-          batch.update(bidDoc.ref, { status: 'won', winningAmount });
-          
-          const userDocRef = doc(db, 'users', bid.userId);
-          batch.update(userDocRef, { balance: increment(winningAmount) });
-        } else {
-          batch.update(bidDoc.ref, { status: 'lost' });
-        }
-      });
-      
-      await batch.commit();
-      
-      form.setValue(`games.${gameIndex}.newResult`, '');
-      form.clearErrors(`games.${gameIndex}.newResult`);
+        const openJodiDigit = currentGameData?.openJodiDigit || calculateJodiDigit(currentGameData?.openResult || '');
+        const finalJodi = `${openJodiDigit}${closeJodiDigit}`;
+        const finalResult = `${currentGameData?.openResult || '***'}-${finalJodi}-${newClosePana}`;
 
-      toast({
-        title: 'Result Published!',
-        description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found and paid.`,
-      });
+        // Update the close result and the final combined result string
+        batch.update(gameDocRef, { 
+            closeResult: newClosePana,
+            closeJodiDigit: closeJodiDigit,
+            result: finalResult,
+        });
+
+        // Process bets for Close Pana, Close Single Digit, and Jodi Digit
+        const bidsQuery = query(
+            collection(db, 'bids'),
+            where('gameId', '==', game.id),
+            where('status', '==', 'running')
+        );
+        const bidsSnapshot = await getDocs(bidsQuery);
+        
+        let winnersFound = 0;
+
+        bidsSnapshot.forEach(bidDoc => {
+            const bid = bidDoc.data();
+            const bidNumbers = bid.numbers as string[];
+            let isWinner = false;
+
+            if (bid.session === 'Close') {
+                if (bid.betType.includes('Pana') && bidNumbers.includes(newClosePana)) {
+                    isWinner = true;
+                } else if (bid.betType === 'Single Digit' && bidNumbers.includes(closeJodiDigit)) {
+                    isWinner = true;
+                }
+            } else if (bid.betType === 'Jodi Digit' && bidNumbers.includes(finalJodi)) {
+                isWinner = true;
+            }
+            
+            if (isWinner) {
+                winnersFound++;
+                const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
+                const winningAmount = (bid.totalAmount / bidNumbers.length) * winRate;
+                
+                batch.update(bidDoc.ref, { status: 'won', winningAmount });
+                
+                const userDocRef = doc(db, 'users', bid.userId);
+                batch.update(userDocRef, { balance: increment(winningAmount) });
+            } else {
+                batch.update(bidDoc.ref, { status: 'lost' });
+            }
+        });
+        
+        await batch.commit();
+        
+        form.setValue(`games.${gameIndex}.newClosePana`, '');
+        form.clearErrors(`games.${gameIndex}.newClosePana`);
+
+        toast({
+            title: 'Result Published!',
+            description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found and paid.`,
+        });
     } catch (error) {
-      console.error('Error updating result: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update result. Please try again.',
-      });
+        console.error('Error updating result: ', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to update result. Please try again.',
+        });
     } finally {
-      setIsSubmitting(null);
+        setIsSubmitting(null);
     }
   };
 
@@ -154,7 +178,7 @@ export default function UpdateResultsClosePage() {
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl">Update Game Results (Close)</CardTitle>
-          <CardDescription>Update the Close results for all available games here. This will also process payouts.</CardDescription>
+          <CardDescription>Update the Close Pana results here. Close Jodi and the final Jodi will be calculated automatically.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -168,8 +192,9 @@ export default function UpdateResultsClosePage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Game Name</TableHead>
-                                <TableHead>Current Close Result</TableHead>
-                                <TableHead>New Close Result</TableHead>
+                                <TableHead>Current Result</TableHead>
+                                <TableHead>New Close Pana</TableHead>
+                                <TableHead>Auto Jodi (Close)</TableHead>
                                 <TableHead className="text-right">Action</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -177,23 +202,35 @@ export default function UpdateResultsClosePage() {
                              {fields.map((field, index) => (
                                 <TableRow key={field.id}>
                                     <TableCell>{field.name}</TableCell>
-                                    <TableCell>{field.closeResult || '**'}</TableCell>
+                                    <TableCell>{`${field.openResult || '***'}-${field.closeResult || '**'}`}</TableCell>
                                     <TableCell>
                                         <FormField
                                             control={form.control}
-                                            name={`games.${index}.newResult`}
+                                            name={`games.${index}.newClosePana`}
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
                                                         <Input 
-                                                            placeholder="e.g. 89"
+                                                            placeholder="Enter 3-digit pana"
                                                             {...field} 
                                                             className="bg-input rounded-lg"
+                                                            maxLength={3}
+                                                            onChange={(e) => {
+                                                                field.onChange(e);
+                                                                form.trigger(`games.${index}.newClosePana`);
+                                                            }}
                                                          />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input
+                                            readOnly
+                                            value={calculateJodiDigit(form.watch(`games.${index}.newClosePana`) || '')}
+                                            className="bg-muted border-none font-bold text-center"
                                         />
                                     </TableCell>
                                     <TableCell className="text-right">
