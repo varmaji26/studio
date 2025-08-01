@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
-import { auth, db } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc } from 'firebase/firestore';
+import { auth, db, storage } from '@/lib/firebase';
+import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Menu,
@@ -27,6 +28,7 @@ import {
   Landmark,
   CreditCard,
   LogOut,
+  Upload,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -37,6 +39,9 @@ import Autoplay from "embla-carousel-autoplay"
 import { formatTime, cn } from '@/lib/utils';
 import { AddPointsDialog } from '@/components/add-points-dialog';
 import { WithdrawFundsDialog } from '@/components/withdraw-funds-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 interface Game extends DocumentData {
   id: string;
@@ -65,6 +70,7 @@ interface AppSettings extends DocumentData {
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [games, setGames] = useState<Game[]>([]);
   const [gamesLoading, setGamesLoading] = useState(true);
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -73,6 +79,8 @@ export default function Home() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -151,6 +159,7 @@ export default function Home() {
     }
   };
 
+
   if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -181,9 +190,10 @@ export default function Home() {
                 </SheetHeader>
                 <div className="py-4">
                 <div className="flex flex-col items-center space-y-2">
-                    <div className="p-3 bg-primary/20 rounded-full">
-                         <Image src={user.photoURL || "https://placehold.co/80x80.png"} alt="User Profile" width={80} height={80} className="rounded-full" data-ai-hint="avatar" unoptimized />
-                    </div>
+                     <Avatar className="h-20 w-20">
+                        <AvatarImage src={user.photoURL || "https://placehold.co/80x80.png"} alt="User Profile" />
+                        <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
+                    </Avatar>
                     <p className="font-bold text-lg">{user.displayName}</p>
                     <p className="text-muted-foreground">+91 {mobileNumber}</p>
                 </div>
@@ -291,20 +301,6 @@ export default function Home() {
         )}
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardContent className="p-0">
-             <Image
-                src="https://firebasestorage.googleapis.com/v0/b/auth-canvas-4a375.appspot.com/o/matka-king-banner.png?alt=media&token=8e9e422c-a28a-49a0-9721-dba02f37119f"
-                alt="Welcome Banner"
-                width={1200}
-                height={400}
-                className="w-full h-auto object-cover rounded-lg"
-                data-ai-hint="welcome banner"
-                unoptimized
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl">Quick Actions</CardTitle>
           </CardHeader>
@@ -347,6 +343,20 @@ export default function Home() {
               <Phone className="h-6 w-6" />
               <span className="text-xs">Call Support</span>
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardContent className="p-0">
+             <Image
+                src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
+                alt="Welcome Banner"
+                width={1200}
+                height={400}
+                className="w-full h-auto object-cover rounded-lg"
+                data-ai-hint="king"
+                unoptimized
+            />
           </CardContent>
         </Card>
 
