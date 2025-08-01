@@ -67,6 +67,17 @@ interface AppSettings extends DocumentData {
     }
 }
 
+const MarqueeItem = ({ text }: { text: string }) => (
+    <div className="flex items-center mx-4">
+        <Trophy className="h-6 w-6 text-yellow-400 mr-2" />
+        <div className="flex flex-col items-center">
+            <span className="text-xl font-bold tracking-wider">MATKA KING</span>
+            <span className="text-xs">{text}</span>
+        </div>
+    </div>
+);
+
+
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -159,6 +170,38 @@ export default function Home() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedFile || !user) return;
+    setIsUploading(true);
+
+    const storageRef = ref(storage, `profile-images/${user.uid}/${selectedFile.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+
+    uploadTask.on('state_changed', 
+        () => {}, // progress
+        (error) => {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your image.' });
+            setIsUploading(false);
+        },
+        async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            await updateProfile(user, { photoURL: downloadURL });
+            await updateDoc(doc(db, 'users', user.uid), { photoURL: downloadURL });
+
+            toast({ title: 'Success', description: 'Profile image updated!' });
+            setSelectedFile(null);
+            setIsUploading(false);
+            // Manually trigger a re-render or state update if needed, e.g., setUser({...user, photoURL: downloadURL})
+        }
+    );
+  };
 
   if (loading || !user) {
     return (
@@ -170,6 +213,11 @@ export default function Home() {
 
   const isAdmin = user && user.email === '8080601370@authcanvas.dev';
   const mobileNumber = user.email?.split('@')[0];
+  const marqueeTexts = [
+    "किसी भी समस्या के लिए संपर्क करें",
+    "किसी भी प्रकार की सहायता के लिए हमें कॉल करें",
+    "किसी भी समय हमें कॉल करें"
+  ];
 
   return (
     <div className="dark min-h-screen bg-background text-foreground">
@@ -191,11 +239,28 @@ export default function Home() {
                 <div className="py-4">
                 <div className="flex flex-col items-center space-y-2">
                      <Avatar className="h-20 w-20">
-                        <AvatarImage src={user.photoURL || "https://placehold.co/80x80.png"} alt="User Profile" />
+                        <AvatarImage src={user.photoURL || "https://placehold.co/80x80.png"} alt={user.displayName || 'User'} />
                         <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
                     </Avatar>
                     <p className="font-bold text-lg">{user.displayName}</p>
                     <p className="text-muted-foreground">+91 {mobileNumber}</p>
+                    <div className="flex items-center space-x-2 mt-2">
+                         <label htmlFor="profile-image-upload" className="cursor-pointer">
+                            <Button asChild variant="outline" size="sm">
+                                <span className="flex items-center gap-1">
+                                    <Upload className="h-3 w-3"/>
+                                    Choose Image
+                                </span>
+                            </Button>
+                            <input id="profile-image-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                         </label>
+                        {selectedFile && (
+                            <Button size="sm" onClick={handleImageUpload} disabled={isUploading}>
+                                {isUploading ? <Loader className="h-4 w-4" /> : 'Upload'}
+                            </Button>
+                        )}
+                    </div>
+                     {selectedFile && <p className="text-xs text-muted-foreground truncate w-48 text-center">{selectedFile.name}</p>}
                 </div>
                 </div>
                 <Separator className="bg-white/10 my-2" />
@@ -268,6 +333,20 @@ export default function Home() {
           )}
         </div>
       </header>
+
+      <div className="relative flex overflow-x-hidden bg-red-900 text-white py-2">
+        <div className="flex animate-marquee whitespace-nowrap">
+            {marqueeTexts.concat(marqueeTexts).map((text, index) => (
+                <MarqueeItem key={index} text={text} />
+            ))}
+        </div>
+        <div className="absolute top-0 flex animate-marquee whitespace-nowrap" style={{ animationName: 'marquee2', animationDuration: '20s' }}>
+             {marqueeTexts.concat(marqueeTexts).map((text, index) => (
+                <MarqueeItem key={index} text={text} />
+            ))}
+        </div>
+      </div>
+      
       <main className="flex flex-col gap-4 p-4">
         {bannersLoading ? (
             <Card className="bg-card/80 border-white/10 shadow-lg flex items-center justify-center h-[200px]">
@@ -300,20 +379,6 @@ export default function Home() {
             </Carousel>
         )}
 
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardContent className="p-0">
-             <Image
-                src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Welcome Banner"
-                width={1200}
-                height={400}
-                className="w-full h-auto object-cover rounded-lg"
-                data-ai-hint="king"
-                unoptimized
-            />
-          </CardContent>
-        </Card>
-        
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl">Quick Actions</CardTitle>
@@ -357,6 +422,20 @@ export default function Home() {
               <Phone className="h-6 w-6" />
               <span className="text-xs">Call Support</span>
             </Button>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardContent className="p-0">
+             <Image
+                src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
+                alt="Welcome Banner"
+                width={1200}
+                height={400}
+                className="w-full h-auto object-cover rounded-lg"
+                data-ai-hint="king"
+                unoptimized
+            />
           </CardContent>
         </Card>
 
