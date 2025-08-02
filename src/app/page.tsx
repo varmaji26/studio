@@ -350,9 +350,9 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-2 sm:gap-4">
              <AddPointsDialog user={user}>
-                <Button className="h-16 flex-col gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
+                <Button className="h-16 flex-col gap-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30">
                     <Banknote className="h-6 w-6" />
-                    <span className="text-xs">Deposit Funds</span>
+                    <span className="text-base font-bold">Deposit Funds</span>
                 </Button>
              </AddPointsDialog>
             <Button 
