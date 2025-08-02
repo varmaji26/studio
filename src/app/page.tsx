@@ -507,12 +507,12 @@ export default function Home() {
                             </p>
                             <Button 
                                 onClick={(e) => handlePlayNowClick(e, game.id)}
-                                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg"
+                                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg [text-shadow:2px_2px_4px_#000]"
                                 disabled={bettingClosed}
                             >
-                                <span>Play Now</span>
+                                Play Now
                             </Button>
-                            <div className="flex items-center justify-center text-sm font-bold text-white mt-2">
+                            <div className="flex items-center justify-center text-lg font-bold text-white mt-2">
                                 <Clock className="h-4 w-4 mr-2" />
                                 <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
                             </div>
