@@ -70,6 +70,10 @@ interface AppSettings extends DocumentData {
     }
 }
 
+interface UserProfile extends DocumentData {
+  balance?: number;
+}
+
 const MarqueeItem = ({ text }: { text: string }) => (
     <div className="flex items-center mx-4">
         <Trophy className="h-6 w-6 text-yellow-400 mr-2" />
@@ -90,6 +94,7 @@ export default function Home() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(true);
   const [settings, setSettings] = useState<AppSettings>({});
+  const [userProfile, setUserProfile] = useState<UserProfile>({ balance: 0 });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
@@ -110,6 +115,13 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) return;
+
+    const userDocRef = doc(db, 'users', user.uid);
+    const unsubscribeUserProfile = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+            setUserProfile(doc.data() as UserProfile);
+        }
+    });
     
     const gamesQuery = query(collection(db, 'games'), where('active', '==', true));
     const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
@@ -156,6 +168,7 @@ export default function Home() {
         unsubscribeGames();
         unsubscribeBanners();
         unsubscribeSettings();
+        unsubscribeUserProfile();
     };
   }, [user, currentDay]);
 
@@ -310,6 +323,10 @@ export default function Home() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
+                <Wallet className="h-6 w-6 text-green-400" />
+                <span className="font-bold text-lg text-white">₹{userProfile?.balance?.toFixed(2) ?? '0.00'}</span>
+            </div>
           {isAdmin && (
             <Link href="/admin">
               <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600">
