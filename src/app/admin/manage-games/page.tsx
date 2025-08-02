@@ -18,9 +18,10 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { EditGameDialog } from '@/components/edit-game-dialog';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { formatTime } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
+const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 const gameSchema = z.object({
   name: z.string().min(1, 'Game name is required.'),
@@ -29,6 +30,9 @@ const gameSchema = z.object({
   status: z.string().min(1, 'Status is required.'),
   openTime: z.string().min(1, 'Open time is required.'),
   closeTime: z.string().min(1, 'Close time is required.'),
+  activeDays: z.array(z.string()).refine((value) => value.some((day) => day), {
+    message: "You have to select at least one day.",
+  }),
 });
 
 type GameFormValues = z.infer<typeof gameSchema>;
@@ -39,7 +43,8 @@ interface Game extends DocumentData {
     openTime: string;
     closeTime: string;
     status: string;
-    active: boolean;
+    active: boolean; // Master switch
+    activeDays?: string[]; // Days of the week it runs
 }
 
 export default function ManageGamesPage() {
@@ -47,6 +52,13 @@ export default function ManageGamesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentDay, setCurrentDay] = useState('');
+
+  useEffect(() => {
+    const date = new Date();
+    const dayName = date.toLocaleString('en-US', { weekday: 'long' });
+    setCurrentDay(dayName);
+  }, []);
 
   const form = useForm<GameFormValues>({
     resolver: zodResolver(gameSchema),
@@ -57,6 +69,7 @@ export default function ManageGamesPage() {
       status: 'Betting is Open',
       openTime: '',
       closeTime: '',
+      activeDays: daysOfWeek, // Select all days by default
     },
   });
   
@@ -90,8 +103,8 @@ export default function ManageGamesPage() {
 
       batch.set(newGameRef, {
         ...values,
-        result: fullResult, // Combined result for compatibility if needed elsewhere
-        active: true, // Default to active
+        result: fullResult,
+        active: true, // Master switch is active by default
         createdAt: serverTimestamp(),
       });
       
@@ -150,7 +163,7 @@ export default function ManageGamesPage() {
         });
         toast({
             title: 'Status Updated',
-            description: `Game status has been changed to ${!currentStatus ? 'Active' : 'Inactive'}.`
+            description: `Game master status has been changed to ${!currentStatus ? 'Active' : 'Inactive'}.`
         });
     } catch (error) {
         console.error("Error updating status: ", error);
@@ -161,6 +174,13 @@ export default function ManageGamesPage() {
         });
     }
   };
+  
+  const isGameActiveToday = (game: Game) => {
+    if (!game.active) return false; // Master switch is off
+    if (!game.activeDays || game.activeDays.length === 0) return true; // if no days are set, assume it runs everyday
+    return game.activeDays.includes(currentDay);
+  };
+
 
   return (
     <div className="flex-1 space-y-8 p-4 sm:p-8">
@@ -225,6 +245,53 @@ export default function ManageGamesPage() {
                     )}
                     />
                 </div>
+                 <FormField
+                  control={form.control}
+                  name="activeDays"
+                  render={() => (
+                    <FormItem>
+                       <div className="mb-4">
+                        <FormLabel className="text-base">Game Active Days</FormLabel>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {daysOfWeek.map((day) => (
+                          <FormField
+                            key={day}
+                            control={form.control}
+                            name="activeDays"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={day}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(day)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, day])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== day
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {day}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting}>
                   {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                   Add Game
@@ -237,7 +304,7 @@ export default function ManageGamesPage() {
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl">All Games</CardTitle>
-            <CardDescription>View, edit, or delete existing games.</CardDescription>
+            <CardDescription>View, edit, or delete existing games. Today is {currentDay}.</CardDescription>
           </CardHeader>
           <CardContent>
              {loading ? (
@@ -253,11 +320,14 @@ export default function ManageGamesPage() {
                                 <TableHead>Game Name</TableHead>
                                 <TableHead>Game Status</TableHead>
                                 <TableHead>Betting Status</TableHead>
+                                <TableHead>Master Control</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {games.map((game, index) => (
+                            {games.map((game, index) => {
+                                const isActiveToday = isGameActiveToday(game);
+                                return (
                                 <TableRow key={game.id}>
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>
@@ -267,18 +337,23 @@ export default function ManageGamesPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={game.active ? 'default' : 'destructive'} className={game.active ? 'bg-green-500 text-white' : ''}>
-                                            {game.active ? 'ACTIVE' : 'INACTIVE'}
+                                        <Badge variant={isActiveToday ? 'default' : 'destructive'} className={isActiveToday ? 'bg-green-500 text-white' : ''}>
+                                            {isActiveToday ? 'ACTIVE' : 'INACTIVE'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>{game.status}</TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex flex-wrap gap-2 justify-end">
+                                    <TableCell>
+                                        <div className="flex items-center space-x-2">
                                             <Switch
                                                 checked={game.active}
                                                 onCheckedChange={() => handleStatusToggle(game.id, game.active)}
-                                                aria-label={`Toggle game status for ${game.name}`}
+                                                aria-label={`Toggle game master status for ${game.name}`}
                                             />
+                                            <span className="text-xs text-muted-foreground">{game.active ? 'On' : 'Off'}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex flex-wrap gap-2 justify-end">
                                             <EditGameDialog game={game}>
                                                  <Button size="sm" variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400">Edit</Button>
                                             </EditGameDialog>
@@ -302,7 +377,8 @@ export default function ManageGamesPage() {
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                                )
+                            })}
                         </TableBody>
                     </Table>
                 </div>
@@ -315,3 +391,5 @@ export default function ManageGamesPage() {
     </div>
   );
 }
+
+    
