@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { doc, onSnapshot, DocumentData, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Gamepad2, Wallet, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { Users, Gamepad2, Wallet, ArrowUpCircle, ArrowDownCircle, TrendingUp, TrendingDown, Scale } from 'lucide-react';
 import { Loader } from '@/components/loader';
 import { useAuth } from '@/hooks/use-auth';
 import { setInitialStats } from '@/lib/stats-helper';
@@ -15,16 +15,17 @@ interface StatCardProps {
   value: string;
   icon: React.ElementType;
   color?: string;
+  textColor?: string;
 }
 
-const StatCard = ({ title, value, icon: Icon, color }: StatCardProps) => (
+const StatCard = ({ title, value, icon: Icon, color, textColor }: StatCardProps) => (
     <Card className="bg-card/80 border-white/10 shadow-lg" style={{ borderLeft: `4px solid ${color}`}}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <Icon className="h-5 w-5 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-bold" style={{ color: textColor }}>{value}</div>
       </CardContent>
     </Card>
 );
@@ -42,10 +43,17 @@ interface DailyStats {
     yesterdaysWithdrawals: number;
 }
 
+interface BiddingStats {
+    todaysBidding: number;
+    todaysWinning: number;
+    todaysProfitLoss: number;
+}
+
 export default function AdminDashboardPage() {
     const { user } = useAuth();
     const [stats, setStats] = useState<AppStats>({ totalUsers: 0, totalGames: 0, totalBalance: 0 });
     const [dailyStats, setDailyStats] = useState<DailyStats>({ todaysDeposits: 0, todaysWithdrawals: 0, yesterdaysDeposits: 0, yesterdaysWithdrawals: 0 });
+    const [biddingStats, setBiddingStats] = useState<BiddingStats>({ todaysBidding: 0, todaysWinning: 0, todaysProfitLoss: 0 });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -66,7 +74,7 @@ export default function AdminDashboardPage() {
             setLoading(false);
         });
 
-        const fetchDailyStats = async () => {
+        const fetchDailyAndBiddingStats = async () => {
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const startOfYesterday = new Date(startOfToday);
@@ -76,24 +84,37 @@ export default function AdminDashboardPage() {
             const todayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfToday));
             const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
             const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
+            const todayBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfToday));
 
             try {
                 const [
                     todayDepositsSnap,
                     todayWithdrawalsSnap,
                     yesterdayDepositsSnap,
-                    yesterdayWithdrawalsSnap
+                    yesterdayWithdrawalsSnap,
+                    todayBidsSnap
                 ] = await Promise.all([
                     getDocs(todayDepositsQuery),
                     getDocs(todayWithdrawalsQuery),
                     getDocs(yesterdayDepositsQuery),
-                    getDocs(yesterdayWithdrawalsQuery)
+                    getDocs(yesterdayWithdrawalsQuery),
+                    getDocs(todayBidsQuery)
                 ]);
                 
                 const sumApprovedAmount = (snapshot: DocumentData) => snapshot.docs
                     .map((doc: DocumentData) => doc.data())
                     .filter((data: DocumentData) => data.status === 'approved')
                     .reduce((sum: number, data: DocumentData) => sum + (data.amount || 0), 0);
+                
+                let todaysBidding = 0;
+                let todaysWinning = 0;
+                todayBidsSnap.forEach(doc => {
+                    const bid = doc.data();
+                    todaysBidding += bid.totalAmount || 0;
+                    if (bid.status === 'won') {
+                        todaysWinning += bid.winningAmount || 0;
+                    }
+                });
 
                 setDailyStats({
                     todaysDeposits: sumApprovedAmount(todayDepositsSnap),
@@ -101,13 +122,19 @@ export default function AdminDashboardPage() {
                     yesterdaysDeposits: sumApprovedAmount(yesterdayDepositsSnap),
                     yesterdaysWithdrawals: sumApprovedAmount(yesterdayWithdrawalsSnap)
                 });
+                
+                setBiddingStats({
+                    todaysBidding,
+                    todaysWinning,
+                    todaysProfitLoss: todaysBidding - todaysWinning
+                });
 
             } catch (error) {
                 console.error("Error fetching daily stats: ", error);
             }
         }
 
-        fetchDailyStats();
+        fetchDailyAndBiddingStats();
 
         return () => unsubscribe();
     }, [user]);
@@ -138,6 +165,18 @@ export default function AdminDashboardPage() {
             <StatCard title="Withdrawals Given Today" value={`₹${dailyStats.todaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
             <StatCard title="Yesterday's Deposits" value={`₹${dailyStats.yesterdaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#10b981" />
             <StatCard title="Withdrawal Given Yesterday" value={`₹${dailyStats.yesterdaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#ef4444" />
+        </div>
+        
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-6">
+            <StatCard title="Today's Bidding" value={`₹${biddingStats.todaysBidding.toLocaleString()}`} icon={TrendingUp} color="#38bdf8" />
+            <StatCard title="Today's Winning" value={`₹${biddingStats.todaysWinning.toLocaleString()}`} icon={TrendingDown} color="#fb7185" />
+            <StatCard 
+                title="Today's Profit / Loss" 
+                value={`₹${biddingStats.todaysProfitLoss.toLocaleString()}`} 
+                icon={Scale} 
+                color={biddingStats.todaysProfitLoss >= 0 ? "#4ade80" : "#f87171"}
+                textColor={biddingStats.todaysProfitLoss >= 0 ? "#4ade80" : "#f87171"}
+            />
         </div>
     </div>
   );
