@@ -100,11 +100,18 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     
-    const gamesQuery = query(collection(db, 'games'), where('active', '==', true), orderBy("createdAt", "asc"));
+    // Query without ordering to avoid composite index requirement
+    const gamesQuery = query(collection(db, 'games'), where('active', '==', true));
     const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
       const gamesData: Game[] = [];
       querySnapshot.forEach((doc) => {
         gamesData.push({ id: doc.id, ...doc.data() } as Game);
+      });
+      // Sort on the client-side
+      gamesData.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis() || 0;
+          const timeB = b.createdAt?.toMillis() || 0;
+          return timeA - timeB; // ascending
       });
       setGames(gamesData);
       setGamesLoading(false);
