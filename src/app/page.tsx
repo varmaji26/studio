@@ -330,7 +330,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle className="text-xl">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-4 gap-2 sm:gap-4">
+          <CardContent className="grid grid-cols-1 gap-2 sm:gap-4">
              <AddPointsDialog user={user}>
                 <Button className="h-16 flex-col gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
                     <Banknote className="h-6 w-6" />
