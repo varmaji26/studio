@@ -25,6 +25,7 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 const settingsSchema = z.object({
   whatsappNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
   callSupportNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
+  telegramLink: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
   upiId: z.string().optional(),
   bankDetails: z.string().optional(),
   paytmNumber: z.string().optional(),
@@ -62,6 +63,7 @@ export default function SettingsPage() {
     defaultValues: {
       whatsappNumber: '',
       callSupportNumber: '',
+      telegramLink: '',
       upiId: '',
       bankDetails: '',
       paytmNumber: '',
@@ -82,6 +84,7 @@ export default function SettingsPage() {
           form.reset({
             whatsappNumber: data.whatsappNumber || '',
             callSupportNumber: data.callSupportNumber || '',
+            telegramLink: data.telegramLink || '',
             upiId: data.paymentDetails?.UPI?.details || '',
             bankDetails: data.paymentDetails?.['Bank Transfer']?.details || '',
             paytmNumber: data.paymentDetails?.['Paytm/PhonePe']?.details || '',
@@ -155,6 +158,7 @@ export default function SettingsPage() {
         const dataToSave: any = {
             whatsappNumber: values.whatsappNumber,
             callSupportNumber: values.callSupportNumber,
+            telegramLink: values.telegramLink,
             paymentDetails: {
                 'UPI': { title: "UPI Payment", details: values.upiId },
                 'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
@@ -259,6 +263,19 @@ export default function SettingsPage() {
                       <FormLabel>Call Support Number</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., 919876543210" {...field} className="bg-input h-12 rounded-lg" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="telegramLink"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telegram Link</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., https://t.me/yourchannel" {...field} className="bg-input h-12 rounded-lg" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
