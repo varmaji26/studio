@@ -107,11 +107,9 @@ export default function Home() {
       querySnapshot.forEach((doc) => {
         gamesData.push({ id: doc.id, ...doc.data() } as Game);
       });
-      // Sort on the client-side
+      // Sort on the client-side by openTime
       gamesData.sort((a, b) => {
-          const timeA = a.createdAt?.toMillis() || 0;
-          const timeB = b.createdAt?.toMillis() || 0;
-          return timeA - timeB; // ascending
+          return a.openTime.localeCompare(b.openTime);
       });
       setGames(gamesData);
       setGamesLoading(false);
@@ -219,7 +217,7 @@ export default function Home() {
                 <div className="py-4">
                 <div className="flex flex-col items-center space-y-2">
                      <Avatar className="h-20 w-20">
-                        <AvatarImage src={user.photoURL || "https://placehold.co/80x80.png"} alt={user.displayName || 'User'} />
+                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
                         <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
                     </Avatar>
                     <p className="font-bold text-lg">{user.displayName}</p>
@@ -309,7 +307,7 @@ export default function Home() {
              <Card className="bg-card/80 border-white/10 shadow-lg">
                 <CardContent className="p-0">
                     <Image
-                        src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
+                        src={settings.welcomeBanner.imageUrl}
                         alt="Welcome Banner"
                         width={1200}
                         height={400}
