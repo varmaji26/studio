@@ -350,13 +350,13 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-2 sm:gap-4">
              <AddPointsDialog user={user}>
-                <Button className="h-16 flex-col gap-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30">
+                <Button className="h-16 flex-col gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
                     <Banknote className="h-6 w-6" />
-                    <span className="text-base font-bold">Deposit Funds</span>
+                    <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">Deposit Funds</span>
                 </Button>
              </AddPointsDialog>
             <Button 
-                className="h-16 flex-col gap-1 bg-green-500 text-white hover:bg-green-600 shadow-lg shadow-green-500/30"
+                className="h-16 flex-col gap-1 bg-green-500 text-white hover:bg-green-600"
                 onClick={handleWhatsAppSupport}
                 disabled={!settings.whatsappNumber}
             >
@@ -377,10 +377,10 @@ export default function Home() {
                         clipRule="evenodd"
                     />
                 </svg>
-              <span className="text-base font-bold">WhatsApp</span>
+              <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">WhatsApp</span>
             </Button>
             <Button 
-                className="h-16 flex-col gap-1 bg-blue-500 text-white hover:bg-blue-600 shadow-lg shadow-blue-500/30"
+                className="h-16 flex-col gap-1 bg-blue-500 text-white hover:bg-blue-600"
                 onClick={handleTelegramSupport}
                 disabled={!settings.telegramLink}
             >
@@ -394,15 +394,15 @@ export default function Home() {
                 >
                     <path d="M9.78 18.65l.28-4.23l7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3L3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.1-.86 1.32-1.74.84l-4.97-3.6-2.44 2.34c-.27.27-.5.4-.85.4z" />
                 </svg>
-                <span className="text-base font-bold">Telegram</span>
+                <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">Telegram</span>
             </Button>
             <Button 
-              className="h-16 flex-col gap-1 bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/30"
+              className="h-16 flex-col gap-1 bg-red-500 text-white hover:bg-red-600"
               onClick={handleCallSupport}
               disabled={!settings.callSupportNumber}
             >
               <Phone className="h-6 w-6" />
-              <span className="text-base font-bold">Call Support</span>
+              <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">Call Support</span>
             </Button>
           </CardContent>
         </Card>
