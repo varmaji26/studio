@@ -101,7 +101,6 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     
-    // Query without ordering to avoid composite index requirement
     const gamesQuery = query(collection(db, 'games'), where('active', '==', true));
     const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
       const gamesData: Game[] = [];
@@ -458,7 +457,12 @@ export default function Home() {
                             <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">
                             {game.result || `${game.openResult || '***'}-**-${game.closeResult || '**'}`}
                             </div>
-                            <p className="text-sm text-yellow-300">{bettingClosed ? 'Betting Closed' : game.status}</p>
+                            <p className={cn(
+                                "text-sm font-bold",
+                                bettingClosed ? "text-red-500" : "text-green-500"
+                            )}>
+                                {bettingClosed ? 'Betting Closed' : game.status}
+                            </p>
                             <Button 
                                 onClick={(e) => handlePlayNowClick(e, game.id)}
                                 className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg"
