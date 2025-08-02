@@ -512,9 +512,9 @@ export default function Home() {
                             >
                                 <span>Play Now</span>
                             </Button>
-                            <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
-                            <Clock className="h-4 w-4 mr-2" />
-                            <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+                            <div className="flex items-center justify-center text-sm font-bold text-white mt-2">
+                                <Clock className="h-4 w-4 mr-2" />
+                                <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
                             </div>
                         </div>
                     </div>
