@@ -351,7 +351,7 @@ export default function Home() {
           <CardContent className="grid grid-cols-1 gap-2 sm:gap-4">
              <AddPointsDialog user={user}>
                 <Button className="h-16 flex-col gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
-                    <Banknote className="h-6 w-6" />
+                    <Banknote className="h-7 w-7 font-bold [filter:drop-shadow(2px_2px_2px_#000)]" />
                     <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">Deposit Funds</span>
                 </Button>
              </AddPointsDialog>
@@ -390,7 +390,7 @@ export default function Home() {
                     height="24"
                     viewBox="0 0 24 24"
                     fill="currentColor"
-                    className="h-6 w-6"
+                    className="h-7 w-7 font-bold [filter:drop-shadow(2px_2px_2px_#000)]"
                 >
                     <path d="M9.78 18.65l.28-4.23l7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3L3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.1-.86 1.32-1.74.84l-4.97-3.6-2.44 2.34c-.27.27-.5.4-.85.4z" />
                 </svg>
@@ -401,7 +401,7 @@ export default function Home() {
               onClick={handleCallSupport}
               disabled={!settings.callSupportNumber}
             >
-              <Phone className="h-6 w-6" />
+              <Phone className="h-7 w-7 font-bold [filter:drop-shadow(2px_2px_2px_#000)]" />
               <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">Call Support</span>
             </Button>
           </CardContent>
