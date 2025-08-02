@@ -91,8 +91,6 @@ export default function Home() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -171,41 +169,6 @@ export default function Home() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const handleImageUpload = async () => {
-    if (!selectedFile || !user) return;
-    setIsUploading(true);
-
-    const storageRef = ref(storage, `profile-images/${user.uid}/${selectedFile.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, selectedFile);
-
-    uploadTask.on('state_changed', 
-        () => {}, // progress
-        (error) => {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your image.' });
-            setIsUploading(false);
-        },
-        async () => {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            if (auth.currentUser) {
-                await updateProfile(auth.currentUser, { photoURL: downloadURL });
-            }
-            await updateDoc(doc(db, 'users', user.uid), { photoURL: downloadURL });
-
-            toast({ title: 'Success', description: 'Profile image updated!' });
-            setSelectedFile(null);
-            setIsUploading(false);
-            // This will trigger a re-render in useAuth hook and update the UI
-        }
-    );
-  };
-
   if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -255,23 +218,6 @@ export default function Home() {
                     </Avatar>
                     <p className="font-bold text-lg">{user.displayName}</p>
                     <p className="text-muted-foreground">+91 {mobileNumber}</p>
-                    <div className="flex items-center space-x-2 mt-2">
-                         <label htmlFor="profile-image-upload" className="cursor-pointer">
-                            <Button asChild variant="outline" size="sm">
-                                <span className="flex items-center gap-1">
-                                    <Upload className="h-3 w-3"/>
-                                    Choose Image
-                                </span>
-                            </Button>
-                            <input id="profile-image-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                         </label>
-                        {selectedFile && (
-                            <Button size="sm" onClick={handleImageUpload} disabled={isUploading}>
-                                {isUploading ? <Loader className="h-4 w-4" /> : 'Upload'}
-                            </Button>
-                        )}
-                    </div>
-                     {selectedFile && <p className="text-xs text-muted-foreground truncate w-48 text-center">{selectedFile.name}</p>}
                 </div>
                 </div>
                 <Separator className="bg-white/10 my-2" />
@@ -362,7 +308,7 @@ export default function Home() {
                         width={1200}
                         height={400}
                         className="w-full h-auto object-cover rounded-lg"
-                        data-ai-hint="welcome banner"
+                        data-ai-hint="king"
                         unoptimized
                     />
                 </CardContent>
