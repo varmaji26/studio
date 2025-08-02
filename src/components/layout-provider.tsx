@@ -69,6 +69,9 @@ export function LayoutProvider({
                                 <SidebarTrigger className="h-7 w-7" />
                             </SheetTrigger>
                             <SheetContent side="left" className="p-0 w-72 flex flex-col">
+                               <SheetHeaderComponent className="sr-only">
+                                  <SheetTitle>Sidebar Menu</SheetTitle>
+                                </SheetHeaderComponent>
                                {sidebarContent}
                             </SheetContent>
                         </Sheet>
