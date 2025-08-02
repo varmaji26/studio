@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Gamepad2, Wallet } from 'lucide-react';
+import { Users, Gamepad2, Wallet, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { Loader } from '@/components/loader';
 import { useAuth } from '@/hooks/use-auth';
 import { setInitialStats } from '@/lib/stats-helper';
@@ -35,9 +35,17 @@ interface AppStats {
     totalBalance: number;
 }
 
+interface DailyStats {
+    todaysDeposits: number;
+    todaysWithdrawals: number;
+    yesterdaysDeposits: number;
+    yesterdaysWithdrawals: number;
+}
+
 export default function AdminDashboardPage() {
     const { user } = useAuth();
     const [stats, setStats] = useState<AppStats>({ totalUsers: 0, totalGames: 0, totalBalance: 0 });
+    const [dailyStats, setDailyStats] = useState<DailyStats>({ todaysDeposits: 0, todaysWithdrawals: 0, yesterdaysDeposits: 0, yesterdaysWithdrawals: 0 });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -51,13 +59,52 @@ export default function AdminDashboardPage() {
                 setStats(docSnap.data() as AppStats);
             } else {
                 console.log("No stats document! Initializing...");
-                // The setInitialStats function will handle creation.
             }
             setLoading(false);
         }, (error) => {
             console.error("Error fetching stats: ", error);
             setLoading(false);
         });
+
+        const fetchDailyStats = async () => {
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const startOfYesterday = new Date(startOfToday);
+            startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+            
+            const todayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfToday), where("status", "==", "approved"));
+            const todayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfToday), where("status", "==", "approved"));
+            const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday), where("status", "==", "approved"));
+            const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday), where("status", "==", "approved"));
+
+            try {
+                const [
+                    todayDepositsSnap,
+                    todayWithdrawalsSnap,
+                    yesterdayDepositsSnap,
+                    yesterdayWithdrawalsSnap
+                ] = await Promise.all([
+                    getDocs(todayDepositsQuery),
+                    getDocs(todayWithdrawalsQuery),
+                    getDocs(yesterdayDepositsQuery),
+                    getDocs(yesterdayWithdrawalsQuery)
+                ]);
+
+                const sumAmount = (snapshot: DocumentData) => snapshot.docs.reduce((sum: number, doc: DocumentData) => sum + (doc.data().amount || 0), 0);
+
+                setDailyStats({
+                    todaysDeposits: sumAmount(todayDepositsSnap),
+                    todaysWithdrawals: sumAmount(todayWithdrawalsSnap),
+                    yesterdaysDeposits: sumAmount(yesterdayDepositsSnap),
+                    yesterdaysWithdrawals: sumAmount(yesterdayWithdrawalsSnap)
+                });
+
+            } catch (error) {
+                console.error("Error fetching daily stats: ", error);
+            }
+        }
+
+        fetchDailyStats();
 
         return () => unsubscribe();
     }, [user]);
@@ -81,6 +128,13 @@ export default function AdminDashboardPage() {
             <StatCard title="Total Users" value={stats.totalUsers.toString()} icon={Users} color="#8b5cf6" />
             <StatCard title="Total Games" value={stats.totalGames.toString()} icon={Gamepad2} color="#ec4899" />
             <StatCard title="Total Balance" value={`₹${stats.totalBalance.toLocaleString()}`} icon={Wallet} color="#22c55e" />
+        </div>
+        
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-6">
+            <StatCard title="Today's Deposits" value={`₹${dailyStats.todaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
+            <StatCard title="Withdrawals Given Today" value={`₹${dailyStats.todaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
+            <StatCard title="Yesterday's Deposits" value={`₹${dailyStats.yesterdaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#10b981" />
+            <StatCard title="Withdrawal Given Yesterday" value={`₹${dailyStats.yesterdaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#ef4444" />
         </div>
     </div>
   );
