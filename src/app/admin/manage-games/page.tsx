@@ -54,7 +54,7 @@ export default function ManageGamesPage() {
       name: '',
       openResult: '***',
       closeResult: '**',
-      status: 'Betting will open soon',
+      status: 'Betting is Open',
       openTime: '',
       closeTime: '',
     },
