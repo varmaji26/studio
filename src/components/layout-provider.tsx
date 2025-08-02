@@ -64,17 +64,7 @@ export function LayoutProvider({
                 <div className="flex items-center gap-2">
                     {/* Mobile Sidebar Trigger */}
                     <div className="md:hidden">
-                        <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
-                            <SheetTrigger asChild>
-                                <SidebarTrigger className="h-7 w-7" />
-                            </SheetTrigger>
-                            <SheetContent side="left" className="p-0 w-72 flex flex-col">
-                               <SheetHeaderComponent className="sr-only">
-                                  <SheetTitle>Sidebar Menu</SheetTitle>
-                                </SheetHeaderComponent>
-                               {sidebarContent}
-                            </SheetContent>
-                        </Sheet>
+                        <SidebarTrigger className="h-7 w-7" />
                     </div>
                      {/* Desktop Sidebar Trigger */}
                     <SidebarTrigger className="h-7 w-7 hidden md:flex" />
