@@ -72,10 +72,10 @@ export default function AdminDashboardPage() {
             const startOfYesterday = new Date(startOfToday);
             startOfYesterday.setDate(startOfYesterday.getDate() - 1);
             
-            const todayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfToday), where("status", "==", "approved"));
-            const todayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfToday), where("status", "==", "approved"));
-            const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday), where("status", "==", "approved"));
-            const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday), where("status", "==", "approved"));
+            const todayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfToday));
+            const todayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfToday));
+            const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
+            const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
 
             try {
                 const [
@@ -89,14 +89,17 @@ export default function AdminDashboardPage() {
                     getDocs(yesterdayDepositsQuery),
                     getDocs(yesterdayWithdrawalsQuery)
                 ]);
-
-                const sumAmount = (snapshot: DocumentData) => snapshot.docs.reduce((sum: number, doc: DocumentData) => sum + (doc.data().amount || 0), 0);
+                
+                const sumApprovedAmount = (snapshot: DocumentData) => snapshot.docs
+                    .map((doc: DocumentData) => doc.data())
+                    .filter((data: DocumentData) => data.status === 'approved')
+                    .reduce((sum: number, data: DocumentData) => sum + (data.amount || 0), 0);
 
                 setDailyStats({
-                    todaysDeposits: sumAmount(todayDepositsSnap),
-                    todaysWithdrawals: sumAmount(todayWithdrawalsSnap),
-                    yesterdaysDeposits: sumAmount(yesterdayDepositsSnap),
-                    yesterdaysWithdrawals: sumAmount(yesterdayWithdrawalsSnap)
+                    todaysDeposits: sumApprovedAmount(todayDepositsSnap),
+                    todaysWithdrawals: sumApprovedAmount(todayWithdrawalsSnap),
+                    yesterdaysDeposits: sumApprovedAmount(yesterdayDepositsSnap),
+                    yesterdaysWithdrawals: sumApprovedAmount(yesterdayWithdrawalsSnap)
                 });
 
             } catch (error) {
