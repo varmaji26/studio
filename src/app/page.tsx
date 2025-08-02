@@ -100,7 +100,7 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     
-    const gamesQuery = query(collection(db, 'games'), where('active', '==', true), orderBy("openTime", "asc"));
+    const gamesQuery = query(collection(db, 'games'), where('active', '==', true), orderBy("createdAt", "asc"));
     const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
       const gamesData: Game[] = [];
       querySnapshot.forEach((doc) => {
@@ -302,7 +302,7 @@ export default function Home() {
              <Card className="bg-card/80 border-white/10 shadow-lg">
                 <CardContent className="p-0">
                     <Image
-                        src={settings.welcomeBanner.imageUrl}
+                        src="https://images.unsplash.com/photo-1513043307010-22d3c51d93f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxraW5nfGVufDB8fHx8MTc1NDA2MzAzN3ww&ixlib=rb-4.1.0&q=80&w=1080"
                         alt="Welcome Banner"
                         width={1200}
                         height={400}
