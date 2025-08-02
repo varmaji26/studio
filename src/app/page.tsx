@@ -28,7 +28,6 @@ import {
   Landmark,
   CreditCard,
   LogOut,
-  Upload,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -101,7 +100,7 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     
-    const gamesQuery = query(collection(db, 'games'), where('active', '==', true));
+    const gamesQuery = query(collection(db, 'games'), where('active', '==', true), orderBy("openTime", "asc"));
     const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
       const gamesData: Game[] = [];
       querySnapshot.forEach((doc) => {
