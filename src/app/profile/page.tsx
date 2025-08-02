@@ -4,8 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { sendPasswordResetEmail, type User as FirebaseAuthUser } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { type User as FirebaseAuthUser } from 'firebase/auth';
+import { db } from '@/lib/firebase';
 import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,19 +19,9 @@ import { Loader } from '@/components/loader';
 import { ArrowLeft, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { UpdateProfileDialog } from '@/components/update-profile-dialog';
 import { AddPointsDialog } from '@/components/add-points-dialog';
+import { ChangePasswordDialog } from '@/components/change-password-dialog';
 
 interface UserProfile extends DocumentData {
   balance?: number;
@@ -74,26 +64,6 @@ export default function ProfilePage() {
     );
   }
 
-  const handlePasswordReset = async () => {
-    if (user?.email) {
-      try {
-        await sendPasswordResetEmail(auth, user.email);
-        toast({
-          title: 'Password Reset Email Sent',
-          description:
-            'A link to reset your password has been sent to your registered email.',
-        });
-      } catch (error) {
-        console.error('Error sending password reset email:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to send password reset email. Please try again.',
-        });
-      }
-    }
-  };
-  
   const handleUserUpdate = (updatedUser: FirebaseAuthUser) => {
     setUser(updatedUser);
   };
@@ -105,6 +75,7 @@ export default function ProfilePage() {
   
   return (
     <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
+       <div id="recaptcha-container"></div>
       <div className="max-w-2xl mx-auto">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader className="text-center">
@@ -163,28 +134,11 @@ export default function ProfilePage() {
                             Edit Profile
                         </Button>
                     </UpdateProfileDialog>
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                        <Button variant="outline" className="w-full h-12 text-base">
+                    <ChangePasswordDialog mobileNumber={mobileNumber ?? ''}>
+                         <Button variant="outline" className="w-full h-12 text-base">
                             Change Password
                         </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Change Password?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                            A password reset link will be sent to your registered
-                            email address. Are you sure you want to continue?
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handlePasswordReset}>
-                            Continue
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                    </ChangePasswordDialog>
                 </div>
             </div>
           </CardContent>
