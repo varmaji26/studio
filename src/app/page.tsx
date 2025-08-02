@@ -35,7 +35,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay"
-import { formatTime, cn } from '@/lib/utils';
+import { formatTime, cn, isBettingClosed } from '@/lib/utils';
 import { AddPointsDialog } from '@/components/add-points-dialog';
 import { WithdrawFundsDialog } from '@/components/withdraw-funds-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +52,7 @@ interface Game extends DocumentData {
   status: string;
   openTime: string;
   closeTime: string;
+  active: boolean;
 }
 
 interface Banner extends DocumentData {
@@ -442,32 +443,37 @@ export default function Home() {
                 <Loader className="h-8 w-8 text-primary" />
               </div>
             ) : games.length > 0 ? (
-              games.map((game) => (
-                <div
-                    key={game.id}
-                    className={cn(
-                        "rounded-lg p-4 text-center space-y-3 animated-border",
-                        animatingGameId === game.id && "animate-pulse-once"
-                    )}
-                >
-                    <div className="relative z-10 space-y-3">
-                        <h3 className="text-xl font-bold text-white">{game.name}</h3>
-                        <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">
-                           {game.result || `${game.openResult || '***'}-**-${game.closeResult || '**'}`}
-                        </div>
-                        <p className="text-sm text-yellow-300">{game.status}</p>
-                        <Button 
-                            onClick={(e) => handlePlayNowClick(e, game.id)}
-                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg">
-                            <span>Play Now</span>
-                        </Button>
-                        <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
-                        <Clock className="h-4 w-4 mr-2" />
-                        <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+              games.map((game) => {
+                const bettingClosed = isBettingClosed(game.closeTime);
+                return (
+                    <div
+                        key={game.id}
+                        className={cn(
+                            "rounded-lg p-4 text-center space-y-3 animated-border",
+                            animatingGameId === game.id && "animate-pulse-once"
+                        )}
+                    >
+                        <div className="relative z-10 space-y-3">
+                            <h3 className="text-xl font-bold text-white">{game.name}</h3>
+                            <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">
+                            {game.result || `${game.openResult || '***'}-**-${game.closeResult || '**'}`}
+                            </div>
+                            <p className="text-sm text-yellow-300">{bettingClosed ? 'Betting Closed' : game.status}</p>
+                            <Button 
+                                onClick={(e) => handlePlayNowClick(e, game.id)}
+                                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg"
+                                disabled={bettingClosed}
+                            >
+                                <span>Play Now</span>
+                            </Button>
+                            <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
+                            <Clock className="h-4 w-4 mr-2" />
+                            <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-              ))
+                )
+              })
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
             )}

@@ -20,6 +20,8 @@ import { X } from 'lucide-react';
 interface Game extends DocumentData {
   id: string;
   name: string;
+  openTime: string;
+  closeTime: string;
 }
 
 const panaSchema = /^\d{3}$/;
@@ -36,11 +38,21 @@ export default function TriplePanaPage() {
   const [currentPana, setCurrentPana] = useState('');
   const [selectedPana, setSelectedPana] = useState<string[]>([]);
   const [amount, setAmount] = useState<string>('');
-  const [session, setSession] = useState<'Open' | 'Close'>('Close');
+  const [session, setSession] = useState<'Open' | 'Close'>();
   
   const [totalAmount, setTotalAmount] = useState(0);
   const [potentialWin, setPotentialWin] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [isMounted, setIsMounted] = useState(false);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    setIsMounted(true);
+    const timer = setInterval(() => setNow(new Date()), 60000); // Update time every minute
+    return () => clearInterval(timer);
+  }, []);
+
 
   useEffect(() => {
     if (typeof gameId !== 'string') return;
@@ -50,7 +62,8 @@ export default function TriplePanaPage() {
         const gameDocRef = doc(db, 'games', gameId);
         const gameDoc = await getDoc(gameDocRef);
         if (gameDoc.exists()) {
-          setGame({ id: gameDoc.id, ...gameDoc.data() } as Game);
+          const gameData = { id: gameDoc.id, ...gameDoc.data() } as Game;
+          setGame(gameData);
         } else {
           router.push('/404');
         }
@@ -63,6 +76,31 @@ export default function TriplePanaPage() {
     fetchGame();
   }, [gameId, router]);
   
+  const getTimeParts = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return { hours, minutes };
+  }
+
+  const openTime = game ? getTimeParts(game.openTime) : { hours: 0, minutes: 0 };
+  const closeTime = game ? getTimeParts(game.closeTime) : { hours: 0, minutes: 0 };
+
+  const openDateTime = new Date(now);
+  openDateTime.setHours(openTime.hours, openTime.minutes, 0, 0);
+
+  const closeDateTime = new Date(now);
+  closeDateTime.setHours(closeTime.hours, closeTime.minutes, 0, 0);
+
+  const isOpenDisabled = now >= openDateTime;
+  const isCloseDisabled = now >= closeDateTime;
+
+  useEffect(() => {
+    if (isOpenDisabled) {
+        setSession('Close');
+    } else {
+        setSession('Open');
+    }
+  }, [isOpenDisabled]);
+
   useEffect(() => {
     const parsedAmount = parseInt(amount, 10);
     const numSelected = selectedPana.length;
@@ -71,7 +109,7 @@ export default function TriplePanaPage() {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
       // Assuming a rate of 600 for Triple Pana wins
-      setPotentialWin(parsedAmount * 6000);
+      setPotentialWin(parsedAmount * 600);
     } else {
       setTotalAmount(0);
       setPotentialWin(0);
@@ -117,6 +155,10 @@ export default function TriplePanaPage() {
     if (!amount || parseInt(amount) <= 0) {
       toast({ variant: 'destructive', title: 'Error', description: 'Please enter a valid bet amount.' });
       return;
+    }
+    if (!session) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please select a session.' });
+        return;
     }
     
     setIsSubmitting(true);
@@ -173,7 +215,7 @@ export default function TriplePanaPage() {
     }
   };
   
-  if (loading) {
+  if (loading || !isMounted) {
     return (
       <div className="dark flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 text-primary" />
@@ -188,6 +230,8 @@ export default function TriplePanaPage() {
       </div>
     );
   }
+
+  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || (isOpenDisabled && isCloseDisabled);
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Triple Pana">
@@ -248,14 +292,14 @@ export default function TriplePanaPage() {
                         className="grid grid-cols-2 gap-4"
                      >
                         <div>
-                            <RadioGroupItem value="Open" id="open" className="sr-only peer" />
-                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 text-lg hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary">
+                            <RadioGroupItem value="Open" id="open" className="sr-only peer" disabled={isOpenDisabled}/>
+                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 text-lg hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                                 Open
                             </Label>
                         </div>
                          <div>
-                            <RadioGroupItem value="Close" id="close" className="sr-only peer" />
-                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 text-lg hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary">
+                            <RadioGroupItem value="Close" id="close" className="sr-only peer" disabled={isCloseDisabled}/>
+                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 text-lg hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                                 Close
                             </Label>
                         </div>
@@ -297,9 +341,9 @@ export default function TriplePanaPage() {
             
             <div className="mt-6">
                 <p className="text-center text-muted-foreground mb-2">Total Bids: {selectedPana.length}</p>
-                <Button className="w-full h-16 text-xl font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting}>
+                <Button className="w-full h-16 text-xl font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
                     {isSubmitting ? <Loader className="mr-2" /> : null}
-                    {isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
+                     {isBettingDisabled ? 'Betting Closed' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
                 </Button>
             </div>
         </div>

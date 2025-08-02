@@ -20,3 +20,15 @@ export function formatTime(timeString: string | undefined | null): string {
 
   return `${formattedHour}:${minutes} ${ampm}`;
 }
+
+export function isBettingClosed(closeTimeStr: string): boolean {
+  if (!closeTimeStr || !/^\d{2}:\d{2}$/.test(closeTimeStr)) {
+    return true; // If time is invalid, assume closed
+  }
+  const now = new Date();
+  const [hours, minutes] = closeTimeStr.split(':').map(Number);
+  const closeTime = new Date();
+  closeTime.setHours(hours, minutes, 0, 0);
+
+  return now > closeTime;
+}
