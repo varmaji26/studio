@@ -222,9 +222,10 @@ export default function Home() {
   const mobileNumber = user.email?.split('@')[0];
   const isAdmin = user.email === '8080601370@authcanvas.dev';
   const marqueeTexts = [
-    "किसी भी समस्या के लिए संपर्क करें",
     "किसी भी प्रकार की सहायता के लिए हमें कॉल करें",
-    "किसी भी समय हमें कॉल करें"
+    "किसी भी प्रकार की सहायता के लिए हमें कॉल करें",
+    "किसी भी प्रकार की सहायता के लिए हमें कॉल करें"
+       
   ];
 
   const MarqueeContent = () => (
