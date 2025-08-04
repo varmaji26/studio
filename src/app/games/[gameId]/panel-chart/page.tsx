@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
@@ -101,12 +102,12 @@ export default function PanelChartPage() {
             const weeklyData = parts.slice(dataStartIndex);
             const daysData = [];
             for (let i = 0; i < 7; i++) {
-                const dayDataIndex = i * 7;
+                const dayDataIndex = i * 3;
                 if (dayDataIndex < weeklyData.length) {
                     daysData.push({
-                        openPana: `${weeklyData[dayDataIndex] || ''}${weeklyData[dayDataIndex+1] || ''}${weeklyData[dayDataIndex+2] || ''}`,
-                        jodi: weeklyData[dayDataIndex+3] || '*',
-                        closePana: `${weeklyData[dayDataIndex+4] || ''}${weeklyData[dayDataIndex+5] || ''}${weeklyData[dayDataIndex+6] || ''}`
+                        openPana: weeklyData[dayDataIndex] || '*',
+                        jodi: weeklyData[dayDataIndex+1] || '*',
+                        closePana: weeklyData[dayDataIndex+2] || '*'
                     });
                 } else {
                     daysData.push({ openPana: '*', jodi: '*', closePana: '*' });
