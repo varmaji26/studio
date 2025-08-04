@@ -105,16 +105,18 @@ export default function PanelChartPage() {
 
             const daysData = [];
             let currentIndex = 0;
+            // A full week of data for 7 days has 7 * (3 + 2 + 3) = 56 digits.
+            // But we process day by day.
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-                // Each day's data consists of Open Pana (3), Jodi (2), Close Pana (3) = 8 numbers
-                if (currentIndex + 8 <= weeklyData.length) {
-                    const openPana = weeklyData.slice(currentIndex, currentIndex + 3).join('');
-                    const jodi = weeklyData.slice(currentIndex + 3, currentIndex + 5).join('');
-                    const closePana = weeklyData.slice(currentIndex + 5, currentIndex + 8).join('');
-                    daysData.push({ openPana, jodi, closePana });
-                    currentIndex += 8;
+                 // Check if there are enough digits for a full day entry (3 for open, 2 for jodi, 3 for close)
+                if (weeklyData.length >= currentIndex + 8) {
+                     const openPana = weeklyData.slice(currentIndex, currentIndex + 3).join('');
+                     const jodi = weeklyData.slice(currentIndex + 3, currentIndex + 5).join('');
+                     const closePana = weeklyData.slice(currentIndex + 5, currentIndex + 8).join('');
+                     daysData.push({ openPana, jodi, closePana });
+                     currentIndex += 8;
                 } else {
-                    // Fill with placeholders if data is incomplete for the day
+                    // Handle incomplete data for the rest of the week
                     daysData.push({ openPana: '***', jodi: '**', closePana: '***' });
                 }
             }
