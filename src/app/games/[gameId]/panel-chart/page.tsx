@@ -43,12 +43,12 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     const isRed = isRedNumber(jodi);
     
     return (
-        <div className="flex items-center justify-center p-0.5 min-h-[50px] gap-0.5">
-            <div className="text-center text-[10px] text-black font-semibold leading-tight">
+        <div className="flex items-center justify-center p-0 min-h-[40px] gap-0">
+            <div className="text-center text-[9px] text-black font-semibold leading-tight">
                 {openPana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
             </div>
-            <span className={cn("text-xl mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
-            <div className="text-center text-[10px] text-black font-semibold leading-tight">
+            <span className={cn("text-base mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
+            <div className="text-center text-[9px] text-black font-semibold leading-tight">
                 {closePana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
             </div>
         </div>
@@ -132,7 +132,7 @@ export default function PanelChartPage() {
     
     return (
         <div className="dark min-h-screen bg-background text-foreground p-2 sm:p-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-full mx-auto">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader className="text-center">
                         <CardTitle className="text-xl sm:text-2xl font-bold text-primary">
@@ -165,7 +165,7 @@ export default function PanelChartPage() {
                                     <tbody className="text-center">
                                        {parsedRows.map((row, rowIndex) => (
                                             <tr key={rowIndex}>
-                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[9px] min-w-[65px]">
+                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[8px] min-w-[60px]">
                                                     <span>{row.dateRange.start}</span><br/>
                                                     <span>To</span><br/>
                                                     <span>{row.dateRange.end}</span>
