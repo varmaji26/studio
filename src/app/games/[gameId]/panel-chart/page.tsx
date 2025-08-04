@@ -29,7 +29,7 @@ const isRedNumber = (num: string) => {
 };
 
 const DayCell = ({ jodi, openPana, closePana }: { jodi: string, openPana: string, closePana: string }) => {
-    if (jodi === '**' && openPana === '***' && closePana === '***') {
+    if (jodi === '**' || jodi === '*') {
       return <div className="p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">**</div>;
     }
 
