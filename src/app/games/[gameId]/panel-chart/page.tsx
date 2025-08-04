@@ -23,7 +23,7 @@ interface PanelChartData extends DocumentData {
 const isRedNumber = (num: string) => {
     if (!num || num === '**' || num.length !== 2) return false;
     const digits = num.split('');
-    if (digits.length !== 2 || isNaN(parseInt(digits[0])) || isNaN(parseInt(digits[1]))) return false;
+    if (digits.some(d => isNaN(parseInt(d)))) return false;
     const [first, second] = [parseInt(digits[0]), parseInt(digits[1])];
     const diff = Math.abs(first - second);
     return diff === 5 || first === second;
@@ -107,7 +107,7 @@ export default function PanelChartPage() {
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
                 const startIndex = dayIndex * 8;
                 const dayDataSlice = weeklyData.slice(startIndex, startIndex + 8);
-
+                
                 const openPana = dayDataSlice.slice(0, 3).join('');
                 const jodi = dayDataSlice.slice(3, 5).join('');
                 const closePana = dayDataSlice.slice(5, 8).join('');
@@ -139,10 +139,10 @@ export default function PanelChartPage() {
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader className="text-center">
                         <CardTitle className="text-xl sm:text-2xl font-bold text-primary">
-                            {chartData?.gameName.toUpperCase() || 'RECORD'}
+                            {chartData?.title || 'Panel Chart'}
                         </CardTitle>
                         <CardDescription>
-                            Historical Panel Records
+                            {chartData?.gameName.toUpperCase() || 'RECORD'}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
