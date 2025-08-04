@@ -34,7 +34,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     
     if (jodi === '**' || jodi === '*') {
       return (
-        <div className="relative p-0.5 min-h-[50px] flex items-center justify-center text-black font-bold text-lg">
+        <div className="relative p-0 min-h-[50px] flex items-center justify-center text-black font-bold text-lg">
             **
         </div>
       );
@@ -47,7 +47,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
             <div className="text-center text-[8px] text-black font-semibold leading-tight">
                 {openPana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
             </div>
-            <span className={cn("text-sm mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
+            <span className={cn("text-sm mx-0 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
             <div className="text-center text-[8px] text-black font-semibold leading-tight">
                 {closePana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
             </div>
@@ -98,6 +98,12 @@ export default function PanelChartPage() {
         for (let i = 0; i < sections.length; i += 3) {
             const startDate = sections[i];
             const endDate = sections[i + 1];
+
+            // Add a check to prevent crash if sections are incomplete
+            if (typeof startDate === 'undefined' || typeof endDate === 'undefined') {
+                continue; // Skip this iteration if data is malformed
+            }
+            
             const dataBlock = sections[i + 2] || '';
             const dateRange = { start: startDate.trim(), end: endDate.trim() };
             
@@ -156,7 +162,7 @@ export default function PanelChartPage() {
                                 <table className="w-full border-collapse">
                                     <thead className="text-[9px] sm:text-[10px]">
                                         <tr className="bg-blue-800 text-white font-bold">
-                                            <th className="p-0.5 border border-yellow-600">Date</th>
+                                            <th className="p-0.5 border border-yellow-600 min-w-[50px]">Date</th>
                                             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
                                                 <th key={day} className="p-0.5 border border-yellow-600">{day}</th>
                                             ))}
@@ -191,3 +197,4 @@ export default function PanelChartPage() {
         </div>
     );
 }
+
