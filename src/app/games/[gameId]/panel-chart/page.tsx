@@ -32,17 +32,21 @@ const DayCell = ({ jodi, openPana, closePana }: { jodi: string, openPana: string
       return <div className="p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">*</div>;
     }
 
-    const openJodiDigit = (openPana.split('').reduce((acc, digit) => acc + parseInt(digit), 0) % 10).toString();
-    const closeJodiDigit = (closePana.split('').reduce((acc, digit) => acc + parseInt(digit), 0) % 10).toString();
-
     const isRed = isRedNumber(jodi);
 
     return (
-        <div className="relative p-1 min-h-[60px] flex flex-col items-center justify-center font-bold">
-            <span className="absolute top-0 left-1 text-xs text-black">{openJodiDigit}</span>
-            <span className="absolute top-0 right-1 text-xs text-black">{closeJodiDigit}</span>
-            <span className={`text-2xl ${isRed ? 'text-red-600' : 'text-black'}`}>{jodi}</span>
-            <span className="text-xs text-black">{openPana}</span>
+        <div className="relative p-1 min-h-[60px] flex items-center justify-center font-bold">
+            <div className="flex flex-col text-xs text-black">
+                <span>{openPana[0]}</span>
+                <span>{openPana[1]}</span>
+                <span>{openPana[2]}</span>
+            </div>
+            <span className={`text-2xl mx-1 ${isRed ? 'text-red-600' : 'text-black'}`}>{jodi}</span>
+            <div className="flex flex-col text-xs text-black">
+                <span>{closePana[0]}</span>
+                <span>{closePana[1]}</span>
+                <span>{closePana[2]}</span>
+            </div>
         </div>
     );
 };
@@ -78,6 +82,43 @@ export default function PanelChartPage() {
         fetchChartData();
     }, [gameId]);
 
+    const parsedRows = React.useMemo(() => {
+        if (!chartData?.data) return [];
+        
+        return chartData.data.split('\n').filter(row => row.trim() !== '').map(row => {
+            const parts = row.trim().split(/\s+/);
+            const dateRangeMatch = row.match(/(\d{2}\/\d{2}\/\d{4})\s+to\s+(\d{2}\/\d{2}\/\d{4})/);
+            
+            let dateRange = { start: '', end: '' };
+            let dataStartIndex = 0;
+
+            if (dateRangeMatch) {
+                dateRange = { start: dateRangeMatch[1], end: dateRangeMatch[2] };
+                const dateString = dateRangeMatch[0];
+                dataStartIndex = dateString.split(/\s+/).length;
+            }
+
+            const weeklyData = parts.slice(dataStartIndex);
+            const daysData = [];
+            for (let i = 0; i < 7; i++) {
+                const dayDataIndex = i * 7;
+                if (dayDataIndex < weeklyData.length) {
+                    daysData.push({
+                        openPana: `${weeklyData[dayDataIndex] || ''}${weeklyData[dayDataIndex+1] || ''}${weeklyData[dayDataIndex+2] || ''}`,
+                        jodi: weeklyData[dayDataIndex+3] || '*',
+                        closePana: `${weeklyData[dayDataIndex+4] || ''}${weeklyData[dayDataIndex+5] || ''}${weeklyData[dayDataIndex+6] || ''}`
+                    });
+                } else {
+                    daysData.push({ openPana: '*', jodi: '*', closePana: '*' });
+                }
+            }
+            
+            return { dateRange, daysData };
+        });
+
+    }, [chartData]);
+
+
     if (!isClient || loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
@@ -86,8 +127,6 @@ export default function PanelChartPage() {
         );
     }
     
-    const parsedRows = chartData?.data.split('\n').filter(row => row.trim() !== '') || [];
-
     return (
         <div className="dark min-h-screen bg-background text-foreground p-2 sm:p-4">
             <div className="max-w-5xl mx-auto">
@@ -121,48 +160,24 @@ export default function PanelChartPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="text-center">
-                                        {parsedRows.map((row, rowIndex) => {
-                                            const cols = row.split(/\s+/).filter(d => d);
-                                            
-                                            const dateRangeParts = [];
-                                            let dataStartIndex = 0;
-                                            for(let i=0; i<cols.length; i++) {
-                                                if (cols[i].toLowerCase() === 'to') {
-                                                    dateRangeParts.push(cols[i-1], 'To', cols[i+1]);
-                                                    dataStartIndex = i + 2;
-                                                    break;
-                                                }
-                                            }
-                                            if(dateRangeParts.length === 0 && cols.length >= 3) {
-                                                dateRangeParts.push(cols[0], 'To', cols[2]);
-                                                dataStartIndex = 3;
-                                            }
-
-                                            const weekData = cols.slice(dataStartIndex);
-
-                                            return (
-                                                <tr key={rowIndex}>
-                                                    <td className="p-1 border border-gray-400 font-bold text-black text-xs min-w-[90px]">
-                                                        <span>{dateRangeParts[0]}</span><br/>
-                                                        <span>To</span><br/>
-                                                        <span>{dateRangeParts[2]}</span>
+                                       {parsedRows.map((row, rowIndex) => (
+                                            <tr key={rowIndex}>
+                                                <td className="p-1 border border-gray-400 font-bold text-black text-xs min-w-[90px]">
+                                                    <span>{row.dateRange.start}</span><br/>
+                                                    <span>To</span><br/>
+                                                    <span>{row.dateRange.end}</span>
+                                                </td>
+                                                {row.daysData.map((dayData, dayIndex) => (
+                                                    <td key={dayIndex} className="p-1 border border-gray-400">
+                                                        <DayCell 
+                                                            jodi={dayData.jodi.length === 2 ? dayData.jodi : '*'}
+                                                            openPana={dayData.openPana.length === 3 ? dayData.openPana : '*'}
+                                                            closePana={dayData.closePana.length === 3 ? dayData.closePana : '*'}
+                                                        />
                                                     </td>
-                                                    {Array.from({ length: 7 }).map((_, dayIndex) => {
-                                                        const dataIndex = dayIndex * 3;
-                                                        
-                                                        const openPana = weekData[dataIndex] || '*';
-                                                        const jodi = weekData[dataIndex + 1] || '*';
-                                                        const closePana = weekData[dataIndex + 2] || '*';
-
-                                                        return (
-                                                            <td key={dayIndex} className="p-1 border border-gray-400">
-                                                                <DayCell jodi={jodi} openPana={openPana} closePana={closePana} />
-                                                            </td>
-                                                        );
-                                                    })}
-                                                </tr>
-                                            );
-                                        })}
+                                                ))}
+                                            </tr>
+                                       ))}
                                     </tbody>
                                 </table>
                             </div>
@@ -177,5 +192,3 @@ export default function PanelChartPage() {
         </div>
     );
 }
-
-    
