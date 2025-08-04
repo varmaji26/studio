@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface JodiChart extends DocumentData {
+interface PanelChart extends DocumentData {
     id: string;
     gameName: string;
     title: string;
@@ -40,8 +40,8 @@ const chartSchema = z.object({
 
 type ChartFormValues = z.infer<typeof chartSchema>;
 
-export default function JodiPanelPage() {
-  const [charts, setCharts] = useState<JodiChart[]>([]);
+export default function PanelChartPage() {
+  const [charts, setCharts] = useState<PanelChart[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -58,9 +58,9 @@ export default function JodiPanelPage() {
 
   const fetchChartsAndGames = useCallback(() => {
     setLoading(true);
-    const chartsQuery = collection(db, "jodiCharts");
+    const chartsQuery = collection(db, "panelCharts");
     const unsubscribeCharts = onSnapshot(chartsQuery, (querySnapshot) => {
-      const chartsData: JodiChart[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JodiChart));
+      const chartsData: PanelChart[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PanelChart));
       setCharts(chartsData);
     });
 
@@ -90,13 +90,13 @@ export default function JodiPanelPage() {
         return;
       }
 
-      const docRef = doc(db, 'jodiCharts', values.gameId);
+      const docRef = doc(db, 'panelCharts', values.gameId);
       await setDoc(docRef, {
           gameName: selectedGame.name,
           title: values.title,
           data: values.data,
       });
-      toast({ title: 'Success', description: 'Jodi chart saved successfully.' });
+      toast({ title: 'Success', description: 'Panel chart saved successfully.' });
       setIsDialogOpen(false);
       form.reset();
     } catch (error) {
@@ -107,7 +107,7 @@ export default function JodiPanelPage() {
 
   const handleDelete = async (chartId: string) => {
     try {
-      await deleteDoc(doc(db, 'jodiCharts', chartId));
+      await deleteDoc(doc(db, 'panelCharts', chartId));
       toast({ title: 'Success', description: 'Chart deleted successfully.' });
     } catch (error) {
       console.error("Error deleting chart: ", error);
@@ -120,8 +120,8 @@ export default function JodiPanelPage() {
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-2xl">Manage Jodi Charts</CardTitle>
-            <CardDescription>Manage Jodi calendar charts for each game.</CardDescription>
+            <CardTitle className="text-2xl">Manage Panel Charts</CardTitle>
+            <CardDescription>Manage Panel calendar charts for each game.</CardDescription>
           </div>
            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -132,7 +132,7 @@ export default function JodiPanelPage() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                <DialogTitle>Add New Jodi Chart</DialogTitle>
+                <DialogTitle>Add New Panel Chart</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -167,7 +167,7 @@ export default function JodiPanelPage() {
                                 <FormItem>
                                     <FormLabel>Chart Title</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g., SRIDEVI MATKA JODI RECORD 2018 - 2025" {...field} />
+                                        <Input placeholder="e.g., SRIDEVI MATKA PANEL RECORD 2018 - 2025" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -181,13 +181,13 @@ export default function JodiPanelPage() {
                                     <FormLabel>Chart Data</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                        placeholder="Enter numbers separated by spaces or new lines. Example: 08 85 06..."
+                                        placeholder="Enter data row by row. Ex: DateRange OpenPana Jodi ClosePana OpenPana Jodi ClosePana..."
                                         className="min-h-[200px]"
                                         {...field}
                                         />
                                     </FormControl>
                                     <FormDescription>
-                                        Enter all numbers in order. They will automatically wrap into a 7-column grid. Use '*' for empty cells.
+                                        Enter data for each row separated by spaces. A new line for each week.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>

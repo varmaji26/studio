@@ -509,7 +509,7 @@ export default function Home() {
                             <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
                                 <Link href={`/games/${game.id}/jodi-chart`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Jodi</Link>
                                 <span>{formatGameResult(game)}</span>
-                                <Link href={`/games/${game.id}/single-pana`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Panel</Link>
+                                <Link href={`/games/${game.id}/panel-chart`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Panel</Link>
                             </div>
                             <p className={cn(
                                 "text-sm font-bold",

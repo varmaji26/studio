@@ -186,9 +186,17 @@ export default function AdminLayout({
           </SidebarMenuItem>
            <SidebarMenuItem>
             <Link href="/admin/jodi-panel" passHref onClick={handleLinkClick}>
-                <SidebarMenuButton isActive={isActive('/admin/jodi-panel')} tooltip={{children: "Jodi Panel"}}>
+                <SidebarMenuButton isActive={isActive('/admin/jodi-panel')} tooltip={{children: "Manage Jodi Chart"}}>
                 <ClipboardList />
-                <span>Jodi Panel</span>
+                <span>Manage Jodi Chart</span>
+                </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/admin/panel-chart" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/panel-chart')} tooltip={{children: "Manage Panel Chart"}}>
+                <ClipboardList />
+                <span>Manage Panel Chart</span>
                 </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
