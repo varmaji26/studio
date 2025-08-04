@@ -34,7 +34,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     
     if (jodi === '**' || jodi === '*') {
       return (
-        <div className="relative p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">
+        <div className="relative p-1 min-h-[50px] flex items-center justify-center text-black font-bold text-lg">
             **
         </div>
       );
@@ -43,12 +43,12 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     const isRed = isRedNumber(jodi);
     
     return (
-        <div className="flex items-center justify-center p-1 min-h-[60px] gap-1">
-            <div className="text-center text-xs text-black font-semibold leading-tight">
+        <div className="flex items-center justify-center p-0.5 min-h-[50px] gap-0.5">
+            <div className="text-center text-[10px] text-black font-semibold leading-tight">
                 {openPana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
             </div>
-            <span className={cn("text-4xl mx-1 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
-            <div className="text-center text-xs text-black font-semibold leading-tight">
+            <span className={cn("text-2xl mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
+            <div className="text-center text-[10px] text-black font-semibold leading-tight">
                 {closePana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
             </div>
         </div>
@@ -101,12 +101,11 @@ export default function PanelChartPage() {
             const dataBlock = sections[i + 2] || '';
             const dateRange = { start: startDate.trim(), end: endDate.trim() };
             
-            const weeklyData = dataBlock.trim().split(/\s+/).join(''); // Join all numbers into a single string
+            const weeklyData = dataBlock.trim().split(/\s+/).join('');
 
             const daysData = [];
             let currentIndex = 0;
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-                 // Each day's data should be 3 (open) + 2 (jodi) + 3 (close) = 8 digits.
                 if (weeklyData.length >= currentIndex + 8) {
                      const openPana = weeklyData.slice(currentIndex, currentIndex + 3);
                      const jodi = weeklyData.slice(currentIndex + 3, currentIndex + 5);
@@ -114,7 +113,6 @@ export default function PanelChartPage() {
                      daysData.push({ openPana, jodi, closePana });
                      currentIndex += 8;
                 } else {
-                    // Handle incomplete data for the rest of the week
                     daysData.push({ openPana: '***', jodi: '**', closePana: '***' });
                 }
             }
@@ -134,7 +132,7 @@ export default function PanelChartPage() {
     
     return (
         <div className="dark min-h-screen bg-background text-foreground p-2 sm:p-4">
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader className="text-center">
                         <CardTitle className="text-xl sm:text-2xl font-bold text-primary">
@@ -156,24 +154,24 @@ export default function PanelChartPage() {
                         {chartData ? (
                             <div className="overflow-x-auto border-2 border-yellow-600 bg-orange-100 p-1">
                                 <table className="w-full border-collapse">
-                                    <thead className="text-sm">
+                                    <thead className="text-xs sm:text-sm">
                                         <tr className="bg-blue-800 text-white font-bold">
-                                            <th className="p-2 border border-yellow-600">Date</th>
+                                            <th className="p-1 border border-yellow-600">Date</th>
                                             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                                                <th key={day} className="p-2 border border-yellow-600">{day}</th>
+                                                <th key={day} className="p-1 border border-yellow-600">{day}</th>
                                             ))}
                                         </tr>
                                     </thead>
                                     <tbody className="text-center">
                                        {parsedRows.map((row, rowIndex) => (
                                             <tr key={rowIndex}>
-                                                <td className="p-1 border border-gray-400 font-bold text-black text-xs min-w-[90px]">
+                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[10px] min-w-[70px]">
                                                     <span>{row.dateRange.start}</span><br/>
                                                     <span>To</span><br/>
                                                     <span>{row.dateRange.end}</span>
                                                 </td>
                                                 {row.daysData.map((dayData, dayIndex) => (
-                                                    <td key={dayIndex} className="p-1 border border-gray-400">
+                                                    <td key={dayIndex} className="p-0 border border-gray-400">
                                                         <DayCell dayData={dayData} />
                                                     </td>
                                                 ))}
