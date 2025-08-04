@@ -123,7 +123,7 @@ export default function Home() {
         }
     });
     
-    const gamesQuery = query(collection(db, 'games'), where('active', '==', true));
+    const gamesQuery = query(collection(db, 'games'));
     const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
       const gamesData: Game[] = [];
       querySnapshot.forEach((doc) => {
