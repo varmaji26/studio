@@ -98,14 +98,6 @@ export default function Home() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
-  const [currentDay, setCurrentDay] = useState('');
-
-  useEffect(() => {
-    const date = new Date();
-    const dayName = date.toLocaleString('en-US', { weekday: 'long' });
-    setCurrentDay(dayName);
-  }, []);
-
 
   useEffect(() => {
     if (!loading && !user) {
@@ -115,6 +107,9 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) return;
+
+    const date = new Date();
+    const currentDay = date.toLocaleString('en-US', { weekday: 'long' });
 
     const userDocRef = doc(db, 'users', user.uid);
     const unsubscribeUserProfile = onSnapshot(userDocRef, (doc) => {
@@ -130,14 +125,12 @@ export default function Home() {
         gamesData.push({ id: doc.id, ...doc.data() } as Game);
       });
       
-      // Filter games based on activeDays
       const filteredGames = gamesData.filter(game => {
           if (!game.active) return false;
           if (!game.activeDays || game.activeDays.length === 0) return true;
           return game.activeDays.includes(currentDay);
       });
 
-      // Sort on the client-side by openTime
       filteredGames.sort((a, b) => {
           return a.openTime.localeCompare(b.openTime);
       });
@@ -170,7 +163,7 @@ export default function Home() {
         unsubscribeSettings();
         unsubscribeUserProfile();
     };
-  }, [user, currentDay]);
+  }, [user]);
 
   const handleWhatsAppSupport = () => {
     if (settings.whatsappNumber) {
