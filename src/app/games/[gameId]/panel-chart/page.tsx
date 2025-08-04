@@ -20,7 +20,7 @@ interface PanelChartData extends DocumentData {
 }
 
 const isRedNumber = (num: string) => {
-    if (!num || num === '*' || num.length !== 2) return false;
+    if (!num || num === '**' || num.length !== 2) return false;
     const digits = num.split('');
     if (digits.length !== 2 || isNaN(parseInt(digits[0])) || isNaN(parseInt(digits[1]))) return false;
     const [first, second] = [parseInt(digits[0]), parseInt(digits[1])];
@@ -29,17 +29,17 @@ const isRedNumber = (num: string) => {
 };
 
 const DayCell = ({ jodi, openPana, closePana }: { jodi: string, openPana: string, closePana: string }) => {
-    if (jodi === '*' && openPana === '*' && closePana === '*') {
-      return <div className="p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">*</div>;
+    if (jodi === '**' && openPana === '***' && closePana === '***') {
+      return <div className="p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">**</div>;
     }
 
     const isRed = isRedNumber(jodi);
 
     const renderPana = (pana: string) => (
         <div className="flex flex-col text-xs text-black font-bold">
-            <span>{pana[0] ?? '*'}</span>
-            <span>{pana[1] ?? '*'}</span>
-            <span>{pana[2] ?? '*'}</span>
+            <span>{pana === '***' ? '*' : pana[0]}</span>
+            <span>{pana === '***' ? '*' : pana[1]}</span>
+            <span>{pana === '***' ? '*' : pana[2]}</span>
         </div>
     );
 
@@ -86,7 +86,7 @@ export default function PanelChartPage() {
     const parsedRows = React.useMemo(() => {
         if (!chartData?.data) return [];
         
-        const dataString = chartData.data;
+        const dataString = chartData.data.replace(/\r\n/g, '\n');
         const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/gi;
         
         const sections = dataString.split(dateRangeRegex).filter(s => s.trim());
@@ -104,14 +104,14 @@ export default function PanelChartPage() {
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
                 const dayStartIndex = dayIndex * 3;
                 
-                const openPana = weeklyData[dayStartIndex] || '*';
-                const jodi = weeklyData[dayStartIndex + 1] || '*';
-                const closePana = weeklyData[dayStartIndex + 2] || '*';
+                const openPana = weeklyData[dayStartIndex] || '***';
+                const jodi = weeklyData[dayStartIndex + 1] || '**';
+                const closePana = weeklyData[dayStartIndex + 2] || '***';
 
                 daysData.push({
-                    openPana: openPana.length === 3 ? openPana : '*',
-                    jodi: jodi.length === 2 ? jodi : '*',
-                    closePana: closePana.length === 3 ? closePana : '*'
+                    openPana: openPana.length === 3 ? openPana : '***',
+                    jodi: jodi.length === 2 ? jodi : '**',
+                    closePana: closePana.length === 3 ? closePana : '***'
                 });
             }
             rows.push({ dateRange, daysData });
