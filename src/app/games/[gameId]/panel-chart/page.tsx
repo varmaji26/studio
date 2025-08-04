@@ -104,16 +104,15 @@ export default function PanelChartPage() {
             const weeklyData = dataBlock.trim().split(/\s+/).filter(d => d);
 
             const daysData = [];
+            let currentIndex = 0;
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-                const startIndex = dayIndex * 8;
-                const dayDataSlice = weeklyData.slice(startIndex, startIndex + 8);
-                
-                const openPana = dayDataSlice.slice(0, 3).join('');
-                const jodi = dayDataSlice.slice(3, 5).join('');
-                const closePana = dayDataSlice.slice(5, 8).join('');
-                
-                if (openPana && jodi && closePana) {
+                // Each day's data consists of Open Pana (3), Jodi (2), Close Pana (3) = 8 numbers
+                if (currentIndex + 8 <= weeklyData.length) {
+                    const openPana = weeklyData.slice(currentIndex, currentIndex + 3).join('');
+                    const jodi = weeklyData.slice(currentIndex + 3, currentIndex + 5).join('');
+                    const closePana = weeklyData.slice(currentIndex + 5, currentIndex + 8).join('');
                     daysData.push({ openPana, jodi, closePana });
+                    currentIndex += 8;
                 } else {
                     // Fill with placeholders if data is incomplete for the day
                     daysData.push({ openPana: '***', jodi: '**', closePana: '***' });
