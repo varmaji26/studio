@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, limit, startAfter, Query } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -36,28 +36,18 @@ declare module 'jspdf' {
 const PAGE_SIZE = 7;
 
 export default function AdminPaymentHistoryPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [displayedTransactions, setDisplayedTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  
-  const [lastDoc, setLastDoc] = useState<DocumentData | null>(null);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchTransactions = useCallback(async (lastVisibleDoc: DocumentData | null = null) => {
-    setLoading(lastVisibleDoc === null);
-    setLoadingMore(lastVisibleDoc !== null);
-
+  const fetchAllTransactions = useCallback(async () => {
+    setLoading(true);
     try {
-        let combinedTransactions: Transaction[] = [];
-
-        // We fetch both collections and merge them. For simplicity in pagination,
-        // we'll paginate over a combined list ordered by date. This might be slow with
-        // huge datasets, but is simpler than paginating two sources separately.
-        // A more scalable solution would involve a single 'transactions' collection.
-        
         const depositsQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
         const withdrawalsQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
 
@@ -69,44 +59,47 @@ export default function AdminPaymentHistoryPage() {
         const deposits = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'deposit' })) as Transaction[];
         const withdrawals = withdrawalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'withdrawal' })) as Transaction[];
         
-        combinedTransactions = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-
-        // Now we apply pagination logic on the client-side combined array.
-        const currentLength = lastVisibleDoc ? transactions.length : 0;
-        const newTransactions = combinedTransactions.slice(currentLength, currentLength + PAGE_SIZE);
-
-        if (newTransactions.length > 0) {
-            setTransactions(prev => lastVisibleDoc ? [...prev, ...newTransactions] : newTransactions);
-            setHasMore(currentLength + newTransactions.length < combinedTransactions.length);
-        } else {
-            setHasMore(false);
-        }
+        const combined = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        
+        setAllTransactions(combined);
+        setDisplayedTransactions(combined.slice(0, PAGE_SIZE));
+        setPage(1);
+        setHasMore(combined.length > PAGE_SIZE);
         
     } catch (error) {
         console.error("Error fetching transactions: ", error);
     } finally {
         setLoading(false);
-        setLoadingMore(false);
     }
-  }, [transactions.length]);
+  }, []);
 
 
    useEffect(() => {
-    fetchTransactions();
+    fetchAllTransactions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   useEffect(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (!lowercasedFilter) {
-        setFilteredTransactions(transactions);
+        setFilteredTransactions(displayedTransactions);
+        setHasMore(allTransactions.length > displayedTransactions.length);
         return;
     }
-    const filteredData = transactions.filter((t) => 
+    const filteredData = allTransactions.filter((t) => 
       t.displayName?.toLowerCase().includes(lowercasedFilter)
     );
     setFilteredTransactions(filteredData);
-  }, [searchTerm, transactions]);
+    setHasMore(false); // Disable load more when searching
+  }, [searchTerm, displayedTransactions, allTransactions]);
+
+  const loadMore = () => {
+      const nextPage = page + 1;
+      const newTransactions = allTransactions.slice(0, nextPage * PAGE_SIZE);
+      setDisplayedTransactions(newTransactions);
+      setPage(nextPage);
+      setHasMore(allTransactions.length > newTransactions.length);
+  };
 
 
   const formatDate = (timestamp: Timestamp) => {
@@ -131,26 +124,16 @@ export default function AdminPaymentHistoryPage() {
     const tableColumn = ["Date", "Username", "Type", "Amount", "Method", "Status"];
     const tableRows: (string | number)[][] = [];
     
-    // Fetch all transactions for PDF export
-    const depositsQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
-    const withdrawalsQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
-
-    const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([
-        getDocs(depositsQuery),
-        getDocs(withdrawalsQuery)
-    ]);
-    const deposits = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'deposit' })) as Transaction[];
-    const withdrawals = withdrawalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'withdrawal' })) as Transaction[];
-    let allTransactions = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    let transactionsToExport = allTransactions;
 
     if(searchTerm) {
         const lowercasedFilter = searchTerm.toLowerCase().trim();
-        allTransactions = allTransactions.filter((t) => 
+        transactionsToExport = allTransactions.filter((t) => 
             t.displayName?.toLowerCase().includes(lowercasedFilter)
         );
     }
 
-    allTransactions.forEach(t => {
+    transactionsToExport.forEach(t => {
         const transactionData = [
             formatDate(t.createdAt),
             t.displayName,
@@ -220,6 +203,8 @@ export default function AdminPaymentHistoryPage() {
      </div>
   );
 
+  const dataForTabs = searchTerm ? filteredTransactions : allTransactions;
+
   return (
      <div className="flex-1 space-y-4 p-4 sm:p-8">
         <Card className="bg-card/80 border-white/10 shadow-lg">
@@ -229,7 +214,7 @@ export default function AdminPaymentHistoryPage() {
                     <CardTitle className="text-3xl font-bold">Payment History</CardTitle>
                     <CardDescription>View all deposit and withdrawal history for all users.</CardDescription>
                 </div>
-                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={transactions.length === 0}>
+                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={allTransactions.length === 0}>
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                 </Button>
@@ -237,7 +222,7 @@ export default function AdminPaymentHistoryPage() {
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">All Transactions ({filteredTransactions.length})</h3>
+                <h3 className="text-xl font-semibold">All Transactions ({searchTerm ? filteredTransactions.length : allTransactions.length})</h3>
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
@@ -272,10 +257,9 @@ export default function AdminPaymentHistoryPage() {
                 </Tabs>
             )}
             
-            {hasMore && !searchTerm && (
+            {hasMore && !searchTerm && !loading && (
                 <div className="text-center mt-6">
-                    <Button onClick={() => fetchTransactions(lastDoc)} disabled={loadingMore}>
-                        {loadingMore ? <Loader className="mr-2" /> : null}
+                    <Button onClick={loadMore}>
                         Load More
                     </Button>
                 </div>
@@ -286,5 +270,3 @@ export default function AdminPaymentHistoryPage() {
       </div>
   );
 }
-
-    
