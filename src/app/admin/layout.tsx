@@ -185,10 +185,12 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "220 Matka Pana List"}}>
-             <ClipboardList />
-             <span>220 Matka Pana List</span>
-            </SidebarMenuButton>
+            <Link href="/admin/jodi-panel" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/jodi-panel')} tooltip={{children: "Jodi Panel"}}>
+                <ClipboardList />
+                <span>Jodi Panel</span>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
             <SidebarMenuButton tooltip={{children: "Registered Users"}}>
