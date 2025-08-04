@@ -19,19 +19,27 @@ interface PanelChartData extends DocumentData {
 }
 
 const isRedNumber = (num: string) => {
-    if (num === '*' || num.length !== 2) return false;
-    const [first, second] = num.split('');
-    const diff = Math.abs(parseInt(first) - parseInt(second));
+    if (!num || num === '*' || num.length !== 2) return false;
+    const digits = num.split('');
+    if (digits.length !== 2 || isNaN(parseInt(digits[0])) || isNaN(parseInt(digits[1]))) return false;
+    const [first, second] = [parseInt(digits[0]), parseInt(digits[1])];
+    const diff = Math.abs(first - second);
     return diff === 5 || first === second;
 };
 
-const DayCell = ({ jodi, pana, isRed }: { jodi: string, pana: string, isRed: boolean }) => (
-    <div className="flex flex-col items-center justify-center p-1 border border-gray-400">
-        <span className="text-xs">{pana.substring(0,3)}</span>
-        <span className={`font-bold text-lg ${isRed ? 'text-red-600' : 'text-black'}`}>{jodi}</span>
-        <span className="text-xs">{pana.substring(3)}</span>
-    </div>
-);
+const DayCell = ({ jodi, openPana, closePana }: { jodi: string, openPana: string, closePana: string }) => {
+    if (jodi === '*') {
+      return <div className="p-1 min-h-[50px] flex items-center justify-center text-black font-bold">*</div>;
+    }
+    const isRed = isRedNumber(jodi);
+    return (
+        <div className="flex flex-col items-center justify-center p-1 min-h-[50px]">
+            <span className="text-xs text-black">{openPana}</span>
+            <span className={`font-bold text-lg ${isRed ? 'text-red-600' : 'text-black'}`}>{jodi}</span>
+            <span className="text-xs text-black">{closePana}</span>
+        </div>
+    );
+};
 
 export default function PanelChartPage() {
     const { gameId } = useParams();
@@ -93,40 +101,51 @@ export default function PanelChartPage() {
                             </Button>
                         </div>
                         {chartData ? (
-                            <div className="overflow-x-auto border-2 border-primary bg-orange-100 p-1">
-                                <div className="grid grid-cols-8 text-center font-bold text-white bg-blue-800">
-                                    <div className="p-2 border-b-2 border-primary">Date</div>
-                                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                                        <div key={day} className="p-2 border-b-2 border-primary">{day}</div>
-                                    ))}
-                                </div>
-                                <div className="text-center">
-                                    {parsedRows.map((row, rowIndex) => {
-                                        const cols = row.split(/\s+/).filter(d => d);
-                                        const dateRange = cols.slice(0, 3).join(' ');
-                                        const weekData = cols.slice(3);
-                                        return (
-                                            <div key={rowIndex} className="grid grid-cols-8">
-                                                <div className="flex flex-col items-center justify-center p-1 border border-gray-400 font-bold text-black text-xs">
-                                                    <span>{dateRange.split(' To ')[0]}</span>
-                                                    <span>To</span>
-                                                    <span>{dateRange.split(' To ')[1]}</span>
-                                                </div>
-                                                {Array.from({ length: 7 }).map((_, dayIndex) => {
-                                                    const dataIndex = dayIndex * 3;
-                                                    if (dataIndex >= weekData.length) return <div key={dayIndex} className="border border-gray-400"></div>;
-                                                    
-                                                    const openPana = weekData[dataIndex];
-                                                    const jodi = weekData[dataIndex + 1];
-                                                    const closePana = weekData[dataIndex + 2];
-                                                    const isRed = isRedNumber(jodi);
-                                                    
-                                                    return <DayCell key={dayIndex} jodi={jodi} pana={`${openPana}${closePana}`} isRed={isRed} />;
-                                                })}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                            <div className="overflow-x-auto border-2 border-yellow-600 bg-orange-100">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-blue-800 text-white font-bold">
+                                            <th className="p-2 border border-yellow-600">Date</th>
+                                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                                                <th key={day} className="p-2 border border-yellow-600">{day}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-center">
+                                        {parsedRows.map((row, rowIndex) => {
+                                            const cols = row.split(/\s+/).filter(d => d);
+                                            const dateRangeParts = cols.slice(0, 3);
+                                            const dateRange = dateRangeParts.length === 3 ? `${dateRangeParts[0]} To ${dateRangeParts[2]}` : dateRangeParts.join(' ');
+                                            const weekData = cols.slice(3);
+                                            
+                                            return (
+                                                <tr key={rowIndex}>
+                                                    <td className="p-1 border border-gray-400 font-bold text-black text-xs min-w-[90px]">
+                                                        <span>{dateRange.split(' To ')[0]}</span><br/>
+                                                        <span>To</span><br/>
+                                                        <span>{dateRange.split(' To ')[1]}</span>
+                                                    </td>
+                                                    {Array.from({ length: 7 }).map((_, dayIndex) => {
+                                                        const dataIndex = dayIndex * 3;
+                                                        if (dataIndex >= weekData.length || !weekData[dataIndex + 1]) {
+                                                            return <td key={dayIndex} className="p-1 border border-gray-400"></td>;
+                                                        }
+                                                        
+                                                        const openPana = weekData[dataIndex];
+                                                        const jodi = weekData[dataIndex + 1];
+                                                        const closePana = weekData[dataIndex + 2];
+                                                        
+                                                        return (
+                                                            <td key={dayIndex} className="p-1 border border-gray-400">
+                                                                <DayCell jodi={jodi} openPana={openPana} closePana={closePana} />
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                         ) : (
                              <p className="text-center text-muted-foreground mt-8 py-10">
