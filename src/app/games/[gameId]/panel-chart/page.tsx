@@ -31,26 +31,28 @@ const isRedNumber = (num: string) => {
 
 const DayCell = ({ jodi }: { jodi: string }) => {
     if (jodi === '**' || jodi === '*') {
-      return <div className="p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">**</div>;
+      return (
+        <div className="relative p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">
+            **
+        </div>
+      );
     }
-
     const isRed = isRedNumber(jodi);
+    
     const dotPositions = [
-        { top: '10%', left: '20%' }, { top: '10%', right: '20%' },
-        { top: '30%', left: '5%' }, { top: '30%', right: '5%' },
-        { top: '50%', left: '0%' }, { top: '50%', right: '0%' },
-        { bottom: '30%', left: '5%' }, { bottom: '30%', right: '5%' },
-        { bottom: '10%', left: '20%' }, { bottom: '10%', right: '20%' },
+        { top: '10%', left: '47%' }, { bottom: '10%', left: '47%' },
+        { top: '25%', left: '15%' }, { top: '25%', right: '15%' },
+        { bottom: '25%', left: '15%' }, { bottom: '25%', right: '15%' },
+        { top: '40%', left: '5%' }, { top: '50%', left: '5%' },
+        { top: '40%', right: '5%' }, { top: '50%', right: '5%' },
     ];
 
     return (
         <div className="relative p-1 min-h-[60px] flex items-center justify-center">
-            <span className={cn("text-2xl mx-1 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
             {dotPositions.map((pos, i) => (
-                <span key={i} className="absolute text-black/70 text-xs" style={pos}>
-                    *
-                </span>
+                <span key={i} className="absolute text-black/70 text-base" style={pos}>*</span>
             ))}
+            <span className={cn("text-4xl mx-1 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
         </div>
     );
 };
@@ -88,29 +90,29 @@ export default function PanelChartPage() {
 
     const parsedRows = React.useMemo(() => {
         if (!chartData?.data) return [];
-        
-        const dataString = chartData.data.replace(/\r\n/g, '\n');
-        const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/gi;
-        
-        const sections = dataString.split(dateRangeRegex).filter(s => s.trim());
-        
+        const dataString = chartData.data.replace(/\r/g, ''); // Normalize line endings
+        const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
+        const sections = dataString.split(dateRangeRegex).filter(s => s.trim() !== '');
+
         const rows = [];
         for (let i = 0; i < sections.length; i += 3) {
             const startDate = sections[i];
             const endDate = sections[i + 1];
             const dataBlock = sections[i + 2] || '';
-            
             const dateRange = { start: startDate.trim(), end: endDate.trim() };
             const weeklyData = dataBlock.trim().split(/\s+/).filter(d => d);
             
             const daysData = [];
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-                const dayStartIndex = dayIndex * 3;
-                
-                const jodi = weeklyData[dayStartIndex + 1] || '**';
+                const dayStartIndex = dayIndex * 8; // Each day has 8 numbers (3+2+3)
+                const openPana = weeklyData.slice(dayStartIndex, dayStartIndex + 3).join('');
+                const jodi = weeklyData.slice(dayStartIndex + 3, dayStartIndex + 5).join('');
+                const closePana = weeklyData.slice(dayStartIndex + 5, dayStartIndex + 8).join('');
 
                 daysData.push({
-                    jodi: jodi.length === 2 ? jodi : '**'
+                    openPana: openPana.length === 3 ? openPana : '***',
+                    jodi: jodi.length === 2 ? jodi : '**',
+                    closePana: closePana.length === 3 ? closePana : '***'
                 });
             }
             rows.push({ dateRange, daysData });
