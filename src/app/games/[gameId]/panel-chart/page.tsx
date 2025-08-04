@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface PanelChartData extends DocumentData {
   id: string;
@@ -28,26 +29,28 @@ const isRedNumber = (num: string) => {
     return diff === 5 || first === second;
 };
 
-const DayCell = ({ jodi, openPana, closePana }: { jodi: string, openPana: string, closePana: string }) => {
+const DayCell = ({ jodi }: { jodi: string }) => {
     if (jodi === '**' || jodi === '*') {
       return <div className="p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">**</div>;
     }
 
     const isRed = isRedNumber(jodi);
-
-    const renderPana = (pana: string) => (
-        <div className="flex flex-col text-xs text-black font-bold">
-            <span>{pana === '***' ? '*' : pana[0]}</span>
-            <span>{pana === '***' ? '*' : pana[1]}</span>
-            <span>{pana === '***' ? '*' : pana[2]}</span>
-        </div>
-    );
+    const dotPositions = [
+        { top: '10%', left: '20%' }, { top: '10%', right: '20%' },
+        { top: '30%', left: '5%' }, { top: '30%', right: '5%' },
+        { top: '50%', left: '0%' }, { top: '50%', right: '0%' },
+        { bottom: '30%', left: '5%' }, { bottom: '30%', right: '5%' },
+        { bottom: '10%', left: '20%' }, { bottom: '10%', right: '20%' },
+    ];
 
     return (
         <div className="relative p-1 min-h-[60px] flex items-center justify-center">
-            {renderPana(openPana)}
-            <span className={`text-2xl mx-1 font-bold ${isRed ? 'text-red-600' : 'text-black'}`}>{jodi}</span>
-            {renderPana(closePana)}
+            <span className={cn("text-2xl mx-1 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
+            {dotPositions.map((pos, i) => (
+                <span key={i} className="absolute text-black/70 text-xs" style={pos}>
+                    *
+                </span>
+            ))}
         </div>
     );
 };
@@ -104,14 +107,10 @@ export default function PanelChartPage() {
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
                 const dayStartIndex = dayIndex * 3;
                 
-                const openPana = weeklyData[dayStartIndex] || '***';
                 const jodi = weeklyData[dayStartIndex + 1] || '**';
-                const closePana = weeklyData[dayStartIndex + 2] || '***';
 
                 daysData.push({
-                    openPana: openPana.length === 3 ? openPana : '***',
-                    jodi: jodi.length === 2 ? jodi : '**',
-                    closePana: closePana.length === 3 ? closePana : '***'
+                    jodi: jodi.length === 2 ? jodi : '**'
                 });
             }
             rows.push({ dateRange, daysData });
@@ -134,7 +133,7 @@ export default function PanelChartPage() {
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader className="text-center">
                         <CardTitle className="text-xl sm:text-2xl font-bold text-primary">
-                            {chartData?.title || `Panel Chart`}
+                            {chartData?.title || `Record`}
                         </CardTitle>
                         <CardDescription>
                             Historical Panel Records
@@ -170,11 +169,7 @@ export default function PanelChartPage() {
                                                 </td>
                                                 {row.daysData.map((dayData, dayIndex) => (
                                                     <td key={dayIndex} className="p-1 border border-gray-400">
-                                                        <DayCell 
-                                                            jodi={dayData.jodi}
-                                                            openPana={dayData.openPana}
-                                                            closePana={dayData.closePana}
-                                                        />
+                                                        <DayCell jodi={dayData.jodi} />
                                                     </td>
                                                 ))}
                                             </tr>
