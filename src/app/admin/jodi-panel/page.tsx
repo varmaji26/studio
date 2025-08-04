@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -49,6 +49,11 @@ export default function JodiPanelPage() {
 
   const form = useForm<ChartFormValues>({
     resolver: zodResolver(chartSchema),
+    defaultValues: {
+        gameId: '',
+        title: '',
+        data: ''
+    }
   });
 
   const fetchChartsAndGames = useCallback(() => {
