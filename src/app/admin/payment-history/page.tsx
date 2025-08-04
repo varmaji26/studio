@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, DocumentData, orderBy, Timestamp } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, limit, startAfter, Query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -33,41 +33,67 @@ declare module 'jspdf' {
   }
 }
 
+const PAGE_SIZE = 7;
+
 export default function AdminPaymentHistoryPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  
+  const [lastDoc, setLastDoc] = useState<DocumentData | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  
   const [searchTerm, setSearchTerm] = useState('');
 
+  const fetchTransactions = useCallback(async (lastVisibleDoc: DocumentData | null = null) => {
+    setLoading(lastVisibleDoc === null);
+    setLoadingMore(lastVisibleDoc !== null);
+
+    try {
+        let combinedTransactions: Transaction[] = [];
+
+        // We fetch both collections and merge them. For simplicity in pagination,
+        // we'll paginate over a combined list ordered by date. This might be slow with
+        // huge datasets, but is simpler than paginating two sources separately.
+        // A more scalable solution would involve a single 'transactions' collection.
+        
+        const depositsQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
+        const withdrawalsQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
+
+        const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([
+            getDocs(depositsQuery),
+            getDocs(withdrawalsQuery)
+        ]);
+
+        const deposits = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'deposit' })) as Transaction[];
+        const withdrawals = withdrawalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'withdrawal' })) as Transaction[];
+        
+        combinedTransactions = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+
+        // Now we apply pagination logic on the client-side combined array.
+        const currentLength = lastVisibleDoc ? transactions.length : 0;
+        const newTransactions = combinedTransactions.slice(currentLength, currentLength + PAGE_SIZE);
+
+        if (newTransactions.length > 0) {
+            setTransactions(prev => lastVisibleDoc ? [...prev, ...newTransactions] : newTransactions);
+            setHasMore(currentLength + newTransactions.length < combinedTransactions.length);
+        } else {
+            setHasMore(false);
+        }
+        
+    } catch (error) {
+        console.error("Error fetching transactions: ", error);
+    } finally {
+        setLoading(false);
+        setLoadingMore(false);
+    }
+  }, [transactions.length]);
+
+
    useEffect(() => {
-    setLoading(true);
-
-    const depositQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
-    const depositsUnsub = onSnapshot(depositQuery, (snapshot) => {
-        const deposits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'deposit' })) as Transaction[];
-        setTransactions(prev => {
-            const withdrawals = prev.filter(t => t.type === 'withdrawal');
-            const all = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-            return all;
-        });
-        setLoading(false);
-    });
-
-    const withdrawalQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
-    const withdrawalsUnsub = onSnapshot(withdrawalQuery, (snapshot) => {
-        const withdrawals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'withdrawal' })) as Transaction[];
-        setTransactions(prev => {
-            const deposits = prev.filter(t => t.type === 'deposit');
-            const all = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-            return all;
-        });
-        setLoading(false);
-    });
-
-    return () => {
-        depositsUnsub();
-        withdrawalsUnsub();
-    };
+    fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   useEffect(() => {
@@ -98,16 +124,33 @@ export default function AdminPaymentHistoryPage() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const doc = new jsPDF();
     doc.text("Admin Payment History", 14, 16);
 
     const tableColumn = ["Date", "Username", "Type", "Amount", "Method", "Status"];
     const tableRows: (string | number)[][] = [];
+    
+    // Fetch all transactions for PDF export
+    const depositsQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
+    const withdrawalsQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
 
-    const dataToExport = searchTerm ? filteredTransactions : transactions;
+    const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([
+        getDocs(depositsQuery),
+        getDocs(withdrawalsQuery)
+    ]);
+    const deposits = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'deposit' })) as Transaction[];
+    const withdrawals = withdrawalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'withdrawal' })) as Transaction[];
+    let allTransactions = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
-    dataToExport.forEach(t => {
+    if(searchTerm) {
+        const lowercasedFilter = searchTerm.toLowerCase().trim();
+        allTransactions = allTransactions.filter((t) => 
+            t.displayName?.toLowerCase().includes(lowercasedFilter)
+        );
+    }
+
+    allTransactions.forEach(t => {
         const transactionData = [
             formatDate(t.createdAt),
             t.displayName,
@@ -143,7 +186,7 @@ export default function AdminPaymentHistoryPage() {
             </TableHeader>
             <TableBody>
                 {data.map((t) => (
-                    <TableRow key={t.id}>
+                    <TableRow key={t.id + t.createdAt.toMillis()}>
                         <TableCell>{formatDate(t.createdAt)}</TableCell>
                         <TableCell>{t.displayName}</TableCell>
                         <TableCell>
@@ -229,8 +272,19 @@ export default function AdminPaymentHistoryPage() {
                 </Tabs>
             )}
             
+            {hasMore && !searchTerm && (
+                <div className="text-center mt-6">
+                    <Button onClick={() => fetchTransactions(lastDoc)} disabled={loadingMore}>
+                        {loadingMore ? <Loader className="mr-2" /> : null}
+                        Load More
+                    </Button>
+                </div>
+            )}
+            
           </CardContent>
         </Card>
       </div>
   );
 }
+
+    
