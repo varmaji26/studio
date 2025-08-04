@@ -39,19 +39,14 @@ const DayCell = ({ jodi }: { jodi: string }) => {
     }
     const isRed = isRedNumber(jodi);
     
-    const dotPositions = [
-        { top: '10%', left: '47%' }, { bottom: '10%', left: '47%' },
-        { top: '25%', left: '15%' }, { top: '25%', right: '15%' },
-        { bottom: '25%', left: '15%' }, { bottom: '25%', right: '15%' },
-        { top: '40%', left: '5%' }, { top: '50%', left: '5%' },
-        { top: '40%', right: '5%' }, { top: '50%', right: '5%' },
-    ];
-
     return (
         <div className="relative p-1 min-h-[60px] flex items-center justify-center">
-            {dotPositions.map((pos, i) => (
-                <span key={i} className="absolute text-black/70 text-base" style={pos}>*</span>
-            ))}
+            {/* Asterisks for decoration */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-black/70 text-base">*</div>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-black/70 text-base">*</div>
+            <div className="absolute left-2 top-1/2 -translate-y-[60%] text-black/70 text-base leading-none">*<br/>*</div>
+            <div className="absolute right-2 top-1/2 -translate-y-[60%] text-black/70 text-base leading-none">*<br/>*</div>
+            
             <span className={cn("text-4xl mx-1 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
         </div>
     );
@@ -87,11 +82,12 @@ export default function PanelChartPage() {
 
         fetchChartData();
     }, [gameId]);
-
-    const parsedRows = React.useMemo(() => {
+    
+     const parsedRows = React.useMemo(() => {
         if (!chartData?.data) return [];
-        const dataString = chartData.data.replace(/\r/g, ''); // Normalize line endings
+        const dataString = chartData.data.replace(/\r/g, '');
         const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
+        
         const sections = dataString.split(dateRangeRegex).filter(s => s.trim() !== '');
 
         const rows = [];
@@ -104,15 +100,11 @@ export default function PanelChartPage() {
             
             const daysData = [];
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-                const dayStartIndex = dayIndex * 8; // Each day has 8 numbers (3+2+3)
-                const openPana = weeklyData.slice(dayStartIndex, dayStartIndex + 3).join('');
+                const dayStartIndex = dayIndex * 8;
                 const jodi = weeklyData.slice(dayStartIndex + 3, dayStartIndex + 5).join('');
-                const closePana = weeklyData.slice(dayStartIndex + 5, dayStartIndex + 8).join('');
 
                 daysData.push({
-                    openPana: openPana.length === 3 ? openPana : '***',
                     jodi: jodi.length === 2 ? jodi : '**',
-                    closePana: closePana.length === 3 ? closePana : '***'
                 });
             }
             rows.push({ dateRange, daysData });
