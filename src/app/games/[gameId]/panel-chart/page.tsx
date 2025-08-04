@@ -29,7 +29,9 @@ const isRedNumber = (num: string) => {
     return diff === 5 || first === second;
 };
 
-const DayCell = ({ openPana, jodi, closePana }: { openPana: string; jodi: string; closePana: string }) => {
+const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; closePana: string; closeJodi: string } }) => {
+    const { openPana, jodi, closePana, closeJodi } = dayData;
+
     if (jodi === '**' || jodi === '*') {
       return (
         <div className="relative p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">
@@ -40,7 +42,7 @@ const DayCell = ({ openPana, jodi, closePana }: { openPana: string; jodi: string
     const isRed = isRedNumber(jodi);
     
     return (
-        <div className="flex items-center justify-center p-1 min-h-[60px]">
+        <div className="flex items-center justify-center p-1 min-h-[60px] gap-1">
             <div className="text-center text-xs text-black font-semibold leading-tight">
                 {openPana.split('').map((digit, i) => <div key={i}>{digit}</div>)}
             </div>
@@ -48,6 +50,11 @@ const DayCell = ({ openPana, jodi, closePana }: { openPana: string; jodi: string
             <div className="text-center text-xs text-black font-semibold leading-tight">
                 {closePana.split('').map((digit, i) => <div key={i}>{digit}</div>)}
             </div>
+            {closeJodi && (
+                <div className="text-center text-xs text-black font-semibold leading-tight pl-1">
+                    {closeJodi}
+                </div>
+            )}
         </div>
     );
 };
@@ -85,10 +92,11 @@ export default function PanelChartPage() {
     
      const parsedRows = React.useMemo(() => {
         if (!chartData?.data) return [];
+        
         const dataString = chartData.data.replace(/\r/g, '');
         const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
         
-        const sections = dataString.split(dateRangeRegex).filter(s => s.trim() !== '');
+        const sections = dataString.split(dateRangeRegex).filter(s => s && s.trim() !== '');
 
         const rows = [];
         for (let i = 0; i < sections.length; i += 3) {
@@ -96,21 +104,28 @@ export default function PanelChartPage() {
             const endDate = sections[i + 1];
             const dataBlock = sections[i + 2] || '';
             const dateRange = { start: startDate.trim(), end: endDate.trim() };
-            const weeklyData = dataBlock.trim().split(/\s+/).filter(d => d);
             
+            // Clean up the data block: remove newlines, multiple spaces, and then split
+            const weeklyData = dataBlock.trim().replace(/\s+/g, ' ').split(' ');
+
             const daysData = [];
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-                const dayStartIndex = dayIndex * 8;
-                const daySlice = weeklyData.slice(dayStartIndex, dayStartIndex + 8);
+                const startIndex = dayIndex * 8;
+                const dayDataSlice = weeklyData.slice(startIndex, startIndex + 8);
+                
+                const openPana = dayDataSlice.slice(0, 3).join('');
+                const jodi = dayDataSlice.slice(3, 5).join('');
+                const closePana = dayDataSlice.slice(5, 8).join('');
+                
+                // For Sunday, the last digit is the close jodi
+                const closeJodi = (dayIndex === 6 && closePana.length === 3) 
+                    ? (closePana.split('').reduce((sum, digit) => sum + parseInt(digit), 0) % 10).toString() 
+                    : '';
 
-                if(daySlice.length > 0 && daySlice[0] !== '*') {
-                    daysData.push({
-                        openPana: daySlice.slice(0, 3).join(''),
-                        jodi: daySlice.slice(3, 5).join(''),
-                        closePana: daySlice.slice(5, 8).join(''),
-                    });
+                if (openPana && jodi && closePana) {
+                    daysData.push({ openPana, jodi, closePana, closeJodi });
                 } else {
-                     daysData.push({ openPana: '***', jodi: '**', closePana: '***' });
+                    daysData.push({ openPana: '***', jodi: '**', closePana: '***', closeJodi: '*' });
                 }
             }
             rows.push({ dateRange, daysData });
@@ -169,7 +184,7 @@ export default function PanelChartPage() {
                                                 </td>
                                                 {row.daysData.map((dayData, dayIndex) => (
                                                     <td key={dayIndex} className="p-1 border border-gray-400">
-                                                        <DayCell openPana={dayData.openPana} jodi={dayData.jodi} closePana={dayData.closePana} />
+                                                        <DayCell dayData={dayData} />
                                                     </td>
                                                 ))}
                                             </tr>
