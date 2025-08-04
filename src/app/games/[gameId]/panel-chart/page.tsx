@@ -86,35 +86,55 @@ export default function PanelChartPage() {
     const parsedRows = React.useMemo(() => {
         if (!chartData?.data) return [];
         
-        return chartData.data.split('\n').filter(row => row.trim() !== '').map(row => {
-            const parts = row.trim().split(/\s+/);
-            const dateRangeMatch = row.match(/(\d{2}\/\d{2}\/\d{4})\s+to\s+(\d{2}\/\d{2}\/\d{4})/);
+        return chartData.data.split('\n\n').filter(block => block.trim() !== '').map(block => {
+            const lines = block.trim().split('\n');
+            const dateLine = lines[0] + ' ' + lines[1] + ' ' + lines[2];
+            const dateRangeMatch = dateLine.match(/(\d{2}\/\d{2}\/\d{4})\s+to\s+(\d{2}\/\d{2}\/\d{4})/);
             
             let dateRange = { start: '', end: '' };
-            let dataStartIndex = 0;
-
             if (dateRangeMatch) {
                 dateRange = { start: dateRangeMatch[1], end: dateRangeMatch[2] };
-                const dateString = dateRangeMatch[0];
-                dataStartIndex = dateString.split(/\s+/).length;
             }
 
-            const weeklyData = parts.slice(dataStartIndex);
+            const dataLines = lines.slice(3).join(' ').trim();
+            const weeklyData = dataLines.split(/\s+/).filter(d => d);
+            
             const daysData = [];
             for (let i = 0; i < 7; i++) {
-                const dayDataIndex = i * 3;
+                const dayDataIndex = i * 5; // Each day seems to have 5 numbers
                 if (dayDataIndex < weeklyData.length) {
                     daysData.push({
-                        openPana: weeklyData[dayDataIndex] || '*',
-                        jodi: weeklyData[dayDataIndex+1] || '*',
-                        closePana: weeklyData[dayDataIndex+2] || '*'
+                        openPana: weeklyData.slice(dayDataIndex, dayDataIndex+3).join(''),
+                        jodi: weeklyData[dayDataIndex+3] || '*',
+                        closePana: weeklyData[dayDataIndex+4] ? weeklyData.slice(dayDataIndex+4, dayDataIndex+7).join('') : '*'
                     });
                 } else {
-                    daysData.push({ openPana: '*', jodi: '*', closePana: '*' });
+                     daysData.push({ openPana: '*', jodi: '*', closePana: '*' });
                 }
             }
+             const finalWeeklyData = lines.join(' ').trim().split(/\s+/);
+             const dateMatch = finalWeeklyData.findIndex(d => d === 'to');
+             let cleanData = finalWeeklyData;
+             if(dateMatch !== -1) {
+                dateRange = { start: finalWeeklyData[dateMatch-1], end: finalWeeklyData[dateMatch+1] };
+                cleanData = finalWeeklyData.slice(dateMatch+2);
+             }
+
+
+            const newDaysData = [];
+            for (let i = 0; i < 7; i++) {
+                 const openPana = cleanData.slice(i * 5, i * 5 + 3).join('');
+                 const jodi = cleanData[i * 5 + 3];
+                 const closePana = cleanData[i * 5 + 4] ? cleanData.slice(i * 5 + 4, i * 5 + 7).join('') : undefined;
+                 
+                 newDaysData.push({
+                    openPana: openPana.length === 3 ? openPana : '*',
+                    jodi: jodi && jodi.length === 2 ? jodi : '*',
+                    closePana: closePana && closePana.length === 3 ? closePana : '*'
+                 })
+            }
             
-            return { dateRange, daysData };
+            return { dateRange, daysData: newDaysData };
         });
 
     }, [chartData]);
@@ -171,9 +191,9 @@ export default function PanelChartPage() {
                                                 {row.daysData.map((dayData, dayIndex) => (
                                                     <td key={dayIndex} className="p-1 border border-gray-400">
                                                         <DayCell 
-                                                            jodi={dayData.jodi.length === 2 ? dayData.jodi : '*'}
-                                                            openPana={dayData.openPana.length === 3 ? dayData.openPana : '*'}
-                                                            closePana={dayData.closePana.length === 3 ? dayData.closePana : '*'}
+                                                            jodi={dayData.jodi}
+                                                            openPana={dayData.openPana}
+                                                            closePana={dayData.closePana}
                                                         />
                                                     </td>
                                                 ))}
@@ -193,3 +213,4 @@ export default function PanelChartPage() {
         </div>
     );
 }
+
