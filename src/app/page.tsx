@@ -98,6 +98,8 @@ export default function Home() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
+  
+  const currentDay = new Date().toLocaleString('en-US', { weekday: 'long' });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -107,9 +109,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) return;
-
-    const date = new Date();
-    const currentDay = date.toLocaleString('en-US', { weekday: 'long' });
 
     const userDocRef = doc(db, 'users', user.uid);
     const unsubscribeUserProfile = onSnapshot(userDocRef, (doc) => {
@@ -163,7 +162,7 @@ export default function Home() {
         unsubscribeSettings();
         unsubscribeUserProfile();
     };
-  }, [user]);
+  }, [user, currentDay]);
 
   const handleWhatsAppSupport = () => {
     if (settings.whatsappNumber) {
@@ -508,7 +507,7 @@ export default function Home() {
                         <div className="relative z-10 space-y-3">
                             <h3 className="text-xl font-bold text-white">{game.name}</h3>
                             <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
-                                <Link href={`/games/${game.id}/jodi-digit`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Jodi</Link>
+                                <Link href={`/games/${game.id}/jodi-chart`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Jodi</Link>
                                 <span>{formatGameResult(game)}</span>
                                 <Link href={`/games/${game.id}/single-pana`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Panel</Link>
                             </div>
