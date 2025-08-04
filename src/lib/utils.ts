@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { type DocumentData } from "firebase/firestore";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -31,4 +32,31 @@ export function isBettingClosed(closeTimeStr: string): boolean {
   closeTime.setHours(hours, minutes, 0, 0);
 
   return now > closeTime;
+}
+
+const calculateJodiDigit = (pana: string): string => {
+    if (!pana || pana.length !== 3 || !/^\d+$/.test(pana) || pana.includes('*')) return '';
+    return (pana.split('').reduce((acc, digit) => acc + parseInt(digit, 10), 0) % 10).toString();
+};
+
+export function formatGameResult(game: DocumentData): string {
+    const { result, openResult, closeResult } = game;
+
+    const defaultResult = `${openResult || '***'}-**-${closeResult || '**'}`;
+
+    if (result && !result.includes('**')) {
+        return result;
+    }
+
+    const openPana = openResult && !openResult.includes('*') ? openResult : null;
+    const closePana = closeResult && !closeResult.includes('*') ? closeResult : null;
+
+    if (openPana && !closePana) {
+        const openJodi = calculateJodiDigit(openPana);
+        return `${openPana}-${openJodi}X-XXX`;
+    }
+
+    if (result) return result;
+    
+    return defaultResult;
 }

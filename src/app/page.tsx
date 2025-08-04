@@ -35,7 +35,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay"
-import { formatTime, cn, isBettingClosed } from '@/lib/utils';
+import { formatTime, cn, isBettingClosed, formatGameResult } from '@/lib/utils';
 import { AddPointsDialog } from '@/components/add-points-dialog';
 import { WithdrawFundsDialog } from '@/components/withdraw-funds-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -471,7 +471,7 @@ export default function Home() {
                   <div key={game.id} className="flex justify-between items-center bg-slate-800/80 p-3 rounded-lg border border-slate-700">
                     <span className="text-sm font-medium text-white">{game.name}</span>
                     <div className="text-right">
-                       <span className="text-sm font-bold text-primary">{game.result || `${game.openResult || '***'}-**-${game.closeResult || '**'}`}</span>
+                       <span className="text-sm font-bold text-primary">{formatGameResult(game)}</span>
                       <span className="text-xs text-muted-foreground ml-2">({formatTime(game.closeTime)})</span>
                     </div>
                   </div>
@@ -515,7 +515,7 @@ export default function Home() {
                         <div className="relative z-10 space-y-3">
                             <h3 className="text-xl font-bold text-white">{game.name}</h3>
                             <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">
-                            {game.result || `${game.openResult || '***'}-**-${game.closeResult || '**'}`}
+                            {formatGameResult(game)}
                             </div>
                             <p className={cn(
                                 "text-sm font-bold",
