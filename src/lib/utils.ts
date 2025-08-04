@@ -42,21 +42,22 @@ const calculateJodiDigit = (pana: string): string => {
 export function formatGameResult(game: DocumentData): string {
     const { result, openResult, closeResult } = game;
 
-    const defaultResult = `${openResult || '***'}-**-${closeResult || '**'}`;
+    const openPana = (openResult && !openResult.includes('*')) ? openResult : null;
+    const closePana = (closeResult && !closeResult.includes('*')) ? closeResult : null;
 
-    if (result && !result.includes('**')) {
-        return result;
+    if (openPana && closePana) {
+        const openJodi = calculateJodiDigit(openPana);
+        const closeJodi = calculateJodiDigit(closePana);
+        return `${openPana}-${openJodi}${closeJodi}-${closePana}`;
     }
 
-    const openPana = openResult && !openResult.includes('*') ? openResult : null;
-    const closePana = closeResult && !closeResult.includes('*') ? closeResult : null;
-
-    if (openPana && !closePana) {
+    if (openPana) {
         const openJodi = calculateJodiDigit(openPana);
         return `${openPana}-${openJodi}X-XXX`;
     }
 
+    // Fallback for when no results are updated or data is old
     if (result) return result;
     
-    return defaultResult;
+    return `${openResult || '***'}-**-${closeResult || '**'}`;
 }
