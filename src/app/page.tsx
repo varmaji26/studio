@@ -496,6 +496,7 @@ export default function Home() {
             ) : games.length > 0 ? (
               games.map((game) => {
                 const bettingClosed = isBettingClosed(game.closeTime);
+                const gameIdForChart = game.name.toLowerCase().replace(/\s+/g, '-');
                 return (
                     <div
                         key={game.id}
@@ -507,7 +508,7 @@ export default function Home() {
                         <div className="relative z-10 space-y-3">
                             <h3 className="text-xl font-bold text-white">{game.name}</h3>
                             <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
-                                <Link href={`/games/${game.id}/jodi-chart`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Jodi</Link>
+                                <Link href={`/games/${gameIdForChart}/jodi-chart`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Jodi</Link>
                                 <span>{formatGameResult(game)}</span>
                                 <Link href={`/games/${game.id}/single-pana`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Panel</Link>
                             </div>
@@ -541,3 +542,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

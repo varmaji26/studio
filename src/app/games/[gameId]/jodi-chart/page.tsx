@@ -3,82 +3,61 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc, getDoc, limit } from 'firebase/firestore';
+import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
 
-interface Game extends DocumentData {
+interface JodiChartData extends DocumentData {
   id: string;
-  name: string;
+  gameName: string;
+  title: string;
+  data: string;
 }
 
-interface WinningBid extends DocumentData {
-    id: string;
-    createdAt: Timestamp;
-    numbers: string[];
-    betType: string;
-}
+const isRedNumber = (num: string) => {
+    if (num === '*' || num.length !== 2) return false;
+    const [first, second] = num.split('');
+    const diff = Math.abs(parseInt(first) - parseInt(second));
+    return diff === 5 || first === second;
+};
 
 export default function JodiChartPage() {
     const { gameId } = useParams();
     const router = useRouter();
-    const [game, setGame] = useState<Game | null>(null);
-    const [winningHistory, setWinningHistory] = useState<WinningBid[]>([]);
+    const [chartData, setChartData] = useState<JodiChartData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (typeof gameId !== 'string') return;
 
-        const fetchGameDetails = async () => {
-            const gameDocRef = doc(db, 'games', gameId);
-            const gameDoc = await getDoc(gameDocRef);
-            if (gameDoc.exists()) {
-                setGame({ id: gameDoc.id, ...gameDoc.data() } as Game);
-            } else {
-                router.push('/');
+        const fetchChartData = async () => {
+            setLoading(true);
+            try {
+                // The document ID in jodiCharts should match the gameId
+                const chartDocRef = doc(db, 'jodiCharts', gameId);
+                const chartDoc = await getDoc(chartDocRef);
+                if (chartDoc.exists()) {
+                    setChartData({ id: chartDoc.id, ...chartDoc.data() } as JodiChartData);
+                } else {
+                    // Fallback or error message if no chart data found for this game
+                    setChartData(null);
+                }
+            } catch (error) {
+                console.error("Error fetching Jodi chart data:", error);
+            } finally {
+                setLoading(false);
             }
         };
 
-        fetchGameDetails();
+        fetchChartData();
+    }, [gameId]);
 
-        // Simplified query to avoid composite index requirement.
-        // We will filter and sort on the client side.
-        const historyQuery = query(
-            collection(db, 'bids'),
-            where('gameId', '==', gameId),
-            where('status', '==', 'won')
-        );
-
-        const unsubscribe = onSnapshot(historyQuery, (snapshot) => {
-            const jodiWins: WinningBid[] = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.betType === 'Jodi Digit') {
-                    jodiWins.push({ id: doc.id, ...data } as WinningBid);
-                }
-            });
-
-            // Sort the data on the client side by date
-            jodiWins.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-            
-            setWinningHistory(jodiWins.slice(0, 30)); // Limit to latest 30 results
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching Jodi chart data:", error);
-            setLoading(false);
-        });
-
-
-        return () => unsubscribe();
-    }, [gameId, router]);
-
-
+    const parsedData = chartData?.data.split(/\s+/).filter(d => d) || [];
+    
     if (loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
@@ -88,56 +67,52 @@ export default function JodiChartPage() {
     }
     
     return (
-        <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
+        <div className="dark min-h-screen bg-background text-foreground p-2 sm:p-4">
             <div className="max-w-4xl mx-auto">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="text-2xl sm:text-3xl">
-                            Jodi Chart - {game?.name}
+                    <CardHeader className="text-center">
+                        <CardTitle className="text-xl sm:text-2xl font-bold text-primary">
+                            {chartData?.title || `Jodi Chart`}
                         </CardTitle>
                         <CardDescription>
-                            Recent winning Jodi numbers for this game.
+                            Historical Jodi Records
                         </CardDescription>
-                         <div className="pt-4">
-                            <Button asChild variant="ghost" className="pl-0">
-                                <Link href="/" className="inline-flex items-center gap-2 text-sm text-green-500 hover:underline">
+                    </CardHeader>
+                    <CardContent>
+                        <div className="mb-4">
+                            <Button asChild variant="outline" className="w-full">
+                                <Link href="/" className="inline-flex items-center gap-2">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
                                 </Link>
                             </Button>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        {winningHistory.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead className="text-center">Winning Jodi</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {winningHistory.map((win) => (
-                                            <TableRow key={win.id}>
-                                                <TableCell>{format(win.createdAt.toDate(), 'dd/MM/yyyy')}</TableCell>
-                                                <TableCell className="text-center font-bold text-lg text-primary">
-                                                    {/* Assuming the first winning number is the Jodi */}
-                                                    {win.numbers[0]}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                        {chartData ? (
+                            <div className="overflow-x-auto border-2 border-primary bg-orange-100 p-1">
+                                <div className="grid grid-cols-7 text-center font-bold text-white bg-blue-800">
+                                    {['Mo', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                                        <div key={day} className="p-2 border-b-2 border-primary">{day}</div>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-7 text-center">
+                                    {parsedData.map((num, index) => (
+                                        <div key={index} 
+                                             className={`p-2 border border-gray-300 font-bold ${isRedNumber(num) ? 'text-red-600' : 'text-black'}`}>
+                                            {num}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         ) : (
-                             <p className="text-center text-muted-foreground mt-4">
-                                No recent Jodi win history found for this game.
+                             <p className="text-center text-muted-foreground mt-8 py-10">
+                                No Jodi chart data found for this game.
                              </p>
                         )}
                     </CardContent>
                 </Card>
             </div>
         </div>
-    )
+    );
 }
+
+    
