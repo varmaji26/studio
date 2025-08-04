@@ -44,11 +44,11 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     
     return (
         <div className="flex items-center justify-center p-0 min-h-[40px] gap-0">
-            <div className="text-center text-[9px] text-black font-semibold leading-tight">
+            <div className="text-center text-[8px] text-black font-semibold leading-tight">
                 {openPana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
             </div>
-            <span className={cn("text-base mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
-            <div className="text-center text-[9px] text-black font-semibold leading-tight">
+            <span className={cn("text-sm mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
+            <div className="text-center text-[8px] text-black font-semibold leading-tight">
                 {closePana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
             </div>
         </div>
@@ -106,7 +106,7 @@ export default function PanelChartPage() {
             const daysData = [];
             let currentIndex = 0;
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-                if (weeklyData.length >= currentIndex + 8) {
+                 if (weeklyData.length >= currentIndex + 8) {
                      const openPana = weeklyData.slice(currentIndex, currentIndex + 3);
                      const jodi = weeklyData.slice(currentIndex + 3, currentIndex + 5);
                      const closePana = weeklyData.slice(currentIndex + 5, currentIndex + 8);
@@ -154,18 +154,18 @@ export default function PanelChartPage() {
                         {chartData ? (
                             <div className="overflow-x-auto border-2 border-yellow-600 bg-orange-100 p-1">
                                 <table className="w-full border-collapse">
-                                    <thead className="text-[10px] sm:text-xs">
+                                    <thead className="text-[9px] sm:text-[10px]">
                                         <tr className="bg-blue-800 text-white font-bold">
-                                            <th className="p-1 border border-yellow-600">Date</th>
+                                            <th className="p-0.5 border border-yellow-600">Date</th>
                                             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                                                <th key={day} className="p-1 border border-yellow-600">{day}</th>
+                                                <th key={day} className="p-0.5 border border-yellow-600">{day}</th>
                                             ))}
                                         </tr>
                                     </thead>
                                     <tbody className="text-center">
                                        {parsedRows.map((row, rowIndex) => (
                                             <tr key={rowIndex}>
-                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[8px] min-w-[60px]">
+                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[7px] min-w-[50px]">
                                                     <span>{row.dateRange.start}</span><br/>
                                                     <span>To</span><br/>
                                                     <span>{row.dateRange.end}</span>
