@@ -28,25 +28,34 @@ const isRedNumber = (num: string) => {
 };
 
 const DayCell = ({ jodi, openPana, closePana }: { jodi: string, openPana: string, closePana: string }) => {
-    if (jodi === '*') {
-      return <div className="p-1 min-h-[50px] flex items-center justify-center text-black font-bold">*</div>;
+    if (jodi === '*' || openPana === '*' || closePana === '*') {
+      return <div className="p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">*</div>;
     }
+
+    const openJodiDigit = (openPana.split('').reduce((acc, digit) => acc + parseInt(digit), 0) % 10).toString();
+    const closeJodiDigit = (closePana.split('').reduce((acc, digit) => acc + parseInt(digit), 0) % 10).toString();
+
     const isRed = isRedNumber(jodi);
+
     return (
-        <div className="flex flex-col items-center justify-center p-1 min-h-[50px]">
+        <div className="relative p-1 min-h-[60px] flex flex-col items-center justify-center font-bold">
+            <span className="absolute top-0 left-1 text-xs text-black">{openJodiDigit}</span>
+            <span className="absolute top-0 right-1 text-xs text-black">{closeJodiDigit}</span>
+            <span className={`text-2xl ${isRed ? 'text-red-600' : 'text-black'}`}>{jodi}</span>
             <span className="text-xs text-black">{openPana}</span>
-            <span className={`font-bold text-lg ${isRed ? 'text-red-600' : 'text-black'}`}>{jodi}</span>
-            <span className="text-xs text-black">{closePana}</span>
         </div>
     );
 };
+
 
 export default function PanelChartPage() {
     const { gameId } = useParams();
     const [chartData, setChartData] = useState<PanelChartData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
+        setIsClient(true);
         if (typeof gameId !== 'string') return;
 
         const fetchChartData = async () => {
@@ -69,9 +78,7 @@ export default function PanelChartPage() {
         fetchChartData();
     }, [gameId]);
 
-    const parsedRows = chartData?.data.split('\n').filter(row => row.trim() !== '') || [];
-
-    if (loading) {
+    if (!isClient || loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
@@ -79,9 +86,11 @@ export default function PanelChartPage() {
         );
     }
     
+    const parsedRows = chartData?.data.split('\n').filter(row => row.trim() !== '') || [];
+
     return (
         <div className="dark min-h-screen bg-background text-foreground p-2 sm:p-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader className="text-center">
                         <CardTitle className="text-xl sm:text-2xl font-bold text-primary">
@@ -101,9 +110,9 @@ export default function PanelChartPage() {
                             </Button>
                         </div>
                         {chartData ? (
-                            <div className="overflow-x-auto border-2 border-yellow-600 bg-orange-100">
+                            <div className="overflow-x-auto border-2 border-yellow-600 bg-orange-100 p-1">
                                 <table className="w-full border-collapse">
-                                    <thead>
+                                    <thead className="text-sm">
                                         <tr className="bg-blue-800 text-white font-bold">
                                             <th className="p-2 border border-yellow-600">Date</th>
                                             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
@@ -115,36 +124,36 @@ export default function PanelChartPage() {
                                         {parsedRows.map((row, rowIndex) => {
                                             const cols = row.split(/\s+/).filter(d => d);
                                             
-                                            // Improved parsing for date range
-                                            let dateRange = "N/A";
-                                            let weekData = [];
-                                            const toIndex = cols.indexOf('To');
-                                            if (toIndex === 1 && cols.length >= 3) {
-                                                dateRange = `${cols[0]} To ${cols[2]}`;
-                                                weekData = cols.slice(3);
-                                            } else {
-                                                // Fallback if "To" is not found or in an unexpected position
-                                                dateRange = cols.slice(0, 3).join(' ');
-                                                weekData = cols.slice(3);
+                                            const dateRangeParts = [];
+                                            let dataStartIndex = 0;
+                                            for(let i=0; i<cols.length; i++) {
+                                                if (cols[i].toLowerCase() === 'to') {
+                                                    dateRangeParts.push(cols[i-1], 'To', cols[i+1]);
+                                                    dataStartIndex = i + 2;
+                                                    break;
+                                                }
                                             }
+                                            if(dateRangeParts.length === 0 && cols.length >= 3) {
+                                                dateRangeParts.push(cols[0], 'To', cols[2]);
+                                                dataStartIndex = 3;
+                                            }
+
+                                            const weekData = cols.slice(dataStartIndex);
 
                                             return (
                                                 <tr key={rowIndex}>
                                                     <td className="p-1 border border-gray-400 font-bold text-black text-xs min-w-[90px]">
-                                                        <span>{dateRange.split(' To ')[0]}</span><br/>
+                                                        <span>{dateRangeParts[0]}</span><br/>
                                                         <span>To</span><br/>
-                                                        <span>{dateRange.split(' To ')[1]}</span>
+                                                        <span>{dateRangeParts[2]}</span>
                                                     </td>
                                                     {Array.from({ length: 7 }).map((_, dayIndex) => {
                                                         const dataIndex = dayIndex * 3;
-                                                        if (dataIndex >= weekData.length || !weekData[dataIndex + 1]) {
-                                                            return <td key={dayIndex} className="p-1 border border-gray-400"></td>;
-                                                        }
                                                         
-                                                        const openPana = weekData[dataIndex];
-                                                        const jodi = weekData[dataIndex + 1];
-                                                        const closePana = weekData[dataIndex + 2];
-                                                        
+                                                        const openPana = weekData[dataIndex] || '*';
+                                                        const jodi = weekData[dataIndex + 1] || '*';
+                                                        const closePana = weekData[dataIndex + 2] || '*';
+
                                                         return (
                                                             <td key={dayIndex} className="p-1 border border-gray-400">
                                                                 <DayCell jodi={jodi} openPana={openPana} closePana={closePana} />
@@ -168,3 +177,5 @@ export default function PanelChartPage() {
         </div>
     );
 }
+
+    
