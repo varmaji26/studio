@@ -21,13 +21,9 @@ interface Game extends DocumentData {
 interface WinningBid extends DocumentData {
     id: string;
     createdAt: Timestamp;
-    result: string; // The full result like "123-68-459"
+    numbers: string[];
+    betType: string;
 }
-
-const calculateJodiDigit = (pana: string): string => {
-    if (!pana || pana.length !== 3 || !/^\d+$/.test(pana)) return '';
-    return (pana.split('').reduce((acc, digit) => acc + parseInt(digit, 10), 0) % 10).toString();
-};
 
 export default function JodiChartPage() {
     const { gameId } = useParams();
@@ -51,67 +47,36 @@ export default function JodiChartPage() {
 
         fetchGameDetails();
 
-        // Querying winning bids is complex. We'll fetch recent game states instead.
-        // For a true Jodi chart, you would typically have a separate collection
-        // storing daily results. Here's an approximation using the bids collection.
-        // A better approach is to create a 'results' collection.
-        // For now, let's fetch the last 30 winning bids for this game to simulate a chart.
+        // Simplified query to avoid composite index requirement.
+        // We will filter and sort on the client side.
         const historyQuery = query(
             collection(db, 'bids'),
             where('gameId', '==', gameId),
-            where('status', '==', 'won'),
-            where('betType', '==', 'Jodi Digit'),
-            orderBy('createdAt', 'desc'),
-            limit(30)
-        );
-        
-        // This is a simplified approach. A more robust solution would be to have a `results` collection
-        // that stores the final result for each game each day.
-        // Let's use the game document's own `result` history if available, or fetch winning bids.
-        // Since we don't store historical results, we'll just show the latest winning Jodi bids.
-        
-        const bidsQuery = query(
-            collection(db, "bids"),
-            where("gameId", "==", gameId),
-            where("status", "==", "won"),
-            orderBy("createdAt", "desc"),
-            limit(50) // Fetch last 50 winning bids
+            where('status', '==', 'won')
         );
 
-        const unsubscribe = onSnapshot(bidsQuery, (snapshot) => {
-            const history: WinningBid[] = [];
-            const addedDates: Set<string> = new Set();
-            
-            // This logic is tricky because one result can have many winners.
-            // We need to find the unique results for each day.
-            // For now, let's just show the winning Jodi numbers from bids.
+        const unsubscribe = onSnapshot(historyQuery, (snapshot) => {
+            const jodiWins: WinningBid[] = [];
             snapshot.forEach(doc => {
-                 const bid = doc.data();
-                 const date = format(bid.createdAt.toDate(), 'yyyy-MM-dd');
-                 
-                 // We need the final game result to extract the Jodi
-                 // This info is not on the bid document.
-                 // This is a placeholder. For a real chart, a `results` collection is needed.
+                const data = doc.data();
+                if (data.betType === 'Jodi Digit') {
+                    jodiWins.push({ id: doc.id, ...data } as WinningBid);
+                }
             });
+
+            // Sort the data on the client side by date
+            jodiWins.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
             
-            // A better, simpler approach for now: show the most recent winning jodi bids.
-            const jodiWins = snapshot.docs
-                .filter(doc => doc.data().betType === 'Jodi Digit')
-                .map(doc => doc.data() as WinningBid);
-            
-            setWinningHistory(jodiWins);
+            setWinningHistory(jodiWins.slice(0, 30)); // Limit to latest 30 results
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching Jodi chart data:", error);
             setLoading(false);
         });
 
 
         return () => unsubscribe();
     }, [gameId, router]);
-
-    const getJodiFromResult = (resultString: string) => {
-        if (!resultString || typeof resultString !== 'string') return '**';
-        const parts = resultString.split('-');
-        return parts.length === 3 ? parts[1] : '**';
-    }
 
 
     if (loading) {
