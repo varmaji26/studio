@@ -514,8 +514,10 @@ export default function Home() {
                     >
                         <div className="relative z-10 space-y-3">
                             <h3 className="text-xl font-bold text-white">{game.name}</h3>
-                            <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg">
-                            {formatGameResult(game)}
+                            <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
+                                <Link href="#" className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Jodi</Link>
+                                <span>{formatGameResult(game)}</span>
+                                <Link href="#" className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Panel</Link>
                             </div>
                             <p className={cn(
                                 "text-sm font-bold",
