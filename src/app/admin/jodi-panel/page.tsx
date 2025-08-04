@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, DocumentData } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, DocumentData, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface JodiChart extends DocumentData {
     id: string;
@@ -26,8 +27,13 @@ interface JodiChart extends DocumentData {
     data: string;
 }
 
+interface Game extends DocumentData {
+    id: string;
+    name: string;
+}
+
 const chartSchema = z.object({
-  gameName: z.string().min(1, 'Game name is required'),
+  gameId: z.string().min(1, 'Please select a game'),
   title: z.string().min(1, 'Chart title is required'),
   data: z.string().min(1, 'Chart data is required'),
 });
@@ -36,6 +42,7 @@ type ChartFormValues = z.infer<typeof chartSchema>;
 
 export default function JodiPanelPage() {
   const [charts, setCharts] = useState<JodiChart[]>([]);
+  const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -44,26 +51,46 @@ export default function JodiPanelPage() {
     resolver: zodResolver(chartSchema),
   });
 
-  const fetchCharts = useCallback(() => {
+  const fetchChartsAndGames = useCallback(() => {
     setLoading(true);
-    const q = collection(db, "jodiCharts");
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const chartsQuery = collection(db, "jodiCharts");
+    const unsubscribeCharts = onSnapshot(chartsQuery, (querySnapshot) => {
       const chartsData: JodiChart[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JodiChart));
       setCharts(chartsData);
+    });
+
+    const gamesQuery = query(collection(db, "games"), orderBy("name", "asc"));
+    const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
+      const gamesData: Game[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+      setGames(gamesData);
       setLoading(false);
     });
-    return unsubscribe;
+
+    return () => {
+        unsubscribeCharts();
+        unsubscribeGames();
+    };
   }, []);
 
   useEffect(() => {
-    const unsubscribe = fetchCharts();
+    const unsubscribe = fetchChartsAndGames();
     return () => unsubscribe();
-  }, [fetchCharts]);
+  }, [fetchChartsAndGames]);
 
   const onSubmit = async (values: ChartFormValues) => {
     try {
-      const docRef = doc(db, 'jodiCharts', values.gameName.toLowerCase().replace(/\s+/g, '-'));
-      await setDoc(docRef, values);
+      const selectedGame = games.find(g => g.id === values.gameId);
+      if (!selectedGame) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Selected game not found.' });
+        return;
+      }
+
+      const docRef = doc(db, 'jodiCharts', values.gameId);
+      await setDoc(docRef, {
+          gameName: selectedGame.name,
+          title: values.title,
+          data: values.data,
+      });
       toast({ title: 'Success', description: 'Chart saved successfully.' });
       setIsDialogOpen(false);
       form.reset();
@@ -106,13 +133,24 @@ export default function JodiPanelPage() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
                             control={form.control}
-                            name="gameName"
+                            name="gameId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Game Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., Sridevi" {...field} />
-                                    </FormControl>
+                                    <FormLabel>Game</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a game" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {games.map((game) => (
+                                                <SelectItem key={game.id} value={game.id}>
+                                                    {game.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}
