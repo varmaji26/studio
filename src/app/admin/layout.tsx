@@ -161,10 +161,12 @@ export default function AdminLayout({
               </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Find Password"}}>
-              <KeyRound />
-              <span>Find Password</span>
-            </SidebarMenuButton>
+            <Link href="/admin/find-password" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/find-password')} tooltip={{children: "Find Password"}}>
+                  <KeyRound />
+                  <span>Find Password</span>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/admin/deposits" passHref onClick={handleLinkClick}>
