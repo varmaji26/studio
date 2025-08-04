@@ -29,7 +29,7 @@ const isRedNumber = (num: string) => {
 };
 
 const DayCell = ({ jodi, openPana, closePana }: { jodi: string, openPana: string, closePana: string }) => {
-    if (jodi === '*' || openPana === '*' || closePana === '*') {
+    if (jodi === '*' && openPana === '*' && closePana === '*') {
       return <div className="p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">*</div>;
     }
 
@@ -38,15 +38,15 @@ const DayCell = ({ jodi, openPana, closePana }: { jodi: string, openPana: string
     return (
         <div className="relative p-1 min-h-[60px] flex items-center justify-center font-bold">
             <div className="flex flex-col text-xs text-black">
-                <span>{openPana[0]}</span>
-                <span>{openPana[1]}</span>
-                <span>{openPana[2]}</span>
+                <span>{openPana[0] ?? '*'}</span>
+                <span>{openPana[1] ?? '*'}</span>
+                <span>{openPana[2] ?? '*'}</span>
             </div>
             <span className={`text-2xl mx-1 ${isRed ? 'text-red-600' : 'text-black'}`}>{jodi}</span>
             <div className="flex flex-col text-xs text-black">
-                <span>{closePana[0]}</span>
-                <span>{closePana[1]}</span>
-                <span>{closePana[2]}</span>
+                <span>{closePana[0] ?? '*'}</span>
+                <span>{closePana[1] ?? '*'}</span>
+                <span>{closePana[2] ?? '*'}</span>
             </div>
         </div>
     );
@@ -86,57 +86,47 @@ export default function PanelChartPage() {
     const parsedRows = React.useMemo(() => {
         if (!chartData?.data) return [];
         
-        return chartData.data.split('\n\n').filter(block => block.trim() !== '').map(block => {
-            const lines = block.trim().split('\n');
-            const dateLine = lines[0] + ' ' + lines[1] + ' ' + lines[2];
-            const dateRangeMatch = dateLine.match(/(\d{2}\/\d{2}\/\d{4})\s+to\s+(\d{2}\/\d{2}\/\d{4})/);
-            
-            let dateRange = { start: '', end: '' };
-            if (dateRangeMatch) {
-                dateRange = { start: dateRangeMatch[1], end: dateRangeMatch[2] };
-            }
+        // Regex to split the data by date ranges. This will act as the separator for each week's block.
+        const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s+to\s+(\d{2}\/\d{2}\/\d{4})/gi;
+        const blocks = chartData.data.split(dateRangeRegex).filter(s => s.trim() !== '');
 
-            const dataLines = lines.slice(3).join(' ').trim();
-            const weeklyData = dataLines.split(/\s+/).filter(d => d);
+        const rows = [];
+        // The regex split results in an array like: [dateStart, dateEnd, data, dateStart, dateEnd, data, ...]
+        for (let i = 0; i < blocks.length; i += 3) {
+            const start = blocks[i];
+            const end = blocks[i+1];
+            const dataBlock = blocks[i+2] || '';
+
+            const dateRange = { start: start.trim(), end: end.trim() };
+            
+            // Clean up the data block and split into numbers
+            const weeklyData = dataBlock.trim().split(/\s+/).filter(d => d);
             
             const daysData = [];
-            for (let i = 0; i < 7; i++) {
-                const dayDataIndex = i * 5; // Each day seems to have 5 numbers
-                if (dayDataIndex < weeklyData.length) {
-                    daysData.push({
-                        openPana: weeklyData.slice(dayDataIndex, dayDataIndex+3).join(''),
-                        jodi: weeklyData[dayDataIndex+3] || '*',
-                        closePana: weeklyData[dayDataIndex+4] ? weeklyData.slice(dayDataIndex+4, dayDataIndex+7).join('') : '*'
-                    });
-                } else {
-                     daysData.push({ openPana: '*', jodi: '*', closePana: '*' });
-                }
-            }
-             const finalWeeklyData = lines.join(' ').trim().split(/\s+/);
-             const dateMatch = finalWeeklyData.findIndex(d => d === 'to');
-             let cleanData = finalWeeklyData;
-             if(dateMatch !== -1) {
-                dateRange = { start: finalWeeklyData[dateMatch-1], end: finalWeeklyData[dateMatch+1] };
-                cleanData = finalWeeklyData.slice(dateMatch+2);
-             }
+            // Each day has 5 parts: 3 for open pana, 1 for jodi, 1 for the first digit of close pana. 
+            // So we need to look at groups of numbers.
+            // A full week has 7 * 5 = 35 numbers. Let's process day by day.
+            for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                const dayStartIndex = dayIndex * 5;
+                const dayData = weeklyData.slice(dayStartIndex, dayStartIndex + 5);
+
+                const openPana = dayData.slice(0, 3).join('');
+                const jodi = dayData[3];
+                const closePana = dayData[4] ? (dayData[4] + (weeklyData[dayStartIndex+5] || '') + (weeklyData[dayStartIndex+6] || '')) : '';
+                 const finalClosePana = dayData.slice(4).join('');
 
 
-            const newDaysData = [];
-            for (let i = 0; i < 7; i++) {
-                 const openPana = cleanData.slice(i * 5, i * 5 + 3).join('');
-                 const jodi = cleanData[i * 5 + 3];
-                 const closePana = cleanData[i * 5 + 4] ? cleanData.slice(i * 5 + 4, i * 5 + 7).join('') : undefined;
-                 
-                 newDaysData.push({
+                daysData.push({
                     openPana: openPana.length === 3 ? openPana : '*',
                     jodi: jodi && jodi.length === 2 ? jodi : '*',
-                    closePana: closePana && closePana.length === 3 ? closePana : '*'
-                 })
+                    closePana: finalClosePana && finalClosePana.length === 3 ? finalClosePana : '*'
+                });
             }
             
-            return { dateRange, daysData: newDaysData };
-        });
+            rows.push({ dateRange, daysData });
+        }
 
+        return rows;
     }, [chartData]);
 
 
@@ -213,4 +203,3 @@ export default function PanelChartPage() {
         </div>
     );
 }
-
