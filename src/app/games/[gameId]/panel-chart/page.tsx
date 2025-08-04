@@ -35,23 +35,33 @@ const DayCell = ({ jodi, openPana, closePana }: { jodi: string, openPana: string
 
     const isRed = isRedNumber(jodi);
 
+    const renderPana = (pana: string) => {
+        if (pana === '*') {
+            return (
+                <div className="flex flex-col text-xs text-black">
+                    <span>*</span>
+                    <span>*</span>
+                    <span>*</span>
+                </div>
+            );
+        }
+        return (
+            <div className="flex flex-col text-xs text-black">
+                <span>{pana[0] ?? '*'}</span>
+                <span>{pana[1] ?? '*'}</span>
+                <span>{pana[2] ?? '*'}</span>
+            </div>
+        );
+    };
+
     return (
         <div className="relative p-1 min-h-[60px] flex items-center justify-center font-bold">
-            <div className="flex flex-col text-xs text-black">
-                <span>{openPana[0] ?? '*'}</span>
-                <span>{openPana[1] ?? '*'}</span>
-                <span>{openPana[2] ?? '*'}</span>
-            </div>
+            {renderPana(openPana)}
             <span className={`text-2xl mx-1 ${isRed ? 'text-red-600' : 'text-black'}`}>{jodi}</span>
-            <div className="flex flex-col text-xs text-black">
-                <span>{closePana[0] ?? '*'}</span>
-                <span>{closePana[1] ?? '*'}</span>
-                <span>{closePana[2] ?? '*'}</span>
-            </div>
+            {renderPana(closePana)}
         </div>
     );
 };
-
 
 export default function PanelChartPage() {
     const { gameId } = useParams();
@@ -83,46 +93,46 @@ export default function PanelChartPage() {
         fetchChartData();
     }, [gameId]);
 
-    const parsedRows = React.useMemo(() => {
+     const parsedRows = React.useMemo(() => {
         if (!chartData?.data) return [];
         
-        // Regex to split the data by date ranges. This will act as the separator for each week's block.
-        const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s+to\s+(\d{2}\/\d{2}\/\d{4})/gi;
-        const blocks = chartData.data.split(dateRangeRegex).filter(s => s.trim() !== '');
+        const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/gi;
+        const blocks = chartData.data.split(dateRangeRegex).filter(s => s.trim() !== '' && s.trim() !== 'to');
 
         const rows = [];
-        // The regex split results in an array like: [dateStart, dateEnd, data, dateStart, dateEnd, data, ...]
         for (let i = 0; i < blocks.length; i += 3) {
             const start = blocks[i];
             const end = blocks[i+1];
             const dataBlock = blocks[i+2] || '';
 
             const dateRange = { start: start.trim(), end: end.trim() };
-            
-            // Clean up the data block and split into numbers
             const weeklyData = dataBlock.trim().split(/\s+/).filter(d => d);
             
             const daysData = [];
-            // Each day has 5 parts: 3 for open pana, 1 for jodi, 1 for the first digit of close pana. 
-            // So we need to look at groups of numbers.
-            // A full week has 7 * 5 = 35 numbers. Let's process day by day.
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
                 const dayStartIndex = dayIndex * 5;
-                const dayData = weeklyData.slice(dayStartIndex, dayStartIndex + 5);
-
-                const openPana = dayData.slice(0, 3).join('');
-                const jodi = dayData[3];
-                const closePana = dayData[4] ? (dayData[4] + (weeklyData[dayStartIndex+5] || '') + (weeklyData[dayStartIndex+6] || '')) : '';
-                 const finalClosePana = dayData.slice(4).join('');
+                if(dayStartIndex >= weeklyData.length) {
+                     daysData.push({ openPana: '*', jodi: '*', closePana: '*' });
+                     continue;
+                }
+                
+                const openPana = weeklyData[dayStartIndex];
+                const jodi = weeklyData[dayStartIndex + 1];
+                const closePana = weeklyData[dayStartIndex + 2];
+                // In the provided data format, it seems each day has 3 main parts.
+                // Re-adjusting the logic based on this. Let's assume 3 parts per day.
+                const dayStartIndexNew = dayIndex * 3;
+                const openPanaNew = weeklyData[dayStartIndexNew];
+                const jodiNew = weeklyData[dayStartIndexNew+1];
+                const closePanaNew = weeklyData[dayStartIndexNew+2];
 
 
                 daysData.push({
-                    openPana: openPana.length === 3 ? openPana : '*',
-                    jodi: jodi && jodi.length === 2 ? jodi : '*',
-                    closePana: finalClosePana && finalClosePana.length === 3 ? finalClosePana : '*'
+                    openPana: openPanaNew && openPanaNew.length === 3 ? openPanaNew : '*',
+                    jodi: jodiNew && jodiNew.length === 2 ? jodiNew : '*',
+                    closePana: closePanaNew && closePanaNew.length === 3 ? closePanaNew : '*'
                 });
             }
-            
             rows.push({ dateRange, daysData });
         }
 
@@ -203,3 +213,4 @@ export default function PanelChartPage() {
         </div>
     );
 }
+
