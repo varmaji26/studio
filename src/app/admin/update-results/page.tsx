@@ -20,6 +20,7 @@ const formSchema = z.object({
       id: z.string(),
       name: z.string(),
       openResult: z.string(),
+      closeResult: z.string(),
       newOpenPana: z.string().optional(),
     })
   ),
@@ -98,8 +99,11 @@ export default function UpdateResultsPage() {
       const batch = writeBatch(db);
       const gameDocRef = doc(db, 'games', game.id);
       
-      // Update the open result (pana) and the open jodi digit
-      batch.update(gameDocRef, { openResult: newOpenPana, openJodiDigit });
+      // Update the open result and RESET the close result to a placeholder
+      batch.update(gameDocRef, { 
+        openResult: newOpenPana,
+        closeResult: '**' // Reset close result
+      });
 
       // Process bets for Open Pana and Open Single Digit
       const bidsQuery = query(
