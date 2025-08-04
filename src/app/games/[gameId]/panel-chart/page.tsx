@@ -114,10 +114,20 @@ export default function PanelChartPage() {
                                     <tbody className="text-center">
                                         {parsedRows.map((row, rowIndex) => {
                                             const cols = row.split(/\s+/).filter(d => d);
-                                            const dateRangeParts = cols.slice(0, 3);
-                                            const dateRange = dateRangeParts.length === 3 ? `${dateRangeParts[0]} To ${dateRangeParts[2]}` : dateRangeParts.join(' ');
-                                            const weekData = cols.slice(3);
                                             
+                                            // Improved parsing for date range
+                                            let dateRange = "N/A";
+                                            let weekData = [];
+                                            const toIndex = cols.indexOf('To');
+                                            if (toIndex === 1 && cols.length >= 3) {
+                                                dateRange = `${cols[0]} To ${cols[2]}`;
+                                                weekData = cols.slice(3);
+                                            } else {
+                                                // Fallback if "To" is not found or in an unexpected position
+                                                dateRange = cols.slice(0, 3).join(' ');
+                                                weekData = cols.slice(3);
+                                            }
+
                                             return (
                                                 <tr key={rowIndex}>
                                                     <td className="p-1 border border-gray-400 font-bold text-black text-xs min-w-[90px]">
