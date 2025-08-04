@@ -29,9 +29,9 @@ const isRedNumber = (num: string) => {
     return diff === 5 || first === second;
 };
 
-const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; closePana: string; closeJodi: string } }) => {
-    const { openPana, jodi, closePana, closeJodi } = dayData;
-
+const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; closePana: string; } }) => {
+    const { openPana, jodi, closePana } = dayData;
+    
     if (jodi === '**' || jodi === '*') {
       return (
         <div className="relative p-1 min-h-[60px] flex items-center justify-center text-black font-bold text-2xl">
@@ -39,6 +39,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
         </div>
       );
     }
+    
     const isRed = isRedNumber(jodi);
     
     return (
@@ -50,11 +51,6 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
             <div className="text-center text-xs text-black font-semibold leading-tight">
                 {closePana.split('').map((digit, i) => <div key={i}>{digit}</div>)}
             </div>
-            {closeJodi && (
-                <div className="text-center text-xs text-black font-semibold leading-tight pl-1">
-                    {closeJodi}
-                </div>
-            )}
         </div>
     );
 };
@@ -105,27 +101,22 @@ export default function PanelChartPage() {
             const dataBlock = sections[i + 2] || '';
             const dateRange = { start: startDate.trim(), end: endDate.trim() };
             
-            // Clean up the data block: remove newlines, multiple spaces, and then split
-            const weeklyData = dataBlock.trim().replace(/\s+/g, ' ').split(' ');
+            const weeklyData = dataBlock.trim().split(/\s+/).filter(d => d);
 
             const daysData = [];
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
                 const startIndex = dayIndex * 8;
                 const dayDataSlice = weeklyData.slice(startIndex, startIndex + 8);
-                
+
                 const openPana = dayDataSlice.slice(0, 3).join('');
                 const jodi = dayDataSlice.slice(3, 5).join('');
                 const closePana = dayDataSlice.slice(5, 8).join('');
                 
-                // For Sunday, the last digit is the close jodi
-                const closeJodi = (dayIndex === 6 && closePana.length === 3) 
-                    ? (closePana.split('').reduce((sum, digit) => sum + parseInt(digit), 0) % 10).toString() 
-                    : '';
-
                 if (openPana && jodi && closePana) {
-                    daysData.push({ openPana, jodi, closePana, closeJodi });
+                    daysData.push({ openPana, jodi, closePana });
                 } else {
-                    daysData.push({ openPana: '***', jodi: '**', closePana: '***', closeJodi: '*' });
+                    // Fill with placeholders if data is incomplete for the day
+                    daysData.push({ openPana: '***', jodi: '**', closePana: '***' });
                 }
             }
             rows.push({ dateRange, daysData });
@@ -148,7 +139,7 @@ export default function PanelChartPage() {
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader className="text-center">
                         <CardTitle className="text-xl sm:text-2xl font-bold text-primary">
-                            {chartData?.title || `Record`}
+                            {chartData?.gameName.toUpperCase() || 'RECORD'}
                         </CardTitle>
                         <CardDescription>
                             Historical Panel Records
@@ -203,3 +194,5 @@ export default function PanelChartPage() {
         </div>
     );
 }
+
+    
