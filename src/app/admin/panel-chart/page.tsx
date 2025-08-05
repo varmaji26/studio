@@ -31,6 +31,7 @@ interface PanelChart extends DocumentData {
 interface Game extends DocumentData {
     id: string;
     name: string;
+    openTime: string;
 }
 
 const chartSchema = z.object({
@@ -59,21 +60,34 @@ export default function PanelChartPage() {
 
   const fetchChartsAndGames = useCallback(() => {
     setLoading(true);
-    const chartsQuery = collection(db, "panelCharts");
-    const unsubscribeCharts = onSnapshot(chartsQuery, (querySnapshot) => {
-      const chartsData: PanelChart[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PanelChart));
-      setCharts(chartsData);
-    });
+    
+    const gamesQuery = query(collection(db, "games"), orderBy("openTime", "asc"));
+    const unsubscribeGames = onSnapshot(gamesQuery, (gamesSnapshot) => {
+        const gamesData: Game[] = gamesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+        setGames(gamesData);
 
-    const gamesQuery = query(collection(db, "games"), orderBy("name", "asc"));
-    const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
-      const gamesData: Game[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
-      setGames(gamesData);
-      setLoading(false);
-    });
+        const chartsQuery = collection(db, "panelCharts");
+        const unsubscribeCharts = onSnapshot(chartsQuery, (chartsSnapshot) => {
+            const chartsData: PanelChart[] = chartsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PanelChart));
+            
+            // Create a map of gameId to its openTime for quick lookup
+            const gameTimeMap = new Map(gamesData.map(game => [game.id, game.openTime]));
 
+            // Sort charts based on the game's openTime
+            chartsData.sort((a, b) => {
+                const timeA = gameTimeMap.get(a.id) || '23:59';
+                const timeB = gameTimeMap.get(b.id) || '23:59';
+                return timeA.localeCompare(timeB);
+            });
+            
+            setCharts(chartsData);
+            setLoading(false);
+        });
+        
+        return () => unsubscribeCharts();
+    });
+    
     return () => {
-        unsubscribeCharts();
         unsubscribeGames();
     };
   }, []);

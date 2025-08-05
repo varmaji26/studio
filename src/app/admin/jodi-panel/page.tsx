@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, DocumentData, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, DocumentData, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -33,6 +33,7 @@ interface JodiChart extends DocumentData {
 interface Game extends DocumentData {
     id: string;
     name: string;
+    openTime: string;
 }
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -67,21 +68,34 @@ export default function JodiPanelPage() {
 
   const fetchChartsAndGames = useCallback(() => {
     setLoading(true);
-    const chartsQuery = collection(db, "jodiCharts");
-    const unsubscribeCharts = onSnapshot(chartsQuery, (querySnapshot) => {
-      const chartsData: JodiChart[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JodiChart));
-      setCharts(chartsData);
-    });
+    
+    const gamesQuery = query(collection(db, "games"), orderBy("openTime", "asc"));
+    const unsubscribeGames = onSnapshot(gamesQuery, (gamesSnapshot) => {
+        const gamesData: Game[] = gamesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+        setGames(gamesData);
 
-    const gamesQuery = query(collection(db, "games"), orderBy("name", "asc"));
-    const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
-      const gamesData: Game[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
-      setGames(gamesData);
-      setLoading(false);
+        const chartsQuery = collection(db, "jodiCharts");
+        const unsubscribeCharts = onSnapshot(chartsQuery, (chartsSnapshot) => {
+            const chartsData: JodiChart[] = chartsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JodiChart));
+            
+            // Create a map of gameId to its openTime for quick lookup
+            const gameTimeMap = new Map(gamesData.map(game => [game.id, game.openTime]));
+
+            // Sort charts based on the game's openTime
+            chartsData.sort((a, b) => {
+                const timeA = gameTimeMap.get(a.id) || '23:59';
+                const timeB = gameTimeMap.get(b.id) || '23:59';
+                return timeA.localeCompare(timeB);
+            });
+            
+            setCharts(chartsData);
+            setLoading(false);
+        });
+
+        return () => unsubscribeCharts();
     });
 
     return () => {
-        unsubscribeCharts();
         unsubscribeGames();
     };
   }, []);
