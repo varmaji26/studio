@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { collection, getDocs, DocumentData, query, orderBy, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -59,12 +59,22 @@ export default function ViewOpenLoadPage() {
     fetchGames();
   }, []);
 
-  // Listen for real-time bid updates
+  // Listen for real-time bid updates for the current day
   useEffect(() => {
-    const bidsQuery = query(collection(db, 'bids'), where('session', '==', 'Open'));
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const bidsQuery = query(
+        collection(db, 'bids'), 
+        where('session', '==', 'Open'),
+        where('createdAt', '>=', startOfToday)
+    );
     const unsubscribe = onSnapshot(bidsQuery, (bidsSnapshot) => {
       const bidsData: Bid[] = bidsSnapshot.docs.map(doc => doc.data() as Bid);
       setAllOpenBids(bidsData);
+    }, (error) => {
+        console.error("Error fetching today's open bids: ", error);
+        // This might indicate a missing Firestore index.
     });
     return () => unsubscribe();
   }, []);
@@ -122,8 +132,8 @@ export default function ViewOpenLoadPage() {
     <div className="flex-1 space-y-8 p-4 sm:p-8">
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader>
-            <CardTitle className="text-3xl font-bold">View Open Load</CardTitle>
-            <CardDescription>Click on a game to see its live bidding details below.</CardDescription>
+            <CardTitle className="text-3xl font-bold">View Open Load (Today)</CardTitle>
+            <CardDescription>Click on a game to see its live bidding details for today's Open session below.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -191,4 +201,3 @@ export default function ViewOpenLoadPage() {
     </div>
   );
 }
-

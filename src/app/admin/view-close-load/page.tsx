@@ -59,12 +59,23 @@ export default function ViewCloseLoadPage() {
     fetchGames();
   }, []);
 
-  // Listen for real-time bid updates
+  // Listen for real-time bid updates for the current day
   useEffect(() => {
-    const bidsQuery = query(collection(db, 'bids'), where('session', '==', 'Close'));
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    
+    const bidsQuery = query(
+        collection(db, 'bids'), 
+        where('session', '==', 'Close'),
+        where('createdAt', '>=', startOfToday)
+    );
+
     const unsubscribe = onSnapshot(bidsQuery, (bidsSnapshot) => {
       const bidsData: Bid[] = bidsSnapshot.docs.map(doc => doc.data() as Bid);
       setAllCloseBids(bidsData);
+    }, (error) => {
+        console.error("Error fetching today's close bids: ", error);
+        // This might indicate a missing Firestore index.
     });
     return () => unsubscribe();
   }, []);
@@ -122,8 +133,8 @@ export default function ViewCloseLoadPage() {
     <div className="flex-1 space-y-8 p-4 sm:p-8">
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader>
-            <CardTitle className="text-3xl font-bold">View Close Load</CardTitle>
-            <CardDescription>Click on a game to see its live bidding details for the Close session below.</CardDescription>
+            <CardTitle className="text-3xl font-bold">View Close Load (Today)</CardTitle>
+            <CardDescription>Click on a game to see its live bidding details for today's Close session below.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
