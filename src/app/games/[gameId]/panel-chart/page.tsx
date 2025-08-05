@@ -34,7 +34,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     
     if (jodi === '**' || jodi === '*' || openPana === '***' ) {
       return (
-        <div className="relative p-0 min-h-[50px] flex items-center justify-center text-black font-bold text-lg">
+        <div className="relative p-0 min-h-[40px] flex items-center justify-center text-black font-bold text-base">
             **
         </div>
       );
@@ -44,11 +44,11 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     
     return (
         <div className="flex items-center justify-center p-0 min-h-[40px] gap-0">
-            <div className="text-center text-xs text-black font-semibold leading-tight flex flex-col">
+            <div className="text-center text-[10px] text-black font-semibold leading-tight flex flex-col">
                 {openPana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
             </div>
-            <span className={cn("text-lg mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
-            <div className="text-center text-xs text-black font-semibold leading-tight flex flex-col">
+            <span className={cn("text-base mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
+            <div className="text-center text-[10px] text-black font-semibold leading-tight flex flex-col">
                 {closePana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
             </div>
         </div>
