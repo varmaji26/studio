@@ -11,6 +11,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatTime, cn } from '@/lib/utils';
+import React from 'react';
+
 
 interface Game extends DocumentData {
   id: string;
@@ -19,12 +21,115 @@ interface Game extends DocumentData {
   closeTime: string;
 }
 
+const SingleDigitIcon = () => (
+  <svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4.80005 17.5V30.5C4.80005 32.7091 6.59091 34.5 8.80005 34.5H21.8L33.8 22.5V9.5C33.8 7.29086 32.0092 5.5 29.8 5.5H16.8L4.80005 17.5Z" fill="#3F3F3F"/>
+    <path d="M21.8 34.5H34.8C37.0092 34.5 38.8 32.7091 38.8 30.5V17.5L21.8 34.5Z" fill="#2F2F2F"/>
+    <path d="M43.2 22.5L33.8 31.5V9.5L43.2 22.5Z" fill="#2F2F2F"/>
+    <circle cx="25" cy="15" r="2" fill="white"/>
+    <circle cx="15" cy="25" r="2" fill="white"/>
+    <circle cx="10" cy="20" r="1.5" fill="white"/>
+    <circle cx="20" cy="30" r="1.5" fill="white"/>
+    <circle cx="30" cy="25" r="1.5" fill="white"/>
+  </svg>
+);
+
+const JodiDigitIcon = () => (
+    <svg width="64" height="64" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(0, 5)">
+            <path d="M9.8 17.5V30.5C9.8 32.7091 11.5909 34.5 13.8 34.5H26.8L38.8 22.5V9.5C38.8 7.29086 37.0092 5.5 34.8 5.5H21.8L9.8 17.5Z" fill="#3F3F3F"/>
+            <path d="M26.8 34.5H39.8C42.0092 34.5 43.8 32.7091 43.8 30.5V17.5L26.8 34.5Z" fill="#2F2F2F"/>
+            <path d="M48.2 22.5L38.8 31.5V9.5L48.2 22.5Z" fill="#2F2F2F"/>
+            <circle cx="30" cy="15" r="2" fill="white"/>
+            <circle cx="20" cy="25" r="2" fill="white"/>
+            <circle cx="15" cy="20" r="1.5" fill="white"/>
+            <circle cx="25" cy="30" r="1.5" fill="white"/>
+            <circle cx="35" cy="25" r="1.5" fill="white"/>
+        </g>
+        <g transform="translate(15, -5)">
+            <path d="M9.8 17.5V30.5C9.8 32.7091 11.5909 34.5 13.8 34.5H26.8L38.8 22.5V9.5C38.8 7.29086 37.0092 5.5 34.8 5.5H21.8L9.8 17.5Z" fill="#FFFFFF"/>
+            <path d="M26.8 34.5H39.8C42.0092 34.5 43.8 32.7091 43.8 30.5V17.5L26.8 34.5Z" fill="#E0E0E0"/>
+            <path d="M48.2 22.5L38.8 31.5V9.5L48.2 22.5Z" fill="#E0E0E0"/>
+            <circle cx="30" cy="15" r="2" fill="#3F3F3F"/>
+            <circle cx="20" cy="25" r="2" fill="#3F3F3F"/>
+        </g>
+    </svg>
+);
+
+const SinglePanaIcon = () => (
+    <svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_1_2)"/>
+        <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_1_2)"/>
+        <defs>
+            <linearGradient id="paint0_linear_1_2" x1="24" y1="4" x2="24" y2="37" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#FBCFE8"/>
+                <stop offset="1" stopColor="#E879F9"/>
+            </linearGradient>
+            <linearGradient id="paint1_linear_1_2" x1="24" y1="36" x2="24" y2="44" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#FBCFE8"/>
+                <stop offset="1" stopColor="#E879F9"/>
+            </linearGradient>
+        </defs>
+    </svg>
+);
+
+const DoublePanaIcon = () => (
+     <svg width="64" height="64" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(8, 8) scale(0.8)" style={{opacity: 0.6}}>
+            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="#BE93FD"/>
+            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="#BE93FD"/>
+        </g>
+        <g>
+            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_2_2)"/>
+            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_2_2)"/>
+        </g>
+        <defs>
+            <linearGradient id="paint0_linear_2_2" x1="24" y1="4" x2="24" y2="37" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#FBCFE8"/>
+                <stop offset="1" stopColor="#E879F9"/>
+            </linearGradient>
+            <linearGradient id="paint1_linear_2_2" x1="24" y1="36" x2="24" y2="44" gradientUnits="userSpaceOnUse">
+                 <stop stopColor="#FBCFE8"/>
+                <stop offset="1" stopColor="#E879F9"/>
+            </linearGradient>
+        </defs>
+    </svg>
+);
+
+const TriplePanaIcon = () => (
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(16, 16) scale(0.7)" style={{opacity: 0.5}}>
+            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="#BE93FD"/>
+            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="#BE93FD"/>
+        </g>
+        <g transform="translate(8, 8) scale(0.8)" style={{opacity: 0.7}}>
+            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="#BE93FD"/>
+            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="#BE93FD"/>
+        </g>
+        <g>
+            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_3_2)"/>
+            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_3_2)"/>
+        </g>
+        <defs>
+            <linearGradient id="paint0_linear_3_2" x1="24" y1="4" x2="24" y2="37" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#FBCFE8"/>
+                <stop offset="1" stopColor="#E879F9"/>
+            </linearGradient>
+            <linearGradient id="paint1_linear_3_2" x1="24" y1="36" x2="24" y2="44" gradientUnits="userSpaceOnUse">
+                 <stop stopColor="#FBCFE8"/>
+                <stop offset="1" stopColor="#E879F9"/>
+            </linearGradient>
+        </defs>
+    </svg>
+);
+
+
 const betTypes = [
-    { title: 'Single Digit', href: (gameId: string) => `/games/${gameId}/single-digit` },
-    { title: 'Jodi Digit', href: (gameId: string) => `/games/${gameId}/jodi-digit` },
-    { title: 'Single Pana', href: (gameId: string) => `/games/${gameId}/single-pana` },
-    { title: 'Double Pana', href: (gameId: string) => `/games/${gameId}/double-pana` },
-    { title: 'Triple Pana', href: (gameId: string) => `/games/${gameId}/triple-pana` },
+    { title: 'Single Digit', href: (gameId: string) => `/games/${gameId}/single-digit`, icon: <SingleDigitIcon />, gradient: 'from-blue-400 to-blue-600' },
+    { title: 'Jodi Digit', href: (gameId: string) => `/games/${gameId}/jodi-digit`, icon: <JodiDigitIcon />, gradient: 'from-purple-500 to-indigo-600' },
+    { title: 'Single Pana', href: (gameId: string) => `/games/${gameId}/single-pana`, icon: <SinglePanaIcon />, gradient: 'from-slate-700 to-slate-900' },
+    { title: 'Double Pana', href: (gameId: string) => `/games/${gameId}/double-pana`, icon: <DoublePanaIcon />, gradient: 'from-teal-500 to-cyan-600' },
+    { title: 'Triple Pana', href: (gameId: string) => `/games/${gameId}/triple-pana`, icon: <TriplePanaIcon />, gradient: 'from-rose-500 to-red-600' },
 ];
 
 export default function GamePage() {
@@ -112,7 +217,7 @@ export default function GamePage() {
             <CardHeader>
                 <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <CardContent className="grid grid-cols-2 gap-4">
                {betTypes.map((betType) => {
                   const isClickable = !!betType.href;
                   const Wrapper = isClickable ? Link : 'div';
@@ -120,15 +225,17 @@ export default function GamePage() {
 
                   return (
                     <Wrapper key={betType.title} {...props} onClick={() => handleBetTypeClick(betType.title)}>
-                      <Card className={cn(
-                        "bg-slate-800/80 border-slate-700 h-full flex items-center justify-center",
-                        isClickable ? 'hover:border-primary hover:bg-primary/10 transition-all cursor-pointer' : 'cursor-not-allowed opacity-50',
+                      <div className={cn(
+                        "rounded-lg p-4 text-white text-center flex flex-col items-center justify-between h-36",
+                        "transition-all duration-300 transform hover:scale-105",
+                        betType.gradient,
                         animatingBetType === betType.title && 'animate-pulse-once'
                         )}>
-                          <CardHeader>
-                              <CardTitle className="text-primary text-center">{betType.title}</CardTitle>
-                          </CardHeader>
-                      </Card>
+                          <div className="flex-grow flex items-center justify-center">
+                            {betType.icon}
+                          </div>
+                          <p className="font-bold text-lg">{betType.title}</p>
+                      </div>
                     </Wrapper>
                   )
                })}
