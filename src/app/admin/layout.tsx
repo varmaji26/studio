@@ -20,7 +20,9 @@ import {
   CreditCard,
   Settings,
   ImageIcon,
-  AreaChart
+  AreaChart,
+  Eye,
+  ChevronDown
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
@@ -32,6 +34,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
 
 export default function AdminLayout({
@@ -41,11 +45,12 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(false);
   const { user } = useAuth();
   const router = useRouter();
 
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => pathname.startsWith(path);
   
   const handleLinkClick = () => {
     if (isSidebarOpen) {
@@ -77,20 +82,48 @@ export default function AdminLayout({
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/admin" passHref onClick={handleLinkClick}>
-              <SidebarMenuButton isActive={isActive('/admin')} tooltip={{children: "Dashboard"}}>
+              <SidebarMenuButton isActive={pathname === '/admin'} tooltip={{children: "Dashboard"}}>
                 <Home />
                 <span>Dashboard</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
-           <SidebarMenuItem>
-            <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
-              <SidebarMenuButton isActive={isActive('/admin/view-all-load')} tooltip={{children: "View All Load"}}>
-                <AreaChart />
-                <span>View All Load</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
+           <Collapsible open={isLoadMenuOpen} onOpenChange={setIsLoadMenuOpen}>
+              <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                     <SidebarMenuButton isActive={isActive('/admin/view-all-load')} className="w-full justify-between">
+                        <div className="flex items-center gap-2">
+                            <Eye />
+                            <span>View All Load</span>
+                        </div>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", isLoadMenuOpen && "rotate-180")} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+              </SidebarMenuItem>
+              <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
+                 <SidebarMenuItem>
+                    <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
+                      <SidebarMenuButton size="sm" variant="ghost" isActive={pathname === '/admin/view-all-load'}>
+                        <span>View Open Load</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
+                      <SidebarMenuButton size="sm" variant="ghost" isActive={pathname === '/admin/view-all-load'}>
+                        <span>View Close Load</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                   <SidebarMenuItem>
+                    <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
+                      <SidebarMenuButton size="sm" variant="ghost" isActive={pathname === '/admin/view-all-load'}>
+                        <span>View Game-Type wise Load</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+              </CollapsibleContent>
+           </Collapsible>
           <SidebarMenuItem>
              <Link href="/admin/manage-users" passHref onClick={handleLinkClick}>
                 <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Manage Users"}}>
