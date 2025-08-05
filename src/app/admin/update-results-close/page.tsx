@@ -103,9 +103,10 @@ export default function UpdateResultsClosePage() {
         const gameDocSnap = await getDoc(gameDocRef);
         const currentGameData = gameDocSnap.data();
         
-        const openJodiDigit = currentGameData?.openJodiDigit || calculateJodiDigit(currentGameData?.openResult || '');
+        const openPana = currentGameData?.openResult || '***';
+        const openJodiDigit = calculateJodiDigit(openPana);
         const finalJodi = `${openJodiDigit}${closeJodiDigit}`;
-        const finalResult = `${currentGameData?.openResult || '***'}-${finalJodi}-${newClosePana}`;
+        const finalResult = `${openPana}-${finalJodi}-${newClosePana}`;
 
         // Update the close result and the final combined result string
         batch.update(gameDocRef, { 
@@ -123,7 +124,52 @@ export default function UpdateResultsClosePage() {
             const updatedChartData = `${finalJodi} ${currentChartData}`.trim();
             batch.update(jodiChartDocRef, { data: updatedChartData });
         }
-        // --- END AUTO UPDATE JODI CHART ---
+        
+        // --- AUTO UPDATE PANEL CHART ---
+        const panelChartDocRef = doc(db, 'panelCharts', game.id);
+        const panelChartDocSnap = await getDoc(panelChartDocRef);
+        if (panelChartDocSnap.exists()) {
+            const chartData = panelChartDocSnap.data();
+            let currentChartData = chartData.data || '';
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, etc.
+            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, Sunday - 6
+            
+            const weeklyDataLength = (3 + 2 + 3) * 7; // (open+jodi+close) * 7 days
+
+            // Find the last date range in the chart data
+            const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
+            let lastMatch;
+            let match;
+            while ((match = dateRangeRegex.exec(currentChartData)) !== null) {
+                lastMatch = match;
+            }
+
+            if (lastMatch) {
+                const [fullMatch, startDateStr, endDateStr] = lastMatch;
+                const [day, month, year] = endDateStr.split('/').map(Number);
+                const endDate = new Date(year, month - 1, day);
+
+                if (today <= endDate) {
+                    // Today is within the last week range, so update the data
+                    const lastDateRangeIndex = lastMatch.index;
+                    const dataBlockStartIndex = lastDateRangeIndex + fullMatch.length;
+                    
+                    const dataToUpdateIndex = dataBlockStartIndex + (dayIndex * 8);
+                    
+                    const newDataForDay = `${openPana}${finalJodi}${newClosePana}`;
+                    
+                    // Replace the specific day's data
+                    currentChartData = 
+                        currentChartData.substring(0, dataToUpdateIndex) + 
+                        newDataForDay + 
+                        currentChartData.substring(dataToUpdateIndex + 8);
+
+                    batch.update(panelChartDocRef, { data: currentChartData });
+                }
+            }
+        }
+        // --- END AUTO UPDATE PANEL CHART ---
 
         // Process bets for Close Pana, Close Single Digit, and Jodi Digit
         const bidsQuery = query(
@@ -175,7 +221,7 @@ export default function UpdateResultsClosePage() {
 
         toast({
             title: 'Result Published!',
-            description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found and paid out a total of ₹${totalWinningAmount.toFixed(2)}. Jodi chart updated.`,
+            description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found. Jodi and Panel charts updated.`,
         });
     } catch (error) {
         console.error('Error updating result: ', error);
@@ -274,3 +320,6 @@ export default function UpdateResultsClosePage() {
     </div>
   );
 }
+
+
+    
