@@ -123,16 +123,6 @@ export default function UpdateResultsClosePage() {
             closeJodiDigit: closeJodiDigit,
             result: finalResult,
         });
-
-        // --- AUTO UPDATE JODI CHART ---
-        const jodiChartDocRef = doc(db, 'jodiCharts', game.id);
-        const jodiChartDocSnap = await getDoc(jodiChartDocRef);
-        if (jodiChartDocSnap.exists()) {
-            const chartData = jodiChartDocSnap.data();
-            const currentChartData = chartData.data || '';
-            const updatedChartData = `${currentChartData} ${finalJodi}`.trim();
-            batch.update(jodiChartDocRef, { data: updatedChartData });
-        }
         
         // --- AUTO UPDATE PANEL CHART ---
         const panelChartDocRef = doc(db, 'panelCharts', game.id);
