@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,7 +17,9 @@ import 'jspdf-autotable';
 
 interface Transaction extends DocumentData {
     id: string;
+    userId: string;
     displayName: string;
+    mobile?: string;
     amount: number;
     status: 'pending' | 'approved' | 'rejected';
     createdAt: Timestamp;
@@ -45,6 +47,21 @@ export default function AdminPaymentHistoryPage() {
   
   const [searchTerm, setSearchTerm] = useState('');
 
+  const fetchUserDetails = async (requests: DocumentData[]): Promise<Transaction[]> => {
+    const requestsWithUsers = await Promise.all(
+        requests.map(async (request) => {
+            const userDocRef = doc(db, 'users', request.userId);
+            const userDoc = await getDoc(userDocRef);
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            return {
+                ...request,
+                mobile: userData.mobile || 'N/A',
+            } as Transaction;
+        })
+    );
+    return requestsWithUsers;
+  };
+
   const fetchAllTransactions = useCallback(async () => {
     setLoading(true);
     try {
@@ -56,9 +73,15 @@ export default function AdminPaymentHistoryPage() {
             getDocs(withdrawalsQuery)
         ]);
 
-        const deposits = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'deposit' })) as Transaction[];
-        const withdrawals = withdrawalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'withdrawal' })) as Transaction[];
+        const depositsData = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const withdrawalsData = withdrawalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
+        const depositsWithUsers = await fetchUserDetails(depositsData);
+        const withdrawalsWithUsers = await fetchUserDetails(withdrawalsData);
+
+        const deposits = depositsWithUsers.map(t => ({...t, type: 'deposit'})) as Transaction[];
+        const withdrawals = withdrawalsWithUsers.map(t => ({...t, type: 'withdrawal'})) as Transaction[];
+
         const combined = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
         
         setAllTransactions(combined);
@@ -87,7 +110,8 @@ export default function AdminPaymentHistoryPage() {
         return;
     }
     const filteredData = allTransactions.filter((t) => 
-      t.displayName?.toLowerCase().includes(lowercasedFilter)
+      t.displayName?.toLowerCase().includes(lowercasedFilter) ||
+      t.mobile?.toLowerCase().includes(lowercasedFilter)
     );
     setFilteredTransactions(filteredData);
     setHasMore(false); // Disable load more when searching
@@ -121,7 +145,7 @@ export default function AdminPaymentHistoryPage() {
     const doc = new jsPDF();
     doc.text("Admin Payment History", 14, 16);
 
-    const tableColumn = ["Date", "Username", "Type", "Amount", "Method", "Status"];
+    const tableColumn = ["Date", "Username", "Mobile", "Type", "Amount", "Method", "Status"];
     const tableRows: (string | number)[][] = [];
     
     let transactionsToExport = allTransactions;
@@ -129,7 +153,8 @@ export default function AdminPaymentHistoryPage() {
     if(searchTerm) {
         const lowercasedFilter = searchTerm.toLowerCase().trim();
         transactionsToExport = allTransactions.filter((t) => 
-            t.displayName?.toLowerCase().includes(lowercasedFilter)
+            t.displayName?.toLowerCase().includes(lowercasedFilter) ||
+            t.mobile?.toLowerCase().includes(lowercasedFilter)
         );
     }
 
@@ -137,6 +162,7 @@ export default function AdminPaymentHistoryPage() {
         const transactionData = [
             formatDate(t.createdAt),
             t.displayName,
+            t.mobile || 'N/A',
             t.type,
             `₹${t.amount}`,
             t.paymentMethod || t.withdrawalMethod || 'N/A',
@@ -161,6 +187,7 @@ export default function AdminPaymentHistoryPage() {
                 <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Username</TableHead>
+                    <TableHead>Mobile</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Method</TableHead>
@@ -172,6 +199,7 @@ export default function AdminPaymentHistoryPage() {
                     <TableRow key={t.id + t.createdAt.toMillis()}>
                         <TableCell>{formatDate(t.createdAt)}</TableCell>
                         <TableCell>{t.displayName}</TableCell>
+                        <TableCell>{t.mobile}</TableCell>
                         <TableCell>
                             <Badge variant={t.type === 'deposit' ? 'default' : 'outline'} className={t.type === 'deposit' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
                                 {t.type === 'deposit' ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
@@ -226,7 +254,7 @@ export default function AdminPaymentHistoryPage() {
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
-                        placeholder="Search by username..."
+                        placeholder="Search by username or mobile..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="bg-input h-10 rounded-lg pl-10"
