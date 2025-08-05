@@ -1,11 +1,9 @@
 
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 
 interface GameBettingLayoutProps {
   gameName: string;
@@ -15,6 +13,8 @@ interface GameBettingLayoutProps {
 }
 
 export function GameBettingLayout({ gameName, gameId, activeBetType, children }: GameBettingLayoutProps) {
+  const router = useRouter();
+
   return (
     <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
       <div className="max-w-2xl mx-auto">
@@ -26,11 +26,11 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
         </div>
 
         <div className="my-6">
-            <Button asChild variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white">
-                <Link href={`/games/${gameId}`} className="flex items-center gap-2">
+            <Button variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white" onClick={() => router.back()}>
+                <div className="flex items-center gap-2">
                     <ArrowLeft className="h-4 w-4"/>
                     <span>Back to Game Options</span>
-                </Link>
+                </div>
             </Button>
         </div>
         
