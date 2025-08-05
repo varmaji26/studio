@@ -28,10 +28,10 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
 
         <div className="my-6">
              <Button asChild variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white">
-                <Link href={`/games/${gameId}`} scroll={false}>
+                <Link href="/" scroll={false}>
                     <div className="flex items-center gap-2">
                         <ArrowLeft className="h-4 w-4"/>
-                        <span>Back to Game Options</span>
+                        <span>Back to Home</span>
                     </div>
                 </Link>
             </Button>
