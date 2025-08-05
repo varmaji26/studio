@@ -1,9 +1,9 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-const firebaseConfig = {
+const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -12,8 +12,17 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+function initializeFirebase() {
+    if (getApps().length > 0) {
+        return getApp();
+    }
+    // Isse yeh sunishchit hota hai ki app admin ke roop mein initialize ho
+    (firebaseConfig as any).authAdmin = true; 
+    return initializeApp(firebaseConfig);
+}
+
+// Firebase ko initialize karo
+const app = initializeFirebase();
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
