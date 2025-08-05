@@ -124,55 +124,6 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
         
-        // --- AUTO UPDATE PANEL CHART ---
-        const panelChartDocRef = doc(db, 'panelCharts', game.id);
-        const panelChartDocSnap = await getDoc(panelChartDocRef);
-        if (panelChartDocSnap.exists()) {
-            const chartData = panelChartDocSnap.data();
-            let currentChartData = chartData.data || '';
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            const dataRows = currentChartData.split('\n').filter(row => row.trim() !== '');
-            let chartWasUpdated = false;
-
-            const updatedRows = dataRows.map(row => {
-                const dateRangeMatch = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
-                if (!dateRangeMatch || chartWasUpdated) {
-                    return row;
-                }
-
-                const startDate = parseDateString(dateRangeMatch[1]);
-                const endDate = parseDateString(dateRangeMatch[2]);
-                
-                if (startDate && endDate && today >= startDate && today <= endDate) {
-                    chartWasUpdated = true;
-                    
-                    const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1
-                    const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, Sunday - 6
-
-                    const dataPart = row.substring(dateRangeMatch[0].length).trim();
-                    const dataEntries = dataPart.split(/\s+/).filter(Boolean);
-                    
-                    const newDataForDay = `${openPana}${finalJodi}${newClosePana}`;
-                    
-                    while (dataEntries.length < 7) {
-                        dataEntries.push('********'); // Placeholder for a full day's data
-                    }
-
-                    dataEntries[dayIndex] = newDataForDay;
-                    
-                    return `${dateRangeMatch[0]} ${dataEntries.join(' ')}`;
-                }
-                return row;
-            });
-
-            if (chartWasUpdated) {
-                batch.update(panelChartDocRef, { data: updatedRows.join('\n') });
-            }
-        }
-        // --- END AUTO UPDATE PANEL CHART ---
-
         // Process bets for Close Pana, Close Single Digit, and Jodi Digit
         const bidsQuery = query(
             collection(db, 'bids'),
@@ -223,7 +174,7 @@ export default function UpdateResultsClosePage() {
 
         toast({
             title: 'Result Published!',
-            description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found. Jodi and Panel charts updated.`,
+            description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found.`,
         });
     } catch (error) {
         console.error('Error updating result: ', error);
