@@ -123,6 +123,15 @@ export default function UpdateResultsClosePage() {
             closeJodiDigit: closeJodiDigit,
             result: finalResult,
         });
+
+        // Automatically update the Jodi Chart
+        const jodiChartDocRef = doc(db, 'jodiCharts', game.id);
+        const jodiChartDocSnap = await getDoc(jodiChartDocRef);
+        if (jodiChartDocSnap.exists()) {
+            const currentChartData = jodiChartDocSnap.data().data || '';
+            const updatedChartData = `${currentChartData} ${finalJodi}`.trim();
+            batch.update(jodiChartDocRef, { data: updatedChartData });
+        }
         
         // Process bets for Close Pana, Close Single Digit, and Jodi Digit
         const bidsQuery = query(
