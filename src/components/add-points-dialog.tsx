@@ -62,6 +62,23 @@ type PaymentDetails = {
     }
 }
 
+const UpiLogo = () => (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7.33333 5.33333H16.6667V7.33333H12.6667V12H14C15.8409 12 17.3333 13.4924 17.3333 15.3333C17.3333 17.1742 15.8409 18.6667 14 18.6667H7.33333V5.33333Z" fill="#2F69FF"/>
+        <path d="M7.33333 12H9.33333V16.6667H7.33333V12Z" fill="#FFA500"/>
+        <path d="M10.6667 12H12.6667V16.6667C12.6667 16.1144 12.8774 15.5835 13.2523 15.2085C13.6273 14.8335 14.1582 14.623 14.7104 14.623H14C13.5684 14.623 13.1413 14.5447 12.74 14.39" fill="#00BFFF"/>
+        <path d="M12.6667 7.33333H10.6667V12H12.6667V7.33333Z" fill="#32CD32"/>
+    </svg>
+)
+
+const PaytmPhonePeLogo = () => (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="#00BFFF"/>
+        <path d="M12 6L7 11H10V14H14V11H17L12 6Z" fill="#002E6E"/>
+    </svg>
+)
+
+
 export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -134,6 +151,12 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   const selectedMethod = form.watch('paymentMethod');
   const selectedPaymentDetail = selectedMethod && paymentDetails ? paymentDetails[selectedMethod] : null;
 
+  const paymentMethodsConfig: { [key: string]: { logo: React.ReactNode, title: string } } = {
+        'Paytm/PhonePe': { logo: <PaytmPhonePeLogo />, title: 'Paytm/PhonePe' },
+        'UPI': { logo: <UpiLogo />, title: 'UPI Payment' },
+   };
+
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -153,7 +176,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 <FormItem>
                   <FormLabel>Amount (₹)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} />
+                    <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-12 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -169,8 +192,8 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                    <FormControl>
                     {loadingDetails ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Skeleton className="h-20 w-full" />
-                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-24 w-full" />
+                            <Skeleton className="h-24 w-full" />
                         </div>
                     ) : (
                         <RadioGroup
@@ -180,14 +203,16 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         >
                           {paymentDetails && Object.keys(paymentDetails).map((method) => {
                             const detail = paymentDetails[method as keyof typeof paymentDetails];
-                            if (!detail.details && !detail.imageUrl) return null; // Don't show if no details or QR
+                            if (!detail.details && !detail.imageUrl) return null;
+                            const config = paymentMethodsConfig[method];
                             return (
                              <FormItem key={method}>
                                <FormControl>
                                 <RadioGroupItem value={method} className="peer sr-only" id={method} />
                                </FormControl>
                                <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                    {detail.title}
+                                    {config?.logo}
+                                    <span className="mt-2 font-semibold">{config?.title || detail.title}</span>
                                </Label>
                              </FormItem>
                             )
@@ -226,19 +251,19 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 <FormItem>
                   <FormLabel>Transaction ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter transaction ID after payment" {...field} />
+                    <Input placeholder="Enter transaction ID after payment" {...field} className="h-12" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter className="gap-2 sm:gap-0 pt-4">
               <DialogClose asChild>
-                <Button type="button" variant="outline">
+                <Button type="button" variant="outline" className="h-12">
                     Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={isSubmitting || loadingDetails}>
+              <Button type="submit" disabled={isSubmitting || loadingDetails} className="h-12">
                 {isSubmitting ? <Loader className="mr-2" /> : null}
                 Submit Request
               </Button>
@@ -249,5 +274,3 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
     </Dialog>
   );
 }
-
-    
