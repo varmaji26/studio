@@ -114,6 +114,17 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
+        // --- AUTO UPDATE JODI CHART ---
+        const jodiChartDocRef = doc(db, 'jodiCharts', game.id);
+        const jodiChartDocSnap = await getDoc(jodiChartDocRef);
+        if (jodiChartDocSnap.exists()) {
+            const chartData = jodiChartDocSnap.data();
+            const currentChartData = chartData.data || '';
+            const updatedChartData = `${finalJodi} ${currentChartData}`.trim();
+            batch.update(jodiChartDocRef, { data: updatedChartData });
+        }
+        // --- END AUTO UPDATE JODI CHART ---
+
         // Process bets for Close Pana, Close Single Digit, and Jodi Digit
         const bidsQuery = query(
             collection(db, 'bids'),
@@ -164,7 +175,7 @@ export default function UpdateResultsClosePage() {
 
         toast({
             title: 'Result Published!',
-            description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found and paid out a total of ₹${totalWinningAmount.toFixed(2)}.`,
+            description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found and paid out a total of ₹${totalWinningAmount.toFixed(2)}. Jodi chart updated.`,
         });
     } catch (error) {
         console.error('Error updating result: ', error);
