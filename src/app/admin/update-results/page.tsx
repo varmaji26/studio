@@ -66,7 +66,7 @@ export default function UpdateResultsPage() {
   });
 
   useEffect(() => {
-    const q = query(collection(db, "games"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "games"), orderBy("openTime", "asc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const gamesData: Game[] = [];
       querySnapshot.forEach((doc) => {
