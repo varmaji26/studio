@@ -18,6 +18,11 @@ interface JodiChartData extends DocumentData {
   data: string;
 }
 
+interface GameData extends DocumentData {
+    id: string;
+    activeDays?: string[];
+}
+
 const isRedNumber = (num: string) => {
     if (num === '*' || num.length !== 2) return false;
     const [first, second] = num.split('');
@@ -25,27 +30,51 @@ const isRedNumber = (num: string) => {
     return diff === 5 || first === second;
 };
 
+const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const dayAbbreviations: { [key: string]: string } = {
+    Monday: 'Mo',
+    Tuesday: 'Tue',
+    Wednesday: 'Wed',
+    Thursday: 'Thu',
+    Friday: 'Fri',
+    Saturday: 'Sat',
+    Sunday: 'Sun',
+};
+
 export default function JodiChartPage() {
     const { gameId } = useParams();
     const router = useRouter();
     const [chartData, setChartData] = useState<JodiChartData | null>(null);
+    const [gameData, setGameData] = useState<GameData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (typeof gameId !== 'string') return;
 
-        const fetchChartData = async () => {
+        const fetchChartAndGameData = async () => {
             setLoading(true);
             try {
-                // The document ID in jodiCharts should match the gameId
                 const chartDocRef = doc(db, 'jodiCharts', gameId);
-                const chartDoc = await getDoc(chartDocRef);
+                const gameDocRef = doc(db, 'games', gameId);
+
+                const [chartDoc, gameDoc] = await Promise.all([
+                    getDoc(chartDocRef),
+                    getDoc(gameDocRef)
+                ]);
+
                 if (chartDoc.exists()) {
                     setChartData({ id: chartDoc.id, ...chartDoc.data() } as JodiChartData);
                 } else {
-                    // Fallback or error message if no chart data found for this game
                     setChartData(null);
                 }
+                
+                if (gameDoc.exists()) {
+                    setGameData({ id: gameDoc.id, ...gameDoc.data() } as GameData);
+                } else {
+                    // Fallback to all days if game data not found for some reason
+                    setGameData({ id: gameId as string, activeDays: allDays });
+                }
+
             } catch (error) {
                 console.error("Error fetching Jodi chart data:", error);
             } finally {
@@ -53,8 +82,11 @@ export default function JodiChartPage() {
             }
         };
 
-        fetchChartData();
+        fetchChartAndGameData();
     }, [gameId]);
+
+    const activeDays = gameData?.activeDays && gameData.activeDays.length > 0 ? gameData.activeDays : allDays;
+    const numberOfDays = activeDays.length;
 
     const parsedData = chartData?.data.split(/\s+/).filter(d => d) || [];
     
@@ -89,12 +121,18 @@ export default function JodiChartPage() {
                         </div>
                         {chartData ? (
                             <div className="overflow-x-auto border-2 border-primary bg-orange-100 p-1">
-                                <div className="grid grid-cols-7 text-center font-bold text-white bg-blue-800">
-                                    {['Mo', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                                        <div key={day} className="p-2 border-b-2 border-primary">{day}</div>
+                                <div 
+                                    className="grid text-center font-bold text-white bg-blue-800"
+                                    style={{ gridTemplateColumns: `repeat(${numberOfDays}, minmax(0, 1fr))` }}
+                                >
+                                    {activeDays.map(day => (
+                                        <div key={day} className="p-2 border-b-2 border-primary">{dayAbbreviations[day]}</div>
                                     ))}
                                 </div>
-                                <div className="grid grid-cols-7 text-center">
+                                <div 
+                                    className="grid text-center"
+                                    style={{ gridTemplateColumns: `repeat(${numberOfDays}, minmax(0, 1fr))` }}
+                                >
                                     {parsedData.map((num, index) => (
                                         <div key={index} 
                                              className={`p-2 border border-gray-300 font-bold ${isRedNumber(num) ? 'text-red-600' : 'text-black'}`}>
@@ -114,5 +152,3 @@ export default function JodiChartPage() {
         </div>
     );
 }
-
-    
