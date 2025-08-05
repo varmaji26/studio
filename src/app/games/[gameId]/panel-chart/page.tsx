@@ -149,7 +149,7 @@ export default function PanelChartPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="mb-4">
-                            <Button asChild variant="outline" className="w-full border-green-500 text-green-500 hover:bg-green-500/10 hover:text-green-400">
+                            <Button asChild className="w-full bg-green-500 text-white hover:bg-green-600">
                                 <Link href="/" className="inline-flex items-center gap-2">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
