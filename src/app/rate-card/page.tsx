@@ -4,28 +4,33 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, onSnapshot, orderBy, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { formatTime } from '@/lib/utils';
 
-interface Game extends DocumentData {
-    id: string;
-    name: string;
-    openTime: string;
-    closeTime: string;
-}
+const standardGameRates = [
+    { name: 'SINGLE DIGIT', rate: '₹10 Ka - ₹100' },
+    { name: 'JODI DIGIT', rate: '₹10 Ka - ₹1000' },
+    { name: 'SINGLE PANNA', rate: '₹10 Ka - ₹1500' },
+    { name: 'DOUBLE PANNA', rate: '₹10 Ka - ₹3000' },
+    { name: 'TRIPLE PANNA', rate: '₹10 Ka - ₹6000' },
+    { name: 'HALF SANGAM', rate: '₹10 Ka - ₹5000' },
+    { name: 'FULL SANGAM', rate: '₹10 Ka - ₹10000' },
+];
+
+const RateItem = ({ name, rate }: { name: string; rate: string }) => (
+    <div className="bg-indigo-600 text-white flex justify-between items-center p-4 rounded-lg shadow-md">
+        <span className="font-semibold text-lg">{name}</span>
+        <span className="font-bold text-lg">{rate}</span>
+    </div>
+);
+
 
 export default function RateCardPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
-    const [games, setGames] = useState<Game[]>([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (authLoading) return;
@@ -33,24 +38,9 @@ export default function RateCardPage() {
             router.replace('/login');
             return;
         }
-
-        const gamesQuery = query(collection(db, 'games'), orderBy('createdAt', 'asc'));
-        const unsubscribe = onSnapshot(gamesQuery, (querySnapshot) => {
-            const gamesData: Game[] = [];
-            querySnapshot.forEach((doc) => {
-                gamesData.push({ id: doc.id, ...doc.data() } as Game);
-            });
-            setGames(gamesData);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching games: ", error);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
     }, [user, authLoading, router]);
 
-    if (authLoading || loading) {
+    if (authLoading || !user) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
@@ -60,7 +50,7 @@ export default function RateCardPage() {
     
     return (
         <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-4xl mx-auto">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-2xl sm:text-3xl">Game Rates</CardTitle>
@@ -74,45 +64,19 @@ export default function RateCardPage() {
                             </Button>
                         </div>
                     </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Game Name</TableHead>
-                                        <TableHead>Open Time</TableHead>
-                                        <TableHead>Close Time</TableHead>
-                                        <TableHead>Single Digit</TableHead>
-                                        <TableHead>Jodi Digit</TableHead>
-                                        <TableHead>Single Pana</TableHead>
-                                        <TableHead>Double Pana</TableHead>
-                                        <TableHead>Triple Pana</TableHead>
-                                        <TableHead>Half Sangam</TableHead>
-                                        <TableHead>Full Sangam</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {games.map((game) => (
-                                        <TableRow key={game.id}>
-                                            <TableCell>{game.name}</TableCell>
-                                            <TableCell>{formatTime(game.openTime)}</TableCell>
-                                            <TableCell>{formatTime(game.closeTime)}</TableCell>
-                                            <TableCell>₹10 - ₹100</TableCell>
-                                            <TableCell>₹10 - ₹1000</TableCell>
-                                            <TableCell>₹10 - ₹1000</TableCell>
-                                            <TableCell>₹10 - ₹3000</TableCell>
-                                            <TableCell>₹10 - ₹6000</TableCell>
-                                            <TableCell>₹10 - ₹5000</TableCell>
-                                            <TableCell>₹10 - ₹10000</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                    <CardContent className="space-y-6">
+                        <div>
+                            <h2 className="text-xl font-bold mb-4 text-primary">STANDARD GAMES</h2>
+                            <div className="space-y-3">
+                                {standardGameRates.map((item) => (
+                                    <RateItem key={item.name} name={item.name} rate={item.rate} />
+                                ))}
+                            </div>
                         </div>
-                        {games.length === 0 && !loading && (
-                            <p className="text-center text-muted-foreground mt-4">No games available to show rates.</p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-4">All rates are based on a ₹10 bet.</p>
+                         <div>
+                            <h2 className="text-xl font-bold mb-4 text-primary">STARLINES GAMES</h2>
+                            <p className="text-muted-foreground">Starline game rates will be updated soon.</p>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
