@@ -32,7 +32,7 @@ const isRedNumber = (num: string) => {
 const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; closePana: string; } }) => {
     const { openPana, jodi, closePana } = dayData;
     
-    if (jodi === '**' || jodi === '*') {
+    if (jodi === '**' || jodi === '*' || openPana === '***' ) {
       return (
         <div className="relative p-0 min-h-[50px] flex items-center justify-center text-black font-bold text-lg">
             **
@@ -44,12 +44,12 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     
     return (
         <div className="flex items-center justify-center p-0 min-h-[40px] gap-0">
-            <div className="text-center text-[8px] text-black font-semibold leading-tight">
-                {openPana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
+            <div className="text-center text-xs text-black font-semibold leading-tight flex flex-col">
+                {openPana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
             </div>
-            <span className={cn("text-sm mx-0 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
-            <div className="text-center text-[8px] text-black font-semibold leading-tight">
-                {closePana.split('').map((digit, i) => <div key={i}>{digit === '*' ? ' ' : digit}</div>)}
+            <span className={cn("text-lg mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
+            <div className="text-center text-xs text-black font-semibold leading-tight flex flex-col">
+                {closePana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
             </div>
         </div>
     );
@@ -110,14 +110,13 @@ export default function PanelChartPage() {
             const weeklyData = dataBlock.trim().split(/\s+/).join('');
 
             const daysData = [];
-            let currentIndex = 0;
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                 let currentIndex = dayIndex * 8;
                  if (weeklyData.length >= currentIndex + 8) {
                      const openPana = weeklyData.slice(currentIndex, currentIndex + 3);
                      const jodi = weeklyData.slice(currentIndex + 3, currentIndex + 5);
                      const closePana = weeklyData.slice(currentIndex + 5, currentIndex + 8);
                      daysData.push({ openPana, jodi, closePana });
-                     currentIndex += 8;
                 } else {
                     daysData.push({ openPana: '***', jodi: '**', closePana: '***' });
                 }
@@ -197,4 +196,3 @@ export default function PanelChartPage() {
         </div>
     );
 }
-

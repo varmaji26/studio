@@ -121,6 +121,7 @@ export default function UpdateResultsClosePage() {
         if (jodiChartDocSnap.exists()) {
             const chartData = jodiChartDocSnap.data();
             const currentChartData = chartData.data || '';
+            // Prepend the new jodi to the existing data string
             const updatedChartData = `${finalJodi} ${currentChartData}`.trim();
             batch.update(jodiChartDocRef, { data: updatedChartData });
         }
@@ -132,8 +133,8 @@ export default function UpdateResultsClosePage() {
             const chartData = panelChartDocSnap.data();
             let currentChartData = chartData.data || '';
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalize today's date to midnight
-
+            
+            // Find the last date range in the data
             const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
             let lastMatch: RegExpExecArray | null = null;
             let currentMatch: RegExpExecArray | null;
@@ -146,30 +147,48 @@ export default function UpdateResultsClosePage() {
                 const [startDay, startMonth, startYear] = startDateStr.split('/').map(Number);
                 const [endDay, endMonth, endYear] = endDateStr.split('/').map(Number);
                 
+                // Note: JS months are 0-indexed
                 const startDate = new Date(startYear, startMonth - 1, startDay);
-                startDate.setHours(0, 0, 0, 0);
                 const endDate = new Date(endYear, endMonth - 1, endDay);
-                endDate.setHours(0, 0, 0, 0);
+                
+                // Normalize today's date to midnight for accurate comparison
+                const todayNormalized = new Date(today);
+                todayNormalized.setHours(0, 0, 0, 0);
 
-                if (today >= startDate && today <= endDate) {
+                if (todayNormalized >= startDate && todayNormalized <= endDate) {
                     const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, etc.
-                    const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, Sunday - 6
+                    const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday - 0, Sunday - 6
                     
                     const dataBlockStartIndex = lastMatch.index + fullMatch.length;
-                    const dataToUpdateIndex = dataBlockStartIndex + (dayIndex * 8) + dayIndex; // + dayIndex for spaces
+                    // Remove leading/trailing whitespace from the data block to handle inconsistencies
+                    const dataContentString = currentChartData.substring(dataBlockStartIndex).trim();
+                    const dataEntries = dataContentString.split(/\s+/);
                     
                     const newDataForDay = `${openPana}${finalJodi}${newClosePana}`;
+
+                    // Update the specific day's data block (which is 8 chars per day)
+                    const dataArray = dataContentString.split('');
+                    const updateIndex = dayIndex * 8;
                     
-                    // Replace the specific day's data block (8 chars)
-                    const dataArray = currentChartData.split('');
-                    dataArray.splice(dataToUpdateIndex, 8, ...newDataForDay.split(''));
-                    const updatedChartData = dataArray.join('');
+                    // Ensure the array is long enough
+                    while (dataArray.length < updateIndex + 8) {
+                        dataArray.push(' ');
+                    }
+
+                    dataArray.splice(updateIndex, 8, ...newDataForDay.split(''));
+
+                    // Join back with spaces to maintain structure
+                    const updatedDataBlock = dataArray.join('').replace(/(.{8})/g, '$1 ').trim();
                     
+                    const chartDataPrefix = currentChartData.substring(0, dataBlockStartIndex);
+                    const updatedChartData = `${chartDataPrefix}\n${updatedDataBlock}`;
+
                     batch.update(panelChartDocRef, { data: updatedChartData });
                 }
             }
         }
         // --- END AUTO UPDATE PANEL CHART ---
+
 
         // Process bets for Close Pana, Close Single Digit, and Jodi Digit
         const bidsQuery = query(
