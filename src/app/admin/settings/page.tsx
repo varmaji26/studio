@@ -178,8 +178,6 @@ export default function SettingsPage() {
             };
         }
         
-        setUploadProgress(0);
-
         const qrFile = values.qrCodeImage?.[0];
         if (qrFile) {
             const { downloadURL, storagePath } = await uploadFile(qrFile, 'qrcodes', existingQrStoragePath);
@@ -404,5 +402,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
