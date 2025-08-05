@@ -51,6 +51,7 @@ const calculateJodiDigit = (pana: string): string => {
 };
 
 const parseDateString = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
     const parts = dateStr.trim().split('/');
     if (parts.length !== 3) return null;
     const [day, month, year] = parts.map(Number);
