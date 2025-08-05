@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, DocumentData, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, DocumentData, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -18,13 +18,11 @@ interface Bid extends DocumentData {
 
 interface GroupedLoad {
     [key: string]: {
-        [key: string]: {
-            [key: string]: number;
-        };
+        [key: string]: number;
     };
 }
 
-export default function ViewAllLoadPage() {
+export default function ViewOpenLoadPage() {
   const [bids, setBids] = useState<Bid[]>([]);
   const [groupedLoad, setGroupedLoad] = useState<GroupedLoad>({});
   const [loading, setLoading] = useState(true);
@@ -41,7 +39,8 @@ export default function ViewAllLoadPage() {
         const gamesData = gamesSnapshot.docs.map(doc => doc.data().name as string);
         setGamesList(['all', ...gamesData]);
 
-        const bidsSnapshot = await getDocs(collection(db, 'bids'));
+        const bidsQuery = query(collection(db, 'bids'), where('session', '==', 'Open'));
+        const bidsSnapshot = await getDocs(bidsQuery);
         const bidsData = bidsSnapshot.docs.map(doc => doc.data() as Bid);
         setBids(bidsData);
 
@@ -62,20 +61,17 @@ export default function ViewAllLoadPage() {
     let currentTotal = 0;
 
     dataToProcess.forEach(bid => {
-        const { gameName, betType, session, totalAmount } = bid;
-        if (!gameName || !betType || !session) return;
+        const { gameName, betType, totalAmount } = bid;
+        if (!gameName || !betType) return;
         
         if (!grouped[gameName]) {
             grouped[gameName] = {};
         }
         if (!grouped[gameName][betType]) {
-            grouped[gameName][betType] = {};
-        }
-        if (!grouped[gameName][betType][session]) {
-            grouped[gameName][betType][session] = 0;
+            grouped[gameName][betType] = 0;
         }
         
-        grouped[gameName][betType][session] += totalAmount;
+        grouped[gameName][betType] += totalAmount;
         currentTotal += totalAmount;
     });
 
@@ -89,8 +85,8 @@ export default function ViewAllLoadPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <CardTitle className="text-3xl font-bold">View All Load</CardTitle>
-              <CardDescription>A detailed breakdown of the betting load across all games.</CardDescription>
+              <CardTitle className="text-3xl font-bold">View Open Load</CardTitle>
+              <CardDescription>A detailed breakdown of the betting load for the 'Open' session.</CardDescription>
             </div>
             <div className="w-full sm:w-auto sm:max-w-xs">
                 <Select value={selectedGame} onValueChange={setSelectedGame}>
@@ -126,15 +122,13 @@ export default function ViewAllLoadPage() {
                 </TableHeader>
                 <TableBody>
                   {Object.entries(groupedLoad).map(([gameName, betTypes]) => (
-                    Object.entries(betTypes).map(([betType, sessions]) => (
-                      Object.entries(sessions).map(([session, load]) => (
-                        <TableRow key={`${gameName}-${betType}-${session}`}>
-                          <TableCell>{gameName}</TableCell>
-                          <TableCell>{betType}</TableCell>
-                          <TableCell>{session}</TableCell>
-                          <TableCell>₹{load.toFixed(2)}</TableCell>
-                        </TableRow>
-                      ))
+                    Object.entries(betTypes).map(([betType, load]) => (
+                      <TableRow key={`${gameName}-${betType}`}>
+                        <TableCell>{gameName}</TableCell>
+                        <TableCell>{betType}</TableCell>
+                        <TableCell>Open</TableCell>
+                        <TableCell>₹{load.toFixed(2)}</TableCell>
+                      </TableRow>
                     ))
                   ))}
                 </TableBody>
@@ -149,7 +143,7 @@ export default function ViewAllLoadPage() {
           )}
           {Object.keys(groupedLoad).length === 0 && !loading && (
             <p className="text-center text-muted-foreground mt-4">
-              No load data available for the selected filter.
+              No 'Open' session load data available for the selected filter.
             </p>
           )}
         </CardContent>

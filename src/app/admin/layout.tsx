@@ -45,12 +45,14 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(false);
+  
+  const isLoadMenuInitiallyOpen = isActive('/admin/view-open-load') || isActive('/admin/view-close-load') || isActive('/admin/view-gametype-load');
+  const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(isLoadMenuInitiallyOpen);
   const { user } = useAuth();
   const router = useRouter();
 
 
-  const isActive = (path: string) => pathname.startsWith(path);
+  const isActive = (path: string) => pathname === path;
   
   const handleLinkClick = () => {
     if (isSidebarOpen) {
@@ -91,7 +93,10 @@ export default function AdminLayout({
            <Collapsible open={isLoadMenuOpen} onOpenChange={setIsLoadMenuOpen}>
               <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                     <SidebarMenuButton isActive={isActive('/admin/view-all-load')} className="w-full justify-between">
+                     <SidebarMenuButton 
+                        isActive={isLoadMenuInitiallyOpen} 
+                        className="w-full justify-between"
+                     >
                         <div className="flex items-center gap-2">
                             <Eye />
                             <span>View All Load</span>
@@ -102,22 +107,22 @@ export default function AdminLayout({
               </SidebarMenuItem>
               <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
                  <SidebarMenuItem>
-                    <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
-                      <SidebarMenuButton size="sm" variant="ghost" isActive={pathname === '/admin/view-all-load'}>
+                    <Link href="/admin/view-open-load" passHref onClick={handleLinkClick}>
+                      <SidebarMenuButton size="sm" variant="ghost" isActive={isActive('/admin/view-open-load')}>
                         <span>View Open Load</span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
-                      <SidebarMenuButton size="sm" variant="ghost" isActive={pathname === '/admin/view-all-load'}>
+                      <SidebarMenuButton size="sm" variant="ghost" isActive={isActive('/admin/view-close-load')}>
                         <span>View Close Load</span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
                    <SidebarMenuItem>
                     <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
-                      <SidebarMenuButton size="sm" variant="ghost" isActive={pathname === '/admin/view-all-load'}>
+                      <SidebarMenuButton size="sm" variant="ghost" isActive={isActive('/admin/view-gametype-load')}>
                         <span>View Game-Type wise Load</span>
                       </SidebarMenuButton>
                     </Link>
