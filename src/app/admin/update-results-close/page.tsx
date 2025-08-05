@@ -134,6 +134,55 @@ export default function UpdateResultsClosePage() {
             batch.update(jodiChartDocRef, { data: updatedChartData });
         }
         
+        // Automatically update Panel Chart
+        const panelChartDocRef = doc(db, 'panelCharts', game.id);
+        const panelChartDocSnap = await getDoc(panelChartDocRef);
+        if (panelChartDocSnap.exists()) {
+            let chartDataStr = panelChartDocSnap.data().data || '';
+            const today = new Date();
+            const todayDay = today.getDay(); // Sunday - 0, Monday - 1, ...
+            const dayIndex = todayDay === 0 ? 6 : todayDay - 1; // Monday - 0, ..., Sunday - 6
+            
+            const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
+            let match;
+            let lastMatchIndex = -1;
+            let lastMatchContentIndex = -1;
+            let foundWeek = false;
+
+            while ((match = dateRangeRegex.exec(chartDataStr)) !== null) {
+                const startDate = parseDateString(match[1]);
+                const endDate = parseDateString(match[2]);
+                if (startDate && endDate) {
+                    endDate.setHours(23, 59, 59, 999);
+                    if (today >= startDate && today <= endDate) {
+                        lastMatchIndex = match.index;
+                        lastMatchContentIndex = dateRangeRegex.lastIndex;
+                        foundWeek = true;
+                        break;
+                    }
+                }
+            }
+
+            if(foundWeek) {
+                const nextMatch = dateRangeRegex.exec(chartDataStr);
+                const contentEndIndex = nextMatch ? nextMatch.index : chartDataStr.length;
+                const weekContent = chartDataStr.substring(lastMatchContentIndex, contentEndIndex).trim();
+                
+                const dayDataArray = weekContent.match(/.{1,8}/g) || [];
+                while (dayDataArray.length < 7) {
+                    dayDataArray.push('********');
+                }
+
+                const newDayData = `${openPana}${finalJodi}${newClosePana}`;
+                dayDataArray[dayIndex] = newDayData;
+                
+                const updatedWeekContent = ' ' + dayDataArray.join(' ');
+                const updatedChartData = chartDataStr.substring(0, lastMatchContentIndex) + updatedWeekContent + chartDataStr.substring(contentEndIndex);
+                
+                batch.update(panelChartDocRef, { data: updatedChartData });
+            }
+        }
+        
         // Process bets for Close Pana, Close Single Digit, and Jodi Digit
         const bidsQuery = query(
             collection(db, 'bids'),
