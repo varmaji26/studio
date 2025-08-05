@@ -98,6 +98,7 @@ export default function Home() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
+  const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   
   const currentDay = new Date().toLocaleString('en-US', { weekday: 'long' });
 
@@ -193,6 +194,17 @@ export default function Home() {
         router.push(`/games/${gameId}`);
     }, 500); // Animation duration
   };
+
+  const handleChartLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, gameId: string, type: 'jodi' | 'panel') => {
+    e.preventDefault();
+    const animationKey = `${gameId}-${type}`;
+    setAnimatingButton(animationKey);
+    setTimeout(() => {
+        router.push(`/games/${gameId}/${type}-chart`);
+        setAnimatingButton(null);
+    }, 500); // Animation duration
+  };
+
 
   const handleLogout = async () => {
     try {
@@ -507,9 +519,27 @@ export default function Home() {
                         <div className="relative z-10 space-y-3">
                             <h3 className="text-xl font-bold text-white">{game.name}</h3>
                             <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
-                                <Link href={`/games/${game.id}/jodi-chart`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Jodi</Link>
+                                <Link
+                                    href={`/games/${game.id}/jodi-chart`}
+                                    onClick={(e) => handleChartLinkClick(e, game.id, 'jodi')}
+                                    className={cn(
+                                        "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
+                                        animatingButton === `${game.id}-jodi` && "animate-pulse-once"
+                                    )}
+                                >
+                                    Jodi
+                                </Link>
                                 <span>{formatGameResult(game)}</span>
-                                <Link href={`/games/${game.id}/panel-chart`} className="bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md">Panel</Link>
+                                <Link
+                                    href={`/games/${game.id}/panel-chart`}
+                                    onClick={(e) => handleChartLinkClick(e, game.id, 'panel')}
+                                    className={cn(
+                                        "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
+                                        animatingButton === `${game.id}-panel` && "animate-pulse-once"
+                                    )}
+                                >
+                                    Panel
+                                </Link>
                             </div>
                             <p className={cn(
                                 "text-sm font-bold",
