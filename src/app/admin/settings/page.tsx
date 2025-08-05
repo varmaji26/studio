@@ -114,11 +114,13 @@ export default function SettingsPage() {
 
   const uploadFile = async (file: File, path: string, oldStoragePath: string | null): Promise<{ downloadURL: string; storagePath: string }> => {
     if (oldStoragePath) {
-        const oldStorageRef = ref(storage, oldStoragePath);
         try {
+            const oldStorageRef = ref(storage, oldStoragePath);
             await deleteObject(oldStorageRef);
-        } catch (e) {
-            console.warn("Could not delete old file, it might not exist:", e);
+        } catch (e: any) {
+             if (e.code !== 'storage/object-not-found') {
+                console.warn("Could not delete old file:", e);
+             }
         }
     }
     const storagePath = `${path}/${Date.now()}_${file.name}`;
@@ -150,38 +152,26 @@ export default function SettingsPage() {
 
   const onSubmit = async (values: SettingsFormValues) => {
     setIsSubmitting(true);
-    setUploadProgress(0); // Initialize progress bar
+    setUploadProgress(0);
 
     try {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         
-        const dataToSave: any = {
-            whatsappNumber: values.whatsappNumber,
-            callSupportNumber: values.callSupportNumber,
-            telegramLink: values.telegramLink,
-            paymentDetails: {
-                'UPI': { title: "UPI Payment", details: values.upiId },
-                'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
-                'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
-            },
-            welcomeBanner: existingWelcomeBannerUrl ? {
-                imageUrl: existingWelcomeBannerUrl,
-                storagePath: existingWelcomeBannerStoragePath,
-            } : null,
-        };
+        let qrCodeData = existingQrUrl ? {
+            title: 'Scan QR Code',
+            imageUrl: existingQrUrl,
+            storagePath: existingQrStoragePath
+        } : undefined;
 
-        if (existingQrUrl) {
-            dataToSave.paymentDetails['Scan QR Code'] = {
-                title: 'Scan QR Code',
-                imageUrl: existingQrUrl,
-                storagePath: existingQrStoragePath
-            };
-        }
+        let welcomeBannerData = existingWelcomeBannerUrl ? {
+            imageUrl: existingWelcomeBannerUrl,
+            storagePath: existingWelcomeBannerStoragePath,
+        } : null;
         
         const qrFile = values.qrCodeImage?.[0];
         if (qrFile) {
             const { downloadURL, storagePath } = await uploadFile(qrFile, 'qrcodes', existingQrStoragePath);
-            dataToSave.paymentDetails['Scan QR Code'] = {
+            qrCodeData = {
                 title: 'Scan QR Code',
                 imageUrl: downloadURL,
                 storagePath: storagePath,
@@ -193,12 +183,28 @@ export default function SettingsPage() {
         const welcomeBannerFile = values.welcomeBannerImage?.[0];
         if (welcomeBannerFile) {
             const { downloadURL, storagePath } = await uploadFile(welcomeBannerFile, 'welcome-banners', existingWelcomeBannerStoragePath);
-            dataToSave.welcomeBanner = {
+            welcomeBannerData = {
                 imageUrl: downloadURL,
                 storagePath: storagePath,
             };
             setExistingWelcomeBannerUrl(downloadURL);
             setExistingWelcomeBannerStoragePath(storagePath);
+        }
+
+        const dataToSave: any = {
+            whatsappNumber: values.whatsappNumber,
+            callSupportNumber: values.callSupportNumber,
+            telegramLink: values.telegramLink,
+            paymentDetails: {
+                'UPI': { title: "UPI Payment", details: values.upiId },
+                'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
+                'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
+            },
+            welcomeBanner: welcomeBannerData,
+        };
+
+        if (qrCodeData) {
+            dataToSave.paymentDetails['Scan QR Code'] = qrCodeData;
         }
         
         await setDoc(settingsDocRef, dataToSave, { merge: true });
@@ -209,8 +215,7 @@ export default function SettingsPage() {
         });
 
         form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined });
-        setUploadProgress(null);
-
+        
     } catch (error: any) {
       console.error('Error updating settings: ', error);
       toast({
@@ -218,9 +223,9 @@ export default function SettingsPage() {
         title: 'Error',
         description: error.message || 'Failed to update settings. Please try again.',
       });
-      setUploadProgress(null); // Clear progress on error
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(null);
     }
   };
 
