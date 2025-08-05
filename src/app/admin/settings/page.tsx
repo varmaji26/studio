@@ -150,7 +150,7 @@ export default function SettingsPage() {
 
   const onSubmit = async (values: SettingsFormValues) => {
     setIsSubmitting(true);
-    setUploadProgress(null);
+    setUploadProgress(0); // Initialize progress bar
 
     try {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
@@ -218,6 +218,7 @@ export default function SettingsPage() {
         title: 'Error',
         description: error.message || 'Failed to update settings. Please try again.',
       });
+      setUploadProgress(null); // Clear progress on error
     } finally {
       setIsSubmitting(false);
     }
