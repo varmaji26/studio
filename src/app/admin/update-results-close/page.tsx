@@ -130,6 +130,7 @@ export default function UpdateResultsClosePage() {
         if (jodiChartDocSnap.exists()) {
             const chartData = jodiChartDocSnap.data();
             const currentChartData = chartData.data || '';
+            // This is the correct logic to append the new result at the end.
             const updatedChartData = `${currentChartData} ${finalJodi}`.trim();
             batch.update(jodiChartDocRef, { data: updatedChartData });
         }
