@@ -19,7 +19,8 @@ import {
   UserCheck,
   CreditCard,
   Settings,
-  ImageIcon
+  ImageIcon,
+  AreaChart
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
@@ -79,6 +80,14 @@ export default function AdminLayout({
               <SidebarMenuButton isActive={isActive('/admin')} tooltip={{children: "Dashboard"}}>
                 <Home />
                 <span>Dashboard</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin/view-all-load')} tooltip={{children: "View All Load"}}>
+                <AreaChart />
+                <span>View All Load</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
