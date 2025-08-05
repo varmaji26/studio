@@ -130,7 +130,7 @@ export default function UpdateResultsClosePage() {
         if (jodiChartDocSnap.exists()) {
             const chartData = jodiChartDocSnap.data();
             const currentChartData = chartData.data || '';
-            const updatedChartData = `${finalJodi} ${currentChartData}`.trim();
+            const updatedChartData = `${currentChartData} ${finalJodi}`.trim();
             batch.update(jodiChartDocRef, { data: updatedChartData });
         }
         
