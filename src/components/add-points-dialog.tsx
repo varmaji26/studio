@@ -209,7 +209,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         )}
                         {selectedPaymentDetail.imageUrl && (
                             <div className="mt-2 flex justify-center">
-                                <Image src={selectedPaymentDetail.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" />
+                                <Image src={selectedPaymentDetail.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
                             </div>
                         )}
                         { !selectedPaymentDetail.details && !selectedPaymentDetail.imageUrl && (
@@ -249,3 +249,5 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
     </Dialog>
   );
 }
+
+    
