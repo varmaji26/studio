@@ -132,40 +132,40 @@ export default function UpdateResultsClosePage() {
             const chartData = panelChartDocSnap.data();
             let currentChartData = chartData.data || '';
             const today = new Date();
-            const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, etc.
-            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, Sunday - 6
-            
-            const weeklyDataLength = (3 + 2 + 3) * 7; // (open+jodi+close) * 7 days
+            today.setHours(0, 0, 0, 0); // Normalize today's date to midnight
 
-            // Find the last date range in the chart data
             const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
-            let lastMatch;
-            let match;
-            while ((match = dateRangeRegex.exec(currentChartData)) !== null) {
-                lastMatch = match;
+            let lastMatch: RegExpExecArray | null = null;
+            let currentMatch: RegExpExecArray | null;
+            while ((currentMatch = dateRangeRegex.exec(currentChartData)) !== null) {
+                lastMatch = currentMatch;
             }
 
             if (lastMatch) {
                 const [fullMatch, startDateStr, endDateStr] = lastMatch;
-                const [day, month, year] = endDateStr.split('/').map(Number);
-                const endDate = new Date(year, month - 1, day);
+                const [startDay, startMonth, startYear] = startDateStr.split('/').map(Number);
+                const [endDay, endMonth, endYear] = endDateStr.split('/').map(Number);
+                
+                const startDate = new Date(startYear, startMonth - 1, startDay);
+                startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(endYear, endMonth - 1, endDay);
+                endDate.setHours(0, 0, 0, 0);
 
-                if (today <= endDate) {
-                    // Today is within the last week range, so update the data
-                    const lastDateRangeIndex = lastMatch.index;
-                    const dataBlockStartIndex = lastDateRangeIndex + fullMatch.length;
+                if (today >= startDate && today <= endDate) {
+                    const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, etc.
+                    const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, Sunday - 6
                     
-                    const dataToUpdateIndex = dataBlockStartIndex + (dayIndex * 8);
+                    const dataBlockStartIndex = lastMatch.index + fullMatch.length;
+                    const dataToUpdateIndex = dataBlockStartIndex + (dayIndex * 8) + dayIndex; // + dayIndex for spaces
                     
                     const newDataForDay = `${openPana}${finalJodi}${newClosePana}`;
                     
-                    // Replace the specific day's data
-                    currentChartData = 
-                        currentChartData.substring(0, dataToUpdateIndex) + 
-                        newDataForDay + 
-                        currentChartData.substring(dataToUpdateIndex + 8);
-
-                    batch.update(panelChartDocRef, { data: currentChartData });
+                    // Replace the specific day's data block (8 chars)
+                    const dataArray = currentChartData.split('');
+                    dataArray.splice(dataToUpdateIndex, 8, ...newDataForDay.split(''));
+                    const updatedChartData = dataArray.join('');
+                    
+                    batch.update(panelChartDocRef, { data: updatedChartData });
                 }
             }
         }
@@ -320,6 +320,3 @@ export default function UpdateResultsClosePage() {
     </div>
   );
 }
-
-
-    
