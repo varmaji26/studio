@@ -114,14 +114,14 @@ export default function AdminLayout({
                     </Link>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
+                    <Link href="/admin/view-close-load" passHref onClick={handleLinkClick}>
                       <SidebarMenuButton size="sm" variant="ghost" isActive={isActive('/admin/view-close-load')}>
                         <span>View Close Load</span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
                    <SidebarMenuItem>
-                    <Link href="/admin/view-all-load" passHref onClick={handleLinkClick}>
+                    <Link href="/admin/view-gametype-load" passHref onClick={handleLinkClick}>
                       <SidebarMenuButton size="sm" variant="ghost" isActive={isActive('/admin/view-gametype-load')}>
                         <span>View Game-Type wise Load</span>
                       </SidebarMenuButton>
