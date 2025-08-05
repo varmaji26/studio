@@ -249,7 +249,7 @@ export default function JodiDigitPage() {
                     {selectedJodi.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                             {selectedJodi.map((jodi) => (
-                                <Badge key={jodi} variant="secondary" className="text-lg py-1 px-3">
+                                <Badge key={jodi} className="text-lg py-1 px-3 bg-green-500 text-white">
                                     {jodi}
                                     <button onClick={() => handleRemoveJodi(jodi)} className="ml-2 rounded-full hover:bg-destructive/80 p-0.5">
                                         <X className="h-3 w-3" />
