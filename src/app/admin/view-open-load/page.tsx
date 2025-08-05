@@ -63,15 +63,16 @@ export default function ViewOpenLoadPage() {
   useEffect(() => {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
-
+    
     const bidsQuery = query(
         collection(db, 'bids'), 
-        where('session', '==', 'Open'),
         where('createdAt', '>=', startOfToday)
     );
+
     const unsubscribe = onSnapshot(bidsQuery, (bidsSnapshot) => {
       const bidsData: Bid[] = bidsSnapshot.docs.map(doc => doc.data() as Bid);
-      setAllOpenBids(bidsData);
+      const openBids = bidsData.filter(bid => bid.session === 'Open');
+      setAllOpenBids(openBids);
     }, (error) => {
         console.error("Error fetching today's open bids: ", error);
         // This might indicate a missing Firestore index.

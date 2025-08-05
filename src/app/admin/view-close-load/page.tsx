@@ -66,13 +66,13 @@ export default function ViewCloseLoadPage() {
     
     const bidsQuery = query(
         collection(db, 'bids'), 
-        where('session', '==', 'Close'),
         where('createdAt', '>=', startOfToday)
     );
 
     const unsubscribe = onSnapshot(bidsQuery, (bidsSnapshot) => {
       const bidsData: Bid[] = bidsSnapshot.docs.map(doc => doc.data() as Bid);
-      setAllCloseBids(bidsData);
+      const closeBids = bidsData.filter(bid => bid.session === 'Close');
+      setAllCloseBids(closeBids);
     }, (error) => {
         console.error("Error fetching today's close bids: ", error);
         // This might indicate a missing Firestore index.
