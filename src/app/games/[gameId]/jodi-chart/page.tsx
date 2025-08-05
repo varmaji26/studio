@@ -16,17 +16,15 @@ interface JodiChartData extends DocumentData {
   gameName: string;
   title: string;
   data: string;
-}
-
-interface GameData extends DocumentData {
-    id: string;
-    activeDays?: string[];
+  activeDays?: string[];
 }
 
 const isRedNumber = (num: string) => {
-    if (num === '*' || num.length !== 2) return false;
-    const [first, second] = num.split('');
-    const diff = Math.abs(parseInt(first) - parseInt(second));
+    if (num === '*' || num === '**' || num.length !== 2) return false;
+    const digits = num.split('');
+    if (digits.some(d => isNaN(parseInt(d, 10)))) return false;
+    const [first, second] = [parseInt(digits[0], 10), parseInt(digits[1], 10)];
+    const diff = Math.abs(first - second);
     return diff === 5 || first === second;
 };
 
@@ -45,7 +43,6 @@ export default function JodiChartPage() {
     const { gameId } = useParams();
     const router = useRouter();
     const [chartData, setChartData] = useState<JodiChartData | null>(null);
-    const [gameData, setGameData] = useState<GameData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -55,24 +52,26 @@ export default function JodiChartPage() {
             setLoading(true);
             try {
                 const chartDocRef = doc(db, 'jodiCharts', gameId);
-                const gameDocRef = doc(db, 'games', gameId);
-
-                const [chartDoc, gameDoc] = await Promise.all([
-                    getDoc(chartDocRef),
-                    getDoc(gameDocRef)
-                ]);
+                const chartDoc = await getDoc(chartDocRef);
 
                 if (chartDoc.exists()) {
                     setChartData({ id: chartDoc.id, ...chartDoc.data() } as JodiChartData);
                 } else {
-                    setChartData(null);
-                }
-                
-                if (gameDoc.exists()) {
-                    setGameData({ id: gameDoc.id, ...gameDoc.data() } as GameData);
-                } else {
-                    // Fallback to all days if game data not found for some reason
-                    setGameData({ id: gameId as string, activeDays: allDays });
+                     // If no specific jodi chart, check the game for active days as a fallback
+                    const gameDocRef = doc(db, 'games', gameId);
+                    const gameDoc = await getDoc(gameDocRef);
+                    if (gameDoc.exists()) {
+                        const gameData = gameDoc.data();
+                        setChartData({
+                            id: gameId,
+                            gameName: gameData.name || 'Game',
+                            title: `Jodi Chart for ${gameData.name}`,
+                            data: '', // No data available
+                            activeDays: gameData.activeDays || allDays
+                        });
+                    } else {
+                        setChartData(null);
+                    }
                 }
 
             } catch (error) {
@@ -85,7 +84,7 @@ export default function JodiChartPage() {
         fetchChartAndGameData();
     }, [gameId]);
 
-    const activeDays = gameData?.activeDays && gameData.activeDays.length > 0 ? gameData.activeDays : allDays;
+    const activeDays = chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
     const numberOfDays = activeDays.length;
 
     const parsedData = chartData?.data.split(/\s+/).filter(d => d) || [];
@@ -119,7 +118,7 @@ export default function JodiChartPage() {
                                 </Link>
                             </Button>
                         </div>
-                        {chartData ? (
+                        {chartData && chartData.data ? (
                             <div className="overflow-x-auto border-2 border-primary bg-orange-100 p-1">
                                 <div 
                                     className="grid text-center font-bold text-white bg-blue-800"
