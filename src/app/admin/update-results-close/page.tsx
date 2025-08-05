@@ -50,6 +50,15 @@ const calculateJodiDigit = (pana: string): string => {
     return (pana.split('').reduce((acc, digit) => acc + parseInt(digit, 10), 0) % 10).toString();
 };
 
+const parseDateString = (dateStr: string): Date | null => {
+    const parts = dateStr.trim().split('/');
+    if (parts.length !== 3) return null;
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+    // JS months are 0-indexed
+    return new Date(year, month - 1, day);
+};
+
 
 export default function UpdateResultsClosePage() {
   const { toast } = useToast();
@@ -121,7 +130,6 @@ export default function UpdateResultsClosePage() {
         if (jodiChartDocSnap.exists()) {
             const chartData = jodiChartDocSnap.data();
             const currentChartData = chartData.data || '';
-            // Prepend the new jodi to the existing data string
             const updatedChartData = `${finalJodi} ${currentChartData}`.trim();
             batch.update(jodiChartDocRef, { data: updatedChartData });
         }
@@ -133,62 +141,47 @@ export default function UpdateResultsClosePage() {
             const chartData = panelChartDocSnap.data();
             let currentChartData = chartData.data || '';
             const today = new Date();
-            
-            // Find the last date range in the data
-            const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
-            let lastMatch: RegExpExecArray | null = null;
-            let currentMatch: RegExpExecArray | null;
-            while ((currentMatch = dateRangeRegex.exec(currentChartData)) !== null) {
-                lastMatch = currentMatch;
-            }
+            today.setHours(0, 0, 0, 0);
 
-            if (lastMatch) {
-                const [fullMatch, startDateStr, endDateStr] = lastMatch;
-                const [startDay, startMonth, startYear] = startDateStr.split('/').map(Number);
-                const [endDay, endMonth, endYear] = endDateStr.split('/').map(Number);
-                
-                // Note: JS months are 0-indexed
-                const startDate = new Date(startYear, startMonth - 1, startDay);
-                const endDate = new Date(endYear, endMonth - 1, endDay);
-                
-                // Normalize today's date to midnight for accurate comparison
-                const todayNormalized = new Date(today);
-                todayNormalized.setHours(0, 0, 0, 0);
+            const dataRows = currentChartData.split('\n').filter(row => row.trim() !== '');
+            let chartWasUpdated = false;
 
-                if (todayNormalized >= startDate && todayNormalized <= endDate) {
-                    const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, etc.
-                    const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday - 0, Sunday - 6
+            const updatedRows = dataRows.map(row => {
+                const dateRangeMatch = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
+                if (!dateRangeMatch || chartWasUpdated) {
+                    return row;
+                }
+
+                const startDate = parseDateString(dateRangeMatch[1]);
+                const endDate = parseDateString(dateRangeMatch[2]);
+                
+                if (startDate && endDate && today >= startDate && today <= endDate) {
+                    chartWasUpdated = true;
                     
-                    const dataBlockStartIndex = lastMatch.index + fullMatch.length;
-                    // Remove leading/trailing whitespace from the data block to handle inconsistencies
-                    const dataContentString = currentChartData.substring(dataBlockStartIndex).trim();
-                    const dataEntries = dataContentString.split(/\s+/);
+                    const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1
+                    const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, Sunday - 6
+
+                    const dataPart = row.substring(dateRangeMatch[0].length).trim();
+                    const dataEntries = dataPart.split(/\s+/).filter(Boolean);
                     
                     const newDataForDay = `${openPana}${finalJodi}${newClosePana}`;
-
-                    // Update the specific day's data block (which is 8 chars per day)
-                    const dataArray = dataContentString.split('');
-                    const updateIndex = dayIndex * 8;
                     
-                    // Ensure the array is long enough
-                    while (dataArray.length < updateIndex + 8) {
-                        dataArray.push(' ');
+                    while (dataEntries.length < 7) {
+                        dataEntries.push('********'); // Placeholder for a full day's data
                     }
 
-                    dataArray.splice(updateIndex, 8, ...newDataForDay.split(''));
-
-                    // Join back with spaces to maintain structure
-                    const updatedDataBlock = dataArray.join('').replace(/(.{8})/g, '$1 ').trim();
+                    dataEntries[dayIndex] = newDataForDay;
                     
-                    const chartDataPrefix = currentChartData.substring(0, dataBlockStartIndex);
-                    const updatedChartData = `${chartDataPrefix}\n${updatedDataBlock}`;
-
-                    batch.update(panelChartDocRef, { data: updatedChartData });
+                    return `${dateRangeMatch[0]} ${dataEntries.join(' ')}`;
                 }
+                return row;
+            });
+
+            if (chartWasUpdated) {
+                batch.update(panelChartDocRef, { data: updatedRows.join('\n') });
             }
         }
         // --- END AUTO UPDATE PANEL CHART ---
-
 
         // Process bets for Close Pana, Close Single Digit, and Jodi Digit
         const bidsQuery = query(
