@@ -34,7 +34,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     
     if (jodi === '**' || jodi === '*' || openPana === '***' ) {
       return (
-        <div className="relative p-0 min-h-[40px] flex items-center justify-center text-black font-bold text-base">
+        <div className="relative p-0 min-h-[30px] flex items-center justify-center text-black font-bold text-sm">
             **
         </div>
       );
@@ -43,12 +43,12 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     const isRed = isRedNumber(jodi);
     
     return (
-        <div className="flex items-center justify-center p-0 min-h-[40px] gap-0">
-            <div className="text-center text-[10px] text-black font-semibold leading-tight flex flex-col">
+        <div className="flex items-center justify-center p-0 min-h-[30px] gap-0">
+            <div className="text-center text-[9px] text-black font-semibold leading-tight flex flex-col">
                 {openPana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
             </div>
-            <span className={cn("text-base mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
-            <div className="text-center text-[10px] text-black font-semibold leading-tight flex flex-col">
+            <span className={cn("text-sm mx-0.5 font-bold", isRed ? 'text-red-600' : 'text-black')}>{jodi}</span>
+            <div className="text-center text-[9px] text-black font-semibold leading-tight flex flex-col">
                 {closePana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
             </div>
         </div>
@@ -161,7 +161,7 @@ export default function PanelChartPage() {
                                 <table className="w-full border-collapse">
                                     <thead className="text-[9px] sm:text-[10px]">
                                         <tr className="bg-blue-800 text-white font-bold">
-                                            <th className="p-0.5 border border-yellow-600 min-w-[50px]">Date</th>
+                                            <th className="p-0.5 border border-yellow-600">Date</th>
                                             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
                                                 <th key={day} className="p-0.5 border border-yellow-600">{day}</th>
                                             ))}
@@ -170,7 +170,7 @@ export default function PanelChartPage() {
                                     <tbody className="text-center">
                                        {parsedRows.map((row, rowIndex) => (
                                             <tr key={rowIndex}>
-                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[7px] min-w-[50px]">
+                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[7px]">
                                                     <span>{row.dateRange.start}</span><br/>
                                                     <span>To</span><br/>
                                                     <span>{row.dateRange.end}</span>
