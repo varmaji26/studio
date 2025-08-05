@@ -46,13 +46,13 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   
+  const isActive = (path: string) => pathname === path;
+
   const isLoadMenuInitiallyOpen = isActive('/admin/view-open-load') || isActive('/admin/view-close-load') || isActive('/admin/view-gametype-load');
   const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(isLoadMenuInitiallyOpen);
   const { user } = useAuth();
   const router = useRouter();
 
-
-  const isActive = (path: string) => pathname === path;
   
   const handleLinkClick = () => {
     if (isSidebarOpen) {
