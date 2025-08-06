@@ -138,46 +138,43 @@ export default function UpdateResultsClosePage() {
         const panelChartDocRef = doc(db, 'panelCharts', game.id);
         const panelChartDocSnap = await getDoc(panelChartDocRef);
         if (panelChartDocSnap.exists()) {
-            let chartDataStr = panelChartDocSnap.data().data || '';
+            const chartDataStr = panelChartDocSnap.data().data || '';
             const today = new Date();
-            // Sunday - 0, Monday - 1, ..., Saturday - 6. We need Monday=0, Sunday=6
             const todayDayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
 
             const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
             let match;
-            
+            let finalUpdatedChartData = chartDataStr;
+
             while ((match = dateRangeRegex.exec(chartDataStr)) !== null) {
                 const startDate = parseDateString(match[1]);
                 const endDate = parseDateString(match[2]);
-                
+
                 if (startDate && endDate) {
                     endDate.setHours(23, 59, 59, 999);
                     if (today >= startDate && today <= endDate) {
-                        const weekDataStartIndex = match.index + match[0].length;
-                        
-                        // Find the start of the next date range to determine the end of the current week's data
-                        dateRangeRegex.lastIndex = 0; // Reset regex index before next search
-                        const nextDateRangeMatch = dateRangeRegex.exec(chartDataStr.substring(weekDataStartIndex));
-                        dateRangeRegex.lastIndex = match.index + match[0].length; // Restore for loop
-                        
-                        const weekDataEndIndex = nextDateRangeMatch 
-                            ? weekDataStartIndex + chartDataStr.substring(weekDataStartIndex).indexOf(nextDateRangeMatch[0]) 
-                            : chartDataStr.length;
-
                         const newDayResult = `${openPana}${finalJodi}${newClosePana}`;
                         
-                        // Calculate the precise start and end index for today's data within the full string
-                        const dayDataStartIndex = weekDataStartIndex + (todayDayIndex * 8) + (todayDayIndex > 0 ? todayDayIndex : 0);
-                        const dayDataEndIndex = dayDataStartIndex + 8;
+                        // This regex finds the week's data block after the date range
+                        const weekDataRegex = new RegExp(`(${match[0]}\\s*)([\\d*\\s]{56,})`, 'g');
                         
-                        // Reconstruct the string with the updated part
-                        const updatedChartData = 
-                            chartDataStr.substring(0, dayDataStartIndex) +
-                            newDayResult +
-                            chartDataStr.substring(dayDataEndIndex);
-                        
-                        batch.update(panelChartDocRef, { data: updatedChartData });
-                        break; 
+                        let weekMatch = weekDataRegex.exec(chartDataStr);
+                        if(weekMatch){
+                           let weekData = weekMatch[2].replace(/\s/g, '');
+                           let startPos = todayDayIndex * 8;
+                           let endPos = startPos + 8;
+                           
+                           if(weekData.length >= endPos){
+                               let updatedWeekData = weekData.substring(0, startPos) + newDayResult + weekData.substring(endPos);
+                               
+                               // Add spaces back every 8 characters for readability in Firestore
+                               const spacedWeekData = updatedWeekData.replace(/(.{8})/g, '$1 ').trim();
+                               finalUpdatedChartData = chartDataStr.replace(weekMatch[2].trim(), spacedWeekData);
+                               
+                               batch.update(panelChartDocRef, { data: finalUpdatedChartData });
+                               break; 
+                           }
+                        }
                     }
                 }
             }
