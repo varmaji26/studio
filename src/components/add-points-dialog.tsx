@@ -132,10 +132,11 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   }, [open]);
 
   const handlePayWithApp = () => {
-    const amount = form.getValues('amount');
+    const amountStr = form.getValues('amount');
+    const amount = Number(amountStr);
     const upiId = paymentDetails?.UPI?.details;
 
-    if (!amount || amount < 100) {
+    if (isNaN(amount) || amount < 100) {
         form.setError('amount', { type: 'manual', message: 'Minimum deposit amount is ₹100.' });
         return;
     }
@@ -216,24 +217,24 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Amount (₹)</FormLabel>
-                  <div className="flex gap-2">
-                    <FormControl>
-                        <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-12 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
-                    </FormControl>
-                    <Button type="button" className="h-12" onClick={handlePayWithApp} disabled={loadingDetails}>
-                        Pay with UPI App
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 gap-4">
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount (₹)</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-12 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
+                        </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <Button type="button" className="h-12 w-full" onClick={handlePayWithApp} disabled={loadingDetails}>
+                    Pay with UPI App
+                </Button>
+            </div>
             
             {qrCodeDetails?.imageUrl && (
               <Card className="bg-muted/50">
