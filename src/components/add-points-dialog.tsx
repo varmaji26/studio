@@ -217,7 +217,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="amount"
@@ -231,7 +231,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                     </FormItem>
                   )}
                 />
-                 <Button type="button" className="h-12 w-full" onClick={handlePayWithApp} disabled={loadingDetails}>
+                <Button type="button" className="h-12 w-full" onClick={handlePayWithApp} disabled={loadingDetails}>
                     Pay with UPI App
                 </Button>
             </div>
@@ -242,7 +242,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                   <CardTitle className="text-center text-base">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex justify-center">
-                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
+                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={150} height={150} className="rounded-md" unoptimized/>
                 </CardContent>
               </Card>
             )}
@@ -273,7 +273,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                                <FormControl>
                                 <RadioGroupItem value={method} className="peer sr-only" id={method} />
                                </FormControl>
-                               <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 h-24 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                               <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 h-20 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                     {config?.logo}
                                     <span className="mt-2 font-semibold text-xs text-center">{config?.title || detail.title}</span>
                                </Label>
