@@ -35,6 +35,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
+import { ScrollArea } from './ui/scroll-area';
 
 const addPointsSchema = z.object({
   amount: z.preprocess(
@@ -208,127 +209,130 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[425px] p-0">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle>Add Points</DialogTitle>
           <DialogDescription>
             Complete the payment using the details below and submit your request.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount (₹)</FormLabel>
-                        <FormControl>
-                            <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-12 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
-                        </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="button" className="h-12 w-full" onClick={handlePayWithApp} disabled={loadingDetails}>
-                    Pay with UPI App
-                </Button>
-            </div>
-            
-            {qrCodeDetails?.imageUrl && (
-              <Card className="bg-muted/50">
-                <CardHeader>
-                  <CardTitle className="text-center text-base">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex justify-center">
-                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
-                </CardContent>
-              </Card>
-            )}
-
-            <FormField
-              control={form.control}
-              name="paymentMethod"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Or Select Other Payment Method</FormLabel>
-                   <FormControl>
-                    {loadingDetails ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Skeleton className="h-24 w-full" />
-                            <Skeleton className="h-24 w-full" />
-                        </div>
-                    ) : (
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="grid grid-cols-3 gap-4"
-                        >
-                          {otherPaymentMethods.map((method) => {
-                            const detail = paymentDetails![method as keyof typeof paymentDetails];
-                            const config = paymentMethodsConfig[method];
-                            return (
-                             <FormItem key={method}>
-                               <FormControl>
-                                <RadioGroupItem value={method} className="peer sr-only" id={method} />
-                               </FormControl>
-                               <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 h-20 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                    {config?.logo}
-                                    <span className="mt-2 font-semibold text-xs text-center">{config?.title || detail.title}</span>
-                               </Label>
-                             </FormItem>
-                            )
-                          })}
-                        </RadioGroup>
+        <ScrollArea className="max-h-[80vh] overflow-y-auto">
+        <div className="p-6 pt-2">
+            <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-4">
+                    <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Amount (₹)</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-12 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
+                            </FormControl>
+                        <FormMessage />
+                        </FormItem>
                     )}
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-
-            {selectedPaymentDetail && (
+                    />
+                     <Button type="button" className="h-12 w-full" onClick={handlePayWithApp} disabled={loadingDetails}>
+                        Pay with UPI App
+                    </Button>
+                </div>
+                
+                {qrCodeDetails?.imageUrl && (
                 <Card className="bg-muted/50">
-                    <CardContent className="p-4">
-                        <p className="text-sm font-semibold">{selectedPaymentDetail.title}</p>
-                        {selectedPaymentDetail.details && (
-                             <p className="text-sm text-muted-foreground break-words">{selectedPaymentDetail.details}</p>
-                        )}
-                         { !selectedPaymentDetail.details && (
-                             <p className="text-sm text-muted-foreground">Details not available.</p>
-                        )}
+                    <CardHeader className="p-4">
+                    <CardTitle className="text-center text-base">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex justify-center p-4 pt-0">
+                    <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
                     </CardContent>
                 </Card>
-            )}
+                )}
 
-            <FormField
-              control={form.control}
-              name="transactionId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Transaction ID</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter transaction ID after payment" {...field} className="h-12" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter className="gap-2 sm:gap-0 pt-4">
-              <DialogClose asChild>
-                <Button type="button" variant="outline" className="h-12">
-                    Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" disabled={isSubmitting || loadingDetails} className="h-12">
-                {isSubmitting ? <Loader className="mr-2" /> : null}
-                Submit Request
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                <FormField
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                    <FormItem className="space-y-3">
+                    <FormLabel>Or Select Other Payment Method</FormLabel>
+                    <FormControl>
+                        {loadingDetails ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                <Skeleton className="h-20 w-full" />
+                                <Skeleton className="h-20 w-full" />
+                            </div>
+                        ) : (
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-3 gap-2"
+                            >
+                            {otherPaymentMethods.map((method) => {
+                                const detail = paymentDetails![method as keyof typeof paymentDetails];
+                                const config = paymentMethodsConfig[method];
+                                return (
+                                <FormItem key={method}>
+                                <FormControl>
+                                    <RadioGroupItem value={method} className="peer sr-only" id={method} />
+                                </FormControl>
+                                <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-2 h-20 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                        {config?.logo}
+                                        <span className="mt-1 font-semibold text-xs text-center">{config?.title || detail.title}</span>
+                                </Label>
+                                </FormItem>
+                                )
+                            })}
+                            </RadioGroup>
+                        )}
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                
+                {selectedPaymentDetail && (
+                    <Card className="bg-muted/50">
+                        <CardContent className="p-4">
+                            <p className="text-sm font-semibold">{selectedPaymentDetail.title}</p>
+                            {selectedPaymentDetail.details && (
+                                <p className="text-sm text-muted-foreground break-words">{selectedPaymentDetail.details}</p>
+                            )}
+                            { !selectedPaymentDetail.details && (
+                                <p className="text-sm text-muted-foreground">Details not available.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
+                <FormField
+                control={form.control}
+                name="transactionId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Transaction ID</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter transaction ID after payment" {...field} className="h-12" />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <DialogFooter className="gap-2 sm:gap-0 pt-4 flex flex-col sm:flex-row">
+                    <DialogClose asChild>
+                        <Button type="button" variant="outline" className="h-12 w-full sm:w-auto">
+                            Cancel
+                        </Button>
+                    </DialogClose>
+                    <Button type="submit" disabled={isSubmitting || loadingDetails} className="h-12 w-full sm:w-auto">
+                        {isSubmitting ? <Loader className="mr-2" /> : null}
+                        Submit Request
+                    </Button>
+                    </DialogFooter>
+            </form>
+            </Form>
+        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
