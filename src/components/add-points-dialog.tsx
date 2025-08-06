@@ -41,7 +41,7 @@ const addPointsSchema = z.object({
     (a) => parseInt(z.string().parse(a), 10),
     z.number().min(100, 'Minimum deposit amount is ₹100.')
   ),
-  paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe'], {
+  paymentMethod: z.enum(['UPI', 'Bank Transfer'], {
     required_error: 'You need to select a payment method.',
   }),
   transactionId: z.string().min(1, 'Transaction ID is required.'),
@@ -83,12 +83,10 @@ const BankLogo = () => (
 
 const PaytmPhonePeLogo = () => (
      <svg width="60" height="28" viewBox="0 0 60 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* GPay */}
         <path d="M46.51,14.08C46.51,13,46.42,12,46.25,11.05H36.31V16.2H42.1C41.83,18.06,40.71,19.57,38.9,20.66V23.91H43.19C45.3,21.91,46.51,18.33,46.51,14.08Z" fill="#4285F4"/>
         <path d="M36.31,25C39.4,25,41.97,23.94,43.83,22.2L39.55,18.94C38.07,19.95,36.7,20.5,34.9,20.5C31.62,20.5,28.89,18.28,27.9,15.42H23.5V18.78C25.36,22.5,30.34,25,36.31,25Z" fill="#34A853"/>
         <path d="M27.9,15.42C27.64,14.5,27.46,13.52,27.46,12.5C27.46,11.48,27.64,10.5,27.89,9.58V6.22H23.5C22.2,8.8,21.5,11.52,21.5,14.5C21.5,17.48,22.2,20.2,23.5,22.78L27.9,19.42V15.42Z" fill="#FBBC05"/>
         <path d="M36.31,4.5C39.69,4.5,42.3,5.65,44.42,7.63L40.14,11.91C38.66,10.43,36.88,9.5,34.9,9.5C31.62,9.5,28.89,11.72,27.9,14.58H23.5V11.22C25.36,7.5,30.34,4.5,36.31,4.5Z" fill="#EA4335"/>
-        {/* PhonePe */}
         <path fillRule="evenodd" clipRule="evenodd" d="M12.9844 2.87114C11.1035 2.87114 9.5625 4.41211 9.5625 6.293V11.3907H2.87114C2.87114 13.2716 4.41211 14.8126 6.293 14.8126H9.5625V19.7071C9.5625 21.588 11.1035 23.129 12.9844 23.129H20.129C22.0099 23.129 23.5509 21.588 23.5509 19.7071V14.8126H26.8204C28.7013 14.8126 30.2423 13.2716 30.2423 11.3907V6.293C30.2423 4.41211 28.7013 2.87114 26.8204 2.87114H12.9844ZM12.9844 6.293H26.8204V11.3907H23.5509C21.67 11.3907 20.129 12.9317 20.129 14.8126V19.7071H12.9844V6.293Z" fill="#5F259F"/>
         <path d="M13.6289 10.1602V15.8907H16.6329V10.1602H13.6289Z" fill="#5F259F"/>
     </svg>
@@ -133,6 +131,33 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
 
   }, [open]);
 
+  const handlePayWithApp = () => {
+    const amount = form.getValues('amount');
+    const upiId = paymentDetails?.UPI?.details;
+
+    if (!amount || amount < 100) {
+        form.setError('amount', { type: 'manual', message: 'Minimum deposit amount is ₹100.' });
+        return;
+    }
+    if (!upiId) {
+        toast({
+            variant: 'destructive',
+            title: 'UPI ID not set',
+            description: 'The admin has not configured a UPI ID for payments.',
+        });
+        return;
+    }
+
+    const payeeName = "Matka King"; // You can make this dynamic if needed
+    const note = `Payment for ${user.displayName || 'user'}`;
+    
+    // Standard UPI deep link format
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+
+    // Open the UPI link
+    window.location.href = upiUrl;
+  };
+
   const onSubmit = async (values: AddPointsFormValues) => {
     if (!user) return;
     setIsSubmitting(true);
@@ -170,11 +195,10 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   const qrCodeDetails = paymentDetails ? paymentDetails['Scan QR Code'] : null;
 
   const otherPaymentMethods = paymentDetails 
-    ? Object.keys(paymentDetails).filter(method => method !== 'Scan QR Code' && (paymentDetails[method].details || paymentDetails[method].imageUrl))
+    ? Object.keys(paymentDetails).filter(method => method !== 'Scan QR Code' && method !== 'Paytm/PhonePe' && (paymentDetails[method].details || paymentDetails[method].imageUrl))
     : [];
 
   const paymentMethodsConfig: { [key: string]: { logo: React.ReactNode, title: string } } = {
-        'Paytm/PhonePe': { logo: <PaytmPhonePeLogo />, title: 'PhonePe/GPay' },
         'UPI': { logo: <UpiLogo />, title: 'UPI' },
         'Bank Transfer': { logo: <BankLogo />, title: 'Bank Transfer' },
    };
@@ -206,12 +230,27 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
               )}
             />
             
+            <Button type="button" className="w-full h-14" onClick={handlePayWithApp} disabled={loadingDetails}>
+                 <PaytmPhonePeLogo />
+            </Button>
+            
+            {qrCodeDetails?.imageUrl && (
+              <Card className="bg-muted/50">
+                <CardHeader>
+                  <CardTitle className="text-center text-base">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
+                </CardContent>
+              </Card>
+            )}
+
             <FormField
               control={form.control}
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel>Select Payment Method</FormLabel>
+                  <FormLabel>Or Select Other Payment Method</FormLabel>
                    <FormControl>
                     {loadingDetails ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -222,7 +261,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+                          className="grid grid-cols-2 gap-4"
                         >
                           {otherPaymentMethods.map((method) => {
                             const detail = paymentDetails![method as keyof typeof paymentDetails];
@@ -246,16 +285,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 </FormItem>
               )}
             />
-             {qrCodeDetails?.imageUrl && (
-              <Card className="bg-muted/50">
-                <CardHeader>
-                  <CardTitle className="text-center text-base">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex justify-center">
-                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
-                </CardContent>
-              </Card>
-            )}
+            
 
             {selectedPaymentDetail && (
                 <Card className="bg-muted/50">
