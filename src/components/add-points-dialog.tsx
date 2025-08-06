@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
-import { Card, CardContent } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
@@ -41,7 +41,7 @@ const addPointsSchema = z.object({
     (a) => parseInt(z.string().parse(a), 10),
     z.number().min(100, 'Minimum deposit amount is ₹100.')
   ),
-  paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe', 'Scan QR Code'], {
+  paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe'], {
     required_error: 'You need to select a payment method.',
   }),
   transactionId: z.string().min(1, 'Transaction ID is required.'),
@@ -151,9 +151,16 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   const selectedMethod = form.watch('paymentMethod');
   const selectedPaymentDetail = selectedMethod && paymentDetails ? paymentDetails[selectedMethod] : null;
 
+  const qrCodeDetails = paymentDetails ? paymentDetails['Scan QR Code'] : null;
+
+  const otherPaymentMethods = paymentDetails 
+    ? Object.keys(paymentDetails).filter(method => method !== 'Scan QR Code' && (paymentDetails[method].details || paymentDetails[method].imageUrl))
+    : [];
+
   const paymentMethodsConfig: { [key: string]: { logo: React.ReactNode, title: string } } = {
         'Paytm/PhonePe': { logo: <PaytmPhonePeLogo />, title: 'Paytm/PhonePe' },
         'UPI': { logo: <UpiLogo />, title: 'UPI Payment' },
+        'Bank Transfer': { logo: <UpiLogo />, title: 'Bank Transfer' },
    };
 
 
@@ -201,9 +208,8 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                           defaultValue={field.value}
                           className="grid grid-cols-1 sm:grid-cols-2 gap-4"
                         >
-                          {paymentDetails && Object.keys(paymentDetails).map((method) => {
-                            const detail = paymentDetails[method as keyof typeof paymentDetails];
-                            if (!detail.details && !detail.imageUrl) return null;
+                          {otherPaymentMethods.map((method) => {
+                            const detail = paymentDetails![method as keyof typeof paymentDetails];
                             const config = paymentMethodsConfig[method];
                             return (
                              <FormItem key={method}>
@@ -232,16 +238,22 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         {selectedPaymentDetail.details && (
                              <p className="text-sm text-muted-foreground break-words">{selectedPaymentDetail.details}</p>
                         )}
-                        {selectedPaymentDetail.imageUrl && (
-                            <div className="mt-2 flex justify-center">
-                                <Image src={selectedPaymentDetail.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
-                            </div>
-                        )}
-                        { !selectedPaymentDetail.details && !selectedPaymentDetail.imageUrl && (
+                         { !selectedPaymentDetail.details && (
                              <p className="text-sm text-muted-foreground">Details not available.</p>
                         )}
                     </CardContent>
                 </Card>
+            )}
+
+             {qrCodeDetails?.imageUrl && (
+              <Card className="bg-muted/50">
+                <CardHeader>
+                  <CardTitle className="text-center">{qrCodeDetails.title || 'Scan QR Code'}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
+                </CardContent>
+              </Card>
             )}
 
             <FormField
