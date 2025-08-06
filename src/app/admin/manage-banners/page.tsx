@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, deleteDoc, doc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -38,6 +38,7 @@ type BannerFormValues = z.infer<typeof bannerSchema>;
 interface Banner extends DocumentData {
     id: string;
     imageUrl: string;
+    storagePath: string; // Add storagePath to the interface
 }
 
 export default function ManageBannersPage() {
@@ -81,7 +82,8 @@ export default function ManageBannersPage() {
     const file = values.bannerImage[0] as File;
 
     try {
-        const storageRef = ref(storage, `banners/${Date.now()}_${file.name}`);
+        const storagePath = `banners/${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, storagePath);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
         uploadTask.on('state_changed', 
@@ -102,8 +104,10 @@ export default function ManageBannersPage() {
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                 
+                // Save both URL and storage path
                 await addDoc(collection(db, 'banners'), {
                     imageUrl: downloadURL,
+                    storagePath: storagePath, 
                     createdAt: serverTimestamp(),
                 });
 
@@ -131,7 +135,19 @@ export default function ManageBannersPage() {
   
   const handleDeleteBanner = async (banner: Banner) => {
     try {
+        // Delete the file from Storage using storagePath
+        if (banner.storagePath) {
+            const storageRef = ref(storage, banner.storagePath);
+            await deleteObject(storageRef);
+        } else {
+             // Fallback for old banners without storagePath - might fail
+            const storageRef = ref(storage, banner.imageUrl);
+            await deleteObject(storageRef);
+        }
+
+        // Delete the document from Firestore
         await deleteDoc(doc(db, "banners", banner.id));
+        
         toast({
             title: 'Success!',
             description: 'Banner has been deleted.'
