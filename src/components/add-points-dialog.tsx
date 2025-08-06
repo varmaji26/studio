@@ -153,7 +153,6 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
     const payeeName = "Matka King";
     const note = `Payment for ${user.displayName || 'user'}`;
     
-    // Standard UPI deep link format
     const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
     
     window.location.href = upiUrl;
@@ -241,11 +240,11 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 
                 {qrCodeDetails?.imageUrl && (
                 <Card className="bg-muted/50">
-                    <CardHeader className="p-4">
-                    <CardTitle className="text-center text-base">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
+                    <CardHeader className="p-3">
+                    <CardTitle className="text-center text-sm">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex justify-center p-4 pt-0">
-                    <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
+                    <CardContent className="flex justify-center p-3 pt-0">
+                    <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={150} height={150} className="rounded-md" unoptimized/>
                     </CardContent>
                 </Card>
                 )}
@@ -254,13 +253,13 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 control={form.control}
                 name="paymentMethod"
                 render={({ field }) => (
-                    <FormItem className="space-y-3">
+                    <FormItem className="space-y-2">
                     <FormLabel>Or Select Other Payment Method</FormLabel>
                     <FormControl>
                         {loadingDetails ? (
                             <div className="grid grid-cols-2 gap-4">
-                                <Skeleton className="h-20 w-full" />
-                                <Skeleton className="h-20 w-full" />
+                                <Skeleton className="h-16 w-full" />
+                                <Skeleton className="h-16 w-full" />
                             </div>
                         ) : (
                             <RadioGroup
@@ -276,7 +275,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                                 <FormControl>
                                     <RadioGroupItem value={method} className="peer sr-only" id={method} />
                                 </FormControl>
-                                <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-2 h-20 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-2 h-16 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                         {config?.logo}
                                         <span className="mt-1 font-semibold text-xs text-center">{config?.title || detail.title}</span>
                                 </Label>
@@ -293,7 +292,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 
                 {selectedPaymentDetail && (
                     <Card className="bg-muted/50">
-                        <CardContent className="p-4">
+                        <CardContent className="p-3">
                             <p className="text-sm font-semibold">{selectedPaymentDetail.title}</p>
                             {selectedPaymentDetail.details && (
                                 <p className="text-sm text-muted-foreground break-words">{selectedPaymentDetail.details}</p>
