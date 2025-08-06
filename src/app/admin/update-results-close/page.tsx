@@ -39,7 +39,7 @@ interface Game extends DocumentData {
 const WIN_RATES = {
   'Single Digit': 10,
   'Jodi Digit': 100,
-  'Single Pana': 100,
+  'Single Pana': 150,
   'Double Pana': 300,
   'Triple Pana': 600,
 };
@@ -157,13 +157,11 @@ export default function UpdateResultsClosePage() {
                     if (startDate && endDate) {
                          endDate.setHours(23, 59, 59, 999);
                          if (today >= startDate && today <= endDate) {
-                            // This is the correct week. Let's update the data for today.
                             const dataPart = line.substring(match[0].length).trim();
                             const weekData = dataPart.split(/\s+/).filter(Boolean);
                             
-                            // Ensure weekData has 7 elements, padding with placeholders if necessary
                             while(weekData.length < 7) {
-                                weekData.push('********'); // Placeholder for a full day
+                                weekData.push('********'); 
                             }
                             
                             if (weekData.length > todayDayIndex) {
@@ -334,5 +332,3 @@ export default function UpdateResultsClosePage() {
     </div>
   );
 }
-
-    
