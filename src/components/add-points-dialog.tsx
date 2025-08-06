@@ -63,20 +63,36 @@ type PaymentDetails = {
 }
 
 const UpiLogo = () => (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="48" height="24" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M7.33333 5.33333H16.6667V7.33333H12.6667V12H14C15.8409 12 17.3333 13.4924 17.3333 15.3333C17.3333 17.1742 15.8409 18.6667 14 18.6667H7.33333V5.33333Z" fill="#2F69FF"/>
         <path d="M7.33333 12H9.33333V16.6667H7.33333V12Z" fill="#FFA500"/>
         <path d="M10.6667 12H12.6667V16.6667C12.6667 16.1144 12.8774 15.5835 13.2523 15.2085C13.6273 14.8335 14.1582 14.623 14.7104 14.623H14C13.5684 14.623 13.1413 14.5447 12.74 14.39" fill="#00BFFF"/>
         <path d="M12.6667 7.33333H10.6667V12H12.6667V7.33333Z" fill="#32CD32"/>
     </svg>
-)
+);
+
+const BankLogo = () => (
+    <svg width="48" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 10H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4 14H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17 18H7C5.89543 18 5 17.1046 5 16V8C5 6.89543 5.89543 6 7 6H17C18.1046 6 19 6.89543 19 8V16C19 17.1046 18.1046 18 17 18Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M9 6V4C9 3.44772 9.44772 3 10 3H14C14.5523 3 15 3.44772 15 4V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
 
 const PaytmPhonePeLogo = () => (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="#00BFFF"/>
-        <path d="M12 6L7 11H10V14H14V11H17L12 6Z" fill="#002E6E"/>
+     <svg width="60" height="28" viewBox="0 0 60 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* GPay */}
+        <path d="M46.51,14.08C46.51,13,46.42,12,46.25,11.05H36.31V16.2H42.1C41.83,18.06,40.71,19.57,38.9,20.66V23.91H43.19C45.3,21.91,46.51,18.33,46.51,14.08Z" fill="#4285F4"/>
+        <path d="M36.31,25C39.4,25,41.97,23.94,43.83,22.2L39.55,18.94C38.07,19.95,36.7,20.5,34.9,20.5C31.62,20.5,28.89,18.28,27.9,15.42H23.5V18.78C25.36,22.5,30.34,25,36.31,25Z" fill="#34A853"/>
+        <path d="M27.9,15.42C27.64,14.5,27.46,13.52,27.46,12.5C27.46,11.48,27.64,10.5,27.89,9.58V6.22H23.5C22.2,8.8,21.5,11.52,21.5,14.5C21.5,17.48,22.2,20.2,23.5,22.78L27.9,19.42V15.42Z" fill="#FBBC05"/>
+        <path d="M36.31,4.5C39.69,4.5,42.3,5.65,44.42,7.63L40.14,11.91C38.66,10.43,36.88,9.5,34.9,9.5C31.62,9.5,28.89,11.72,27.9,14.58H23.5V11.22C25.36,7.5,30.34,4.5,36.31,4.5Z" fill="#EA4335"/>
+        {/* PhonePe */}
+        <path fillRule="evenodd" clipRule="evenodd" d="M12.9844 2.87114C11.1035 2.87114 9.5625 4.41211 9.5625 6.293V11.3907H2.87114C2.87114 13.2716 4.41211 14.8126 6.293 14.8126H9.5625V19.7071C9.5625 21.588 11.1035 23.129 12.9844 23.129H20.129C22.0099 23.129 23.5509 21.588 23.5509 19.7071V14.8126H26.8204C28.7013 14.8126 30.2423 13.2716 30.2423 11.3907V6.293C30.2423 4.41211 28.7013 2.87114 26.8204 2.87114H12.9844ZM12.9844 6.293H26.8204V11.3907H23.5509C21.67 11.3907 20.129 12.9317 20.129 14.8126V19.7071H12.9844V6.293Z" fill="#5F259F"/>
+        <path d="M13.6289 10.1602V15.8907H16.6329V10.1602H13.6289Z" fill="#5F259F"/>
     </svg>
-)
+);
 
 
 export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
@@ -158,9 +174,9 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
     : [];
 
   const paymentMethodsConfig: { [key: string]: { logo: React.ReactNode, title: string } } = {
-        'Paytm/PhonePe': { logo: <PaytmPhonePeLogo />, title: 'Paytm/PhonePe' },
-        'UPI': { logo: <UpiLogo />, title: 'UPI Payment' },
-        'Bank Transfer': { logo: <UpiLogo />, title: 'Bank Transfer' },
+        'Paytm/PhonePe': { logo: <PaytmPhonePeLogo />, title: 'PhonePe/GPay' },
+        'UPI': { logo: <UpiLogo />, title: 'UPI' },
+        'Bank Transfer': { logo: <BankLogo />, title: 'Bank Transfer' },
    };
 
 
@@ -206,7 +222,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
                         >
                           {otherPaymentMethods.map((method) => {
                             const detail = paymentDetails![method as keyof typeof paymentDetails];
@@ -216,9 +232,9 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                                <FormControl>
                                 <RadioGroupItem value={method} className="peer sr-only" id={method} />
                                </FormControl>
-                               <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                               <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 h-24 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                     {config?.logo}
-                                    <span className="mt-2 font-semibold">{config?.title || detail.title}</span>
+                                    <span className="mt-2 font-semibold text-xs text-center">{config?.title || detail.title}</span>
                                </Label>
                              </FormItem>
                             )
@@ -230,6 +246,16 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 </FormItem>
               )}
             />
+             {qrCodeDetails?.imageUrl && (
+              <Card className="bg-muted/50">
+                <CardHeader>
+                  <CardTitle className="text-center text-base">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
+                </CardContent>
+              </Card>
+            )}
 
             {selectedPaymentDetail && (
                 <Card className="bg-muted/50">
@@ -243,17 +269,6 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         )}
                     </CardContent>
                 </Card>
-            )}
-
-             {qrCodeDetails?.imageUrl && (
-              <Card className="bg-muted/50">
-                <CardHeader>
-                  <CardTitle className="text-center">{qrCodeDetails.title || 'Scan QR Code'}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex justify-center">
-                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
-                </CardContent>
-              </Card>
             )}
 
             <FormField
