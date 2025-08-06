@@ -1,90 +1,83 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-    
+  
+    // Helper function to check for admin role
     function isAdmin() {
-      // Check if the user document exists and has the isAdmin flag set to true.
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for collections
+    // Rules for the 'users' collection
     match /users/{userId} {
-      // Allow users to create their own document.
-      // Allow users to update/delete their own document OR if the request is from an admin.
-      allow read, create: if request.auth != null;
-      allow update, delete: if isOwner(userId) || isAdmin();
+      // Allow create for any authenticated user (for signup)
+      allow create: if request.auth != null;
+      // Allow read, update, delete for the user themselves OR an admin
+      allow read, update, delete: if request.auth.uid == userId || isAdmin();
     }
-    
+
+    // Rules for app-wide statistics
+    match /app-stats/{statId} {
+      // Any authenticated user can read stats (for dashboard display)
+      allow read: if request.auth != null;
+      // Only admins can write/update stats
+      allow write: if isAdmin();
+    }
+
+    // Rules for the 'games' collection
     match /games/{gameId} {
-      // Any authenticated user can read games.
-      // Only admins can create, update, or delete games.
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow read, list: if request.auth != null; // Any authenticated user can read/list games
+      allow create, update, delete: if isAdmin();
     }
-    
+
+    // Rules for the 'banners' collection
     match /banners/{bannerId} {
-       // Any authenticated user can read banners.
-      // Only admins can create, update, or delete banners.
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow read, list: if request.auth != null; // Any authenticated user can read/list banners
+      allow create, update, delete: if isAdmin();
     }
-    
-    match /jodiCharts/{chartId} {
-      // Any authenticated user can read charts.
-      // Only admins can write to charts.
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+
+    // Rules for the 'settings' collection
+    match /settings/{settingId} {
+      allow read, list: if request.auth != null; // Any authenticated user can read/list settings
+      allow create, update, delete: if isAdmin();
     }
-    
-    match /panelCharts/{chartId} {
-      // Any authenticated user can read charts.
-      // Only admins can write to charts.
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+
+    // Rules for deposit requests
+    match /deposits/{depositId} {
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
+      allow list: if isAdmin();
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow update, delete: if isAdmin();
     }
-    
+
+    // Rules for withdrawal requests
+    match /withdrawals/{withdrawalId} {
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
+      allow list: if isAdmin();
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow update, delete: if isAdmin();
+    }
+
+    // Rules for bids
     match /bids/{bidId} {
-      // Users can create and read their own bids.
-      // Admins can read/write all bids.
-      allow create: if isOwner(request.resource.data.userId);
-      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
+      allow list: if isAdmin();
+      allow create: if request.auth.uid == request.resource.data.userId;
       allow update, delete: if isAdmin();
     }
     
-    match /deposits/{depositId} {
-      // Users can create and read their own deposit requests.
-      // Admins can read/write all requests.
-       allow create: if isOwner(request.resource.data.userId);
-       allow read: if isOwner(resource.data.userId) || isAdmin();
-       allow write: if isAdmin();
+    // Rules for jodiCharts
+    match /jodiCharts/{chartId} {
+      allow read, list: if request.auth != null;
+      allow create, update, delete: if isAdmin();
     }
-    
-    match /withdrawals/{withdrawalId} {
-       // Users can create and read their own withdrawal requests.
-       // Admins can read/write all requests.
-       allow create: if isOwner(request.resource.data.userId);
-       allow read: if isOwner(resource.data.userId) || isAdmin();
-       allow write: if isAdmin();
-    }
-    
-    match /settings/{settingId} {
-        // Any authenticated user can read settings.
-        // Only admins can change settings.
-        allow read: if request.auth != null;
-        allow write: if isAdmin();
-    }
-    
-    match /app-stats/{statId} {
-      // Allow any authenticated user to read stats for the dashboard.
-      // Only admins can update stats.
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+
+    // Rules for panelCharts
+    match /panelCharts/{chartId} {
+      allow read, list: if request.auth != null;
+      allow create, update, delete: if isAdmin();
     }
   }
 }
