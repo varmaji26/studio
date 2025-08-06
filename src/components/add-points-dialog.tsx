@@ -208,7 +208,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Points</DialogTitle>
           <DialogDescription>
@@ -242,7 +242,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                   <CardTitle className="text-center text-base">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex justify-center">
-                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={150} height={150} className="rounded-md" unoptimized/>
+                  <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
                 </CardContent>
               </Card>
             )}
