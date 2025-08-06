@@ -41,7 +41,7 @@ const addPointsSchema = z.object({
     (a) => parseInt(z.string().parse(a), 10),
     z.number().min(100, 'Minimum deposit amount is ₹100.')
   ),
-  paymentMethod: z.enum(['UPI', 'Bank Transfer'], {
+  paymentMethod: z.enum(['UPI', 'Bank Transfer', 'PhonePe/GPay'], {
     required_error: 'You need to select a payment method.',
   }),
   transactionId: z.string().min(1, 'Transaction ID is required.'),
@@ -72,7 +72,7 @@ const UpiLogo = () => (
 );
 
 const BankLogo = () => (
-    <svg width="48" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M4 10H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         <path d="M4 14H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         <path d="M17 18H7C5.89543 18 5 17.1046 5 16V8C5 6.89543 5.89543 6 7 6H17C18.1046 6 19 6.89543 19 8V16C19 17.1046 18.1046 18 17 18Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -83,6 +83,7 @@ const BankLogo = () => (
 
 const PaytmPhonePeLogo = () => (
      <svg width="60" height="28" viewBox="0 0 60 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* This is a simplified combined logo for presentation */}
         <path d="M46.51,14.08C46.51,13,46.42,12,46.25,11.05H36.31V16.2H42.1C41.83,18.06,40.71,19.57,38.9,20.66V23.91H43.19C45.3,21.91,46.51,18.33,46.51,14.08Z" fill="#4285F4"/>
         <path d="M36.31,25C39.4,25,41.97,23.94,43.83,22.2L39.55,18.94C38.07,19.95,36.7,20.5,34.9,20.5C31.62,20.5,28.89,18.28,27.9,15.42H23.5V18.78C25.36,22.5,30.34,25,36.31,25Z" fill="#34A853"/>
         <path d="M27.9,15.42C27.64,14.5,27.46,13.52,27.46,12.5C27.46,11.48,27.64,10.5,27.89,9.58V6.22H23.5C22.2,8.8,21.5,11.52,21.5,14.5C21.5,17.48,22.2,20.2,23.5,22.78L27.9,19.42V15.42Z" fill="#FBBC05"/>
@@ -195,12 +196,13 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   const qrCodeDetails = paymentDetails ? paymentDetails['Scan QR Code'] : null;
 
   const otherPaymentMethods = paymentDetails 
-    ? Object.keys(paymentDetails).filter(method => method !== 'Scan QR Code' && method !== 'Paytm/PhonePe' && (paymentDetails[method].details || paymentDetails[method].imageUrl))
+    ? Object.keys(paymentDetails).filter(method => method !== 'Scan QR Code' && (paymentDetails[method].details || paymentDetails[method].imageUrl))
     : [];
 
   const paymentMethodsConfig: { [key: string]: { logo: React.ReactNode, title: string } } = {
         'UPI': { logo: <UpiLogo />, title: 'UPI' },
         'Bank Transfer': { logo: <BankLogo />, title: 'Bank Transfer' },
+        'PhonePe/GPay': { logo: <PaytmPhonePeLogo />, title: 'PhonePe/GPay' },
    };
 
 
@@ -222,17 +224,18 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Amount (₹)</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-12 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                        <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-12 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
+                    </FormControl>
+                    <Button type="button" className="h-12" onClick={handlePayWithApp} disabled={loadingDetails}>
+                        Pay with UPI App
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <Button type="button" className="w-full h-14" onClick={handlePayWithApp} disabled={loadingDetails}>
-                 <PaytmPhonePeLogo />
-            </Button>
             
             {qrCodeDetails?.imageUrl && (
               <Card className="bg-muted/50">
@@ -261,7 +264,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="grid grid-cols-2 gap-4"
+                          className="grid grid-cols-3 gap-4"
                         >
                           {otherPaymentMethods.map((method) => {
                             const detail = paymentDetails![method as keyof typeof paymentDetails];
