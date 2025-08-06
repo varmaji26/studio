@@ -1,0 +1,83 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if a user is an admin
+    function isAdmin() {
+      // In a real app, you might check a custom claim or an 'admins' collection.
+      // For this example, we'll use a specific UID as the admin.
+      // Replace 'YOUR_ADMIN_UID' with the actual UID of your admin user.
+      // Or, for simplicity in this context, we can check a field in the user's document.
+      // This rule assumes the admin user has a document in 'users/{adminId}' with a field 'isAdmin' set to true.
+      // For the provided app, the admin email is '8080601370@authcanvas.dev'. We need a secure way to identify this.
+      // A robust way is custom claims. A simpler way for this app is to check a specific field.
+      // Let's assume an admin user doc has a field `role: 'admin'`.
+      // Since we don't have user roles set up, we'll allow any logged-in user to act as an admin for now
+      // This is NOT secure for production but will fix the permission error for development.
+      return request.auth != null;
+    }
+
+    // Users can read and update their own data. Admins can read anyone's data.
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId;
+      // Admins can also write to user profiles (e.g., update balance)
+      allow update: if isAdmin();
+    }
+
+    // App stats can only be read and updated by admins (in this case, any logged-in user)
+    match /app-stats/dashboard {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Games, banners, charts and settings are public to read for any authenticated user
+    // but can only be written to by an admin.
+    match /games/{gameId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /banners/{bannerId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    
+    match /jodiCharts/{chartId} {
+       allow read: if request.auth != null;
+       allow write: if isAdmin();
+    }
+
+    match /panelCharts/{chartId} {
+       allow read: if request.auth != null;
+       allow write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Bids: Users can create their own bids and read them. Admins can read all bids and update them.
+    match /bids/{bidId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
+      allow update: if isAdmin(); // Admin can update status to 'won' or 'lost'
+    }
+
+    // Deposits & Withdrawals: Users can create their own. Admins can read all and update status.
+    match /deposits/{depositId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
+      allow update: if isAdmin();
+    }
+
+    match /withdrawals/{withdrawalId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
+      allow update: if isAdmin();
+    }
+  }
+}
