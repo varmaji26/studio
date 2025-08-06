@@ -1,10 +1,9 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Function to check if the requesting user is an admin.
+    
+    // Helper function to check if the user is an admin
     function isAdmin() {
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
@@ -12,31 +11,30 @@ service cloud.firestore {
 
     // Rules for the 'users' collection
     match /users/{userId} {
-      // Users can read and update their own document. Admins can read/update any user.
-      allow read, update: if request.auth.uid == userId || isAdmin();
-      // Users can create their own document upon signup.
-      allow create: if request.auth.uid == userId;
-      // Admins can delete users.
-      allow delete: if isAdmin();
+      // Admins can read and write to any user document.
+      // Users can read and write to their own document.
+      allow read, write: if isAdmin() || request.auth.uid == userId;
     }
 
-    // Rules for application-wide statistics
-    match /app-stats/{docId} {
-      // Any authenticated user can read stats (e.g., for dashboard display).
+    // Rules for the 'app-stats' collection
+    match /app-stats/{statId} {
+      // Any authenticated user can read the stats.
       allow read: if request.auth != null;
-      // Only admins can write to stats.
+      // Only admins can write to the stats.
       allow write: if isAdmin();
     }
-
-    // Generic rules for other collections
-    match /{collection}/{docId}
-      where collection in ['games', 'banners', 'settings', 'jodiCharts', 'panelCharts', 'bids', 'deposits', 'withdrawals'] {
-        // Admin has full access to all these collections.
-        allow get, list, create, update, delete: if isAdmin();
-
-        // Allow users to read documents if they are the owner (e.g., their own bids/deposits).
-        // This rule is combined with the admin rule above. A request is allowed if EITHER condition is true.
-        allow get: if request.auth.uid == resource.data.userId;
+    
+    // A generic rule for collections that admins have full access to,
+    // and authenticated users can only create/read their own documents.
+    match /{collection}/{docId} {
+      // Admin has full access
+      allow read, write, delete: if isAdmin();
+      // Authenticated users can create documents with their userId
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // Authenticated users can read their own documents
+      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Authenticated users can list their own documents (needed for queries like "where('userId', '==', uid)")
+      allow list: if request.auth != null && request.query.limit <= 100 && request.query.offset == null && request.query.wheres[0][1] == "userId" && request.query.wheres[0][2] == request.auth.uid;
     }
   }
 }
