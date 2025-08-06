@@ -140,14 +140,12 @@ export default function UpdateResultsClosePage() {
         if (panelChartDocSnap.exists()) {
             let chartDataStr = panelChartDocSnap.data().data || '';
             const today = new Date();
-            const todayDay = today.getDay(); // Sunday - 0, Monday - 1, ...
-            const dayIndex = todayDay === 0 ? 6 : todayDay - 1; 
+            // Sunday - 0, Monday - 1, ..., Saturday - 6. We need Monday=0, Sunday=6
+            const todayDayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
 
             const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
             let match;
-            let lastIndex = 0;
-            let foundWeek = false;
-
+            
             while ((match = dateRangeRegex.exec(chartDataStr)) !== null) {
                 const startDate = parseDateString(match[1]);
                 const endDate = parseDateString(match[2]);
@@ -157,29 +155,28 @@ export default function UpdateResultsClosePage() {
                     if (today >= startDate && today <= endDate) {
                         const weekDataStartIndex = match.index + match[0].length;
                         
-                        const nextMatch = dateRangeRegex.exec(chartDataStr);
-                        dateRangeRegex.lastIndex = lastIndex; // Reset index for next iteration
+                        // Find the start of the next date range to determine the end of the current week's data
+                        const nextDateRangeMatch = dateRangeRegex.exec(chartDataStr);
+                        dateRangeRegex.lastIndex = match.index + match[0].length; // Reset for next iteration
                         
-                        const weekDataEndIndex = nextMatch ? nextMatch.index : chartDataStr.length;
-                        
-                        const weekDataStr = chartDataStr.substring(weekDataStartIndex, weekDataEndIndex);
-                        const weekDataArray = weekDataStr.trim().split(/\s+/);
+                        const weekDataEndIndex = nextDateRangeMatch ? nextDateRangeMatch.index : chartDataStr.length;
 
-                        const newDayData = `${openPana}${finalJodi}${newClosePana}`;
+                        const weekBlock = chartDataStr.substring(weekDataStartIndex, weekDataEndIndex);
+                        const dayDataBlocks = weekBlock.trim().split(/\s+/);
+
+                        const newDayResult = `${openPana}${finalJodi}${newClosePana}`;
                         
-                        if (dayIndex < weekDataArray.length) {
-                             weekDataArray[dayIndex] = newDayData;
+                        if (todayDayIndex < dayDataBlocks.length) {
+                             dayDataBlocks[todayDayIndex] = newDayResult;
                         }
 
-                        const updatedWeekData = ' ' + weekDataArray.join(' ');
-                        const updatedChartData = chartDataStr.substring(0, weekDataStartIndex) + updatedWeekData + chartDataStr.substring(weekDataEndIndex);
+                        const updatedWeekBlock = ' ' + dayDataBlocks.join(' ');
+                        const updatedChartData = chartDataStr.substring(0, weekDataStartIndex) + updatedWeekBlock + chartDataStr.substring(weekDataEndIndex);
                         
                         batch.update(panelChartDocRef, { data: updatedChartData });
-                        foundWeek = true;
                         break; 
                     }
                 }
-                lastIndex = dateRangeRegex.lastIndex;
             }
         }
         
