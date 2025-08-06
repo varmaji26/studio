@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
@@ -239,15 +239,12 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 </div>
                 
                 {qrCodeDetails?.imageUrl && (
-                <Card className="bg-muted/50">
-                    <CardHeader className="p-3">
-                    <CardTitle className="text-center text-sm">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex justify-center p-3 pt-0">
+                  <div className="flex flex-col items-center justify-center py-2">
+                    <p className="text-center text-sm mb-2">{qrCodeDetails.title || 'Scan to Pay'}</p>
                     <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={140} height={140} className="rounded-md" unoptimized/>
-                    </CardContent>
-                </Card>
+                  </div>
                 )}
+
 
                 <FormField
                 control={form.control}
