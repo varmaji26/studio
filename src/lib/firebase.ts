@@ -1,5 +1,6 @@
+
 import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -22,16 +23,20 @@ const storage = getStorage(app);
 
 // Function to ensure the admin user has the isAdmin flag.
 // This should run once when the admin logs in.
-const ensureAdminUser = async (user: import('firebase/auth').User) => {
+const ensureAdminUser = async (user: User) => {
   if (user.email === '8080601370@authcanvas.dev') {
     const adminUserRef = doc(db, 'users', user.uid);
-    const docSnap = await getDoc(adminUserRef);
-    if (docSnap.exists()) {
-        const userData = docSnap.data();
-        if (userData.isAdmin !== true) {
-            console.log('Setting admin flag for user:', user.uid);
-            await setDoc(adminUserRef, { isAdmin: true }, { merge: true });
-        }
+    try {
+      const docSnap = await getDoc(adminUserRef);
+      // Only write if the flag is missing or false to avoid unnecessary writes.
+      if (!docSnap.exists() || !docSnap.data().isAdmin) {
+        console.log('Setting admin flag for user:', user.uid);
+        // Use setDoc with merge:true to create or update the document without overwriting other fields.
+        await setDoc(adminUserRef, { isAdmin: true }, { merge: true });
+        console.log('Admin flag set successfully.');
+      }
+    } catch (error) {
+       console.error("Error ensuring admin user:", error);
     }
   }
 };
