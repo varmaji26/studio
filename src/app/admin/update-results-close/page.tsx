@@ -156,22 +156,25 @@ export default function UpdateResultsClosePage() {
                         const weekDataStartIndex = match.index + match[0].length;
                         
                         // Find the start of the next date range to determine the end of the current week's data
-                        const nextDateRangeMatch = dateRangeRegex.exec(chartDataStr);
-                        dateRangeRegex.lastIndex = match.index + match[0].length; // Reset for next iteration
+                        dateRangeRegex.lastIndex = 0; // Reset regex index before next search
+                        const nextDateRangeMatch = dateRangeRegex.exec(chartDataStr.substring(weekDataStartIndex));
+                        dateRangeRegex.lastIndex = match.index + match[0].length; // Restore for loop
                         
-                        const weekDataEndIndex = nextDateRangeMatch ? nextDateRangeMatch.index : chartDataStr.length;
-
-                        const weekBlock = chartDataStr.substring(weekDataStartIndex, weekDataEndIndex);
-                        const dayDataBlocks = weekBlock.trim().split(/\s+/);
+                        const weekDataEndIndex = nextDateRangeMatch 
+                            ? weekDataStartIndex + chartDataStr.substring(weekDataStartIndex).indexOf(nextDateRangeMatch[0]) 
+                            : chartDataStr.length;
 
                         const newDayResult = `${openPana}${finalJodi}${newClosePana}`;
                         
-                        if (todayDayIndex < dayDataBlocks.length) {
-                             dayDataBlocks[todayDayIndex] = newDayResult;
-                        }
-
-                        const updatedWeekBlock = ' ' + dayDataBlocks.join(' ');
-                        const updatedChartData = chartDataStr.substring(0, weekDataStartIndex) + updatedWeekBlock + chartDataStr.substring(weekDataEndIndex);
+                        // Calculate the precise start and end index for today's data within the full string
+                        const dayDataStartIndex = weekDataStartIndex + (todayDayIndex * 8) + (todayDayIndex > 0 ? todayDayIndex : 0);
+                        const dayDataEndIndex = dayDataStartIndex + 8;
+                        
+                        // Reconstruct the string with the updated part
+                        const updatedChartData = 
+                            chartDataStr.substring(0, dayDataStartIndex) +
+                            newDayResult +
+                            chartDataStr.substring(dayDataEndIndex);
                         
                         batch.update(panelChartDocRef, { data: updatedChartData });
                         break; 
