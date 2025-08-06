@@ -193,11 +193,16 @@ export default function SettingsPage() {
             setExistingWelcomeBannerStoragePath(storagePath);
         }
 
+        const settingsDoc = await getDoc(settingsDocRef);
+        const currentData = settingsDoc.exists() ? settingsDoc.data() : {};
+        const currentPaymentDetails = currentData.paymentDetails || {};
+        
         const dataToSave: any = {
             whatsappNumber: values.whatsappNumber,
             callSupportNumber: values.callSupportNumber,
             telegramLink: values.telegramLink,
             paymentDetails: {
+                ...currentPaymentDetails,
                 'UPI': { title: "UPI Payment", details: values.upiId },
                 'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
                 'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
@@ -207,6 +212,8 @@ export default function SettingsPage() {
 
         if (qrCodeData) {
             dataToSave.paymentDetails['Scan QR Code'] = qrCodeData;
+        } else {
+            delete dataToSave.paymentDetails['Scan QR Code'];
         }
         
         await setDoc(settingsDocRef, dataToSave, { merge: true });
@@ -262,6 +269,47 @@ export default function SettingsPage() {
       });
     }
   };
+
+  const handleDeleteQrCode = async () => {
+    if (!existingQrStoragePath) return;
+    
+    setIsSubmitting(true);
+    try {
+      // Delete from Storage
+      const storageRef = ref(storage, existingQrStoragePath);
+      await deleteObject(storageRef);
+      
+      // Delete from Firestore
+      const settingsDocRef = doc(db, 'settings', 'app-settings');
+      const settingsDoc = await getDoc(settingsDocRef);
+      if(settingsDoc.exists()) {
+        const currentPaymentDetails = settingsDoc.data().paymentDetails || {};
+        delete currentPaymentDetails['Scan QR Code'];
+        await updateDoc(settingsDocRef, {
+            paymentDetails: currentPaymentDetails
+        });
+      }
+
+      // Update local state
+      setExistingQrUrl(null);
+      setExistingQrStoragePath(null);
+
+      toast({
+        title: 'Success!',
+        description: 'QR Code has been deleted.',
+      });
+    } catch (error) {
+      console.error("Error deleting QR Code: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete the QR Code.',
+      });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
 
   return (
     <div className="flex-1 space-y-8 p-4 sm:p-8">
@@ -417,9 +465,29 @@ export default function SettingsPage() {
                 <Separator />
                 <h3 className="text-lg font-semibold">Payment QR Code</h3>
                 {existingQrUrl && (
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center gap-4">
                     <p className="text-sm text-muted-foreground mb-2">Current QR Code:</p>
                     <Image src={existingQrUrl} alt="Current QR Code" width={150} height={150} className="rounded-md border p-1" unoptimized />
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="destructive" size="sm">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete QR Code
+                           </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the QR Code.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteQrCode}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 )}
                  <FormField
