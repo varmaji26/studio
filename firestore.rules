@@ -1,72 +1,51 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check for admin status
+
+    // Helper function to check if the user is an admin.
     function isAdmin() {
+      // Check if the user document exists and the isAdmin flag is true.
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Users can manage their own document, admins can manage any
+    // Rules for the users collection
     match /users/{userId} {
-      allow read, update, delete: if request.auth.uid == userId || isAdmin();
+      // Admins can perform any action on any user document.
+      // A user can read or update their own document.
+      allow read, update: if isAdmin() || request.auth.uid == userId;
+      // A user can create their own document upon signup.
       allow create: if request.auth.uid == userId;
-      // Admins can list all users
-      allow list: if isAdmin();
+      // Only admins can list or delete user documents.
+      allow list, delete: if isAdmin();
     }
 
-    // Admins can manage these collections fully. Logged-in users can read.
-    match /{path=**}/games/{gameId} {
-        allow read: if request.auth != null;
-        allow write: if isAdmin();
-    }
-     match /{path=**}/banners/{bannerId} {
-        allow read: if request.auth != null;
-        allow write: if isAdmin();
-    }
-     match /{path=**}/settings/{settingId} {
-        allow read: if request.auth != null;
-        allow write: if isAdmin();
-    }
-     match /{path=**}/jodiCharts/{chartId} {
-        allow read: if request.auth != null;
-        allow write: if isAdmin();
-    }
-     match /{path=**}/panelCharts/{chartId} {
-        allow read: if request.auth != null;
-        allow write: if isAdmin();
-    }
-
-
-    // Bids, deposits, and withdrawals have user-specific and admin rules
-    match /bids/{bidId} {
-        allow read: if resource.data.userId == request.auth.uid || isAdmin();
-        allow create: if request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isAdmin();
-        // Admins can list all bids
-        allow list: if isAdmin();
-    }
-
-     match /deposits/{depositId} {
-        allow read: if resource.data.userId == request.auth.uid || isAdmin();
-        allow create: if request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isAdmin();
-        // Admins can list all deposits
-        allow list: if isAdmin();
-    }
-
-     match /withdrawals/{withdrawalId} {
-        allow read: if resource.data.userId == request.auth.uid || isAdmin();
-        allow create: if request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isAdmin();
-        // Admins can list all withdrawals
-        allow list: if isAdmin();
+    // Rules for collections that are managed only by admins
+    match /(games|banners|settings|jodiCharts|panelCharts)/{docId} {
+      // Admins can do anything.
+      allow read, write: if isAdmin();
+      // Any authenticated user can read (view) the data.
+      allow list, get: if request.auth != null;
     }
     
-    // Stats are readable by logged-in users, writable by admins
+    // Rules for collections containing user-specific data like bids and transactions
+    match /(bids|deposits|withdrawals)/{docId} {
+       // Admins can do anything.
+       allow read, write: if isAdmin();
+       // Users can create their own documents (e.g., place a bid, make a deposit request).
+       allow create: if request.resource.data.userId == request.auth.uid;
+       // Users can read their own documents, but cannot list all documents in the collection.
+       allow get: if request.resource.data.userId == request.auth.uid;
+    }
+
+    // Rules for the application statistics document
     match /app-stats/{statId} {
-        allow read: if request.auth != null;
-        allow write: if isAdmin();
+      // Any authenticated user can read the stats.
+      allow read: if request.auth != null;
+      // Only admins can write to the stats.
+      allow write: if isAdmin();
     }
   }
 }
