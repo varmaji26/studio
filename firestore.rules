@@ -3,48 +3,50 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the user is an admin.
+  
+    // Helper function to check if a user is an admin
     function isAdmin() {
-      // Check if the user document exists and the isAdmin flag is true.
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for the users collection
+    // Users can read/write their own data. Admins can read/write any user's data.
     match /users/{userId} {
-      // Admins can perform any action on any user document.
-      // A user can read or update their own document.
-      allow read, update: if isAdmin() || request.auth.uid == userId;
-      // A user can create their own document upon signup.
+      allow read, update, delete: if request.auth.uid == userId || isAdmin();
       allow create: if request.auth.uid == userId;
-      // Only admins can list or delete user documents.
-      allow list, delete: if isAdmin();
     }
 
-    // Rules for collections that are managed only by admins
-    match /(games|banners|settings|jodiCharts|panelCharts)/{docId} {
-      // Admins can do anything.
-      allow read, write: if isAdmin();
-      // Any authenticated user can read (view) the data.
-      allow list, get: if request.auth != null;
+    // Logged-in users can read app stats. Only admins can write.
+    match /app-stats/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Bids can be created by users for themselves. They can only read their own bids. Admins can do anything.
+    match /bids/{bidId} {
+      allow read: if resource.data.userId == request.auth.uid || isAdmin();
+      allow create: if request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
     
-    // Rules for collections containing user-specific data like bids and transactions
-    match /(bids|deposits|withdrawals)/{docId} {
-       // Admins can do anything.
-       allow read, write: if isAdmin();
-       // Users can create their own documents (e.g., place a bid, make a deposit request).
+    // Deposits can be created by users for themselves. They can only read their own deposits. Admins can do anything.
+    match /deposits/{depositId} {
+      allow read: if resource.data.userId == request.auth.uid || isAdmin();
+      allow create: if request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+    
+    // Withdrawals can be created by users for themselves. They can only read their own withdrawals. Admins can do anything.
+    match /withdrawals/{withdrawalId} {
+       allow read: if resource.data.userId == request.auth.uid || isAdmin();
        allow create: if request.resource.data.userId == request.auth.uid;
-       // Users can read their own documents, but cannot list all documents in the collection.
-       allow get: if request.resource.data.userId == request.auth.uid;
+       allow update, delete: if isAdmin();
     }
 
-    // Rules for the application statistics document
-    match /app-stats/{statId} {
-      // Any authenticated user can read the stats.
+    // Read-only access for authenticated users, full access for admins.
+    match /{collection}/{docId} 
+        where collection in ['games', 'banners', 'settings', 'jodiCharts', 'panelCharts'] {
       allow read: if request.auth != null;
-      // Only admins can write to the stats.
       allow write: if isAdmin();
     }
   }
