@@ -209,17 +209,17 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px] p-0">
-        <DialogHeader className="p-6 pb-0">
+        <DialogHeader className="p-4 pb-0">
           <DialogTitle>Add Points</DialogTitle>
           <DialogDescription>
             Complete the payment using the details below and submit your request.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[80vh] overflow-y-auto">
-        <div className="p-6 pt-2">
+        <div className="p-4 pt-2">
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                <div className="space-y-3">
                     <FormField
                     control={form.control}
                     name="amount"
@@ -227,13 +227,13 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         <FormItem>
                         <FormLabel>Amount (₹)</FormLabel>
                             <FormControl>
-                                <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-12 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
+                                <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-11 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
                             </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
                     />
-                     <Button type="button" className="h-12 w-full" onClick={handlePayWithApp} disabled={loadingDetails}>
+                     <Button type="button" className="h-11 w-full" onClick={handlePayWithApp} disabled={loadingDetails}>
                         Pay with UPI App
                     </Button>
                 </div>
@@ -244,7 +244,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                     <CardTitle className="text-center text-sm">{qrCodeDetails.title || 'Scan to Pay'}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex justify-center p-3 pt-0">
-                    <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={150} height={150} className="rounded-md" unoptimized/>
+                    <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={140} height={140} className="rounded-md" unoptimized/>
                     </CardContent>
                 </Card>
                 )}
@@ -258,8 +258,8 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                     <FormControl>
                         {loadingDetails ? (
                             <div className="grid grid-cols-2 gap-4">
-                                <Skeleton className="h-16 w-full" />
-                                <Skeleton className="h-16 w-full" />
+                                <Skeleton className="h-14 w-full" />
+                                <Skeleton className="h-14 w-full" />
                             </div>
                         ) : (
                             <RadioGroup
@@ -275,7 +275,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                                 <FormControl>
                                     <RadioGroupItem value={method} className="peer sr-only" id={method} />
                                 </FormControl>
-                                <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-2 h-16 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-1 h-14 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                         {config?.logo}
                                         <span className="mt-1 font-semibold text-xs text-center">{config?.title || detail.title}</span>
                                 </Label>
@@ -311,19 +311,19 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                     <FormItem>
                     <FormLabel>Transaction ID</FormLabel>
                     <FormControl>
-                        <Input placeholder="Enter transaction ID after payment" {...field} className="h-12" />
+                        <Input placeholder="Enter transaction ID after payment" {...field} className="h-11" />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
                 />
-                 <DialogFooter className="gap-2 sm:gap-0 pt-4 flex flex-col sm:flex-row">
+                 <DialogFooter className="gap-2 sm:gap-0 pt-2 flex flex-col sm:flex-row">
                     <DialogClose asChild>
-                        <Button type="button" variant="outline" className="h-12 w-full sm:w-auto">
+                        <Button type="button" variant="outline" className="h-11 w-full sm:w-auto">
                             Cancel
                         </Button>
                     </DialogClose>
-                    <Button type="submit" disabled={isSubmitting || loadingDetails} className="h-12 w-full sm:w-auto">
+                    <Button type="submit" disabled={isSubmitting || loadingDetails} className="h-11 w-full sm:w-auto">
                         {isSubmitting ? <Loader className="mr-2" /> : null}
                         Submit Request
                     </Button>
