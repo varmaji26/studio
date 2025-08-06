@@ -1,40 +1,72 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if the user is an admin
+    // Helper function to check for admin status
     function isAdmin() {
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for the 'users' collection
+    // Users can manage their own document, admins can manage any
     match /users/{userId} {
-      // Admins can read and write to any user document.
-      // Users can read and write to their own document.
-      allow read, write: if isAdmin() || request.auth.uid == userId;
+      allow read, update, delete: if request.auth.uid == userId || isAdmin();
+      allow create: if request.auth.uid == userId;
+      // Admins can list all users
+      allow list: if isAdmin();
     }
 
-    // Rules for the 'app-stats' collection
-    match /app-stats/{statId} {
-      // Any authenticated user can read the stats.
-      allow read: if request.auth != null;
-      // Only admins can write to the stats.
-      allow write: if isAdmin();
+    // Admins can manage these collections fully. Logged-in users can read.
+    match /{path=**}/games/{gameId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+    }
+     match /{path=**}/banners/{bannerId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+    }
+     match /{path=**}/settings/{settingId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+    }
+     match /{path=**}/jodiCharts/{chartId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+    }
+     match /{path=**}/panelCharts/{chartId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+    }
+
+
+    // Bids, deposits, and withdrawals have user-specific and admin rules
+    match /bids/{bidId} {
+        allow read: if resource.data.userId == request.auth.uid || isAdmin();
+        allow create: if request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAdmin();
+        // Admins can list all bids
+        allow list: if isAdmin();
+    }
+
+     match /deposits/{depositId} {
+        allow read: if resource.data.userId == request.auth.uid || isAdmin();
+        allow create: if request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAdmin();
+        // Admins can list all deposits
+        allow list: if isAdmin();
+    }
+
+     match /withdrawals/{withdrawalId} {
+        allow read: if resource.data.userId == request.auth.uid || isAdmin();
+        allow create: if request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAdmin();
+        // Admins can list all withdrawals
+        allow list: if isAdmin();
     }
     
-    // A generic rule for collections that admins have full access to,
-    // and authenticated users can only create/read their own documents.
-    match /{collection}/{docId} {
-      // Admin has full access
-      allow read, write, delete: if isAdmin();
-      // Authenticated users can create documents with their userId
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      // Authenticated users can read their own documents
-      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
-      // Authenticated users can list their own documents (needed for queries like "where('userId', '==', uid)")
-      allow list: if request.auth != null && request.query.limit <= 100 && request.query.offset == null && request.query.wheres[0][1] == "userId" && request.query.wheres[0][2] == request.auth.uid;
+    // Stats are readable by logged-in users, writable by admins
+    match /app-stats/{statId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
     }
   }
 }
