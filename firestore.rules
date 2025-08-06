@@ -1,58 +1,42 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the user is an admin.
+    // Function to check if the requesting user is an admin.
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-    
-    // USERS
-    match /users/{userId} {
-      // Admins can manage any user. Users can read/update their own data.
-      allow read, update, delete: if request.auth.uid == userId || isAdmin();
-      // Allow user creation for anyone who is authenticated.
-      allow create: if request.auth != null;
-    }
-    
-    // APP-STATS
-    // Any authenticated user can read stats, but only admins can write them.
-    match /app-stats/{docId} {
-        allow read: if request.auth != null;
-        allow write: if isAdmin();
-    }
-    
-    // BIDS
-    match /bids/{bidId} {
-      // Admins can do anything. Users can create their own bids and read their own bids.
-      allow read, list, update, delete: if isAdmin();
-      allow create: if request.auth.uid == request.resource.data.userId;
-      allow read: if request.auth.uid == resource.data.userId;
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // DEPOSITS
-    match /deposits/{depositId} {
-      // Admins can do anything. Users can create their own deposits and read their own deposits.
-      allow read, list, update, delete: if isAdmin();
-      allow create: if request.auth.uid == request.resource.data.userId;
-      allow read: if request.auth.uid == resource.data.userId;
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Users can read and update their own document. Admins can read/update any user.
+      allow read, update: if request.auth.uid == userId || isAdmin();
+      // Users can create their own document upon signup.
+      allow create: if request.auth.uid == userId;
+      // Admins can delete users.
+      allow delete: if isAdmin();
     }
-    
-    // WITHDRAWALS
-    match /withdrawals/{withdrawalId} {
-       // Admins can do anything. Users can create their own withdrawals and read their own withdrawals.
-      allow read, list, update, delete: if isAdmin();
-      allow create: if request.auth.uid == request.resource.data.userId;
-      allow read: if request.auth.uid == resource.data.userId;
-    }
-    
-    // GAMES, BANNERS, JODI/PANEL CHARTS, SETTINGS
-    // Any authenticated user can read these collections, but only admins can modify them.
-    match /{collection}/{docId} 
-        where collection in ['games', 'banners', 'jodiCharts', 'panelCharts', 'settings'] {
-      allow read, list: if request.auth != null;
+
+    // Rules for application-wide statistics
+    match /app-stats/{docId} {
+      // Any authenticated user can read stats (e.g., for dashboard display).
+      allow read: if request.auth != null;
+      // Only admins can write to stats.
       allow write: if isAdmin();
+    }
+
+    // Generic rules for other collections
+    match /{collection}/{docId}
+      where collection in ['games', 'banners', 'settings', 'jodiCharts', 'panelCharts', 'bids', 'deposits', 'withdrawals'] {
+        // Admin has full access to all these collections.
+        allow get, list, create, update, delete: if isAdmin();
+
+        // Allow users to read documents if they are the owner (e.g., their own bids/deposits).
+        // This rule is combined with the admin rule above. A request is allowed if EITHER condition is true.
+        allow get: if request.auth.uid == resource.data.userId;
     }
   }
 }
