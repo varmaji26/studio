@@ -134,51 +134,51 @@ export default function UpdateResultsClosePage() {
             batch.update(jodiChartDocRef, { data: updatedChartData });
         }
         
-        // Automatically update Panel Chart
+       // Automatically update Panel Chart
         const panelChartDocRef = doc(db, 'panelCharts', game.id);
         const panelChartDocSnap = await getDoc(panelChartDocRef);
         if (panelChartDocSnap.exists()) {
             const chartDataStr = panelChartDocSnap.data().data || '';
             const today = new Date();
-            const todayDayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
+            const todayDayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1; // Monday = 0, Sunday = 6
+            const newDayResult = `${openPana}${finalJodi}${newClosePana}`;
 
-            const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
-            let match;
-            let finalUpdatedChartData = chartDataStr;
+            const lines = chartDataStr.split('\n');
+            let chartWasUpdated = false;
 
-            while ((match = dateRangeRegex.exec(chartDataStr)) !== null) {
-                const startDate = parseDateString(match[1]);
-                const endDate = parseDateString(match[2]);
-
-                if (startDate && endDate) {
-                    endDate.setHours(23, 59, 59, 999);
-                    if (today >= startDate && today <= endDate) {
-                        const newDayResult = `${openPana}${finalJodi}${newClosePana}`;
-                        
-                        // This regex finds the week's data block after the date range
-                        const weekDataRegex = new RegExp(`(${match[0]}\\s*)([\\d*\\s]{56,})`, 'g');
-                        
-                        let weekMatch = weekDataRegex.exec(chartDataStr);
-                        if(weekMatch){
-                           let weekData = weekMatch[2].replace(/\s/g, '');
-                           let startPos = todayDayIndex * 8;
-                           let endPos = startPos + 8;
-                           
-                           if(weekData.length >= endPos){
-                               let updatedWeekData = weekData.substring(0, startPos) + newDayResult + weekData.substring(endPos);
-                               
-                               // Add spaces back every 8 characters for readability in Firestore
-                               const spacedWeekData = updatedWeekData.replace(/(.{8})/g, '$1 ').trim();
-                               finalUpdatedChartData = chartDataStr.replace(weekMatch[2].trim(), spacedWeekData);
-                               
-                               batch.update(panelChartDocRef, { data: finalUpdatedChartData });
-                               break; 
-                           }
-                        }
+            const updatedLines = lines.map(line => {
+                const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/;
+                const match = line.match(dateRangeRegex);
+                
+                if (match) {
+                    const startDate = parseDateString(match[1]);
+                    const endDate = parseDateString(match[2]);
+                    
+                    if (startDate && endDate) {
+                         endDate.setHours(23, 59, 59, 999);
+                         if (today >= startDate && today <= endDate) {
+                            // This is the correct week. Let's update the data for today.
+                            const dataPart = line.substring(match[0].length).trim();
+                            const weekData = dataPart.split(/\s+/).filter(d => d.length === 8);
+                            
+                            if (weekData.length > todayDayIndex) {
+                                weekData[todayDayIndex] = newDayResult;
+                                const updatedDataPart = weekData.join(' ');
+                                chartWasUpdated = true;
+                                return `${match[0]} ${updatedDataPart}`;
+                            }
+                         }
                     }
                 }
+                return line;
+            });
+            
+            if (chartWasUpdated) {
+                const finalUpdatedChartData = updatedLines.join('\n');
+                batch.update(panelChartDocRef, { data: finalUpdatedChartData });
             }
         }
+
         
         // Process bets for Close Pana, Close Single Digit, and Jodi Digit
         const bidsQuery = query(
