@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, getDoc, setDoc, DocumentData } from 'firebase/firestore';
+import { doc, getDoc, setDoc, DocumentData, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -228,6 +230,38 @@ export default function SettingsPage() {
       setUploadProgress(null);
     }
   };
+  
+  const handleDeleteWelcomeBanner = async () => {
+    if (!existingWelcomeBannerStoragePath) return;
+
+    try {
+      // Delete from Storage
+      const storageRef = ref(storage, existingWelcomeBannerStoragePath);
+      await deleteObject(storageRef);
+
+      // Delete from Firestore
+      const settingsDocRef = doc(db, 'settings', 'app-settings');
+      await updateDoc(settingsDocRef, {
+        welcomeBanner: null
+      });
+
+      // Update local state
+      setExistingWelcomeBannerUrl(null);
+      setExistingWelcomeBannerStoragePath(null);
+
+      toast({
+        title: 'Success!',
+        description: 'Welcome banner has been deleted.',
+      });
+    } catch (error) {
+      console.error("Error deleting welcome banner: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete the welcome banner.',
+      });
+    }
+  };
 
   return (
     <div className="flex-1 space-y-8 p-4 sm:p-8">
@@ -290,9 +324,29 @@ export default function SettingsPage() {
 
                 <h3 className="text-lg font-semibold">Welcome Banner</h3>
                 {existingWelcomeBannerUrl && (
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center gap-4">
                     <p className="text-sm text-muted-foreground mb-2">Current Welcome Banner:</p>
                     <Image src={existingWelcomeBannerUrl} alt="Current Welcome Banner" width={400} height={133} className="rounded-md border p-1" unoptimized />
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="destructive" size="sm">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Banner
+                           </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the welcome banner.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteWelcomeBanner}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 )}
                  <FormField
