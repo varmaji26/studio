@@ -22,7 +22,8 @@ import {
   ImageIcon,
   AreaChart,
   Eye,
-  ChevronDown
+  ChevronDown,
+  MailQuestion,
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
@@ -173,6 +174,14 @@ export default function AdminLayout({
                 </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
+           <SidebarMenuItem>
+            <Link href="/admin/pending-requests" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin/pending-requests')} tooltip={{children: "Pending Requests"}}>
+                <MailQuestion />
+                <span>Pending Requests</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/admin/update-results" passHref onClick={handleLinkClick}>
               <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result (Open)"}}>
@@ -231,7 +240,7 @@ export default function AdminLayout({
           </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/admin/deposits" passHref onClick={handleLinkClick}>
-              <SidebarMenuButton isActive={isActive('/admin/deposits')} tooltip={{children: "Deposits/Withdrawals"}}>
+              <SidebarMenuButton isActive={isActive('/admin/deposits')} tooltip={{children: "Deposits/Withdrawals History"}}>
                 <ArrowLeftRight />
                 <span>Deposits/Withdrawals</span>
               </SidebarMenuButton>
