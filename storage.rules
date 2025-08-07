@@ -1,9 +1,14 @@
+
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
+    // Allow public read access to all files.
     match /{allPaths=**} {
       allow read;
-      allow write: if request.auth != null && request.auth.uid == 'nRjDRPd9PyXf7E05lPM3qef5m2L2';
+      // Allow write access only for authenticated users.
+      // This is a secure and standard way to handle uploads.
+      allow write: if request.auth != null;
     }
   }
 }
