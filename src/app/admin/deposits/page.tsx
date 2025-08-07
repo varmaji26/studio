@@ -175,11 +175,18 @@ export default function ApprovedHistoryPage() {
     const unsubDeposits = fetchHistory('deposits', setDepositHistory);
     const unsubWithdrawals = fetchHistory('withdrawals', setWithdrawalHistory);
 
+    const timer = setTimeout(() => {
+        if (loading) {
+            setLoading(false);
+        }
+    }, 3000);
+
     return () => {
+      clearTimeout(timer);
       unsubDeposits.then(unsub => unsub());
       unsubWithdrawals.then(unsub => unsub());
     };
-  }, [fetchHistory]);
+  }, [fetchHistory, loading]);
 
   return (
     <div className="flex-1 space-y-4 p-4 sm:p-8">
