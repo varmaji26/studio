@@ -1,11 +1,12 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access for all users
+    // Allow read access for any authenticated user
     match /{document=**} {
-      allow read, write: if true;
+      allow read: if request.auth != null;
+      // Allow write access only for authenticated users (more specific rules can be added later)
+      allow write: if request.auth != null;
     }
   }
 }
