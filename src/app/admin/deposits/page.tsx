@@ -136,7 +136,6 @@ export default function ApprovedHistoryPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchHistory = useCallback(async (collectionName: 'deposits' | 'withdrawals', setData: React.Dispatch<React.SetStateAction<Request[]>>) => {
-      // Query only by status to avoid needing a composite index
       const q = query(collection(db, collectionName), where("status", "==", "approved"));
       
       const fetchUserDetails = async (requests: DocumentData[]): Promise<Request[]> => {
@@ -154,14 +153,13 @@ export default function ApprovedHistoryPage() {
       const unsubscribe = onSnapshot(q, async (snapshot) => {
           const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
           const dataWithUsers = await fetchUserDetails(data);
-          // Sort client-side to avoid composite index
           dataWithUsers.sort((a, b) => {
               const dateA = a.createdAt?.toMillis() || 0;
               const dateB = b.createdAt?.toMillis() || 0;
               return dateB - dateA;
           });
           setData(dataWithUsers);
-          setLoading(false);
+          setLoading(false); 
       }, (error) => {
           console.error(`Error fetching ${collectionName}: `, error);
           setLoading(false);
@@ -172,21 +170,14 @@ export default function ApprovedHistoryPage() {
 
   useEffect(() => {
     setLoading(true);
-    const unsubDeposits = fetchHistory('deposits', setDepositHistory);
-    const unsubWithdrawals = fetchHistory('withdrawals', setWithdrawalHistory);
-
-    const timer = setTimeout(() => {
-        if (loading) {
-            setLoading(false);
-        }
-    }, 3000);
+    const unsubDepositsPromise = fetchHistory('deposits', setDepositHistory);
+    const unsubWithdrawalsPromise = fetchHistory('withdrawals', setWithdrawalHistory);
 
     return () => {
-      clearTimeout(timer);
-      unsubDeposits.then(unsub => unsub());
-      unsubWithdrawals.then(unsub => unsub());
+      unsubDepositsPromise.then(unsub => unsub());
+      unsubWithdrawalsPromise.then(unsub => unsub());
     };
-  }, [fetchHistory, loading]);
+  }, [fetchHistory]);
 
   return (
     <div className="flex-1 space-y-4 p-4 sm:p-8">
