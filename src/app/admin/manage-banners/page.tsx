@@ -84,7 +84,10 @@ export default function ManageBannersPage() {
     try {
         const storagePath = `banners/${Date.now()}_${file.name}`;
         const storageRef = ref(storage, storagePath);
-        const uploadTask = uploadBytesResumable(storageRef, file);
+        const metadata = {
+            contentType: file.type,
+        };
+        const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
         uploadTask.on('state_changed', 
             (snapshot) => {

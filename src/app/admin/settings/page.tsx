@@ -127,7 +127,10 @@ export default function SettingsPage() {
     }
     const storagePath = `${path}/${Date.now()}_${file.name}`;
     const storageRef = ref(storage, storagePath);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const metadata = {
+        contentType: file.type
+    };
+    const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
     return new Promise((resolve, reject) => {
         uploadTask.on('state_changed',
