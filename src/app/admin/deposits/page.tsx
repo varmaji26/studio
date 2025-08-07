@@ -136,6 +136,7 @@ export default function ApprovedHistoryPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchHistory = useCallback(async (collectionName: 'deposits' | 'withdrawals', setData: React.Dispatch<React.SetStateAction<Request[]>>) => {
+      // Query only by status to avoid needing a composite index
       const q = query(collection(db, collectionName), where("status", "==", "approved"));
       
       const fetchUserDetails = async (requests: DocumentData[]): Promise<Request[]> => {
