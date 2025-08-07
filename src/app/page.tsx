@@ -277,6 +277,10 @@ export default function Home() {
                         <HomeIcon className="h-5 w-5 text-primary" />
                         <span>Home</span>
                     </Link>
+                    <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <UserIcon className="h-5 w-5 text-primary" />
+                        <span>Profile</span>
+                    </Link>
                     <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <BookUser className="h-5 w-5 text-primary" />
                         <span>Contact</span>
