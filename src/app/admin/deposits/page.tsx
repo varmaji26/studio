@@ -52,6 +52,9 @@ export default function DepositsAndWithdrawalsPage() {
     const fetchUserDetails = async (requests: DocumentData[]): Promise<Request[]> => {
       return Promise.all(
         requests.map(async (request) => {
+          if (!request.userId) {
+             return { ...request, mobile: 'N/A' } as Request;
+          }
           const userDocRef = doc(db, 'users', request.userId);
           const userDoc = await getDoc(userDocRef);
           const userData = userDoc.exists() ? userDoc.data() : {};
@@ -68,6 +71,10 @@ export default function DepositsAndWithdrawalsPage() {
       const depositsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       const depositsWithUsers = await fetchUserDetails(depositsData);
       setDepositRequests(depositsWithUsers);
+      setLoading(false); // Make sure loading is handled correctly
+    }, (error) => {
+        console.error("Error fetching deposits: ", error);
+        setLoading(false);
     });
 
     const withdrawalsQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
@@ -75,16 +82,17 @@ export default function DepositsAndWithdrawalsPage() {
       const withdrawalsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       const withdrawalsWithUsers = await fetchUserDetails(withdrawalsData);
       setWithdrawalRequests(withdrawalsWithUsers);
-      if(loading){
+      setLoading(false); // Make sure loading is handled correctly
+    }, (error) => {
+        console.error("Error fetching withdrawals: ", error);
         setLoading(false);
-      }
     });
 
     return () => {
       unsubDeposits();
       unsubWithdrawals();
     };
-  }, [loading]);
+  }, []);
 
   const handleDepositRequest = async (request: Request, status: 'approved' | 'rejected') => {
     const requestDocRef = doc(db, 'deposits', request.id);
@@ -158,12 +166,12 @@ export default function DepositsAndWithdrawalsPage() {
     };
   }, [searchTerm, pendingDeposits, pendingWithdrawals]);
 
+  const totalWithdrawalPages = Math.ceil(filteredData.withdrawals.length / itemsPerPage);
   const paginatedWithdrawals = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredData.withdrawals.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredData.withdrawals, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(filteredData.withdrawals.length / itemsPerPage);
 
   const renderWithdrawalsTable = () => (
     <div className="space-y-4">
@@ -237,7 +245,7 @@ export default function DepositsAndWithdrawalsPage() {
             <div className="flex items-center gap-2">
                  <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1}>Previous</Button>
                  <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
-                 <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages}>Next</Button>
+                 <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalWithdrawalPages, p+1))} disabled={currentPage === totalWithdrawalPages || paginatedWithdrawals.length === 0}>Next</Button>
             </div>
         </div>
     </div>
@@ -315,3 +323,5 @@ export default function DepositsAndWithdrawalsPage() {
       </div>
   );
 }
+
+    
