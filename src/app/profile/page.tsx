@@ -28,7 +28,7 @@ interface UserProfile extends DocumentData {
 }
 
 export default function ProfilePage() {
-  const { user: authUser, loading } from useAuth();
+  const { user: authUser, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [user, setUser] = useState<FirebaseAuthUser | null>(null);
