@@ -27,15 +27,15 @@ import {
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { Loader } from '@/components/loader';
 
 
 export default function AdminLayout({
@@ -50,10 +50,17 @@ export default function AdminLayout({
 
   const isLoadMenuInitiallyOpen = isActive('/admin/view-open-load') || isActive('/admin/view-close-load') || isActive('/admin/view-gametype-load');
   const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(isLoadMenuInitiallyOpen);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  
+  React.useEffect(() => {
+    if (!authLoading) {
+      if (!user || !user.isAdmin) {
+        router.replace('/');
+      }
+    }
+  }, [user, authLoading, router]);
+
   const handleLinkClick = () => {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
@@ -69,6 +76,13 @@ export default function AdminLayout({
     }
   };
 
+  if (authLoading || !user || !user.isAdmin) {
+    return (
+      <div className="dark flex h-screen w-full items-center justify-center bg-background">
+        <Loader className="h-10 w-10 text-primary" />
+      </div>
+    );
+  }
 
   const sidebarItems = (
     <>
