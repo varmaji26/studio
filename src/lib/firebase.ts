@@ -5,14 +5,12 @@ import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig: FirebaseOptions = {
-  apiKey: "AIzaSyCTncE_u2wUR8W3ptwlRuDG4wmCjI6bF-w",
-  authDomain: "matka-king-66ec3.firebaseapp.com",
-  databaseURL: "https://matka-king-66ec3-default-rtdb.firebaseio.com",
-  projectId: "matka-king-66ec3",
-  storageBucket: "matka-king-66ec3.firebasestorage.app",
-  messagingSenderId: "358988541311",
-  appId: "1:358988541311:web:03491fbc1031220e16be4a",
-  measurementId: "G-GFZW681BYB"
+  "projectId": "auth-canvas",
+  "appId": "1:645923871999:web:848febd795743ae4e4c0ca",
+  "storageBucket": "auth-canvas.appspot.com",
+  "apiKey": "AIzaSyDEZ0vQLJ2kY_3_pdWqZw7OjJVoQvoeJjM",
+  "authDomain": "auth-canvas.firebaseapp.com",
+  "messagingSenderId": "645923871999"
 };
 
 // Initialize Firebase
