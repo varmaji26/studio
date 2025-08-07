@@ -99,7 +99,7 @@ export default function ManageBannersPage() {
                  toast({
                     variant: 'destructive',
                     title: 'Upload Error',
-                    description: 'Failed to upload the banner image.',
+                    description: `Failed to upload the banner image: ${error.message}`,
                 });
                 setIsSubmitting(false);
                 setUploadProgress(null);

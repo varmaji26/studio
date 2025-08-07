@@ -216,7 +216,12 @@ export default function SettingsPage() {
         if (qrCodeData) {
             dataToSave.paymentDetails['Scan QR Code'] = qrCodeData;
         } else {
-            delete dataToSave.paymentDetails['Scan QR Code'];
+            // Check if 'Scan QR Code' exists and if there is no new file, to prevent deleting it.
+            if (!qrFile && dataToSave.paymentDetails['Scan QR Code']) {
+                // Keep the existing one
+            } else if (!qrFile) {
+                delete dataToSave.paymentDetails['Scan QR Code'];
+            }
         }
         
         await setDoc(settingsDocRef, dataToSave, { merge: true });
