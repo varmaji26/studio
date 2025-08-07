@@ -9,7 +9,7 @@ const firebaseConfig: FirebaseOptions = {
   "appId": "1:645923871999:web:848febd795743ae4e4c0ca",
   "storageBucket": "auth-canvas.appspot.com",
   "apiKey": "AIzaSyDEZ0vQLJ2kY_3_pdWqZw7OjJVoQvoeJjM",
-  "authDomain": "auth-canvas.firebaseapp.com",
+  "authDomain": "",
   "messagingSenderId": "645923871999"
 };
 
