@@ -3,8 +3,9 @@ service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
       // Allow read and write access to all users.
-      // In a production app, you should restrict this to authenticated users.
-      // e.g., allow read, write: if request.auth != null;
+      // WARNING: This is insecure. It's recommended to restrict access.
+      // For example, to only allow authenticated users:
+      // allow read, write: if request.auth != null;
       allow read, write;
     }
   }
