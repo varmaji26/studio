@@ -295,10 +295,6 @@ export default function Home() {
                         <Star className="h-5 w-5 text-primary" />
                         <span>Rate Card</span>
                     </Link>
-                    <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <UserIcon className="h-5 w-5 text-primary" />
-                        <span>Profile</span>
-                    </Link>
                     <Link href="/win-history" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <Trophy className="h-5 w-5 text-primary" />
                         <span>Win History</span>
@@ -310,10 +306,6 @@ export default function Home() {
                     <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <BarChart2 className="h-5 w-5 text-primary" />
                         <span>Chart</span>
-                    </Link>
-                    <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <Wallet className="h-5 w-5 text-primary" />
-                        <span>Point Funds</span>
                     </Link>
                 </nav>
             </div>
