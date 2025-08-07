@@ -53,6 +53,7 @@ export function ChangePasswordDialog({ children, mobileNumber }: ChangePasswordD
   const [step, setStep] = useState<'send_otp' | 'verify_otp' | 'set_password'>('send_otp');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [isRecaptchaVerified, setIsRecaptchaVerified] = useState(false);
 
   const otpForm = useForm<z.infer<typeof otpSchema>>({
     resolver: zodResolver(otpSchema),
@@ -70,29 +71,49 @@ export function ChangePasswordDialog({ children, mobileNumber }: ChangePasswordD
         setStep('send_otp');
         setIsSubmitting(false);
         setConfirmationResult(null);
+        setIsRecaptchaVerified(false);
         otpForm.reset();
         passwordForm.reset();
-        window.recaptchaVerifier?.clear();
+        if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+        }
     }
   }, [open, otpForm, passwordForm]);
   
   const setupRecaptcha = () => {
     if (!window.recaptchaVerifier) {
         window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            'size': 'invisible',
+            'size': 'normal',
             'callback': (response: any) => {
                 // reCAPTCHA solved, allow signInWithPhoneNumber.
+                setIsRecaptchaVerified(true);
+            },
+            'expired-callback': () => {
+                // Response expired. Ask user to solve reCAPTCHA again.
+                setIsRecaptchaVerified(false);
             }
         });
+        window.recaptchaVerifier.render(); // Render the reCAPTCHA
     }
     return window.recaptchaVerifier;
   }
+  
+  useEffect(() => {
+    if (open && step === 'send_otp') {
+        // slight delay to ensure the container is in the DOM
+        setTimeout(() => setupRecaptcha(), 100); 
+    }
+  }, [open, step]);
+
 
   const handleSendOtp = async () => {
     setIsSubmitting(true);
     try {
       const fullPhoneNumber = `+91${mobileNumber}`;
-      const appVerifier = setupRecaptcha();
+      const appVerifier = window.recaptchaVerifier;
+      if (!appVerifier) {
+        throw new Error("reCAPTCHA not initialized.");
+      }
       const result = await signInWithPhoneNumber(auth, fullPhoneNumber, appVerifier);
       setConfirmationResult(result);
       setStep('verify_otp');
@@ -100,7 +121,10 @@ export function ChangePasswordDialog({ children, mobileNumber }: ChangePasswordD
     } catch (error) {
       console.error('Error sending OTP:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to send OTP. Please try again.' });
-      window.recaptchaVerifier?.clear();
+       if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+      setIsRecaptchaVerified(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +168,7 @@ export function ChangePasswordDialog({ children, mobileNumber }: ChangePasswordD
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
            <DialogDescription>
-            {step === 'send_otp' && 'We will send a verification code to your registered mobile number.'}
+            {step === 'send_otp' && 'Please verify reCAPTCHA and then we will send a verification code to your registered mobile number.'}
             {step === 'verify_otp' && 'Please enter the 6-digit code sent to your mobile.'}
             {step === 'set_password' && 'Enter your new password.'}
           </DialogDescription>
@@ -153,7 +177,8 @@ export function ChangePasswordDialog({ children, mobileNumber }: ChangePasswordD
         {step === 'send_otp' && (
             <div className="space-y-4">
                 <p>A one-time password (OTP) will be sent to: <strong>+91 {mobileNumber}</strong></p>
-                <Button onClick={handleSendOtp} disabled={isSubmitting} className="w-full">
+                <div id="recaptcha-container" className="my-4 flex justify-center"></div>
+                <Button onClick={handleSendOtp} disabled={isSubmitting || !isRecaptchaVerified} className="w-full">
                     {isSubmitting && <Loader className="mr-2"/>}
                     Send OTP
                 </Button>

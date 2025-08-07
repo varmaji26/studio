@@ -28,7 +28,7 @@ interface UserProfile extends DocumentData {
 }
 
 export default function ProfilePage() {
-  const { user: authUser, loading } = useAuth();
+  const { user: authUser, loading } from useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [user, setUser] = useState<FirebaseAuthUser | null>(null);
@@ -75,7 +75,6 @@ export default function ProfilePage() {
   
   return (
     <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-       <div id="recaptcha-container"></div>
       <div className="max-w-2xl mx-auto">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader className="text-center">
@@ -122,6 +121,7 @@ export default function ProfilePage() {
             </div>
     
             <div className="space-y-4">
+                <div id="recaptcha-container" className="my-4"></div>
                 <AddPointsDialog user={user}>
                     <Button className="w-full h-16 bg-green-500 hover:bg-green-600 text-white font-bold text-lg flex items-center gap-3">
                         <Wallet className="h-7 w-7" />
