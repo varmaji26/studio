@@ -136,7 +136,7 @@ export default function ApprovedHistoryPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchHistory = useCallback(async (collectionName: 'deposits' | 'withdrawals', setData: React.Dispatch<React.SetStateAction<Request[]>>) => {
-      const q = query(collection(db, collectionName), where("status", "==", "approved"), orderBy("createdAt", "desc"));
+      const q = query(collection(db, collectionName), where("status", "==", "approved"));
       
       const fetchUserDetails = async (requests: DocumentData[]): Promise<Request[]> => {
           return Promise.all(
@@ -153,6 +153,12 @@ export default function ApprovedHistoryPage() {
       const unsubscribe = onSnapshot(q, async (snapshot) => {
           const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
           const dataWithUsers = await fetchUserDetails(data);
+          // Sort client-side to avoid composite index
+          dataWithUsers.sort((a, b) => {
+              const dateA = a.createdAt?.toMillis() || 0;
+              const dateB = b.createdAt?.toMillis() || 0;
+              return dateB - dateA;
+          });
           setData(dataWithUsers);
           setLoading(false);
       }, (error) => {
