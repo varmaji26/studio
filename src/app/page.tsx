@@ -338,7 +338,7 @@ export default function Home() {
         <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
                 <Wallet className="h-6 w-6 text-green-400" />
-                <span className="font-bold text-lg text-white">₹{userProfile?.balance?.toFixed(2) ?? '0.00'}</span>
+                <span className="font-bold text-lg text-white">₹{userProfile?.balance?.toFixed(0) ?? '0'}</span>
             </div>
           {isAdmin && (
             <Link href="/admin">
