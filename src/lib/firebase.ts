@@ -9,7 +9,7 @@ const firebaseConfig: FirebaseOptions = {
   authDomain: "matka-king-66ec3.firebaseapp.com",
   databaseURL: "https://matka-king-66ec3-default-rtdb.firebaseio.com",
   projectId: "matka-king-66ec3",
-  storageBucket: "matka-king-66ec3.appspot.com",
+  storageBucket: "matka-king-66ec3.firebasestorage.app",
   messagingSenderId: "358988541311",
   appId: "1:358988541311:web:03491fbc1031220e16be4a",
   measurementId: "G-GFZW681BYB"
