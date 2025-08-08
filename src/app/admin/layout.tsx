@@ -14,7 +14,8 @@ import {
   History,
   Trophy,
   KeyRound,
-  ArrowLeftRight,
+  ArrowUpCircle,
+  ArrowDownCircle,
   ClipboardList,
   UserCheck,
   CreditCard,
@@ -239,10 +240,18 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/admin/deposits" passHref onClick={handleLinkClick}>
-              <SidebarMenuButton isActive={isActive('/admin/deposits')} tooltip={{children: "Deposits/Withdrawals History"}}>
-                <ArrowLeftRight />
-                <span>Deposits/Withdrawals</span>
+            <Link href="/admin/approved-deposits" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin/approved-deposits')} tooltip={{children: "Approved Deposits"}}>
+                <ArrowUpCircle />
+                <span>Approved Deposits</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <Link href="/admin/approved-withdrawals" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin/approved-withdrawals')} tooltip={{children: "Approved Withdrawals"}}>
+                <ArrowDownCircle />
+                <span>Approved Withdrawals</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
