@@ -57,15 +57,15 @@ const settingsSchema = z.object({
       ".jpg, .jpeg, .png, .webp, and .svg files are accepted."
     ),
   marqueeLogoSize: z.preprocess(
-    (a) => parseInt(z.string().parse(a), 10),
+    (val) => (String(val).trim() === '' ? undefined : Number(val)),
     z.number().min(10, 'Minimum size is 10px.').optional()
   ),
   marqueeTitleSize: z.preprocess(
-    (a) => parseInt(z.string().parse(a), 10),
+    (val) => (String(val).trim() === '' ? undefined : Number(val)),
     z.number().min(10, 'Minimum size is 10px.').optional()
   ),
   marqueeTextSize: z.preprocess(
-    (a) => parseInt(z.string().parse(a), 10),
+     (val) => (String(val).trim() === '' ? undefined : Number(val)),
     z.number().min(8, 'Minimum size is 8px.').optional()
   ),
 });
