@@ -10,6 +10,8 @@ import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { ArrowDown } from 'lucide-react';
 
 interface Request extends DocumentData {
     id: string;
@@ -19,6 +21,7 @@ interface Request extends DocumentData {
     amount: number;
     status: 'pending' | 'approved' | 'rejected';
     createdAt: any;
+    withdrawalMethod?: string;
 }
 
 const formatDate = (timestamp: any) => {
@@ -98,6 +101,9 @@ const HistoryTable = ({ title, data, loading }: { title: string; data: Request[]
                                     <TableHead>Mobile</TableHead>
                                     <TableHead>Amount</TableHead>
                                     <TableHead>Date</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Method</TableHead>
+                                    <TableHead>Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -108,6 +114,18 @@ const HistoryTable = ({ title, data, loading }: { title: string; data: Request[]
                                         <TableCell>{request.mobile}</TableCell>
                                         <TableCell>₹{request.amount}</TableCell>
                                         <TableCell>{formatDate(request.createdAt)}</TableCell>
+                                        <TableCell>
+                                            <Badge variant='outline' className='bg-red-500/20 text-red-400'>
+                                                <ArrowDown className="h-3 w-3 mr-1" />
+                                                Withdrawal
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{request.withdrawalMethod}</TableCell>
+                                        <TableCell>
+                                            <Badge className='bg-green-500 text-white'>
+                                                {request.status}
+                                            </Badge>
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -176,7 +194,7 @@ export default function ApprovedWithdrawalsPage() {
   }, [fetchHistory]);
 
   return (
-    <div className="flex-1 space-y-6">
+    <div className="flex-1 space-y-6 p-6">
         <HistoryTable title="Approved Withdrawal History" data={withdrawalHistory} loading={loading} />
     </div>
   );
