@@ -29,6 +29,7 @@ import {
   CreditCard,
   LogOut,
   MessageSquare,
+  Gem
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -324,6 +325,10 @@ export default function Home() {
                     <Link href="/payment-history" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <CreditCard className="h-5 w-5 text-primary" />
                         <span>Payment History</span>
+                    </Link>
+                     <Link href="/golden-ank" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Gem className="h-5 w-5 text-primary" />
+                        <span>Golden Ank</span>
                     </Link>
                     <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <Star className="h-5 w-5 text-primary" />
