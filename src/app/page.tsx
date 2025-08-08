@@ -28,6 +28,7 @@ import {
   Landmark,
   CreditCard,
   LogOut,
+  MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -357,7 +358,7 @@ export default function Home() {
         </div>
       </div>
       
-      <main className="flex flex-col gap-4 p-4">
+      <main className="flex flex-col gap-4 p-4 pb-24">
         {settings.welcomeBanner?.imageUrl && (
              <Card className="bg-card/80 border-white/10 shadow-lg">
                 <CardContent className="p-0">
@@ -373,69 +374,6 @@ export default function Home() {
                 </CardContent>
             </Card>
         )}
-
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-2 sm:gap-4">
-             <AddPointsDialog user={user}>
-                <Button className="h-16 flex-col gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
-                    <Banknote className="h-7 w-7 font-bold [filter:drop-shadow(2px_2px_2px_#000)]" />
-                    <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">Deposit Funds</span>
-                </Button>
-             </AddPointsDialog>
-            <Button 
-                className="h-16 flex-col gap-1 bg-green-500 text-white hover:bg-green-600"
-                onClick={handleWhatsAppSupport}
-                disabled={!settings.whatsappNumber}
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-7 w-7 font-bold [filter:drop-shadow(2px_2px_2px_#000)]"
-                    >
-                    <path
-                        d="M16.75 13.96c.25.13.42.2.46.28.05.09.04.28-.12.58-.12.24-.71.82-1.02.99-.28.16-.58.2-.88.13-.3-.07-1.25-.47-2.38-1.42s-1.8-2.1-1.88-2.2-.08-.12,0-.2.2-.24.28-.32.16-.18.24-.28.04-.16,0-.32c-.04-.16-1.02-2.44-1.4-3.22-.38-.78-.76-.67-.98-.68-.2-.01-.43,0-.65,0s-.58.08-.88.42-.99 1.18-.99 2.89,1.02 3.36,1.18 3.59.86 1.39,2.89 2.58c2.14 1.28,2.98 1.1,3.59.99.58-.12,1.02-.47,1.18-.91.16-.42.16-.78.12-.86s-.16-.13-.32-.24Z"
-                    />
-                    <path
-                        fillRule="evenodd"
-                        d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2ZM5.93 16.51l.39.23c1.48.88,3.13 1.36,4.86 1.36h.02c3.99 0,7.24-3.25,7.24-7.24 0-3.99-3.25-7.24-7.24-7.24a7.12 7.12,0,0,0,-6.3,10.23l-1.33,4.01,4.13-1.36Z"
-                        clipRule="evenodd"
-                    />
-                </svg>
-              <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">WhatsApp</span>
-            </Button>
-            <Button 
-                className="h-16 flex-col gap-1 bg-blue-500 text-white hover:bg-blue-600"
-                onClick={handleTelegramSupport}
-                disabled={!settings.telegramLink}
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-7 w-7 font-bold [filter:drop-shadow(2px_2px_2px_#000)]"
-                >
-                    <path d="M9.78 18.65l.28-4.23l7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3L3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.1-.86 1.32-1.74.84l-4.97-3.6-2.44 2.34c-.27.27-.5.4-.85.4z" />
-                </svg>
-                <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">Telegram</span>
-            </Button>
-            <Button 
-              className="h-16 flex-col gap-1 bg-red-500 text-white hover:bg-red-600"
-              onClick={handleCallSupport}
-              disabled={!settings.callSupportNumber}
-            >
-              <Phone className="h-7 w-7 font-bold [filter:drop-shadow(2px_2px_2px_#000)]" />
-              <span className="text-base font-bold [text-shadow:2px_2px_4px_#000]">Call Support</span>
-            </Button>
-          </CardContent>
-        </Card>
         
         {bannersLoading ? (
             <Card className="bg-card/80 border-white/10 shadow-lg flex items-center justify-center h-[200px]">
@@ -577,6 +515,41 @@ export default function Home() {
           </CardContent>
         </Card>
       </main>
+
+       <footer className="fixed bottom-0 left-0 right-0 bg-card/90 backdrop-blur-sm border-t border-white/10 p-2 z-50">
+          <div className="grid grid-cols-4 gap-2">
+            <AddPointsDialog user={user}>
+                <button className="flex flex-col items-center justify-center text-primary text-xs font-semibold gap-1">
+                    <Banknote className="h-6 w-6" />
+                    Deposit Funds
+                </button>
+            </AddPointsDialog>
+             <button
+              onClick={handleWhatsAppSupport}
+              disabled={!settings.whatsappNumber}
+              className="flex flex-col items-center justify-center text-primary text-xs font-semibold gap-1 disabled:opacity-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.269.655 4.357 1.846 6.166l-1.138 4.162 4.277-1.122z" /></svg>
+              WhatsApp
+            </button>
+            <button
+              onClick={handleTelegramSupport}
+              disabled={!settings.telegramLink}
+              className="flex flex-col items-center justify-center text-primary text-xs font-semibold gap-1 disabled:opacity-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M9.78 18.65l.28-4.23l7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3L3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.1-.86 1.32-1.74.84l-4.97-3.6-2.44 2.34c-.27.27-.5.4-.85.4z" /></svg>
+              Telegram
+            </button>
+            <button
+              onClick={handleCallSupport}
+              disabled={!settings.callSupportNumber}
+              className="flex flex-col items-center justify-center text-primary text-xs font-semibold gap-1 disabled:opacity-50"
+            >
+              <Phone className="h-6 w-6" />
+              Call Support
+            </button>
+          </div>
+        </footer>
     </div>
   );
 }
