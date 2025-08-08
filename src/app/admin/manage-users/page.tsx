@@ -202,7 +202,7 @@ export default function ManageUsersPage() {
 
 
   return (
-     <div className="flex-1 p-4 sm:p-6">
+     <div className="p-4 sm:p-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-3xl font-bold">Manage Users</CardTitle>
@@ -293,7 +293,7 @@ export default function ManageUsersPage() {
                 {totalPages > 1 && renderPagination()}
                 </>
             )}
-            {filteredUsers.length === 0 && !usersLoading && (
+            {paginatedUsers.length === 0 && !usersLoading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm ? `No users found for "${searchTerm}".` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
                 </p>
