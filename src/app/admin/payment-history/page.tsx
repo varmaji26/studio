@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -35,21 +35,19 @@ declare module 'jspdf' {
   }
 }
 
-const PAGE_SIZE = 7;
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminPaymentHistoryPage() {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
-  const [displayedTransactions, setDisplayedTransactions] = useState<Transaction[]>([]);
-  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState('all');
 
   const fetchUserDetails = async (requests: DocumentData[]): Promise<Transaction[]> => {
-    const requestsWithUsers = await Promise.all(
+    return Promise.all(
         requests.map(async (request) => {
+            if (!request.userId) return { ...request, mobile: 'N/A' } as Transaction;
             const userDocRef = doc(db, 'users', request.userId);
             const userDoc = await getDoc(userDocRef);
             const userData = userDoc.exists() ? userDoc.data() : {};
@@ -59,7 +57,6 @@ export default function AdminPaymentHistoryPage() {
             } as Transaction;
         })
     );
-    return requestsWithUsers;
   };
 
   const fetchAllTransactions = useCallback(async () => {
@@ -85,9 +82,6 @@ export default function AdminPaymentHistoryPage() {
         const combined = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
         
         setAllTransactions(combined);
-        setDisplayedTransactions(combined.slice(0, PAGE_SIZE));
-        setPage(1);
-        setHasMore(combined.length > PAGE_SIZE);
         
     } catch (error) {
         console.error("Error fetching transactions: ", error);
@@ -96,34 +90,40 @@ export default function AdminPaymentHistoryPage() {
     }
   }, []);
 
-
-   useEffect(() => {
-    fetchAllTransactions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  
   useEffect(() => {
+    fetchAllTransactions();
+  }, [fetchAllTransactions]);
+  
+  const filteredTransactions = useMemo(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (!lowercasedFilter) {
-        setFilteredTransactions(displayedTransactions);
-        setHasMore(allTransactions.length > displayedTransactions.length);
-        return;
+        return allTransactions;
     }
-    const filteredData = allTransactions.filter((t) => 
+    return allTransactions.filter((t) => 
       t.displayName?.toLowerCase().includes(lowercasedFilter) ||
       t.mobile?.toLowerCase().includes(lowercasedFilter)
     );
-    setFilteredTransactions(filteredData);
-    setHasMore(false); // Disable load more when searching
-  }, [searchTerm, displayedTransactions, allTransactions]);
+  }, [searchTerm, allTransactions]);
 
-  const loadMore = () => {
-      const nextPage = page + 1;
-      const newTransactions = allTransactions.slice(0, nextPage * PAGE_SIZE);
-      setDisplayedTransactions(newTransactions);
-      setPage(nextPage);
-      setHasMore(allTransactions.length > newTransactions.length);
-  };
+  const transactionsForTab = useMemo(() => {
+      if (activeTab === 'deposits') {
+          return filteredTransactions.filter(t => t.type === 'deposit');
+      }
+      if (activeTab === 'withdrawals') {
+          return filteredTransactions.filter(t => t.type === 'withdrawal');
+      }
+      return filteredTransactions;
+  }, [filteredTransactions, activeTab]);
+
+  const totalPages = Math.ceil(transactionsForTab.length / ITEMS_PER_PAGE);
+  const paginatedTransactions = useMemo(() => {
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      return transactionsForTab.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [transactionsForTab, currentPage]);
+
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [searchTerm, activeTab]);
 
 
   const formatDate = (timestamp: Timestamp) => {
@@ -148,17 +148,7 @@ export default function AdminPaymentHistoryPage() {
     const tableColumn = ["Date", "Username", "Mobile", "Type", "Amount", "Method", "Status"];
     const tableRows: (string | number)[][] = [];
     
-    let transactionsToExport = allTransactions;
-
-    if(searchTerm) {
-        const lowercasedFilter = searchTerm.toLowerCase().trim();
-        transactionsToExport = allTransactions.filter((t) => 
-            t.displayName?.toLowerCase().includes(lowercasedFilter) ||
-            t.mobile?.toLowerCase().includes(lowercasedFilter)
-        );
-    }
-
-    transactionsToExport.forEach(t => {
+    transactionsForTab.forEach(t => {
         const transactionData = [
             formatDate(t.createdAt),
             t.displayName,
@@ -177,9 +167,40 @@ export default function AdminPaymentHistoryPage() {
         startY: 20,
     });
 
-    doc.save('admin-payment-history.pdf');
+    doc.save(`payment-history-${activeTab}.pdf`);
   };
   
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    return (
+        <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
+            <div>
+                Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, transactionsForTab.length)}</strong> of <strong>{transactionsForTab.length}</strong> entries
+            </div>
+            <div className="flex items-center gap-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                >
+                    Previous
+                </Button>
+                 <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                >
+                    Next
+                </Button>
+            </div>
+        </div>
+    )
+  }
+
   const renderTable = (data: Transaction[]) => (
      <div className="overflow-x-auto mt-4">
         <Table>
@@ -231,10 +252,8 @@ export default function AdminPaymentHistoryPage() {
      </div>
   );
 
-  const dataForTabs = searchTerm ? filteredTransactions : allTransactions;
-
   return (
-     <div className="flex-1 space-y-6">
+     <div className="flex-1 space-y-6 p-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <div className="flex justify-between items-start">
@@ -242,7 +261,7 @@ export default function AdminPaymentHistoryPage() {
                     <CardTitle className="text-3xl font-bold">Payment History</CardTitle>
                     <CardDescription>View all deposit and withdrawal history for all users.</CardDescription>
                 </div>
-                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={allTransactions.length === 0}>
+                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={transactionsForTab.length === 0}>
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                 </Button>
@@ -250,7 +269,7 @@ export default function AdminPaymentHistoryPage() {
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">All Transactions ({searchTerm ? filteredTransactions.length : allTransactions.length})</h3>
+                <h3 className="text-xl font-semibold">All Transactions ({transactionsForTab.length})</h3>
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
@@ -267,32 +286,24 @@ export default function AdminPaymentHistoryPage() {
                     <Loader className="h-8 w-8 text-primary" />
                 </div>
             ) : (
-                <Tabs defaultValue="all">
+                <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
                     <TabsList>
                         <TabsTrigger value="all">All</TabsTrigger>
                         <TabsTrigger value="deposits">Deposits</TabsTrigger>
                         <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
                     </TabsList>
                     <TabsContent value="all">
-                        {renderTable(filteredTransactions)}
+                        {renderTable(paginatedTransactions)}
                     </TabsContent>
                     <TabsContent value="deposits">
-                        {renderTable(filteredTransactions.filter(t => t.type === 'deposit'))}
+                        {renderTable(paginatedTransactions)}
                     </TabsContent>
                     <TabsContent value="withdrawals">
-                        {renderTable(filteredTransactions.filter(t => t.type === 'withdrawal'))}
+                        {renderTable(paginatedTransactions)}
                     </TabsContent>
                 </Tabs>
             )}
-            
-            {hasMore && !searchTerm && !loading && (
-                <div className="text-center mt-6">
-                    <Button onClick={loadMore}>
-                        Load More
-                    </Button>
-                </div>
-            )}
-            
+            {!loading && renderPagination()}
           </CardContent>
         </Card>
       </div>
