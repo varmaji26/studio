@@ -322,7 +322,7 @@ export default function PendingRequestsPage() {
                         <CardDescription>Approve or reject user deposit and withdrawal requests.</CardDescription>
                     </div>
                     <Button asChild variant="outline">
-                        <Link href="/admin/deposits" className="flex items-center gap-2">
+                        <Link href="/admin/payment-history" className="flex items-center gap-2">
                            <ArrowLeft className="h-4 w-4" />
                            Back to History
                         </Link>
