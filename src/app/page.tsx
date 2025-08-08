@@ -109,6 +109,18 @@ export default function Home() {
   }, [user, loading, router]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const id = window.location.hash.substring(1);
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 500); // Delay to ensure content has rendered
+    }
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
 
     const userDocRef = doc(db, 'users', user.uid);
@@ -507,6 +519,7 @@ export default function Home() {
                 return (
                     <div
                         key={game.id}
+                        id={game.id}
                         className={cn(
                             "rounded-lg p-4 text-center space-y-3 animated-border",
                             animatingGameId === game.id && "animate-pulse-once"
