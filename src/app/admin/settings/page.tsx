@@ -56,6 +56,18 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png, .webp, and .svg files are accepted."
     ),
+  marqueeLogoSize: z.preprocess(
+    (a) => parseInt(z.string().parse(a), 10),
+    z.number().min(10, 'Minimum size is 10px.').optional()
+  ),
+  marqueeTitleSize: z.preprocess(
+    (a) => parseInt(z.string().parse(a), 10),
+    z.number().min(10, 'Minimum size is 10px.').optional()
+  ),
+  marqueeTextSize: z.preprocess(
+    (a) => parseInt(z.string().parse(a), 10),
+    z.number().min(8, 'Minimum size is 8px.').optional()
+  ),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -86,6 +98,9 @@ export default function SettingsPage() {
       marqueeText: '',
       marqueeBackgroundColor: '#b91c1c', // default red-700
       marqueeTextColor: '#ffffff', // default white
+      marqueeLogoSize: 24,
+      marqueeTitleSize: 20,
+      marqueeTextSize: 12,
     },
   });
 
@@ -112,6 +127,9 @@ export default function SettingsPage() {
             marqueeText: data.marquee?.text || '',
             marqueeBackgroundColor: data.marquee?.backgroundColor || '#b91c1c',
             marqueeTextColor: data.marquee?.textColor || '#ffffff',
+            marqueeLogoSize: data.marquee?.logoSize || 24,
+            marqueeTitleSize: data.marquee?.titleSize || 20,
+            marqueeTextSize: data.marquee?.textSize || 12,
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -259,6 +277,9 @@ export default function SettingsPage() {
               backgroundColor: values.marqueeBackgroundColor,
               textColor: values.marqueeTextColor,
               logo: marqueeLogoData,
+              logoSize: values.marqueeLogoSize,
+              titleSize: values.marqueeTitleSize,
+              textSize: values.marqueeTextSize,
             },
         };
 
@@ -533,7 +554,48 @@ export default function SettingsPage() {
                       )}
                     />
                 </div>
-                
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="marqueeLogoSize"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Logo Size (px)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="bg-input h-12 rounded-lg" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="marqueeTitleSize"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title Font Size (px)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="bg-input h-12 rounded-lg" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="marqueeTextSize"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sub-line Font Size (px)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="bg-input h-12 rounded-lg" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                 </div>
+
                 <Separator />
 
                 <h3 className="text-lg font-semibold">Welcome Banner</h3>

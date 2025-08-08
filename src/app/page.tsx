@@ -77,7 +77,10 @@ interface AppSettings extends DocumentData {
         textColor: string;
         logo?: {
             imageUrl: string;
-        }
+        },
+        logoSize?: number;
+        titleSize?: number;
+        textSize?: number;
     }
 }
 
@@ -90,17 +93,20 @@ const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
     const text = settings?.text || '';
     const textColor = settings?.textColor || '#FFFFFF';
     const logoUrl = settings?.logo?.imageUrl;
+    const logoSize = settings?.logoSize || 24;
+    const titleSize = settings?.titleSize || 20;
+    const textSize = settings?.textSize || 12;
 
     return (
         <div className="flex items-center mx-4" style={{ color: textColor }}>
             {logoUrl ? (
-                <Image src={logoUrl} alt="Marquee Logo" width={24} height={24} className="h-6 w-6 mr-2" unoptimized/>
+                <Image src={logoUrl} alt="Marquee Logo" width={logoSize} height={logoSize} className="mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} unoptimized/>
             ) : (
-                <Trophy className="h-6 w-6 text-yellow-400 mr-2" />
+                <Trophy className="text-yellow-400 mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} />
             )}
             <div className="flex flex-col items-center">
-                <span className="text-xl font-bold tracking-wider">{title}</span>
-                <span className="text-xs">{text}</span>
+                <span className="font-bold tracking-wider" style={{ fontSize: `${titleSize}px` }}>{title}</span>
+                <span style={{ fontSize: `${textSize}px`}}>{text}</span>
             </div>
         </div>
     );
@@ -548,7 +554,7 @@ export default function Home() {
             <AddPointsDialog user={user}>
                 <button className="flex flex-col items-center justify-center text-white text-xs gap-1 p-1 rounded-md bg-amber-500 hover:bg-amber-600">
                     <Banknote className="h-6 w-6 [filter:drop-shadow(1px_1px_1px_rgba(0,0,0,0.7))]" />
-                    <span className="font-bold [text-shadow:1px_1px_2px_black]">Deposit</span>
+                    <span className="font-bold [text-shadow:1px_1px_2px_#000]">Deposit</span>
                 </button>
             </AddPointsDialog>
              <button
@@ -557,7 +563,7 @@ export default function Home() {
               className="flex flex-col items-center justify-center text-white text-xs gap-1 disabled:opacity-50 bg-green-500 hover:bg-green-600 p-1 rounded-md"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 [filter:drop-shadow(1px_1px_1px_rgba(0,0,0,0.7))]"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.269.655 4.357 1.846 6.166l-1.138 4.162 4.277-1.122z" /></svg>
-              <span className="font-bold [text-shadow:1px_1px_2px_black]">WhatsApp</span>
+              <span className="font-bold [text-shadow:1px_1px_2px_#000]">WhatsApp</span>
             </button>
             <button
               onClick={handleTelegramSupport}
@@ -565,7 +571,7 @@ export default function Home() {
               className="flex flex-col items-center justify-center text-white text-xs gap-1 disabled:opacity-50 bg-blue-500 hover:bg-blue-600 p-1 rounded-md"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 [filter:drop-shadow(1px_1px_1px_rgba(0,0,0,0.7))]"><path d="M9.78 18.65l.28-4.23l7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3L3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.1-.86 1.32-1.74.84l-4.97-3.6-2.44 2.34c-.27.27-.5.4-.85.4z" /></svg>
-              <span className="font-bold [text-shadow:1px_1px_2px_black]">Telegram</span>
+              <span className="font-bold [text-shadow:1px_1px_2px_#000]">Telegram</span>
             </button>
             <button
               onClick={handleCallSupport}
@@ -573,7 +579,7 @@ export default function Home() {
               className="flex flex-col items-center justify-center text-white text-xs gap-1 disabled:opacity-50 bg-red-500 hover:bg-red-600 p-1 rounded-md"
             >
               <Phone className="h-6 w-6 [filter:drop-shadow(1px_1px_1px_rgba(0,0,0,0.7))]" />
-              <span className="font-bold [text-shadow:1px_1px_2px_black]">Call Support</span>
+              <span className="font-bold [text-shadow:1px_1px_2px_#000]">Call Support</span>
             </button>
           </div>
         </footer>
