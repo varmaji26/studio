@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, DocumentData, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,7 +13,9 @@ import { Input } from '@/components/ui/input';
 
 interface Bid extends DocumentData {
     id: string;
+    userId: string;
     displayName: string;
+    mobile?: string;
     gameName: string;
     betType: string;
     session: string;
@@ -31,13 +33,31 @@ export default function AdminBidHistoryPage() {
 
    useEffect(() => {
     setLoading(true);
-    const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "bids"));
     
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const bidsData: Bid[] = [];
-      querySnapshot.forEach((doc) => {
-        bidsData.push({ id: doc.id, ...doc.data() } as Bid);
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      const bidsDataPromises = querySnapshot.docs.map(async (bidDoc) => {
+        const bidData = bidDoc.data();
+        let mobile = 'N/A';
+        if (bidData.userId) {
+            const userDocRef = doc(db, 'users', bidData.userId);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                mobile = userDoc.data().mobile || 'N/A';
+            }
+        }
+        return { id: bidDoc.id, ...bidData, mobile } as Bid;
       });
+
+      const bidsData = await Promise.all(bidsDataPromises);
+
+      // Sort client-side
+      bidsData.sort((a, b) => {
+          const dateA = a.createdAt?.toMillis() || 0;
+          const dateB = b.createdAt?.toMillis() || 0;
+          return dateB - dateA;
+      });
+
       setBids(bidsData);
       setFilteredBids(bidsData);
       setLoading(false);
@@ -58,7 +78,8 @@ export default function AdminBidHistoryPage() {
     const filteredData = bids.filter((bid) => {
       return (
         bid.displayName?.toLowerCase().includes(lowercasedFilter) ||
-        bid.gameName?.toLowerCase().includes(lowercasedFilter)
+        bid.gameName?.toLowerCase().includes(lowercasedFilter) ||
+        bid.mobile?.includes(lowercasedFilter)
       );
     });
     setFilteredBids(filteredData);
@@ -93,7 +114,7 @@ export default function AdminBidHistoryPage() {
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
-                        placeholder="Search by username or game..."
+                        placeholder="Search by username, game, or mobile..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="bg-input h-10 rounded-lg pl-10"
@@ -112,6 +133,7 @@ export default function AdminBidHistoryPage() {
                             <TableRow>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Username</TableHead>
+                                <TableHead>Mobile</TableHead>
                                 <TableHead>Game</TableHead>
                                 <TableHead>Bet Details</TableHead>
                                 <TableHead>Amount</TableHead>
@@ -123,6 +145,7 @@ export default function AdminBidHistoryPage() {
                                 <TableRow key={bid.id}>
                                     <TableCell>{formatDate(bid.createdAt)}</TableCell>
                                     <TableCell>{bid.displayName}</TableCell>
+                                    <TableCell>{bid.mobile}</TableCell>
                                     <TableCell>{bid.gameName} ({bid.session})</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
