@@ -177,9 +177,9 @@ export default function AdminLayout({
           </SidebarMenuItem>
            <SidebarMenuItem>
             <Link href="/admin/pending-requests" passHref onClick={handleLinkClick}>
-              <SidebarMenuButton isActive={isActive('/admin/pending-requests')} tooltip={{children: "Pending Requests"}}>
+              <SidebarMenuButton isActive={isActive('/admin/pending-requests')} tooltip={{children: "Customer Pending Requests"}}>
                 <MailQuestion />
-                <span>Pending Requests</span>
+                <span>Customer Pending Requests</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
