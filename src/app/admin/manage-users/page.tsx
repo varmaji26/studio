@@ -152,57 +152,60 @@ export default function ManageUsersPage() {
         startPage = Math.max(1, endPage - maxPagesToShow + 1);
     }
     
-    for (let i = startPage; i <= endPage; i++) {
-        pageNumbers.push(i);
-    }
+    if (totalPages <= 1) return null;
 
     return (
-        <div className="flex justify-center items-center gap-2 mt-6">
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-            >
-                Previous
-            </Button>
-            {startPage > 1 && (
-                 <Button variant="outline" size="sm" onClick={() => setCurrentPage(1)}>1</Button>
-            )}
-             {startPage > 2 && (
-                <span className="px-2">...</span>
-            )}
-            {pageNumbers.map(number => (
+        <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
+            <div>
+                Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)}</strong> of <strong>{filteredUsers.length}</strong> entries
+            </div>
+            <div className="flex items-center gap-2">
                 <Button
-                    key={number}
-                    variant={currentPage === number ? 'default' : 'outline'}
+                    variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(number)}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
                 >
-                    {number}
+                    Previous
                 </Button>
-            ))}
-            {endPage < totalPages - 1 && (
-                <span className="px-2">...</span>
-            )}
-            {endPage < totalPages && (
-                 <Button variant="outline" size="sm" onClick={() => setCurrentPage(totalPages)}>{totalPages}</Button>
-            )}
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-            >
-                Next
-            </Button>
+                {startPage > 1 && (
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(1)}>1</Button>
+                )}
+                {startPage > 2 && (
+                    <span className="px-2">...</span>
+                )}
+                {pageNumbers.map(number => (
+                    <Button
+                        key={number}
+                        variant={currentPage === number ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setCurrentPage(number)}
+                    >
+                        {number}
+                    </Button>
+                ))}
+                {endPage < totalPages - 1 && (
+                    <span className="px-2">...</span>
+                )}
+                {endPage < totalPages && (
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(totalPages)}>{totalPages}</Button>
+                )}
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                >
+                    Next
+                </Button>
+            </div>
         </div>
     )
   }
 
 
   return (
-     <div className="p-4 sm:p-6">
+     <div className="flex-1 p-4 sm:p-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-3xl font-bold">Manage Users</CardTitle>
@@ -290,7 +293,7 @@ export default function ManageUsersPage() {
                         </TableBody>
                     </Table>
                 </div>
-                {totalPages > 1 && renderPagination()}
+                {renderPagination()}
                 </>
             )}
             {paginatedUsers.length === 0 && !usersLoading && (
