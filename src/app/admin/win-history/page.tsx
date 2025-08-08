@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, DocumentData, orderBy, Timestamp, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData, orderBy, Timestamp, where, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 interface Win extends DocumentData {
     id: string;
     displayName: string;
+    mobile?: string;
     gameName: string;
     betType: string;
     session: string;
@@ -35,17 +36,28 @@ export default function AdminWinHistoryPage() {
         where("status", "==", "won")
     );
     
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const winsData: Win[] = [];
-      querySnapshot.forEach((doc) => {
-        winsData.push({ id: doc.id, ...doc.data() } as Win);
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      const winsDataPromises = querySnapshot.docs.map(async (bidDoc) => {
+        const bidData = bidDoc.data();
+        let mobile = 'N/A';
+        if (bidData.userId) {
+            const userDocRef = doc(db, 'users', bidData.userId);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                mobile = userDoc.data().mobile || 'N/A';
+            }
+        }
+        return { id: bidDoc.id, ...bidData, mobile } as Win;
       });
-      // Sort wins by creation date in descending order on the client
+
+      const winsData = await Promise.all(winsDataPromises);
+      
       winsData.sort((a, b) => {
           const dateA = a.createdAt?.toMillis() || 0;
           const dateB = b.createdAt?.toMillis() || 0;
           return dateB - dateA;
       });
+
       setWins(winsData);
       setFilteredWins(winsData);
       setLoading(false);
@@ -66,7 +78,8 @@ export default function AdminWinHistoryPage() {
     const filteredData = wins.filter((win) => {
       return (
         win.displayName?.toLowerCase().includes(lowercasedFilter) ||
-        win.gameName?.toLowerCase().includes(lowercasedFilter)
+        win.gameName?.toLowerCase().includes(lowercasedFilter) ||
+        win.mobile?.includes(lowercasedFilter)
       );
     });
     setFilteredWins(filteredData);
@@ -94,7 +107,7 @@ export default function AdminWinHistoryPage() {
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
-                        placeholder="Search by username or game..."
+                        placeholder="Search by username, game, or mobile..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="bg-input h-10 rounded-lg pl-10"
@@ -113,6 +126,7 @@ export default function AdminWinHistoryPage() {
                             <TableRow>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Username</TableHead>
+                                <TableHead>Mobile</TableHead>
                                 <TableHead>Game</TableHead>
                                 <TableHead>Bet Details</TableHead>
                                 <TableHead>Bet Amount</TableHead>
@@ -124,6 +138,7 @@ export default function AdminWinHistoryPage() {
                                 <TableRow key={win.id}>
                                     <TableCell>{formatDate(win.createdAt)}</TableCell>
                                     <TableCell>{win.displayName}</TableCell>
+                                    <TableCell>{win.mobile}</TableCell>
                                     <TableCell>{win.gameName} ({win.session})</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
