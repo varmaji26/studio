@@ -519,34 +519,34 @@ export default function Home() {
        <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-white/10 p-2 z-50">
           <div className="grid grid-cols-4 gap-2">
             <AddPointsDialog user={user}>
-                <button className="flex flex-col items-center justify-center text-primary text-xs font-semibold gap-1 p-1 rounded-md">
+                <button className="flex flex-col items-center justify-center text-white text-xs gap-1 p-1 rounded-md bg-primary hover:bg-primary/90">
                     <Banknote className="h-6 w-6" />
-                    Deposit
+                    <span className="font-bold [text-shadow:1px_1px_2px_black]">Deposit</span>
                 </button>
             </AddPointsDialog>
              <button
               onClick={handleWhatsAppSupport}
               disabled={!settings.whatsappNumber}
-              className="flex flex-col items-center justify-center text-white text-xs font-semibold gap-1 disabled:opacity-50 bg-green-500 hover:bg-green-600 p-1 rounded-md"
+              className="flex flex-col items-center justify-center text-white text-xs gap-1 disabled:opacity-50 bg-green-500 hover:bg-green-600 p-1 rounded-md"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.269.655 4.357 1.846 6.166l-1.138 4.162 4.277-1.122z" /></svg>
-              WhatsApp
+              <span className="font-bold [text-shadow:1px_1px_2px_black]">WhatsApp</span>
             </button>
             <button
               onClick={handleTelegramSupport}
               disabled={!settings.telegramLink}
-              className="flex flex-col items-center justify-center text-white text-xs font-semibold gap-1 disabled:opacity-50 bg-blue-500 hover:bg-blue-600 p-1 rounded-md"
+              className="flex flex-col items-center justify-center text-white text-xs gap-1 disabled:opacity-50 bg-blue-500 hover:bg-blue-600 p-1 rounded-md"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M9.78 18.65l.28-4.23l7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3L3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.1-.86 1.32-1.74.84l-4.97-3.6-2.44 2.34c-.27.27-.5.4-.85.4z" /></svg>
-              Telegram
+              <span className="font-bold [text-shadow:1px_1px_2px_black]">Telegram</span>
             </button>
             <button
               onClick={handleCallSupport}
               disabled={!settings.callSupportNumber}
-              className="flex flex-col items-center justify-center text-white text-xs font-semibold gap-1 disabled:opacity-50 bg-red-500 hover:bg-red-600 p-1 rounded-md"
+              className="flex flex-col items-center justify-center text-white text-xs gap-1 disabled:opacity-50 bg-red-500 hover:bg-red-600 p-1 rounded-md"
             >
               <Phone className="h-6 w-6" />
-              Call Support
+              <span className="font-bold [text-shadow:1px_1px_2px_black]">Call Support</span>
             </button>
           </div>
         </footer>
