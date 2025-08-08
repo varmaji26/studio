@@ -22,7 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Trash2 } from 'lucide-react';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
 
 const settingsSchema = z.object({
   whatsappNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
@@ -36,7 +36,7 @@ const settingsSchema = z.object({
     .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
     .refine(
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png and .webp files are accepted."
+      ".jpg, .jpeg, .png, .webp, and .svg files are accepted."
     ),
   welcomeBannerImage: z.any()
     .optional()
@@ -45,9 +45,17 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
+  marqueeTitle: z.string().optional(),
   marqueeText: z.string().optional(),
   marqueeBackgroundColor: z.string().optional(),
   marqueeTextColor: z.string().optional(),
+  marqueeLogo: z.any()
+    .optional()
+    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png, .webp, and .svg files are accepted."
+    ),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -62,6 +70,8 @@ export default function SettingsPage() {
   const [existingQrStoragePath, setExistingQrStoragePath] = useState<string | null>(null);
   const [existingWelcomeBannerUrl, setExistingWelcomeBannerUrl] = useState<string | null>(null);
   const [existingWelcomeBannerStoragePath, setExistingWelcomeBannerStoragePath] = useState<string | null>(null);
+  const [existingMarqueeLogoUrl, setExistingMarqueeLogoUrl] = useState<string | null>(null);
+  const [existingMarqueeLogoStoragePath, setExistingMarqueeLogoStoragePath] = useState<string | null>(null);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -72,6 +82,7 @@ export default function SettingsPage() {
       upiId: '',
       bankDetails: '',
       paytmNumber: '',
+      marqueeTitle: 'MATKA KING',
       marqueeText: '',
       marqueeBackgroundColor: '#b91c1c', // default red-700
       marqueeTextColor: '#ffffff', // default white
@@ -80,6 +91,7 @@ export default function SettingsPage() {
 
   const qrCodeImageRef = form.register("qrCodeImage");
   const welcomeBannerImageRef = form.register("welcomeBannerImage");
+  const marqueeLogoRef = form.register("marqueeLogo");
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -96,6 +108,7 @@ export default function SettingsPage() {
             upiId: data.paymentDetails?.UPI?.details || '',
             bankDetails: data.paymentDetails?.['Bank Transfer']?.details || '',
             paytmNumber: data.paymentDetails?.['Paytm/PhonePe']?.details || '',
+            marqueeTitle: data.marquee?.title || 'MATKA KING',
             marqueeText: data.marquee?.text || '',
             marqueeBackgroundColor: data.marquee?.backgroundColor || '#b91c1c',
             marqueeTextColor: data.marquee?.textColor || '#ffffff',
@@ -107,6 +120,10 @@ export default function SettingsPage() {
           if (data.welcomeBanner) {
             setExistingWelcomeBannerUrl(data.welcomeBanner.imageUrl);
             setExistingWelcomeBannerStoragePath(data.welcomeBanner.storagePath);
+          }
+          if (data.marquee?.logo) {
+            setExistingMarqueeLogoUrl(data.marquee.logo.imageUrl);
+            setExistingMarqueeLogoStoragePath(data.marquee.logo.storagePath);
           }
         }
       } catch (error) {
@@ -181,6 +198,11 @@ export default function SettingsPage() {
             imageUrl: existingWelcomeBannerUrl,
             storagePath: existingWelcomeBannerStoragePath,
         } : null;
+
+        let marqueeLogoData = existingMarqueeLogoUrl ? {
+            imageUrl: existingMarqueeLogoUrl,
+            storagePath: existingMarqueeLogoStoragePath,
+        } : null;
         
         const qrFile = values.qrCodeImage?.[0];
         if (qrFile) {
@@ -205,6 +227,17 @@ export default function SettingsPage() {
             setExistingWelcomeBannerStoragePath(storagePath);
         }
 
+        const marqueeLogoFile = values.marqueeLogo?.[0];
+        if (marqueeLogoFile) {
+            const { downloadURL, storagePath } = await uploadFile(marqueeLogoFile, 'marquee-logos', existingMarqueeLogoStoragePath);
+            marqueeLogoData = {
+                imageUrl: downloadURL,
+                storagePath: storagePath,
+            };
+            setExistingMarqueeLogoUrl(downloadURL);
+            setExistingMarqueeLogoStoragePath(storagePath);
+        }
+
         const settingsDoc = await getDoc(settingsDocRef);
         const currentData = settingsDoc.exists() ? settingsDoc.data() : {};
         const currentPaymentDetails = currentData.paymentDetails || {};
@@ -221,9 +254,11 @@ export default function SettingsPage() {
             },
             welcomeBanner: welcomeBannerData,
             marquee: {
+              title: values.marqueeTitle,
               text: values.marqueeText,
               backgroundColor: values.marqueeBackgroundColor,
               textColor: values.marqueeTextColor,
+              logo: marqueeLogoData,
             },
         };
 
@@ -245,7 +280,7 @@ export default function SettingsPage() {
             description: 'Settings have been saved.',
         });
 
-        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined });
+        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined, marqueeLogo: undefined });
         
     } catch (error: any) {
       console.error('Error updating settings: ', error);
@@ -289,6 +324,22 @@ export default function SettingsPage() {
         title: 'Error',
         description: 'Failed to delete the welcome banner.',
       });
+    }
+  };
+
+  const handleDeleteMarqueeLogo = async () => {
+    if (!existingMarqueeLogoStoragePath) return;
+    try {
+      const storageRef = ref(storage, existingMarqueeLogoStoragePath);
+      await deleteObject(storageRef);
+      const settingsDocRef = doc(db, 'settings', 'app-settings');
+      await updateDoc(settingsDocRef, { 'marquee.logo': null });
+      setExistingMarqueeLogoUrl(null);
+      setExistingMarqueeLogoStoragePath(null);
+      toast({ title: 'Success!', description: 'Marquee logo deleted.' });
+    } catch (error) {
+       console.error("Error deleting marquee logo: ", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete marquee logo.' });
     }
   };
 
@@ -393,12 +444,60 @@ export default function SettingsPage() {
                 <Separator />
                 
                 <h3 className="text-lg font-semibold">Marquee / Ticker Settings</h3>
+                {existingMarqueeLogoUrl && (
+                  <div className="flex flex-col items-center gap-4">
+                    <p className="text-sm text-muted-foreground mb-2">Current Marquee Logo:</p>
+                    <Image src={existingMarqueeLogoUrl} alt="Current Marquee Logo" width={48} height={48} className="rounded-md border p-1 bg-white" unoptimized />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Logo</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>This will permanently delete the marquee logo.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeleteMarqueeLogo}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+                 <FormField
+                  control={form.control}
+                  name="marqueeLogo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{existingMarqueeLogoUrl ? 'Upload New Logo' : 'Upload Logo'}</FormLabel>
+                      <FormControl>
+                        <Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...marqueeLogoRef} />
+                      </FormControl>
+                      <FormDescriptionComponent>Upload a logo for the marquee (optional).</FormDescriptionComponent>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="marqueeTitle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Marquee Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., MATKA KING" {...field} className="bg-input h-12 rounded-lg" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                  <FormField
                   control={form.control}
                   name="marqueeText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Marquee Text</FormLabel>
+                      <FormLabel>Marquee Text (Sub-line)</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter the text to display in the marquee" {...field} className="bg-input h-12 rounded-lg" />
                       </FormControl>

@@ -70,9 +70,13 @@ interface AppSettings extends DocumentData {
         imageUrl: string;
     };
     marquee?: {
+        title: string;
         text: string;
         backgroundColor: string;
         textColor: string;
+        logo?: {
+            imageUrl: string;
+        }
     }
 }
 
@@ -80,15 +84,26 @@ interface UserProfile extends DocumentData {
   balance?: number;
 }
 
-const MarqueeItem = ({ text, textColor }: { text: string, textColor: string }) => (
-    <div className="flex items-center mx-4" style={{ color: textColor }}>
-        <Trophy className="h-6 w-6 text-yellow-400 mr-2" />
-        <div className="flex flex-col items-center">
-            <span className="text-xl font-bold tracking-wider">MATKA KING</span>
-            <span className="text-xs">{text}</span>
+const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
+    const title = settings?.title || 'MATKA KING';
+    const text = settings?.text || '';
+    const textColor = settings?.textColor || '#FFFFFF';
+    const logoUrl = settings?.logo?.imageUrl;
+
+    return (
+        <div className="flex items-center mx-4" style={{ color: textColor }}>
+            {logoUrl ? (
+                <Image src={logoUrl} alt="Marquee Logo" width={24} height={24} className="h-6 w-6 mr-2" unoptimized/>
+            ) : (
+                <Trophy className="h-6 w-6 text-yellow-400 mr-2" />
+            )}
+            <div className="flex flex-col items-center">
+                <span className="text-xl font-bold tracking-wider">{title}</span>
+                <span className="text-xs">{text}</span>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 
 export default function Home() {
@@ -244,14 +259,13 @@ export default function Home() {
   const mobileNumber = user.email?.split('@')[0];
   const isAdmin = user.email === '8080601370@authcanvas.dev';
   
-  const marqueeText = settings.marquee?.text || '';
-  const marqueeRepetitions = marqueeText ? 3 : 0;
-  const marqueeItems = Array(marqueeRepetitions).fill(marqueeText);
+  const marqueeRepetitions = settings.marquee?.text ? 3 : 0;
+  const marqueeItems = Array(marqueeRepetitions).fill(settings.marquee);
 
   const MarqueeContent = () => (
     <div className="flex">
-        {marqueeItems.map((text, index) => (
-            <MarqueeItem key={index} text={text} textColor={settings.marquee?.textColor || '#FFFFFF'} />
+        {marqueeItems.map((item, index) => (
+            <MarqueeItem key={index} settings={item} />
         ))}
     </div>
   );
