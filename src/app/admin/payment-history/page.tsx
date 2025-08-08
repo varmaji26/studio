@@ -234,7 +234,7 @@ export default function AdminPaymentHistoryPage() {
   const dataForTabs = searchTerm ? filteredTransactions : allTransactions;
 
   return (
-     <div className="flex-1 p-4 sm:p-6">
+     <div className="flex-1 space-y-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <div className="flex justify-between items-start">

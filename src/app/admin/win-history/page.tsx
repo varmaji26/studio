@@ -132,7 +132,7 @@ export default function AdminWinHistoryPage() {
   }
 
   return (
-     <div className="flex-1 p-4 sm:p-6">
+     <div className="flex-1 space-y-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-3xl font-bold flex items-center gap-2">

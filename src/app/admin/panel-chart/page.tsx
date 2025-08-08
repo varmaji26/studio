@@ -131,7 +131,7 @@ export default function PanelChartPage() {
   };
   
   return (
-    <div className="flex-1 p-4 sm:p-6">
+    <div className="flex-1 space-y-6">
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

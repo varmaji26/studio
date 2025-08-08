@@ -53,7 +53,7 @@ export default function ChartsPage() {
   }, []);
 
   return (
-    <div className="flex-1 p-4 sm:p-6">
+    <div className="flex-1 space-y-6">
       <Card className="bg-card/80 border-white/10 shadow-lg mb-6">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Game Charts</CardTitle>

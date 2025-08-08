@@ -188,7 +188,7 @@ export default function AdminDashboardPage() {
     }
   
   return (
-    <div className="flex-1 p-4 sm:p-6">
+    <div className="flex-1 space-y-6">
        <div className="grid gap-6">
         <div className="bg-teal-500 text-white p-6 rounded-lg shadow-lg">
             <h2 className="text-3xl font-bold">Welcome to your Admin Panel!</h2>
