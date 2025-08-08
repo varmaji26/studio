@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, query, onSnapshot, DocumentData, orderBy, Timestamp, where, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Loader } from '@/components/loader';
 import { Search, Trophy } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface Win extends DocumentData {
     id: string;
@@ -23,11 +24,13 @@ interface Win extends DocumentData {
     createdAt: Timestamp;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AdminWinHistoryPage() {
   const [wins, setWins] = useState<Win[]>([]);
-  const [filteredWins, setFilteredWins] = useState<Win[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
    useEffect(() => {
     setLoading(true);
@@ -59,7 +62,6 @@ export default function AdminWinHistoryPage() {
       });
 
       setWins(winsData);
-      setFilteredWins(winsData);
       setLoading(false);
     }, (error) => {
         console.error("Error fetching wins: ", error);
@@ -69,27 +71,65 @@ export default function AdminWinHistoryPage() {
     return () => unsubscribe();
   }, []);
   
-  useEffect(() => {
+  const filteredWins = useMemo(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (!lowercasedFilter) {
-        setFilteredWins(wins);
-        return;
+        return wins;
     }
-    const filteredData = wins.filter((win) => {
+    return wins.filter((win) => {
       return (
         win.displayName?.toLowerCase().includes(lowercasedFilter) ||
         win.gameName?.toLowerCase().includes(lowercasedFilter) ||
         win.mobile?.includes(lowercasedFilter)
       );
     });
-    setFilteredWins(filteredData);
   }, [searchTerm, wins]);
 
+  const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
+  const paginatedWins = useMemo(() => {
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      return filteredWins.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredWins, currentPage]);
+
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [searchTerm]);
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
     return new Date(timestamp.seconds * 1000).toLocaleString('en-GB');
   };
+  
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    return (
+        <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
+            <div>
+                Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredWins.length)}</strong> of <strong>{filteredWins.length}</strong> entries
+            </div>
+            <div className="flex items-center gap-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                >
+                    Previous
+                </Button>
+                 <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                >
+                    Next
+                </Button>
+            </div>
+        </div>
+    )
+  }
 
   return (
      <div className="flex-1 p-4 sm:p-6">
@@ -120,6 +160,7 @@ export default function AdminWinHistoryPage() {
                     <Loader className="h-8 w-8 text-primary" />
                 </div>
             ) : (
+                <>
                 <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
@@ -134,7 +175,7 @@ export default function AdminWinHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredWins.map((win) => (
+                            {paginatedWins.map((win) => (
                                 <TableRow key={win.id}>
                                     <TableCell>{formatDate(win.createdAt)}</TableCell>
                                     <TableCell>{win.displayName}</TableCell>
@@ -155,8 +196,10 @@ export default function AdminWinHistoryPage() {
                         </TableBody>
                     </Table>
                 </div>
+                 {renderPagination()}
+                </>
             )}
-            {filteredWins.length === 0 && !loading && (
+            {paginatedWins.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm ? `No wins found for "${searchTerm}".` : "No wins found."}
                 </p>
