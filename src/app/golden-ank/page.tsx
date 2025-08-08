@@ -23,8 +23,8 @@ export default function GoldenAnkPage() {
                     <CardContent className="space-y-8">
                         <div className="bg-slate-900/50 border-2 border-amber-400 rounded-lg p-6">
                             <p 
-                                className="text-6xl font-bold text-white tracking-widest"
-                                style={{ textShadow: '3px 3px 6px rgba(0,0,0,0.8)' }}
+                                className="text-5xl font-bold text-white tracking-widest"
+                                style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}
                             >
                                 4-9-2-7
                             </p>
