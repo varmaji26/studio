@@ -53,8 +53,8 @@ export default function ChartsPage() {
   }, []);
 
   return (
-    <div className="flex-1 space-y-8 p-4 sm:p-8">
-      <Card className="bg-card/80 border-white/10 shadow-lg">
+    <div className="flex-1 p-4 sm:p-6">
+      <Card className="bg-card/80 border-white/10 shadow-lg mb-6">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Game Charts</CardTitle>
           <CardDescription>Visual representation of game load and statistics.</CardDescription>
@@ -66,7 +66,7 @@ export default function ChartsPage() {
           <Loader className="h-8 w-8 text-primary" />
         </div>
       ) : games.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {games.map((game) => (
             <Card key={game.id} className="bg-card/80 border-white/10 shadow-lg">
               <CardHeader>

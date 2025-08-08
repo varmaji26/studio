@@ -130,75 +130,76 @@ export default function ViewOpenLoadPage() {
 
 
   return (
-    <div className="flex-1 space-y-8 p-4 sm:p-8">
-      <Card className="bg-card/80 border-white/10 shadow-lg">
-        <CardHeader>
-            <CardTitle className="text-3xl font-bold">View Open Load (Today)</CardTitle>
-            <CardDescription>Click on a game to see its live bidding details for today's Open session below.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader className="h-8 w-8 text-primary" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {gameLoads.map((game) => (
-                <button 
-                    key={game.id} 
-                    onClick={() => setSelectedGame(game)}
-                    className={cn(
-                        "text-left rounded-lg transform hover:scale-105 transition-transform duration-300 focus:outline-none focus:ring-2 focus:ring-primary",
-                        selectedGame?.id === game.id ? "ring-2 ring-primary" : ""
-                    )}
-                >
-                    <Card className="bg-slate-800/60 border-slate-700 shadow-md h-full">
-                        <CardContent className="p-4 text-center">
-                            <div className="flex justify-end">
-                                <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
-                            </div>
-                            <h3 className="text-lg font-bold text-white truncate">{game.name.toUpperCase()}</h3>
-                            <p className="text-xl font-semibold text-primary mt-2">₹{game.totalLoad.toFixed(2)} /-</p>
-                             <div className="flex justify-center mt-3">
-                                <div className="h-8 w-8 flex items-center justify-center rounded-full bg-primary/20 text-primary">
-                                    <Play className="h-5 w-5" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </button>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="flex-1 p-4 sm:p-6">
+      <div className="grid gap-6">
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardHeader>
+              <CardTitle className="text-3xl font-bold">View Open Load (Today)</CardTitle>
+              <CardDescription>Click on a game to see its live bidding details for today's Open session below.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader className="h-8 w-8 text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {gameLoads.map((game) => (
+                  <button 
+                      key={game.id} 
+                      onClick={() => setSelectedGame(game)}
+                      className={cn(
+                          "text-left rounded-lg transform hover:scale-105 transition-transform duration-300 focus:outline-none focus:ring-2 focus:ring-primary",
+                          selectedGame?.id === game.id ? "ring-2 ring-primary" : ""
+                      )}
+                  >
+                      <Card className="bg-slate-800/60 border-slate-700 shadow-md h-full">
+                          <CardContent className="p-4 text-center">
+                              <div className="flex justify-end">
+                                  <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+                              </div>
+                              <h3 className="text-lg font-bold text-white truncate">{game.name.toUpperCase()}</h3>
+                              <p className="text-xl font-semibold text-primary mt-2">₹{game.totalLoad.toFixed(2)} /-</p>
+                              <div className="flex justify-center mt-3">
+                                  <div className="h-8 w-8 flex items-center justify-center rounded-full bg-primary/20 text-primary">
+                                      <Play className="h-5 w-5" />
+                                  </div>
+                              </div>
+                          </CardContent>
+                      </Card>
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {selectedGame && liveBiddingDetails.map((details) => (
-          (details.totalLoad > 0) && (
-          <Card key={details.betType} className="bg-card/80 border-white/10 shadow-lg mt-8">
-            <CardHeader>
-                <CardTitle>Live Bidding - {details.gameName} - Open {details.betType} - Total Load ₹{details.totalLoad.toFixed(2)}</CardTitle>
-            </CardHeader>
-             <CardContent>
-                <div className={cn(
-                    "grid gap-4",
-                    details.betType === 'Single Digit' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10' :
-                    'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'
-                )}>
-                    {Object.entries(details.numberLoads)
-                        .sort(([numA], [numB]) => numA.localeCompare(numB, undefined, { numeric: true }))
-                        .map(([number, load]) => (
-                        <div key={number} className="bg-slate-800/60 border border-slate-700 rounded-lg p-3 text-center">
-                            <p className="font-bold text-lg text-white">{number}==</p>
-                            <p className="text-md text-primary">₹{load.toFixed(2)}</p>
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-          </Card>
-          )
-      ))}
-
+        {selectedGame && liveBiddingDetails.map((details) => (
+            (details.totalLoad > 0) && (
+            <Card key={details.betType} className="bg-card/80 border-white/10 shadow-lg">
+              <CardHeader>
+                  <CardTitle>Live Bidding - {details.gameName} - Open {details.betType} - Total Load ₹{details.totalLoad.toFixed(2)}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <div className={cn(
+                      "grid gap-4",
+                      details.betType === 'Single Digit' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10' :
+                      'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'
+                  )}>
+                      {Object.entries(details.numberLoads)
+                          .sort(([numA], [numB]) => numA.localeCompare(numB, undefined, { numeric: true }))
+                          .map(([number, load]) => (
+                          <div key={number} className="bg-slate-800/60 border border-slate-700 rounded-lg p-3 text-center">
+                              <p className="font-bold text-lg text-white">{number}==</p>
+                              <p className="text-md text-primary">₹{load.toFixed(2)}</p>
+                          </div>
+                      ))}
+                  </div>
+              </CardContent>
+            </Card>
+            )
+        ))}
+      </div>
     </div>
   );
 }

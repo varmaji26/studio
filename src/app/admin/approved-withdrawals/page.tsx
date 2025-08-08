@@ -176,7 +176,7 @@ export default function ApprovedWithdrawalsPage() {
   }, [fetchHistory]);
 
   return (
-    <div className="flex-1 space-y-4 p-4 sm:p-8">
+    <div className="flex-1 p-4 sm:p-6">
         <HistoryTable title="Approved Withdrawal History" data={withdrawalHistory} loading={loading} />
     </div>
   );

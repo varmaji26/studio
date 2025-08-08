@@ -140,7 +140,7 @@ export default function JodiPanelPage() {
   };
   
   return (
-    <div className="flex-1 space-y-8 p-4 sm:p-8">
+    <div className="flex-1 p-4 sm:p-6">
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

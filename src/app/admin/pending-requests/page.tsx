@@ -313,50 +313,52 @@ export default function PendingRequestsPage() {
   };
 
   return (
-     <div className="flex-1 space-y-4 p-4 sm:p-8">
-        <Card className="bg-card/80 border-white/10 shadow-lg mb-4">
-             <CardHeader>
-                <div className="flex justify-between items-center">
-                    <div>
-                        <CardTitle className="text-3xl font-bold">Customer Pending Requests</CardTitle>
-                        <CardDescription>Approve or reject user deposit and withdrawal requests.</CardDescription>
+     <div className="flex-1 p-4 sm:p-6">
+        <div className="grid gap-6">
+            <Card className="bg-card/80 border-white/10 shadow-lg">
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle className="text-3xl font-bold">Customer Pending Requests</CardTitle>
+                            <CardDescription>Approve or reject user deposit and withdrawal requests.</CardDescription>
+                        </div>
+                        <Button asChild variant="outline">
+                            <Link href="/admin/payment-history" className="flex items-center gap-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to History
+                            </Link>
+                        </Button>
                     </div>
-                    <Button asChild variant="outline">
-                        <Link href="/admin/payment-history" className="flex items-center gap-2">
-                           <ArrowLeft className="h-4 w-4" />
-                           Back to History
-                        </Link>
-                    </Button>
-                </div>
-            </CardHeader>
-        </Card>
+                </CardHeader>
+            </Card>
 
-        <Tabs defaultValue="withdrawals" onValueChange={setActiveTab} value={activeTab}>
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="deposits">Users Deposit Request ({depositRequests.length})</TabsTrigger>
-                <TabsTrigger value="withdrawals">Users Withdraw Request ({withdrawalRequests.length})</TabsTrigger>
-            </TabsList>
-            <TabsContent value="deposits" className="mt-4">
-                <Card className="bg-card/80 border-white/10 shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="text-2xl">Pending Deposit Requests</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       {renderContent()}
-                    </CardContent>
-                </Card>
-            </TabsContent>
-            <TabsContent value="withdrawals" className="mt-4">
-                <Card className="bg-card/80 border-white/10 shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="text-2xl">Pending Withdrawal Requests</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       {renderContent()}
-                    </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
+            <Tabs defaultValue="withdrawals" onValueChange={setActiveTab} value={activeTab}>
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="deposits">Users Deposit Request ({depositRequests.length})</TabsTrigger>
+                    <TabsTrigger value="withdrawals">Users Withdraw Request ({withdrawalRequests.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="deposits" className="mt-4">
+                    <Card className="bg-card/80 border-white/10 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="text-2xl">Pending Deposit Requests</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                        {renderContent()}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="withdrawals" className="mt-4">
+                    <Card className="bg-card/80 border-white/10 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="text-2xl">Pending Withdrawal Requests</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                        {renderContent()}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+        </div>
       </div>
   );
 }

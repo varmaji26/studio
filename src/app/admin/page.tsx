@@ -188,28 +188,33 @@ export default function AdminDashboardPage() {
     }
   
   return (
-    <div className="flex-1 space-y-8 p-4 sm:p-8">
+    <div className="flex-1 p-4 sm:p-6">
+       <div className="grid gap-6">
         <div className="bg-teal-500 text-white p-6 rounded-lg shadow-lg">
             <h2 className="text-3xl font-bold">Welcome to your Admin Panel!</h2>
             <p className="mt-1">Here's a detailed overview of your application's status and performance.</p>
         </div>
 
-        <h3 className="text-xl font-bold">Overall Stats</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Total Users" value={stats.totalUsers.toString()} icon={Users} color="#8b5cf6" />
-            <StatCard title="Total Games" value={stats.totalGames.toString()} icon={Gamepad2} color="#ec4899" />
-            <StatCard title="Total Money in Users' Wallet" value={`₹${stats.totalBalance.toLocaleString()}`} icon={Wallet} color="#22c55e" />
+        <div>
+            <h3 className="text-xl font-bold mb-4">Overall Stats</h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard title="Total Users" value={stats.totalUsers.toString()} icon={Users} color="#8b5cf6" />
+                <StatCard title="Total Games" value={stats.totalGames.toString()} icon={Gamepad2} color="#ec4899" />
+                <StatCard title="Total Money in Users' Wallet" value={`₹${stats.totalBalance.toLocaleString()}`} icon={Wallet} color="#22c55e" />
+            </div>
         </div>
         
-        <h3 className="text-xl font-bold mt-8">Daily Transaction & Bidding Report</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Today's Deposits" value={`₹${dailyStats.todaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
-            <StatCard title="Withdrawals Given Today" value={`₹${dailyStats.todaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
-            <StatCard title="Yesterday's Deposits" value={`₹${dailyStats.yesterdaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#10b981" />
-            <StatCard title="Withdrawal Given Yesterday" value={`₹${dailyStats.yesterdaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#ef4444" />
+        <div>
+            <h3 className="text-xl font-bold mb-4">Daily Transaction & Bidding Report</h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard title="Today's Deposits" value={`₹${dailyStats.todaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
+                <StatCard title="Withdrawals Given Today" value={`₹${dailyStats.todaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
+                <StatCard title="Yesterday's Deposits" value={`₹${dailyStats.yesterdaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#10b981" />
+                <StatCard title="Withdrawal Given Yesterday" value={`₹${dailyStats.yesterdaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#ef4444" />
+            </div>
         </div>
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <StatCard title="Today's Bidding" value={`₹${biddingStats.todaysBidding.toLocaleString()}`} icon={TrendingUp} color="#38bdf8" />
             <StatCard title="Today's Winning" value={`₹${biddingStats.todaysWinning.toLocaleString()}`} icon={TrendingDown} color="#fb7185" />
             <StatCard 
@@ -221,19 +226,22 @@ export default function AdminDashboardPage() {
             />
         </div>
         
-        <h3 className="text-xl font-bold mt-8">This Month's Report</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Total Bidding This Month" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
-            <StatCard 
-                title="Total Profit This Month" 
-                value={`₹${monthlyStats.totalProfit.toLocaleString()}`} 
-                icon={Scale} 
-                color={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
-                textColor={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
-            />
-            <StatCard title="Total Deposit This Month" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={Banknote} color="#3b82f6" />
-            <StatCard title="Total Withdrawls This Month" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
+        <div>
+            <h3 className="text-xl font-bold mb-4">This Month's Report</h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard title="Total Bidding This Month" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
+                <StatCard 
+                    title="Total Profit This Month" 
+                    value={`₹${monthlyStats.totalProfit.toLocaleString()}`} 
+                    icon={Scale} 
+                    color={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
+                    textColor={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
+                />
+                <StatCard title="Total Deposit This Month" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={Banknote} color="#3b82f6" />
+                <StatCard title="Total Withdrawls This Month" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
+            </div>
         </div>
+      </div>
     </div>
   );
 }
