@@ -7,6 +7,10 @@ import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface Game extends DocumentData {
     id: string;
@@ -25,6 +29,13 @@ interface MarketData {
     load: number;
     distribution: number;
     profitLoss: number;
+}
+
+// Extend jsPDF with autoTable for TypeScript
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
 }
 
 export default function MarketLoadPage() {
@@ -75,12 +86,72 @@ export default function MarketLoadPage() {
   const totalDistribution = marketData.reduce((acc, market) => acc + market.distribution, 0);
   const totalProfitLoss = marketData.reduce((acc, market) => acc + market.profitLoss, 0);
 
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Market-wise Load & Distribution", 14, 16);
+
+    const tableColumn = ["NAME", "LOAD", "DISTRIBUTION", "PROFIT/LOSS"];
+    const tableRows: (string | number)[][] = [];
+
+    marketData.forEach(market => {
+        const marketRow = [
+            market.gameName,
+            `₹${market.load.toFixed(2)}`,
+            `₹${market.distribution.toFixed(2)}`,
+            `₹${market.profitLoss.toFixed(2)}`
+        ];
+        tableRows.push(marketRow);
+    });
+    
+    // Add total row
+    const totalRow = [
+        'Total',
+        `₹${totalLoad.toFixed(2)}`,
+        `₹${totalDistribution.toFixed(2)}`,
+        `₹${totalProfitLoss.toFixed(2)}`
+    ];
+
+    doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        foot: [totalRow],
+        startY: 20,
+        didDrawPage: (data) => {
+            // Header
+            doc.setFontSize(20);
+            doc.setTextColor(40);
+            doc.text("Market Report", data.settings.margin.left, 15);
+        },
+        styles: {
+            halign: 'center'
+        },
+        headStyles: {
+            fillColor: [22, 163, 74]
+        },
+        footStyles: {
+            fillColor: [211, 211, 211],
+            textColor: [0, 0, 0],
+            fontStyle: 'bold'
+        }
+    });
+
+    doc.save('market-load-report.pdf');
+  };
+
   return (
     <div className="flex-1 space-y-6">
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold">Market-wise Load & Distribution</CardTitle>
-          <CardDescription>An overview of the load, distribution, and profit/loss for each market.</CardDescription>
+            <div className="flex justify-between items-start">
+                <div>
+                    <CardTitle className="text-3xl font-bold">Market-wise Load & Distribution</CardTitle>
+                    <CardDescription>An overview of the load, distribution, and profit/loss for each market.</CardDescription>
+                </div>
+                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={marketData.length === 0}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                </Button>
+            </div>
         </CardHeader>
         <CardContent>
           {loading ? (
