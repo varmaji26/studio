@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -38,11 +38,13 @@ interface User extends DocumentData {
     } | null;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function ManageUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
    const fetchUsers = useCallback(() => {
@@ -57,7 +59,6 @@ export default function ManageUsersPage() {
         }
       });
       setUsers(usersData);
-      setFilteredUsers(usersData);
       setUsersLoading(false);
     }, (error) => {
         console.error("Error fetching users: ", error);
@@ -77,20 +78,29 @@ export default function ManageUsersPage() {
     return () => unsubscribe();
   }, [fetchUsers]);
   
-  useEffect(() => {
+  const filteredUsers = useMemo(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (!lowercasedFilter) {
-        setFilteredUsers(users);
-        return;
+        return users;
     }
-    const filteredData = users.filter((user) => {
+    return users.filter((user) => {
       return (
         user.displayName?.toLowerCase().includes(lowercasedFilter) ||
         user.mobile?.toLowerCase().includes(lowercasedFilter)
       );
     });
-    setFilteredUsers(filteredData);
   }, [searchTerm, users]);
+
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+
+  const paginatedUsers = useMemo(() => {
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
+
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [searchTerm]);
 
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
@@ -131,6 +141,64 @@ export default function ManageUsersPage() {
         });
     }
   };
+  
+  const renderPagination = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    if (endPage - startPage + 1 < maxPagesToShow) {
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+    }
+
+    return (
+        <div className="flex justify-center items-center gap-2 mt-6">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+            >
+                Previous
+            </Button>
+            {startPage > 1 && (
+                 <Button variant="outline" size="sm" onClick={() => setCurrentPage(1)}>1</Button>
+            )}
+             {startPage > 2 && (
+                <span className="px-2">...</span>
+            )}
+            {pageNumbers.map(number => (
+                <Button
+                    key={number}
+                    variant={currentPage === number ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentPage(number)}
+                >
+                    {number}
+                </Button>
+            ))}
+            {endPage < totalPages - 1 && (
+                <span className="px-2">...</span>
+            )}
+            {endPage < totalPages && (
+                 <Button variant="outline" size="sm" onClick={() => setCurrentPage(totalPages)}>{totalPages}</Button>
+            )}
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+            >
+                Next
+            </Button>
+        </div>
+    )
+  }
 
 
   return (
@@ -165,6 +233,7 @@ export default function ManageUsersPage() {
                     <Loader className="h-8 w-8 text-primary" />
                 </div>
             ) : (
+                <>
                 <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
@@ -179,9 +248,9 @@ export default function ManageUsersPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredUsers.map((user, index) => (
+                            {paginatedUsers.map((user, index) => (
                                 <TableRow key={user.id}>
-                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
                                     <TableCell>{user.displayName}</TableCell>
                                     <TableCell>{user.mobile}</TableCell>
                                     <TableCell>₹{user.balance || 0}</TableCell>
@@ -221,6 +290,8 @@ export default function ManageUsersPage() {
                         </TableBody>
                     </Table>
                 </div>
+                {totalPages > 1 && renderPagination()}
+                </>
             )}
             {filteredUsers.length === 0 && !usersLoading && (
                 <p className="text-center text-muted-foreground mt-4">
