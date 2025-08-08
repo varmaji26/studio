@@ -68,6 +68,11 @@ interface AppSettings extends DocumentData {
     telegramLink?: string;
     welcomeBanner?: {
         imageUrl: string;
+    };
+    marquee?: {
+        text: string;
+        backgroundColor: string;
+        textColor: string;
     }
 }
 
@@ -75,8 +80,8 @@ interface UserProfile extends DocumentData {
   balance?: number;
 }
 
-const MarqueeItem = ({ text }: { text: string }) => (
-    <div className="flex items-center mx-4">
+const MarqueeItem = ({ text, textColor }: { text: string, textColor: string }) => (
+    <div className="flex items-center mx-4" style={{ color: textColor }}>
         <Trophy className="h-6 w-6 text-yellow-400 mr-2" />
         <div className="flex flex-col items-center">
             <span className="text-xl font-bold tracking-wider">MATKA KING</span>
@@ -238,17 +243,15 @@ export default function Home() {
 
   const mobileNumber = user.email?.split('@')[0];
   const isAdmin = user.email === '8080601370@authcanvas.dev';
-  const marqueeTexts = [
-    "किसी भी प्रकार की सहायता के लिए हमें कॉल करें",
-    "किसी भी प्रकार की सहायता के लिए हमें कॉल करें",
-    "किसी भी प्रकार की सहायता के लिए हमें कॉल करें"
-       
-  ];
+  
+  const marqueeText = settings.marquee?.text || '';
+  const marqueeRepetitions = marqueeText ? 3 : 0;
+  const marqueeItems = Array(marqueeRepetitions).fill(marqueeText);
 
   const MarqueeContent = () => (
     <div className="flex">
-        {marqueeTexts.map((text, index) => (
-            <MarqueeItem key={index} text={text} />
+        {marqueeItems.map((text, index) => (
+            <MarqueeItem key={index} text={text} textColor={settings.marquee?.textColor || '#FFFFFF'} />
         ))}
     </div>
   );
@@ -351,12 +354,17 @@ export default function Home() {
         </div>
       </header>
       
-      <div className="relative flex overflow-x-hidden bg-red-900 text-white py-2">
-        <div className="animate-marquee whitespace-nowrap flex">
-            <MarqueeContent />
-            <MarqueeContent />
+      {settings.marquee?.text && (
+        <div 
+            className="relative flex overflow-x-hidden text-white py-2" 
+            style={{ backgroundColor: settings.marquee.backgroundColor || '#b91c1c' }}
+        >
+            <div className="animate-marquee whitespace-nowrap flex">
+                <MarqueeContent />
+                <MarqueeContent />
+            </div>
         </div>
-      </div>
+      )}
       
       <main className="flex flex-col gap-4 p-4 pb-24">
         {settings.welcomeBanner?.imageUrl && (
@@ -553,5 +561,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

@@ -45,6 +45,9 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
+  marqueeText: z.string().optional(),
+  marqueeBackgroundColor: z.string().optional(),
+  marqueeTextColor: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -69,6 +72,9 @@ export default function SettingsPage() {
       upiId: '',
       bankDetails: '',
       paytmNumber: '',
+      marqueeText: '',
+      marqueeBackgroundColor: '#b91c1c', // default red-700
+      marqueeTextColor: '#ffffff', // default white
     },
   });
 
@@ -90,6 +96,9 @@ export default function SettingsPage() {
             upiId: data.paymentDetails?.UPI?.details || '',
             bankDetails: data.paymentDetails?.['Bank Transfer']?.details || '',
             paytmNumber: data.paymentDetails?.['Paytm/PhonePe']?.details || '',
+            marqueeText: data.marquee?.text || '',
+            marqueeBackgroundColor: data.marquee?.backgroundColor || '#b91c1c',
+            marqueeTextColor: data.marquee?.textColor || '#ffffff',
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -211,6 +220,11 @@ export default function SettingsPage() {
                 'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
             },
             welcomeBanner: welcomeBannerData,
+            marquee: {
+              text: values.marqueeText,
+              backgroundColor: values.marqueeBackgroundColor,
+              textColor: values.marqueeTextColor,
+            },
         };
 
         if (qrCodeData) {
@@ -375,6 +389,51 @@ export default function SettingsPage() {
                     </FormItem>
                   )}
                 />
+
+                <Separator />
+                
+                <h3 className="text-lg font-semibold">Marquee / Ticker Settings</h3>
+                 <FormField
+                  control={form.control}
+                  name="marqueeText"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Marquee Text</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter the text to display in the marquee" {...field} className="bg-input h-12 rounded-lg" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <FormField
+                      control={form.control}
+                      name="marqueeBackgroundColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Background Color</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} className="bg-input h-12 rounded-lg" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="marqueeTextColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Text Color</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} className="bg-input h-12 rounded-lg" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                </div>
                 
                 <Separator />
 
