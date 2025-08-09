@@ -311,9 +311,6 @@ export default function Home() {
                         <Crown className="h-7 w-7" />
                         MATKA KING
                     </SheetTitle>
-                    <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                        {theme === 'dark' ? <Sun className="h-6 w-6 text-yellow-400" /> : <Moon className="h-6 w-6 text-blue-400" />}
-                    </Button>
                 </SheetHeader>
                 <div className="py-4">
                 <div className="flex flex-col items-center space-y-2">
@@ -327,6 +324,10 @@ export default function Home() {
                 </div>
                 <Separator className="bg-white/10 my-2" />
                 <nav className="flex flex-col gap-2 p-4">
+                    <button onClick={toggleTheme} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
+                        {theme === 'dark' ? <Sun className="h-5 w-5 text-primary" /> : <Moon className="h-5 w-5 text-primary" />}
+                        <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                    </button>
                     <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
                         <LogOut className="h-5 w-5 text-primary" />
                         <span>Logout</span>
