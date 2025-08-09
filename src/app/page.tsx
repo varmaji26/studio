@@ -29,7 +29,9 @@ import {
   CreditCard,
   LogOut,
   MessageSquare,
-  Gem
+  Gem,
+  Sun,
+  Moon
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -127,8 +129,24 @@ export default function Home() {
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
+  const [theme, setTheme] = useState('dark');
   
   const currentDay = new Date().toLocaleString('en-US', { weekday: 'long' });
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(storedTheme);
+  }, []);
+  
+  useEffect(() => {
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -278,7 +296,7 @@ export default function Home() {
   );
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <header className="flex items-center justify-between p-4 bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10">
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
@@ -288,11 +306,14 @@ export default function Home() {
           </SheetTrigger>
           <SheetContent side="left" className="bg-card border-r-0 text-foreground flex flex-col p-0">
              <div className="flex-1 overflow-y-auto">
-                <SheetHeader className="p-6">
-                <SheetTitle className="text-primary text-2xl flex items-center gap-2">
-                    <Crown className="h-7 w-7" />
-                    MATKA KING
-                </SheetTitle>
+                <SheetHeader className="p-6 flex flex-row justify-between items-center">
+                    <SheetTitle className="text-primary text-2xl flex items-center gap-2">
+                        <Crown className="h-7 w-7" />
+                        MATKA KING
+                    </SheetTitle>
+                    <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                        {theme === 'dark' ? <Sun className="h-6 w-6 text-yellow-400" /> : <Moon className="h-6 w-6 text-blue-400" />}
+                    </Button>
                 </SheetHeader>
                 <div className="py-4">
                 <div className="flex flex-col items-center space-y-2">

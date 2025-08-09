@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sidebar,
   SidebarInset,
@@ -18,6 +18,8 @@ import {
   LogOut,
   Settings,
   Home,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -41,6 +43,22 @@ export function LayoutProvider({
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const [theme, setTheme] = useState('dark');
+  
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(storedTheme);
+  }, []);
+  
+  useEffect(() => {
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
+  };
   
   const handleLogout = async () => {
     try {
@@ -53,7 +71,7 @@ export function LayoutProvider({
 
   return (
     <SidebarProvider>
-      <div className="dark min-h-screen bg-background text-foreground flex">
+      <div className="min-h-screen bg-background text-foreground flex">
         {/* Desktop Sidebar */}
         <Sidebar variant="sidebar" collapsible="icon" className="hidden md:block">
           {sidebarContent}
@@ -72,6 +90,9 @@ export function LayoutProvider({
                     <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
                 </div>
                 <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                      {theme === 'dark' ? <Sun className="h-6 w-6 text-yellow-400" /> : <Moon className="h-6 w-6 text-blue-400" />}
+                  </Button>
                   <Link href="/">
                     <Button className="bg-green-500 text-white hover:bg-green-600">
                       <Home className="mr-2 h-4 w-4" />
