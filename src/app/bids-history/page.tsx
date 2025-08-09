@@ -10,11 +10,16 @@ import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Banknote, Phone } from 'lucide-react';
+import { ArrowLeft, Banknote, Phone, Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AddPointsDialog } from '@/components/add-points-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
 
 interface Bid extends DocumentData {
     id: string;
@@ -43,6 +48,7 @@ export default function BidsHistoryPage() {
     const [settings, setSettings] = useState<AppSettings>({});
     const [activeTab, setActiveTab] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
     useEffect(() => {
         if (authLoading) return;
@@ -116,11 +122,25 @@ export default function BidsHistoryPage() {
     };
 
     const filteredBids = useMemo(() => {
-        if (activeTab === 'all') {
-            return bids;
+        let filtered = bids;
+        
+        if (selectedDate) {
+            const startOfDay = new Date(selectedDate);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(selectedDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            filtered = filtered.filter(bid => {
+                const bidDate = bid.createdAt.toDate();
+                return bidDate >= startOfDay && bidDate <= endOfDay;
+            });
         }
-        return bids.filter(bid => bid.status === activeTab);
-    }, [bids, activeTab]);
+
+        if (activeTab === 'all') {
+            return filtered;
+        }
+        return filtered.filter(bid => bid.status === activeTab);
+    }, [bids, activeTab, selectedDate]);
 
     const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
     const paginatedBids = useMemo(() => {
@@ -130,7 +150,7 @@ export default function BidsHistoryPage() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [activeTab]);
+    }, [activeTab, selectedDate]);
 
     const renderPagination = () => {
         if (totalPages <= 1) return null;
@@ -198,7 +218,8 @@ export default function BidsHistoryPage() {
             </Table>
             {data.length === 0 && (
                 <p className="text-center text-muted-foreground mt-4">
-                    {activeTab === 'all' ? "You haven't placed any bids yet." : `No ${activeTab} bids found.`}
+                    {selectedDate ? `No bids found for ${format(selectedDate, 'PPP')}.` : 
+                     activeTab === 'all' ? "You haven't placed any bids yet." : `No ${activeTab} bids found.`}
                 </p>
             )}
         </div>
@@ -229,6 +250,31 @@ export default function BidsHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
+                        <div className="flex justify-end mb-4">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[280px] justify-start text-left font-normal",
+                                        !selectedDate && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={setSelectedDate}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+
                         <Tabs defaultValue="all" onValueChange={setActiveTab}>
                             <TabsList className="grid w-full grid-cols-4">
                                 <TabsTrigger value="all">All</TabsTrigger>
