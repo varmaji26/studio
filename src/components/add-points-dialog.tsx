@@ -45,7 +45,6 @@ const addPointsSchema = z.object({
   paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe'], {
     required_error: 'You need to select a payment method.',
   }),
-  transactionId: z.string().min(1, 'Transaction ID is required.'),
 });
 
 type AddPointsFormValues = z.infer<typeof addPointsSchema>;
@@ -106,7 +105,6 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
     defaultValues: {
       amount: undefined,
       paymentMethod: undefined,
-      transactionId: '',
     },
   });
 
@@ -132,32 +130,6 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
 
   }, [open]);
 
-  const handlePayWithApp = () => {
-    const amountStr = form.getValues('amount');
-    const amount = Number(amountStr);
-    const upiId = paymentDetails?.UPI?.details;
-
-    if (isNaN(amount) || amount < 100) {
-        form.setError('amount', { type: 'manual', message: 'Minimum deposit amount is ₹100.' });
-        return;
-    }
-    if (!upiId) {
-        toast({
-            variant: 'destructive',
-            title: 'UPI ID not set',
-            description: 'The admin has not configured a UPI ID for payments.',
-        });
-        return;
-    }
-
-    const payeeName = "Matka King";
-    const note = `Payment for ${user.displayName || 'user'}`;
-    
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
-    
-    window.location.href = upiUrl;
-  };
-
   const onSubmit = async (values: AddPointsFormValues) => {
     if (!user) return;
     setIsSubmitting(true);
@@ -167,7 +139,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
         displayName: user.displayName,
         amount: values.amount,
         paymentMethod: values.paymentMethod,
-        transactionId: values.transactionId,
+        transactionId: 'N/A', // Since it's removed
         status: 'pending',
         createdAt: serverTimestamp(),
       });
@@ -297,20 +269,6 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         </CardContent>
                     </Card>
                 )}
-
-                <FormField
-                control={form.control}
-                name="transactionId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Transaction ID</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Enter transaction ID after payment" {...field} className="h-11" />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
                  <DialogFooter className="gap-2 sm:gap-0 pt-2 flex flex-col sm:flex-row">
                     <DialogClose asChild>
                         <Button type="button" variant="outline" className="h-11 w-full sm:w-auto">
