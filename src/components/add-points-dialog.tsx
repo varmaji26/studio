@@ -139,7 +139,6 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
         displayName: user.displayName,
         amount: values.amount,
         paymentMethod: values.paymentMethod,
-        transactionId: 'N/A', // Since it's removed
         status: 'pending',
         createdAt: serverTimestamp(),
       });
@@ -180,7 +179,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] p-0">
+      <DialogContent className="sm:max-w-[425px] p-0 light">
         <DialogHeader className="p-4 pb-0">
           <DialogTitle>Add Points</DialogTitle>
           <DialogDescription>
