@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
@@ -14,6 +14,7 @@ import { ArrowLeft, Banknote, Phone } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AddPointsDialog } from '@/components/add-points-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Bid extends DocumentData {
     id: string;
@@ -38,6 +39,7 @@ export default function BidsHistoryPage() {
     const [bids, setBids] = useState<Bid[]>([]);
     const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState<AppSettings>({});
+    const [activeTab, setActiveTab] = useState('all');
 
     useEffect(() => {
         if (authLoading) return;
@@ -110,6 +112,53 @@ export default function BidsHistoryPage() {
         }
     };
 
+    const filteredBids = useMemo(() => {
+        if (activeTab === 'all') {
+            return bids;
+        }
+        return bids.filter(bid => bid.status === activeTab);
+    }, [bids, activeTab]);
+
+    const renderTable = (data: Bid[]) => (
+        <div className="overflow-x-auto mt-4">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Game</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Numbers</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {data.map((bid) => (
+                        <TableRow key={bid.id}>
+                            <TableCell>{formatDate(bid.createdAt)}</TableCell>
+                            <TableCell>{bid.gameName} ({bid.session})</TableCell>
+                            <TableCell>{bid.betType}</TableCell>
+                            <TableCell>{bid.numbers.join(', ')}</TableCell>
+                            <TableCell>₹{bid.totalAmount}</TableCell>
+                            <TableCell>
+                                <Badge 
+                                    variant={getStatusBadgeVariant(bid.status)}
+                                    className={bid.status === 'won' ? 'bg-green-500 text-white' : ''}
+                                >
+                                    {bid.status}
+                                </Badge>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            {data.length === 0 && (
+                <p className="text-center text-muted-foreground mt-4">
+                    {activeTab === 'all' ? "You haven't placed any bids yet." : `No ${activeTab} bids found.`}
+                </p>
+            )}
+        </div>
+    );
 
     if (authLoading || loading) {
         return (
@@ -136,42 +185,26 @@ export default function BidsHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Game</TableHead>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead>Numbers</TableHead>
-                                        <TableHead>Amount</TableHead>
-                                        <TableHead>Status</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {bids.map((bid) => (
-                                        <TableRow key={bid.id}>
-                                            <TableCell>{formatDate(bid.createdAt)}</TableCell>
-                                            <TableCell>{bid.gameName} ({bid.session})</TableCell>
-                                            <TableCell>{bid.betType}</TableCell>
-                                            <TableCell>{bid.numbers.join(', ')}</TableCell>
-                                            <TableCell>₹{bid.totalAmount}</TableCell>
-                                            <TableCell>
-                                                <Badge 
-                                                    variant={getStatusBadgeVariant(bid.status)}
-                                                    className={bid.status === 'won' ? 'bg-green-500 text-white' : ''}
-                                                >
-                                                    {bid.status}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                        {bids.length === 0 && (
-                            <p className="text-center text-muted-foreground mt-4">You haven't placed any bids yet.</p>
-                        )}
+                        <Tabs defaultValue="all" onValueChange={setActiveTab}>
+                            <TabsList className="grid w-full grid-cols-4">
+                                <TabsTrigger value="all">All</TabsTrigger>
+                                <TabsTrigger value="running">Running</TabsTrigger>
+                                <TabsTrigger value="won">Won</TabsTrigger>
+                                <TabsTrigger value="lost">Lost</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="all">
+                                {renderTable(filteredBids)}
+                            </TabsContent>
+                            <TabsContent value="running">
+                                 {renderTable(filteredBids)}
+                            </TabsContent>
+                             <TabsContent value="won">
+                                {renderTable(filteredBids)}
+                            </TabsContent>
+                             <TabsContent value="lost">
+                                {renderTable(filteredBids)}
+                            </TabsContent>
+                        </Tabs>
                     </CardContent>
                 </Card>
             </div>
