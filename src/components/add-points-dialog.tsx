@@ -238,7 +238,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                 {qrCodeDetails?.imageUrl && (
                   <div className="flex flex-col items-center justify-center py-2">
                     <p className="text-center text-sm mb-2">{qrCodeDetails.title || 'Scan to Pay'}</p>
-                    <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={140} height={140} className="rounded-md" unoptimized/>
+                    <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
                   </div>
                 )}
 
