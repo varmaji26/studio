@@ -233,9 +233,6 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                         </FormItem>
                     )}
                     />
-                     <Button type="button" className="h-11 w-full" onClick={handlePayWithApp} disabled={loadingDetails}>
-                        
-                    </Button>
                 </div>
                 
                 {qrCodeDetails?.imageUrl && (
