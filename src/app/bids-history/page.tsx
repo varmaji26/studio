@@ -33,6 +33,8 @@ interface AppSettings extends DocumentData {
     telegramLink?: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function BidsHistoryPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
@@ -40,6 +42,7 @@ export default function BidsHistoryPage() {
     const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState<AppSettings>({});
     const [activeTab, setActiveTab] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         if (authLoading) return;
@@ -119,6 +122,47 @@ export default function BidsHistoryPage() {
         return bids.filter(bid => bid.status === activeTab);
     }, [bids, activeTab]);
 
+    const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
+    const paginatedBids = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredBids.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredBids, currentPage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab]);
+
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+
+        return (
+            <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
+                <div>
+                    Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredBids.length)}</strong> of <strong>{filteredBids.length}</strong> entries
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+
     const renderTable = (data: Bid[]) => (
         <div className="overflow-x-auto mt-4">
             <Table>
@@ -193,18 +237,19 @@ export default function BidsHistoryPage() {
                                 <TabsTrigger value="lost">Lost</TabsTrigger>
                             </TabsList>
                             <TabsContent value="all">
-                                {renderTable(filteredBids)}
+                                {renderTable(paginatedBids)}
                             </TabsContent>
                             <TabsContent value="running">
-                                 {renderTable(filteredBids)}
+                                 {renderTable(paginatedBids)}
                             </TabsContent>
                              <TabsContent value="won">
-                                {renderTable(filteredBids)}
+                                {renderTable(paginatedBids)}
                             </TabsContent>
                              <TabsContent value="lost">
-                                {renderTable(filteredBids)}
+                                {renderTable(paginatedBids)}
                             </TabsContent>
                         </Tabs>
+                        {renderPagination()}
                     </CardContent>
                 </Card>
             </div>
