@@ -234,7 +234,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                     )}
                     />
                      <Button type="button" className="h-11 w-full" onClick={handlePayWithApp} disabled={loadingDetails}>
-                        Pay with UPI App
+                        
                     </Button>
                 </div>
                 
