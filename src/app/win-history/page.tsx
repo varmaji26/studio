@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
@@ -9,10 +9,14 @@ import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Trophy } from 'lucide-react';
+import { ArrowLeft, Trophy, Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
 
 interface Win extends DocumentData {
     id: string;
@@ -26,11 +30,15 @@ interface Win extends DocumentData {
     createdAt: Timestamp;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function WinHistoryPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [wins, setWins] = useState<Win[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
     useEffect(() => {
         if (authLoading) return;
@@ -43,8 +51,6 @@ export default function WinHistoryPage() {
             collection(db, 'bids'),
             where('userId', '==', user.uid),
             where('status', '==', 'won')
-            // The orderBy clause is removed to prevent the composite index error.
-            // We will sort the data on the client-side.
         );
 
         const unsubscribe = onSnapshot(winsQuery, (querySnapshot) => {
@@ -52,7 +58,6 @@ export default function WinHistoryPage() {
             querySnapshot.forEach((doc) => {
                 winsData.push({ id: doc.id, ...doc.data() } as Win);
             });
-            // Sort wins by creation date in descending order on the client
             winsData.sort((a, b) => {
                 const dateA = a.createdAt?.toMillis() || 0;
                 const dateB = b.createdAt?.toMillis() || 0;
@@ -68,11 +73,67 @@ export default function WinHistoryPage() {
         return () => unsubscribe();
     }, [user, authLoading, router]);
 
+    const filteredWins = useMemo(() => {
+        if (!selectedDate) {
+            return wins;
+        }
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return wins.filter(win => {
+            const winDate = win.createdAt.toDate();
+            return winDate >= startOfDay && winDate <= endOfDay;
+        });
+    }, [wins, selectedDate]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedDate]);
+    
+    const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
+    const paginatedWins = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredWins.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredWins, currentPage]);
+
     const formatDate = (timestamp: Timestamp) => {
         if (!timestamp) return 'N/A';
         return new Date(timestamp.seconds * 1000).toLocaleString();
     };
     
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+
+        return (
+            <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
+                <div>
+                    Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredWins.length)}</strong> of <strong>{filteredWins.length}</strong> entries
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+
     if (authLoading || loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
@@ -101,6 +162,30 @@ export default function WinHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
+                        <div className="flex justify-end mb-4">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[280px] justify-start text-left font-normal",
+                                        !selectedDate && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={setSelectedDate}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
@@ -113,7 +198,7 @@ export default function WinHistoryPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {wins.map((win) => (
+                                    {paginatedWins.map((win) => (
                                         <TableRow key={win.id}>
                                             <TableCell>{formatDate(win.createdAt)}</TableCell>
                                             <TableCell>{win.gameName} ({win.session})</TableCell>
@@ -132,12 +217,15 @@ export default function WinHistoryPage() {
                                 </TableBody>
                             </Table>
                         </div>
-                        {wins.length === 0 && !loading && (
+                        {filteredWins.length === 0 && !loading && (
                             <div className="text-center py-10">
                                 <Trophy className="mx-auto h-12 w-12 text-muted-foreground" />
-                                <p className="mt-4 text-muted-foreground">You haven't won any bids yet. Keep playing!</p>
+                                <p className="mt-4 text-muted-foreground">
+                                {selectedDate ? `You have no wins on ${format(selectedDate, 'PPP')}.` : "You haven't won any bids yet. Keep playing!"}
+                                </p>
                             </div>
                         )}
+                        {renderPagination()}
                     </CardContent>
                 </Card>
             </div>
