@@ -193,4 +193,7 @@ body {
       transform: translateX(-100%);
     }
   }
+  .support-glow {
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 5px rgba(0, 255, 0, 0.6);
+  }
 }
