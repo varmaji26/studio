@@ -25,6 +25,9 @@ function PaymentQRContent() {
     const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+    const [orderId, setOrderId] = useState<string | null>(null);
+    const [dateTime, setDateTime] = useState<string | null>(null);
+
 
     useEffect(() => {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
@@ -55,13 +58,16 @@ function PaymentQRContent() {
         const timerId = setInterval(() => setTimeLeft(timeLeft - 1), 1000);
         return () => clearInterval(timerId);
     }, [timeLeft]);
+
+    useEffect(() => {
+        // Generate orderId and dateTime on the client side to avoid hydration mismatch
+        setOrderId(`#${Date.now()}`);
+        setDateTime(new Date().toLocaleString('en-GB'));
+    }, []);
     
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     
-    const orderId = `#${Date.now()}`;
-    const dateTime = new Date().toLocaleString('en-GB');
-
     const handleContactSupport = () => {
         if (settings?.whatsappNumber) {
             window.open(`https://wa.me/${settings.whatsappNumber}?text=I%20need%20help%20with%20my%20payment%20(Order%20ID:%20${orderId})`, '_blank');
@@ -148,11 +154,11 @@ function PaymentQRContent() {
                            <div className="text-sm space-y-1 text-gray-600">
                                 <div className="flex justify-between">
                                     <span>Order ID</span>
-                                    <span className="font-mono">{orderId}</span>
+                                    {orderId ? <span className="font-mono">{orderId}</span> : <Skeleton className="h-4 w-24" />}
                                 </div>
                                  <div className="flex justify-between">
                                     <span>Date & Time</span>
-                                    <span>{dateTime}</span>
+                                    <span>{dateTime || <Skeleton className="h-4 w-32" />}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Payment Method</span>
