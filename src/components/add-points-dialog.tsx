@@ -38,6 +38,10 @@ import Image from 'next/image';
 import { ScrollArea } from './ui/scroll-area';
 
 const addPointsSchema = z.object({
+  amount: z.preprocess(
+    (a) => parseInt(z.string().parse(a), 10),
+    z.number().min(10, 'Minimum amount is ₹10.')
+  ),
   transactionId: z.string().min(1, 'Transaction ID is required.'),
   paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe', 'Scan QR Code'], {
     required_error: 'You need to select a payment method.',
@@ -48,7 +52,6 @@ type AddPointsFormValues = z.infer<typeof addPointsSchema>;
 
 interface AddPointsDialogProps {
   user: User;
-  amount: number;
   children: React.ReactNode;
 }
 
@@ -91,7 +94,7 @@ const PaytmPhonePeLogo = () => (
 );
 
 
-export function AddPointsDialog({ user, amount, children }: AddPointsDialogProps) {
+export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,7 +138,7 @@ export function AddPointsDialog({ user, amount, children }: AddPointsDialogProps
       await addDoc(collection(db, 'deposits'), {
         userId: user.uid,
         displayName: user.displayName,
-        amount: amount,
+        amount: values.amount,
         paymentMethod: values.paymentMethod,
         transactionId: values.transactionId,
         status: 'pending',
@@ -176,17 +179,30 @@ export function AddPointsDialog({ user, amount, children }: AddPointsDialogProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] p-0 light">
+      <DialogContent className="sm:max-w-[425px] p-0">
         <DialogHeader className="p-4 pb-0">
-          <DialogTitle>Complete Your Deposit</DialogTitle>
+          <DialogTitle>Add Points</DialogTitle>
           <DialogDescription>
-            Complete the payment of ₹{amount} using one of the methods below, then submit your transaction ID for verification.
+            Complete the payment using one of the methods below, then submit your transaction ID for verification.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[80vh] overflow-y-auto">
         <div className="p-4 pt-2">
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                 <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Amount (₹)</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="Enter amount paid" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.value)} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                  <FormField
                 control={form.control}
                 name="paymentMethod"

@@ -11,7 +11,7 @@ import { ArrowLeft, Landmark, Phone } from 'lucide-react';
 import Link from 'next/link';
 import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { AddPointsDialog } from '@/components/add-points-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface UserProfile extends DocumentData {
   balance?: number;
@@ -25,10 +25,10 @@ interface AppSettings extends DocumentData {
 export default function AddFundPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
     const [profile, setProfile] = useState<UserProfile>({});
     const [settings, setSettings] = useState<AppSettings>({});
     const [amount, setAmount] = useState('');
-    const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -65,12 +65,14 @@ export default function AddFundPage() {
     const handlePayNow = () => {
         const parsedAmount = parseInt(amount, 10);
         if (isNaN(parsedAmount) || parsedAmount < 100) {
-            // Toast logic can be added here if needed.
-            // For now, just preventing dialog open.
-            alert('Minimum amount is ₹100');
+            toast({
+                variant: 'destructive',
+                title: 'Invalid Amount',
+                description: 'Minimum amount to add is ₹100.',
+            });
             return;
         }
-        setIsPayDialogOpen(true);
+        router.push(`/payment-qr?amount=${parsedAmount}`);
     };
 
     if (authLoading || !user) {
@@ -82,7 +84,6 @@ export default function AddFundPage() {
     }
     
     const mobileNumber = user.email?.split('@')[0];
-    const parsedAmount = parseInt(amount, 10);
 
     return (
         <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
@@ -151,13 +152,12 @@ export default function AddFundPage() {
             </main>
 
             <footer className="p-4 bg-white sticky bottom-0">
-                 <AddPointsDialog user={user} amount={parsedAmount}>
-                    <Button 
-                        className="w-full h-14 bg-[#004D40] hover:bg-[#00382e] text-white font-bold text-lg rounded-full"
-                    >
-                        Pay Now
-                    </Button>
-                </AddPointsDialog>
+                <Button 
+                    className="w-full h-14 bg-[#004D40] hover:bg-[#00382e] text-white font-bold text-lg rounded-full"
+                    onClick={handlePayNow}
+                >
+                    Pay Now
+                </Button>
             </footer>
         </div>
     );
