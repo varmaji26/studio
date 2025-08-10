@@ -405,7 +405,7 @@ export default function Home() {
         </div>
       )}
       
-      <main className="flex flex-col gap-4 p-4 pb-24">
+      <main className="flex flex-col gap-4 p-4 pb-28">
         {settings.welcomeBanner?.imageUrl && (
              <Card className="bg-card/80 border-white/10 shadow-lg">
                 <CardContent className="p-0">
