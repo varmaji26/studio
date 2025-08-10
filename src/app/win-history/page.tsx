@@ -47,14 +47,15 @@ export default function WinHistoryPage() {
             const winsQuery = query(
                 collection(db, 'bids'),
                 where('userId', '==', user.uid),
-                where('status', '==', 'won'),
-                orderBy('createdAt', 'desc')
+                where('status', '==', 'won')
             );
             const querySnapshot = await getDocs(winsQuery);
             const winsData: Win[] = [];
             querySnapshot.forEach((doc) => {
                 winsData.push({ id: doc.id, ...doc.data() } as Win);
             });
+            // Sort client-side
+            winsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
             setWins(winsData);
         } catch (error) {
             console.error("Error fetching wins history: ", error);

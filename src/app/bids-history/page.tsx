@@ -56,14 +56,15 @@ export default function BidsHistoryPage() {
         try {
             const bidsQuery = query(
                 collection(db, 'bids'),
-                where('userId', '==', user.uid),
-                orderBy('createdAt', 'desc')
+                where('userId', '==', user.uid)
             );
             const querySnapshot = await getDocs(bidsQuery);
             const bidsData: Bid[] = [];
             querySnapshot.forEach((doc) => {
                 bidsData.push({ id: doc.id, ...doc.data() } as Bid);
             });
+            // Sort client-side
+            bidsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
             setBids(bidsData);
         } catch (error) {
             console.error("Error fetching bids history: ", error);
