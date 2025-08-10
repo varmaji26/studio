@@ -1,12 +1,15 @@
 
 'use client';
 
+import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, LineChart, BookText, CircleDollarSign, MessageSquare } from 'lucide-react';
+import { motion } from "framer-motion";
+import { HiOutlineChartBar, HiOutlineClipboardList, HiOutlineHome, HiOutlineCurrencyDollar } from "react-icons/hi";
+import { FaWhatsapp } from "react-icons/fa";
 import { SupportDialog } from '@/components/support-dialog';
-import { cn } from '@/lib/utils';
-import { NavBarClipper } from './ui/icons';
+import { cn } from "@/lib/utils";
+
 
 interface AppSettings {
     whatsappNumber?: string;
@@ -17,55 +20,98 @@ interface BottomNavbarProps {
     settings: AppSettings;
 }
 
-const navItems = [
-    { href: '/bids-history', icon: LineChart, label: 'My Bids' },
-    { href: '/payment-history', icon: BookText, label: 'Passbook' },
-    { href: '/', icon: Home, label: 'Home' },
-    { href: '/funds', icon: CircleDollarSign, label: 'Funds' },
+const menuItems = [
+  { name: "My Bids", icon: <HiOutlineChartBar size={24} />, href: "/bids-history" },
+  { name: "Passbook", icon: <HiOutlineClipboardList size={24} />, href: "/payment-history" },
+  { name: "Home", icon: <HiOutlineHome size={28} />, href: "/" },
+  { name: "Funds", icon: <HiOutlineCurrencyDollar size={24} />, href: "/funds" },
+  { name: "Support", icon: <FaWhatsapp size={24} />, href: "#" },
 ];
 
 export function BottomNavbar({ settings }: BottomNavbarProps) {
-    const pathname = usePathname();
+  const pathname = usePathname();
+  const [activeIndex, setActiveIndex] = useState(2);
 
-    return (
-        <footer className="fixed bottom-0 left-0 right-0 h-[70px] z-50">
-            <div className="relative h-full w-full">
-                <NavBarClipper className="absolute bottom-0 left-0 w-full h-full text-[#005A9C]" />
-                
-                <div className="absolute inset-0 flex justify-around items-center text-white">
-                    {navItems.slice(0, 2).map(({ href, icon: Icon, label }) => (
-                         <Link key={href} href={href} className="flex flex-col items-center justify-center h-full w-1/5">
-                            <Icon className="h-6 w-6 mb-1" />
-                            <span className="text-xs">{label}</span>
-                        </Link>
-                    ))}
-                    <div className="w-1/5" />
-                    {navItems.slice(3).map(({ href, icon: Icon, label }) => (
-                         <Link key={href} href={href} className="flex flex-col items-center justify-center h-full w-1/5">
-                            <Icon className="h-6 w-6 mb-1" />
-                            <span className="text-xs">{label}</span>
-                        </Link>
-                    ))}
-                    <SupportDialog
-                        callNumber={settings.callSupportNumber}
-                        whatsappNumber={settings.whatsappNumber}
+  useEffect(() => {
+    const currentPath = pathname.split('/')[1];
+    const activeItem = menuItems.findIndex(item => item.href.includes(currentPath) && item.href !== '/');
+    setActiveIndex(activeItem !== -1 ? activeItem : 2);
+  }, [pathname]);
+
+
+  return (
+    <div className="fixed bottom-0 left-0 w-full bg-[#005A9C] h-[70px] flex items-center justify-around rounded-t-2xl z-50">
+      
+      {menuItems.map((item, index) => {
+        const isActive = activeIndex === index;
+        const isSupport = item.name === "Support";
+
+        if (isSupport) {
+            return (
+                <SupportDialog
+                    key={index}
+                    callNumber={settings.callSupportNumber}
+                    whatsappNumber={settings.whatsappNumber}
+                >
+                    <div
+                        className="flex flex-col items-center text-white text-xs relative cursor-pointer"
                     >
-                        <button className="flex flex-col items-center justify-center h-full w-1/5">
-                            <div className="relative">
-                                <MessageSquare className="h-6 w-6 mb-1 text-green-400" />
-                                <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_theme(colors.green.400)]"></div>
-                            </div>
-                            <span className="text-xs">Support</span>
-                        </button>
-                    </SupportDialog>
-                </div>
-
-                <Link href="/" className="absolute -top-7 left-1/2 -translate-x-1/2">
-                    <div className="h-[60px] w-[60px] bg-primary rounded-full flex items-center justify-center shadow-[0_4px_8px_rgba(0,0,0,0.2)]">
-                        <Home className="text-white h-8 w-8" />
+                         <div className="p-1 rounded-full shadow-[0_0_15px_rgba(0,255,0,0.8)] mb-1">
+                            <FaWhatsapp size={24} className="text-green-400" />
+                        </div>
+                        <span className="text-white">{item.name}</span>
                     </div>
-                </Link>
-            </div>
-        </footer>
-    );
+                </SupportDialog>
+            )
+        }
+        
+        const isHome = item.name === "Home";
+
+        return (
+          <Link
+            key={index}
+            href={item.href}
+            className={cn(
+                "flex flex-col items-center justify-center text-white text-xs relative h-full w-1/5",
+                isHome ? "-mt-8" : "mt-2"
+            )}
+          >
+            {isActive && (
+              <motion.div
+                layoutId="activeCircle"
+                className={cn(
+                    "absolute flex items-center justify-center shadow-lg",
+                    isHome 
+                    ? "w-16 h-16 bg-orange-500 rounded-full -top-1"
+                    : "w-full -top-2"
+                )}
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              >
+                { !isHome && (
+                    <svg
+                        className="absolute top-0 w-full h-auto"
+                        viewBox="0 0 80 20"
+                        fill="#005A9C"
+                        >
+                        <path d="M0 20 C20 0, 60 0, 80 20 Z" />
+                    </svg>
+                )}
+                 <div className={cn("z-10", isHome && "text-white")}>{item.icon}</div>
+              </motion.div>
+            )}
+
+             <div className={cn("mb-1 z-10", isActive && isHome && "hidden")}>{item.icon}</div>
+
+            <span className={cn(
+                "z-10",
+                isActive ? "text-orange-400" : "text-white",
+                isHome && "mt-16"
+                )}>
+              {item.name}
+            </span>
+          </Link>
+        );
+      })}
+    </div>
+  );
 }
