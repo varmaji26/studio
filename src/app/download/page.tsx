@@ -4,11 +4,12 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Star, Download } from 'lucide-react';
+import { Star, Download, Share2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
+import { useToast } from '@/hooks/use-toast';
 
 interface DownloadPageSettings extends DocumentData {
     downloadPageImage?: {
@@ -19,6 +20,7 @@ interface DownloadPageSettings extends DocumentData {
 export default function DownloadPage() {
   const [settings, setSettings] = useState<DownloadPageSettings>({});
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -40,6 +42,35 @@ export default function DownloadPage() {
   
   const handleDownload = () => {
     window.open('https://files.appsgeyser.com/Matka%20King_19002963.apk', '_blank');
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Matka King App',
+      text: 'Download the Matka King app now!',
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: 'Link Copied!',
+          description: 'Download link has been copied to your clipboard.',
+        });
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+      // Fallback for when sharing fails
+      await navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: 'Link Copied!',
+        description: 'Sharing failed, but the link is copied to your clipboard.',
+      });
+    }
   };
 
   return (
@@ -78,13 +109,22 @@ export default function DownloadPage() {
         </div>
 
         <div className="w-full max-w-md p-4 bg-background">
-          <Button
-            className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-2xl font-bold rounded-lg shadow-lg"
-            onClick={handleDownload}
-          >
-            <Download className="mr-3 h-8 w-8" />
-            Download Now
-          </Button>
+          <div className="flex gap-4">
+            <Button
+              className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-lg shadow-lg"
+              onClick={handleDownload}
+            >
+              <Download className="mr-3 h-8 w-8" />
+              Download
+            </Button>
+            <Button
+              className="w-full h-16 bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold rounded-lg shadow-lg"
+              onClick={handleShare}
+            >
+              <Share2 className="mr-3 h-7 w-7" />
+              Share
+            </Button>
+          </div>
         </div>
 
         <div className="w-full max-w-2xl p-4 bg-card mt-4">
