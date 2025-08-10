@@ -333,14 +333,6 @@ export default function Home() {
                         <Download className="h-5 w-5 text-primary" />
                         <span>Download App</span>
                     </Link>
-                    <Link href="/withdrawal" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <Landmark className="h-5 w-5 text-primary" />
-                        <span>Withdraw Funds</span>
-                    </Link>
-                    <Link href="/payment-history" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <CreditCard className="h-5 w-5 text-primary" />
-                        <span>Payment History</span>
-                    </Link>
                      <Link href="/golden-ank" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <Gem className="h-5 w-5 text-primary" />
                         <span>Golden Ank</span>
@@ -348,14 +340,6 @@ export default function Home() {
                     <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <Star className="h-5 w-5 text-primary" />
                         <span>Rate Card</span>
-                    </Link>
-                    <Link href="/win-history" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <Trophy className="h-5 w-5 text-primary" />
-                        <span>Win History</span>
-                    </Link>
-                    <Link href="/bids-history" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <History className="h-5 w-5 text-primary" />
-                        <span>Bids History</span>
                     </Link>
                     <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <BarChart2 className="h-5 w-5 text-primary" />
