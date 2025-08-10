@@ -31,7 +31,8 @@ import {
   MessageSquare,
   Gem,
   Sun,
-  Moon
+  Moon,
+  Download
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -324,13 +325,13 @@ export default function Home() {
                 </div>
                 <Separator className="bg-white/10 my-2" />
                 <nav className="flex flex-col gap-2 p-4">
-                    <button onClick={toggleTheme} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
-                        {theme === 'dark' ? <Sun className="h-5 w-5 text-primary" /> : <Moon className="h-5 w-5 text-primary" />}
-                        <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-                    </button>
                     <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
                         <LogOut className="h-5 w-5 text-primary" />
                         <span>Logout</span>
+                    </button>
+                    <button onClick={toggleTheme} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
+                        {theme === 'dark' ? <Sun className="h-5 w-5 text-primary" /> : <Moon className="h-5 w-5 text-primary" />}
+                        <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
                     </button>
                     <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <HomeIcon className="h-5 w-5 text-primary" />
@@ -343,6 +344,10 @@ export default function Home() {
                     <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <BookUser className="h-5 w-5 text-primary" />
                         <span>Contact</span>
+                    </Link>
+                    <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Download className="h-5 w-5 text-primary" />
+                        <span>Download App</span>
                     </Link>
                     <WithdrawFundsDialog user={user}>
                         <button className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
