@@ -8,6 +8,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 export default function DownloadPage() {
+  const handleDownload = () => {
+    window.open('https://files.appsgeyser.com/Matka%20King_19002963.apk', '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-[#E0F7FA] text-black font-sans">
       <main className="flex flex-col items-center">
@@ -31,10 +35,7 @@ export default function DownloadPage() {
         <div className="w-full max-w-md p-4 bg-[#E0F7FA]">
           <Button
             className="w-full h-16 bg-gradient-to-b from-yellow-400 to-orange-500 text-white text-3xl font-bold py-8 px-16 rounded-full shadow-lg border-4 border-white/50 transform hover:scale-105 transition-transform"
-            onClick={() => {
-              // Placeholder for download functionality
-              alert('Downloading...');
-            }}
+            onClick={handleDownload}
           >
             Download Now
           </Button>
