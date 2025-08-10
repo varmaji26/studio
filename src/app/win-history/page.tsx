@@ -16,7 +16,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { BottomNavbar } from '@/components/bottom-navbar';
 
 
 interface Win extends DocumentData {
@@ -245,9 +244,6 @@ export default function WinHistoryPage() {
                     </CardContent>
                 </Card>
             </div>
-             { user && (
-                <BottomNavbar settings={settings} />
-            )}
         </div>
     )
 }

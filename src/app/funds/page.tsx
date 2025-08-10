@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, ChevronRight, IndianRupee, Landmark, History, Banknote } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BottomNavbar } from '@/components/bottom-navbar';
 import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -125,9 +124,6 @@ const FundsPage = () => {
                     </Link>
                 </div>
             </main>
-             { user && (
-                <BottomNavbar settings={settings} />
-            )}
         </div>
     );
 };
