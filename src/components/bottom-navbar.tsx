@@ -1,14 +1,12 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HiOutlineChartBar, HiOutlineClipboardList, HiOutlineHome, HiOutlineCurrencyDollar } from "react-icons/hi";
 import { FaWhatsapp } from "react-icons/fa";
 import { SupportDialog } from '@/components/support-dialog';
 import { cn } from "@/lib/utils";
-
 
 interface AppSettings {
     whatsappNumber?: string;
@@ -33,8 +31,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
   return (
     <div className="fixed bottom-0 left-0 w-full h-[70px] z-50">
         <div className="relative h-full">
-            {/* Curved background shape */}
-             <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
                 <div className="relative w-full h-full">
                     <div
                         className="absolute w-[200%] h-[200%] -left-1/2 -top-[150%] bg-[#005A9C] rounded-[100%]"
@@ -45,9 +42,8 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                 </div>
             </div>
 
-            {/* Navigation Items */}
-            <div className="absolute top-0 left-0 w-full h-full flex justify-around items-center">
-                 {menuItems.map((item, index) => {
+            <div className="absolute top-0 left-0 w-full h-full flex justify-around items-center pt-2">
+                 {menuItems.map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
                     const isHome = item.name === "Home";
@@ -55,50 +51,43 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                     
                     if (isHome) {
                          return (
-                            <Link key={index} href={item.href} className="absolute left-1/2 -translate-x-1/2 -top-5 z-20">
-                                <div className={cn(
-                                    "flex flex-col items-center justify-center text-xs",
-                                     isActive ? "text-orange-500" : "text-white"
-                                )}>
-                                    <div className="bg-background p-1 rounded-full">
-                                        <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                                            <Icon size={28} className="text-white" />
-                                        </div>
-                                    </div>
-                                    <span>{item.name}</span>
+                            <Link key={item.name} href={item.href} className="absolute left-1/2 -translate-x-1/2 -top-5 z-20 flex flex-col items-center">
+                                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center shadow-lg border-4 border-background">
+                                    <Icon size={32} className="text-white" />
                                 </div>
+                                <span className={cn("text-xs mt-1", isActive ? "text-orange-400" : "text-white")}>{item.name}</span>
                             </Link>
                          )
                     }
 
+                    const itemContent = (
+                        <div className={cn("flex flex-col items-center text-xs w-full", isActive ? 'text-orange-400' : 'text-white')}>
+                             <div className={cn("mb-1", isSupport ? "p-1.5 rounded-full support-glow" : "")}>
+                                <Icon size={24} className={isSupport ? "text-green-400" : ""} />
+                            </div>
+                            <span>{item.name}</span>
+                        </div>
+                    );
+
                     if (isSupport) {
                         return (
-                            <div key={index} className="w-1/5 flex justify-center">
+                             <div key={item.name} className="w-1/5 flex justify-center">
                                 <SupportDialog
                                     callNumber={settings.callSupportNumber}
                                     whatsappNumber={settings.whatsappNumber}
                                 >
-                                    <div className="flex flex-col items-center text-white text-xs cursor-pointer">
-                                        <div className="p-1.5 rounded-full support-glow mb-1">
-                                            <Icon size={24} className="text-green-400" />
-                                        </div>
-                                        <span>{item.name}</span>
+                                    <div className="w-full flex justify-center cursor-pointer">
+                                        {itemContent}
                                     </div>
                                 </SupportDialog>
-                            </div>
+                             </div>
                         )
                     }
 
                     return (
-                        <div key={index} className="w-1/5 flex justify-center">
-                             <Link href={item.href} className={cn(
-                                "flex flex-col items-center text-xs",
-                                isActive ? 'text-orange-400' : 'text-white'
-                             )}>
-                                <Icon size={24} className="mb-1" />
-                                <span>{item.name}</span>
-                            </Link>
-                        </div>
+                        <Link key={item.name} href={item.href} className="w-1/5 flex justify-center">
+                            {itemContent}
+                        </Link>
                     );
                 })}
             </div>
