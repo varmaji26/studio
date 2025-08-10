@@ -40,10 +40,6 @@ export default function DownloadPage() {
     fetchSettings();
   }, []);
   
-  const handleDownload = () => {
-    window.open('https://files.appsgeyser.com/Matka%20King_19002963.apk', '_blank');
-  };
-
   const handleShare = async () => {
     const shareData = {
       title: 'Matka King App',
@@ -66,24 +62,22 @@ export default function DownloadPage() {
       // Gracefully handle permission denied error without logging it
       if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
          // Silently fallback to clipboard
+         try {
+            await navigator.clipboard.writeText(window.location.href);
+            toast({
+              title: 'Link Copied!',
+              description: 'Sharing was cancelled, but the link is copied to your clipboard.',
+            });
+          } catch (copyError) {
+            console.error('Error copying to clipboard:', copyError);
+            toast({
+              variant: 'destructive',
+              title: 'Error',
+              description: 'Could not share or copy the link.',
+            });
+          }
       } else {
         console.error('Error sharing:', err);
-      }
-      
-      // Fallback for when sharing fails or is cancelled
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: 'Link Copied!',
-          description: 'Sharing was cancelled, but the link is copied to your clipboard.',
-        });
-      } catch (copyError) {
-        console.error('Error copying to clipboard:', copyError);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not share or copy the link.',
-        });
       }
     }
   };
@@ -125,13 +119,19 @@ export default function DownloadPage() {
 
         <div className="w-full max-w-md p-4 bg-background">
           <div className="flex gap-4">
-            <Button
-              className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-lg shadow-lg"
-              onClick={handleDownload}
+            <a
+              href="https://files.appsgeyser.com/Matka%20King_19002963.apk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full"
             >
-              <Download className="mr-3 h-8 w-8" />
-              Download
-            </Button>
+              <Button
+                className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-lg shadow-lg"
+              >
+                <Download className="mr-3 h-8 w-8" />
+                Download
+              </Button>
+            </a>
             <Button
               className="w-full h-16 bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold rounded-lg shadow-lg"
               onClick={handleShare}
