@@ -70,21 +70,6 @@ const FundsPage = () => {
                         </div>
                     </Link>
 
-                    <Link href="/profile">
-                        <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
-                           <div className="flex items-center gap-4">
-                               <div className="p-2 bg-primary/20 rounded-full">
-                                   <Landmark className="h-6 w-6 text-primary" />
-                               </div>
-                               <div>
-                                   <h2 className="font-semibold text-lg">Bank Detail</h2>
-                                   <p className="text-sm text-muted-foreground">Add your bank detail for withdrawals</p>
-                               </div>
-                           </div>
-                           <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                    </Link>
-
                     <Link href="/payment-history">
                        <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
                            <div className="flex items-center gap-4">
