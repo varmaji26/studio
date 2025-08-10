@@ -17,7 +17,7 @@ export default function DownloadPage() {
       <main className="flex flex-col items-center">
         <div className="w-full text-center py-4 bg-[#E0F7FA]">
            <h1 className="text-5xl font-bold text-blue-800">
-            GOA <span className="text-white bg-gradient-to-r from-orange-500 to-red-600 px-3 rounded-lg shadow-md">567</span>
+            MATKA <span className="text-white bg-gradient-to-r from-orange-500 to-red-600 px-3 rounded-lg shadow-md">KING</span>
           </h1>
         </div>
         
