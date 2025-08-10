@@ -11,6 +11,7 @@ import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 interface AppSettings extends DocumentData {
     upiId?: string;
@@ -27,6 +28,7 @@ function PaymentQRContent() {
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
     const [orderId, setOrderId] = useState<string | null>(null);
     const [dateTime, setDateTime] = useState<string | null>(null);
+    const [upiUrl, setUpiUrl] = useState('');
 
 
     useEffect(() => {
@@ -46,8 +48,9 @@ function PaymentQRContent() {
     useEffect(() => {
         if (settings && settings.upiId && amount && user) {
             const payeeName = "Matka King";
-            const upiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
-            QRCode.toDataURL(upiUrl)
+            const generatedUpiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+            setUpiUrl(generatedUpiUrl);
+            QRCode.toDataURL(generatedUpiUrl)
                 .then(url => setQrCodeDataUrl(url))
                 .catch(err => console.error(err));
         }
@@ -158,7 +161,7 @@ function PaymentQRContent() {
                                 </div>
                                  <div className="flex justify-between">
                                     <span>Date & Time</span>
-                                    <span>{dateTime || <Skeleton className="h-4 w-32" />}</span>
+                                    {dateTime ? <span>{dateTime}</span> : <Skeleton className="h-4 w-32" />}
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Payment Method</span>
@@ -175,9 +178,11 @@ function PaymentQRContent() {
                 </div>
             </main>
             <footer className="bg-gray-100 p-4 space-y-3 sticky bottom-0">
-                <Button className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-bold">
-                    <Image src="https://placehold.co/24x24.png" alt="GPay" width={24} height={24} className="mr-2" data-ai-hint="google pay logo"/>
-                    Google Pay
+                 <Button asChild className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-bold" disabled={!upiUrl}>
+                    <a href={upiUrl}>
+                        <Image src="https://placehold.co/24x24.png" alt="GPay" width={24} height={24} className="mr-2" data-ai-hint="google pay logo"/>
+                        Google Pay
+                    </a>
                 </Button>
                 <Button variant="outline" className="w-full h-12 border-teal-600 text-teal-600 font-bold hover:bg-teal-50">
                     <RefreshCw className="mr-2 h-5 w-5"/>
