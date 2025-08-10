@@ -293,7 +293,7 @@ export default function PendingRequestsPage() {
                     ))}
                 </TableBody>
             </Table>
-            {paginatedData.length === 0 && <p className="text-center text-muted-foreground mt-4">No pending deposit requests found.</p>}
+            {paginatedData.length === 0 && <p className="text-center text-muted-foreground mt-4">No pending fund requests found.</p>}
         </div>
      </div>
   );
@@ -320,7 +320,7 @@ export default function PendingRequestsPage() {
                     <div className="flex justify-between items-center">
                         <div>
                             <CardTitle className="text-3xl font-bold">Customer Pending Requests</CardTitle>
-                            <CardDescription>Approve or reject user deposit and withdrawal requests.</CardDescription>
+                            <CardDescription>Approve or reject user fund and withdrawal requests.</CardDescription>
                         </div>
                         <Button asChild variant="outline">
                             <Link href="/admin/payment-history" className="flex items-center gap-2">
@@ -334,13 +334,13 @@ export default function PendingRequestsPage() {
 
             <Tabs defaultValue="withdrawals" onValueChange={setActiveTab} value={activeTab}>
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="deposits">Users Deposit Request ({depositRequests.length})</TabsTrigger>
+                    <TabsTrigger value="deposits">Users Fund Request ({depositRequests.length})</TabsTrigger>
                     <TabsTrigger value="withdrawals">Users Withdraw Request ({withdrawalRequests.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="deposits" className="mt-4">
                     <Card className="bg-card/80 border-white/10 shadow-lg">
                         <CardHeader>
-                            <CardTitle className="text-2xl">Pending Deposit Requests</CardTitle>
+                            <CardTitle className="text-2xl">Pending Fund Requests</CardTitle>
                         </CardHeader>
                         <CardContent>
                         {renderContent()}

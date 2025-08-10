@@ -581,7 +581,7 @@ export default function Home() {
             <AddPointsDialog user={user}>
                 <button className="flex flex-col items-center justify-center text-white text-xs gap-1 p-1 rounded-md bg-amber-500 hover:bg-amber-600">
                     <Banknote className="h-6 w-6 [filter:drop-shadow(1px_1px_1px_rgba(0,0,0,0.7))]" />
-                    <span className="font-bold [text-shadow:1px_1px_2px_#000]">Deposit</span>
+                    <span className="font-bold [text-shadow:1px_1px_2px_#000]">Funds</span>
                 </button>
             </AddPointsDialog>
              <button
