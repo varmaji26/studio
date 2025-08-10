@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, ChevronRight, IndianRupee, Landmark, History, Banknote } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { WithdrawFundsDialog } from '@/components/withdraw-funds-dialog';
 
 const FundsPage = () => {
     const { user, loading: authLoading } = useAuth();
@@ -56,7 +55,7 @@ const FundsPage = () => {
                         </div>
                     </Link>
                     
-                     <WithdrawFundsDialog user={user}>
+                     <Link href="/withdrawal">
                         <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
                            <div className="flex items-center gap-4">
                                <div className="p-2 bg-primary/20 rounded-full">
@@ -69,7 +68,7 @@ const FundsPage = () => {
                            </div>
                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </div>
-                    </WithdrawFundsDialog>
+                    </Link>
 
                     <Link href="/profile">
                         <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">

@@ -44,8 +44,6 @@ import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay"
 import { formatTime, cn, isBettingClosed, formatGameResult } from '@/lib/utils';
-import { AddPointsDialog } from '@/components/add-points-dialog';
-import { WithdrawFundsDialog } from '@/components/withdraw-funds-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateProfile } from 'firebase/auth';
@@ -340,12 +338,10 @@ export default function Home() {
                         <Download className="h-5 w-5 text-primary" />
                         <span>Download App</span>
                     </Link>
-                    <WithdrawFundsDialog user={user}>
-                        <button className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
-                            <Landmark className="h-5 w-5 text-primary" />
-                            <span>Withdraw Funds</span>
-                        </button>
-                    </WithdrawFundsDialog>
+                    <Link href="/withdrawal" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Landmark className="h-5 w-5 text-primary" />
+                        <span>Withdraw Funds</span>
+                    </Link>
                     <Link href="/payment-history" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <CreditCard className="h-5 w-5 text-primary" />
                         <span>Payment History</span>
