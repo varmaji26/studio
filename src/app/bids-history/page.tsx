@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Banknote, Phone, Calendar as CalendarIcon, LineChart, BookText, Home, CircleDollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { AddPointsDialog } from '@/components/add-points-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -250,7 +249,7 @@ export default function BidsHistoryPage() {
                                     <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "w-[280px] justify-start text-left font-normal",
+                                        "w-full sm:w-[280px] justify-start text-left font-normal",
                                         !selectedDate && "text-muted-foreground"
                                     )}
                                     >

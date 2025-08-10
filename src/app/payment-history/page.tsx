@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
@@ -10,12 +10,16 @@ import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, CreditCard, ArrowDown, ArrowUp, Download } from 'lucide-react';
+import { ArrowLeft, CreditCard, ArrowDown, ArrowUp, Download, Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
 interface Transaction extends DocumentData {
@@ -35,11 +39,15 @@ declare module 'jspdf' {
   }
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function PaymentHistoryPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
     useEffect(() => {
         if (authLoading) return;
@@ -76,6 +84,31 @@ export default function PaymentHistoryPage() {
         };
 
     }, [user, authLoading, router]);
+
+    const filteredTransactions = useMemo(() => {
+        if (!selectedDate) {
+            return transactions;
+        }
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return transactions.filter(t => {
+            const tDate = t.createdAt.toDate();
+            return tDate >= startOfDay && tDate <= endOfDay;
+        });
+    }, [transactions, selectedDate]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedDate]);
+
+    const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
+    const paginatedTransactions = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredTransactions, currentPage]);
 
     const formatDate = (timestamp: Timestamp) => {
         if (!timestamp) return 'N/A';
@@ -118,6 +151,37 @@ export default function PaymentHistoryPage() {
 
         doc.save('payment-history.pdf');
     };
+
+    const renderPagination = (data: Transaction[]) => {
+        if (totalPages <= 1) return null;
+
+        return (
+            <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
+                <div>
+                    Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, data.length)}</strong> of <strong>{data.length}</strong> entries
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+        )
+    }
     
     const renderTable = (data: Transaction[]) => (
         <div className="overflow-x-auto">
@@ -160,7 +224,7 @@ export default function PaymentHistoryPage() {
             </Table>
             {data.length === 0 && !loading && (
                  <p className="text-center text-muted-foreground mt-4">
-                    No transactions of this type found.
+                    No transactions found for the selected criteria.
                  </p>
             )}
         </div>
@@ -202,6 +266,31 @@ export default function PaymentHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
+                        <div className="flex justify-end mb-4">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full sm:w-[280px] justify-start text-left font-normal",
+                                        !selectedDate && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={setSelectedDate}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+
                         <Tabs defaultValue="all">
                             <TabsList className="grid w-full grid-cols-3">
                                 <TabsTrigger value="all">All</TabsTrigger>
@@ -209,13 +298,16 @@ export default function PaymentHistoryPage() {
                                 <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
                             </TabsList>
                             <TabsContent value="all" className="mt-4">
-                                {renderTable(transactions)}
+                                {renderTable(paginatedTransactions)}
+                                {renderPagination(filteredTransactions)}
                             </TabsContent>
                             <TabsContent value="deposits" className="mt-4">
-                                {renderTable(transactions.filter(t => t.type === 'deposit'))}
+                                {renderTable(paginatedTransactions.filter(t => t.type === 'deposit'))}
+                                {renderPagination(filteredTransactions.filter(t => t.type === 'deposit'))}
                             </TabsContent>
                              <TabsContent value="withdrawals" className="mt-4">
-                                {renderTable(transactions.filter(t => t.type === 'withdrawal'))}
+                                {renderTable(paginatedTransactions.filter(t => t.type === 'withdrawal'))}
+                                {renderPagination(filteredTransactions.filter(t => t.type === 'withdrawal'))}
                             </TabsContent>
                         </Tabs>
 
