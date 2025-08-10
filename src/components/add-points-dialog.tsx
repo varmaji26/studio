@@ -38,11 +38,8 @@ import Image from 'next/image';
 import { ScrollArea } from './ui/scroll-area';
 
 const addPointsSchema = z.object({
-  amount: z.preprocess(
-    (a) => parseInt(z.string().parse(a), 10),
-    z.number().min(100, 'Minimum deposit amount is ₹100.')
-  ),
-  paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe'], {
+  transactionId: z.string().min(1, 'Transaction ID is required.'),
+  paymentMethod: z.enum(['UPI', 'Bank Transfer', 'Paytm/PhonePe', 'Scan QR Code'], {
     required_error: 'You need to select a payment method.',
   }),
 });
@@ -51,6 +48,7 @@ type AddPointsFormValues = z.infer<typeof addPointsSchema>;
 
 interface AddPointsDialogProps {
   user: User;
+  amount: number;
   children: React.ReactNode;
 }
 
@@ -93,7 +91,7 @@ const PaytmPhonePeLogo = () => (
 );
 
 
-export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
+export function AddPointsDialog({ user, amount, children }: AddPointsDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,7 +101,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   const form = useForm<AddPointsFormValues>({
     resolver: zodResolver(addPointsSchema),
     defaultValues: {
-      amount: undefined,
+      transactionId: '',
       paymentMethod: undefined,
     },
   });
@@ -137,8 +135,9 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
       await addDoc(collection(db, 'deposits'), {
         userId: user.uid,
         displayName: user.displayName,
-        amount: values.amount,
+        amount: amount,
         paymentMethod: values.paymentMethod,
+        transactionId: values.transactionId,
         status: 'pending',
         createdAt: serverTimestamp(),
       });
@@ -163,12 +162,10 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
   const selectedMethod = form.watch('paymentMethod');
   const selectedPaymentDetail = selectedMethod && paymentDetails ? paymentDetails[selectedMethod] : null;
 
-  const qrCodeDetails = paymentDetails ? paymentDetails['Scan QR Code'] : null;
-
-  const otherPaymentMethods = paymentDetails 
-    ? Object.keys(paymentDetails).filter(method => method !== 'Scan QR Code' && (paymentDetails[method].details || paymentDetails[method].imageUrl))
+  const paymentMethods = paymentDetails 
+    ? Object.keys(paymentDetails).filter(method => paymentDetails[method].details || paymentDetails[method].imageUrl)
     : [];
-
+    
   const paymentMethodsConfig: { [key: string]: { logo: React.ReactNode, title: string } } = {
         'UPI': { logo: <UpiLogo />, title: 'UPI' },
         'Bank Transfer': { logo: <BankLogo />, title: 'Bank Transfer' },
@@ -181,45 +178,21 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px] p-0 light">
         <DialogHeader className="p-4 pb-0">
-          <DialogTitle>Add Points</DialogTitle>
+          <DialogTitle>Complete Your Deposit</DialogTitle>
           <DialogDescription>
-            Complete the payment using the details below and submit your request.
+            Complete the payment of ₹{amount} using one of the methods below, then submit your transaction ID for verification.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[80vh] overflow-y-auto">
         <div className="p-4 pt-2">
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-                <div className="space-y-3">
-                    <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Amount (₹)</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="Enter amount (Min: ₹100)" {...field} onChange={e => field.onChange(e.target.value)} value={field.value || ''} className="h-11 border-2 border-primary/50 focus:border-primary focus:ring-primary/20" />
-                            </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                </div>
-                
-                {qrCodeDetails?.imageUrl && (
-                  <div className="flex flex-col items-center justify-center py-2">
-                    <p className="text-center text-sm mb-2">{qrCodeDetails.title || 'Scan to Pay'}</p>
-                    <Image src={qrCodeDetails.imageUrl} alt="Payment QR Code" width={200} height={200} className="rounded-md" unoptimized/>
-                  </div>
-                )}
-
-
-                <FormField
+                 <FormField
                 control={form.control}
                 name="paymentMethod"
                 render={({ field }) => (
                     <FormItem className="space-y-2">
-                    <FormLabel>Or Select Other Payment Method</FormLabel>
+                    <FormLabel>Payment Method Used</FormLabel>
                     <FormControl>
                         {loadingDetails ? (
                             <div className="grid grid-cols-2 gap-4">
@@ -230,18 +203,21 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                             <RadioGroup
                             onValueChange={field.onChange}
                             defaultValue={field.value}
-                            className="grid grid-cols-3 gap-2"
+                            className="grid grid-cols-2 sm:grid-cols-3 gap-2"
                             >
-                            {otherPaymentMethods.map((method) => {
+                            {paymentMethods.map((method) => {
                                 const detail = paymentDetails![method as keyof typeof paymentDetails];
                                 const config = paymentMethodsConfig[method];
+                                const isQR = method === 'Scan QR Code';
                                 return (
                                 <FormItem key={method}>
                                 <FormControl>
                                     <RadioGroupItem value={method} className="peer sr-only" id={method} />
                                 </FormControl>
                                 <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-1 h-14 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                        {config?.logo}
+                                        {isQR && detail.imageUrl ? (
+                                            <Image src={detail.imageUrl} alt="QR Code" width={24} height={24} unoptimized />
+                                        ) : config?.logo}
                                         <span className="mt-1 font-semibold text-xs text-center">{config?.title || detail.title}</span>
                                 </Label>
                                 </FormItem>
@@ -262,12 +238,29 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                             {selectedPaymentDetail.details && (
                                 <p className="text-sm text-muted-foreground break-words">{selectedPaymentDetail.details}</p>
                             )}
-                            { !selectedPaymentDetail.details && (
-                                <p className="text-sm text-muted-foreground">Details not available.</p>
+                             {selectedPaymentDetail.imageUrl && !selectedPaymentDetail.details && (
+                                <div className="flex justify-center">
+                                    <Image src={selectedPaymentDetail.imageUrl} alt="QR Code" width={150} height={150} unoptimized />
+                                </div>
                             )}
                         </CardContent>
                     </Card>
                 )}
+
+                 <FormField
+                    control={form.control}
+                    name="transactionId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Transaction ID / UTR</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Enter the transaction ID" {...field} />
+                            </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+               
                  <DialogFooter className="gap-2 sm:gap-0 pt-2 flex flex-col sm:flex-row">
                     <DialogClose asChild>
                         <Button type="button" variant="outline" className="h-11 w-full sm:w-auto">

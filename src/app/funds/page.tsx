@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, ChevronRight, IndianRupee, Landmark, History, Banknote } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { AddPointsDialog } from '@/components/add-points-dialog';
 import { WithdrawFundsDialog } from '@/components/withdraw-funds-dialog';
 
 const FundsPage = () => {
@@ -30,13 +29,6 @@ const FundsPage = () => {
         );
     }
     
-    const ListItem = ({ icon, title, description, children }: { icon: React.ReactNode, title: string, description: string, children: React.ReactNode }) => (
-       <div className="w-full">
-         {children}
-       </div>
-    );
-
-
     return (
         <div className="dark min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-background text-foreground">
             <header className="p-4 flex items-center gap-4 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-10">
@@ -49,7 +41,7 @@ const FundsPage = () => {
             </header>
             <main className="p-4">
                 <div className="space-y-3">
-                    <AddPointsDialog user={user}>
+                    <Link href="/add-fund">
                         <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
                             <div className="flex items-center gap-4">
                                 <div className="p-2 bg-primary/20 rounded-full">
@@ -62,7 +54,7 @@ const FundsPage = () => {
                             </div>
                             <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </div>
-                    </AddPointsDialog>
+                    </Link>
                     
                      <WithdrawFundsDialog user={user}>
                         <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
