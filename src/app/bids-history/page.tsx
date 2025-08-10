@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -50,6 +50,28 @@ export default function BidsHistoryPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
+    const fetchBids = useCallback(async () => {
+        if (!user) return;
+        setLoading(true);
+        try {
+            const bidsQuery = query(
+                collection(db, 'bids'),
+                where('userId', '==', user.uid),
+                orderBy('createdAt', 'desc')
+            );
+            const querySnapshot = await getDocs(bidsQuery);
+            const bidsData: Bid[] = [];
+            querySnapshot.forEach((doc) => {
+                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
+            });
+            setBids(bidsData);
+        } catch (error) {
+            console.error("Error fetching bids history: ", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
     useEffect(() => {
         if (authLoading) return;
         if (!user) {
@@ -57,24 +79,8 @@ export default function BidsHistoryPage() {
             return;
         }
 
-        const bidsQuery = query(
-            collection(db, 'bids'),
-            where('userId', '==', user.uid)
-        );
-
-        const unsubscribeBids = onSnapshot(bidsQuery, (querySnapshot) => {
-            const bidsData: Bid[] = [];
-            querySnapshot.forEach((doc) => {
-                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
-            });
-            bidsData.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-            setBids(bidsData);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching bids history: ", error);
-            setLoading(false);
-        });
-
+        fetchBids();
+        
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
             if (docSnap.exists()) {
@@ -83,10 +89,9 @@ export default function BidsHistoryPage() {
         });
 
         return () => {
-            unsubscribeBids();
             unsubscribeSettings();
         };
-    }, [user, authLoading, router]);
+    }, [user, authLoading, router, fetchBids]);
 
     const formatDate = (timestamp: Timestamp) => {
         if (!timestamp) return 'N/A';

@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { collection, query, onSnapshot, DocumentData, orderBy, Timestamp, where, getDoc, doc } from 'firebase/firestore';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, where, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -32,44 +32,43 @@ export default function AdminWinHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-   useEffect(() => {
+   const fetchWins = useCallback(async () => {
     setLoading(true);
-    const q = query(
-        collection(db, "bids"), 
-        where("status", "==", "won")
-    );
-    
-    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const winsDataPromises = querySnapshot.docs.map(async (bidDoc) => {
-        const bidData = bidDoc.data();
-        let mobile = 'N/A';
-        if (bidData.userId) {
-            const userDocRef = doc(db, 'users', bidData.userId);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                mobile = userDoc.data().mobile || 'N/A';
+    try {
+        const q = query(
+            collection(db, "bids"), 
+            where("status", "==", "won"),
+            orderBy("createdAt", "desc")
+        );
+        
+        const querySnapshot = await getDocs(q);
+        
+        const winsDataPromises = querySnapshot.docs.map(async (bidDoc) => {
+            const bidData = bidDoc.data();
+            let mobile = 'N/A';
+            if (bidData.userId) {
+                const userDocRef = doc(db, 'users', bidData.userId);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    mobile = userDoc.data().mobile || 'N/A';
+                }
             }
-        }
-        return { id: bidDoc.id, ...bidData, mobile } as Win;
-      });
+            return { id: bidDoc.id, ...bidData, mobile } as Win;
+        });
 
-      const winsData = await Promise.all(winsDataPromises);
-      
-      winsData.sort((a, b) => {
-          const dateA = a.createdAt?.toMillis() || 0;
-          const dateB = b.createdAt?.toMillis() || 0;
-          return dateB - dateA;
-      });
+        const winsData = await Promise.all(winsDataPromises);
+        setWins(winsData);
 
-      setWins(winsData);
-      setLoading(false);
-    }, (error) => {
+    } catch (error) {
         console.error("Error fetching wins: ", error);
+    } finally {
         setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, []);
+
+  useEffect(() => {
+    fetchWins();
+  }, [fetchWins]);
   
   const filteredWins = useMemo(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();

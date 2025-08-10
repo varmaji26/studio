@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { collection, query, onSnapshot, DocumentData, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -34,42 +34,38 @@ export default function AdminBidHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-   useEffect(() => {
+   const fetchBids = useCallback(async () => {
     setLoading(true);
-    const q = query(collection(db, "bids"));
-    
-    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const bidsDataPromises = querySnapshot.docs.map(async (bidDoc) => {
-        const bidData = bidDoc.data();
-        let mobile = 'N/A';
-        if (bidData.userId) {
-            const userDocRef = doc(db, 'users', bidData.userId);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                mobile = userDoc.data().mobile || 'N/A';
+    try {
+        const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        
+        const bidsDataPromises = querySnapshot.docs.map(async (bidDoc) => {
+            const bidData = bidDoc.data();
+            let mobile = 'N/A';
+            if (bidData.userId) {
+                const userDocRef = doc(db, 'users', bidData.userId);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    mobile = userDoc.data().mobile || 'N/A';
+                }
             }
-        }
-        return { id: bidDoc.id, ...bidData, mobile } as Bid;
-      });
+            return { id: bidDoc.id, ...bidData, mobile } as Bid;
+        });
 
-      const bidsData = await Promise.all(bidsDataPromises);
+        const bidsData = await Promise.all(bidsDataPromises);
+        setBids(bidsData);
 
-      // Sort client-side
-      bidsData.sort((a, b) => {
-          const dateA = a.createdAt?.toMillis() || 0;
-          const dateB = b.createdAt?.toMillis() || 0;
-          return dateB - dateA;
-      });
-
-      setBids(bidsData);
-      setLoading(false);
-    }, (error) => {
+    } catch (error) {
         console.error("Error fetching bids: ", error);
+    } finally {
         setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, []);
+
+  useEffect(() => {
+    fetchBids();
+  }, [fetchBids]);
   
   const filteredBids = useMemo(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();
