@@ -506,7 +506,7 @@ export default function Home() {
                         key={game.id}
                         id={game.id}
                         className={cn(
-                            "rounded-lg p-4 text-center space-y-3 animated-border",
+                            "rounded-lg p-4 text-center space-y-3 bg-slate-800/80 border border-slate-700 shadow-[0_0_15px_rgba(255,255,255,0.2)] animate-pulse-slow",
                             animatingGameId === game.id && "animate-pulse-once"
                         )}
                     >
