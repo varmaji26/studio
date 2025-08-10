@@ -194,6 +194,6 @@ body {
     }
   }
   .support-glow {
-    box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 5px rgba(0, 255, 0, 0.6);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.8), 0 0 5px rgba(34, 197, 94, 0.6);
   }
 }
