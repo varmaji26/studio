@@ -37,8 +37,7 @@ export default function AdminWinHistoryPage() {
     try {
         const q = query(
             collection(db, "bids"), 
-            where("status", "==", "won"),
-            orderBy("createdAt", "desc")
+            where("status", "==", "won")
         );
         
         const querySnapshot = await getDocs(q);
@@ -56,7 +55,11 @@ export default function AdminWinHistoryPage() {
             return { id: bidDoc.id, ...bidData, mobile } as Win;
         });
 
-        const winsData = await Promise.all(winsDataPromises);
+        let winsData = await Promise.all(winsDataPromises);
+        
+        // Sort on the client-side
+        winsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+
         setWins(winsData);
 
     } catch (error) {
