@@ -64,7 +64,7 @@ export default function DownloadPage() {
       }
     } catch (err) {
       console.error('Error sharing:', err);
-      // Fallback for when sharing fails
+      // Fallback for when sharing fails or is cancelled
       await navigator.clipboard.writeText(window.location.href);
       toast({
         title: 'Link Copied!',
