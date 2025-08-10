@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, getDocs, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, DocumentData, Timestamp, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { BottomNavbar } from '@/components/bottom-navbar';
 
 
 interface Win extends DocumentData {
@@ -30,6 +31,11 @@ interface Win extends DocumentData {
     createdAt: Timestamp;
 }
 
+interface AppSettings extends DocumentData {
+    whatsappNumber?: string;
+    callSupportNumber?: string;
+}
+
 const ITEMS_PER_PAGE = 10;
 
 export default function WinHistoryPage() {
@@ -39,6 +45,7 @@ export default function WinHistoryPage() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+    const [settings, setSettings] = useState<AppSettings>({});
 
     const fetchWins = useCallback(async () => {
         if (!user) return;
@@ -71,6 +78,15 @@ export default function WinHistoryPage() {
             return;
         }
         fetchWins();
+        
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setSettings(docSnap.data() as AppSettings);
+            }
+        });
+        
+        return () => unsubscribeSettings();
     }, [user, authLoading, router, fetchWins]);
 
     const filteredWins = useMemo(() => {
@@ -143,8 +159,8 @@ export default function WinHistoryPage() {
     }
     
     return (
-        <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-            <div className="max-w-4xl mx-auto">
+        <div className="dark min-h-screen bg-background text-foreground pb-28">
+            <div className="max-w-4xl mx-auto p-4 sm:p-6">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-2xl sm:text-3xl flex items-center gap-2">
@@ -229,6 +245,9 @@ export default function WinHistoryPage() {
                     </CardContent>
                 </Card>
             </div>
+             { user && (
+                <BottomNavbar settings={settings} />
+            )}
         </div>
     )
 }
