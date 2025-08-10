@@ -5,13 +5,14 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, FileText, HelpCircle, Loader, RefreshCw, Scan, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Clock, FileText, HelpCircle, Loader, Scan, ShieldCheck } from 'lucide-react';
 import QRCode from 'qrcode';
-import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
-import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppSettings extends DocumentData {
     upiId?: string;
@@ -23,12 +24,15 @@ function PaymentQRContent() {
     const searchParams = useSearchParams();
     const amount = searchParams.get('amount');
     const { user } = useAuth();
+    const { toast } = useToast();
     const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
     const [orderId, setOrderId] = useState<string | null>(null);
     const [dateTime, setDateTime] = useState<string | null>(null);
     const [upiUrl, setUpiUrl] = useState('');
+    const [transactionId, setTransactionId] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
 
     useEffect(() => {
@@ -79,6 +83,46 @@ function PaymentQRContent() {
         }
     }
 
+    const handleSubmitForVerification = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!transactionId) {
+            toast({
+                variant: 'destructive',
+                title: 'Transaction ID Required',
+                description: 'Please enter the transaction ID from your UPI app.',
+            });
+            return;
+        }
+        if (!user || !amount) return;
+
+        setIsSubmitting(true);
+        try {
+            await addDoc(collection(db, 'deposits'), {
+                userId: user.uid,
+                displayName: user.displayName,
+                amount: parseInt(amount, 10),
+                paymentMethod: 'UPI',
+                transactionId: transactionId,
+                status: 'pending',
+                createdAt: serverTimestamp(),
+            });
+            toast({
+                title: 'Request Submitted!',
+                description: 'Your deposit request has been sent. It will be reflected in your wallet after admin approval.',
+            });
+            router.push('/');
+        } catch (error) {
+            console.error('Error submitting deposit request: ', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to submit request. Please try again or contact support.',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     if (!amount) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-white">
@@ -94,23 +138,16 @@ function PaymentQRContent() {
                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
                     <ArrowLeft />
                 </Button>
-                <h1 className="text-xl font-bold">Payment QR</h1>
+                <h1 className="text-xl font-bold">Complete Payment</h1>
                 <div className="w-10"></div>
             </header>
             <main className="flex-1 p-4 bg-white">
                 <div className="max-w-md mx-auto">
-                    <div className="bg-[#5C6BC0] text-white p-4 rounded-t-lg flex items-center justify-between">
-                         <Button variant="ghost" size="icon" className="invisible">
-                            <ArrowLeft />
-                        </Button>
-                        <h2 className="font-bold text-lg">Complete Payment</h2>
-                        <Image src="https://placehold.co/40x20.png" alt="IKS Logo" width={40} height={20} data-ai-hint="company logo"/>
-                    </div>
                     
-                    <div className="bg-white p-6 rounded-b-lg shadow-lg space-y-4">
+                    <div className="bg-white p-6 rounded-lg shadow-lg space-y-4">
                         <div className="flex items-center gap-2 text-gray-700">
                            <Scan className="h-5 w-5"/>
-                           <span className="font-semibold">Scan to Pay</span>
+                           <span className="font-semibold">Scan QR to Pay</span>
                         </div>
                         
                         <p className="text-center text-4xl font-bold text-black">
@@ -127,47 +164,38 @@ function PaymentQRContent() {
                         
                         <div className="bg-yellow-100 text-yellow-800 text-sm p-2 rounded-md flex items-center justify-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Time remaining: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
-                        </div>
-                        
-                        <div className="space-y-3 text-sm text-gray-600">
-                            {[
-                                "Open your UPI payment app",
-                                "Tap on 'Scan QR Code'",
-                                "Point camera at the QR code",
-                                "Confirm amount & pay"
-                            ].map((step, index) => (
-                                <div key={index} className="flex items-center gap-3">
-                                    <span className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white font-bold">{index + 1}</span>
-                                    <span>{step}</span>
-                                </div>
-                            ))}
+                            <span>This QR is valid for: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
                         </div>
 
-                        <div className="bg-green-100 text-green-800 p-3 rounded-md flex items-center justify-center gap-2">
-                           <Loader className="h-4 w-4 animate-spin"/>
-                           <span>Verifying payment...</span>
-                        </div>
+                        <Button asChild className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-bold" disabled={!upiUrl}>
+                            <a href={upiUrl}>
+                                <Image src="https://placehold.co/24x24.png" alt="UPI Logo" width={24} height={24} className="mr-2" data-ai-hint="upi logo"/>
+                                Pay using UPI App
+                            </a>
+                        </Button>
                         
                         <div className="border-t pt-4 space-y-2">
                            <div className="flex items-center gap-2 font-semibold text-gray-800">
                                <FileText className="h-5 w-5 text-gray-500"/>
-                               <h3>Order Details</h3>
+                               <h3>After Payment, Submit Details</h3>
                            </div>
-                           <div className="text-sm space-y-1 text-gray-600">
-                                <div className="flex justify-between">
-                                    <span>Order ID</span>
-                                    {orderId ? <span className="font-mono">{orderId}</span> : <Skeleton className="h-4 w-24" />}
-                                </div>
-                                 <div className="flex justify-between">
-                                    <span>Date & Time</span>
-                                    {dateTime ? <span>{dateTime}</span> : <Skeleton className="h-4 w-32" />}
-                                </div>
-                                <div className="flex justify-between">
-                                    <span>Payment Method</span>
-                                    <span>UPI QR Payment</span>
-                                </div>
-                           </div>
+                           <form onSubmit={handleSubmitForVerification} className="space-y-3">
+                               <div>
+                                   <label htmlFor="transactionId" className="text-sm font-medium text-gray-700">Transaction ID / UTR Number</label>
+                                   <Input 
+                                        id="transactionId"
+                                        value={transactionId}
+                                        onChange={(e) => setTransactionId(e.target.value)}
+                                        placeholder="Enter 12-digit UTR number"
+                                        className="mt-1"
+                                        required
+                                   />
+                               </div>
+                               <Button type="submit" className="w-full h-12 bg-green-600 hover:bg-green-700 font-bold" disabled={isSubmitting}>
+                                   {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
+                                   {isSubmitting ? 'Submitting...' : 'Submit for Verification'}
+                               </Button>
+                           </form>
                         </div>
 
                         <div className="text-center text-sm text-gray-500 space-y-1 pt-2">
@@ -177,18 +205,6 @@ function PaymentQRContent() {
                     </div>
                 </div>
             </main>
-            <footer className="bg-gray-100 p-4 space-y-3 sticky bottom-0">
-                 <Button asChild className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-bold" disabled={!upiUrl}>
-                    <a href={upiUrl}>
-                        <Image src="https://placehold.co/24x24.png" alt="GPay" width={24} height={24} className="mr-2" data-ai-hint="google pay logo"/>
-                        Google Pay
-                    </a>
-                </Button>
-                <Button variant="outline" className="w-full h-12 border-teal-600 text-teal-600 font-bold hover:bg-teal-50">
-                    <RefreshCw className="mr-2 h-5 w-5"/>
-                    Refresh Wallet
-                </Button>
-            </footer>
         </div>
     );
 }
