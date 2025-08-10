@@ -5,9 +5,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 
@@ -22,14 +21,22 @@ export default function DownloadPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const settingsDocRef = doc(db, 'settings', 'app-settings');
-    const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            setSettings(docSnap.data() as DownloadPageSettings);
+    const fetchSettings = async () => {
+        try {
+            const settingsDocRef = doc(db, 'settings', 'app-settings');
+            const docSnap = await getDoc(settingsDocRef);
+            if (docSnap.exists()) {
+                setSettings(docSnap.data() as DownloadPageSettings);
+            }
+        } catch (error) {
+            console.error("Error fetching settings for download page:", error);
+            // We can still render the page with default values
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-    });
-    return () => unsubscribe();
+    };
+    
+    fetchSettings();
   }, []);
   
   const handleDownload = () => {
