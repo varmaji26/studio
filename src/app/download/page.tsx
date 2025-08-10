@@ -62,14 +62,29 @@ export default function DownloadPage() {
           description: 'Download link has been copied to your clipboard.',
         });
       }
-    } catch (err) {
-      console.error('Error sharing:', err);
+    } catch (err: any) {
+      // Gracefully handle permission denied error without logging it
+      if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
+         // Silently fallback to clipboard
+      } else {
+        console.error('Error sharing:', err);
+      }
+      
       // Fallback for when sharing fails or is cancelled
-      await navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: 'Link Copied!',
-        description: 'Sharing failed, but the link is copied to your clipboard.',
-      });
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: 'Link Copied!',
+          description: 'Sharing was cancelled, but the link is copied to your clipboard.',
+        });
+      } catch (copyError) {
+        console.error('Error copying to clipboard:', copyError);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not share or copy the link.',
+        });
+      }
     }
   };
 
