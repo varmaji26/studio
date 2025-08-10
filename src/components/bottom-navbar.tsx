@@ -51,7 +51,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                  <div className="nav-active-indicator" style={{ left: indicatorPosition }} />
                 
                 {navItems.map(({ href, icon: Icon, label, position }) => (
-                    <Link key={href} href={href} className={cn("nav-item w-1/5", { 'active': pathname === href || (href !== '/' && pathname.startsWith(item.href)) })}>
+                    <Link key={href} href={href} className={cn("nav-item w-1/5", { 'active': pathname === href || (href !== '/' && pathname.startsWith(href)) })}>
                        <Icon className="nav-icon h-6 w-6 mb-1" />
                        <span className="nav-text">{label}</span>
                     </Link>
