@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { BottomNavbar } from '@/components/bottom-navbar';
 
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
@@ -124,6 +125,7 @@ const FundsPage = () => {
                     </Link>
                 </div>
             </main>
+            <BottomNavbar settings={settings} />
         </div>
     );
 };

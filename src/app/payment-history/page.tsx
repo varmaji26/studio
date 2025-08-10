@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { BottomNavbar } from '@/components/bottom-navbar';
 
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
@@ -330,6 +331,7 @@ export default function PaymentHistoryPage() {
                     </CardContent>
                 </Card>
             </div>
+            <BottomNavbar settings={settings} />
         </div>
     )
 }
