@@ -24,10 +24,6 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
         }
     };
     
-    const handleHomeClick = () => {
-        router.push('/');
-    }
-    
     const navItems = [
         { href: '/bids-history', icon: Home, label: 'My Bids', action: () => router.push('/bids-history'), color: 'bg-yellow-500' },
         { href: '/payment-history', icon: History, label: 'Passbook', action: () => router.push('/payment-history'), color: 'bg-green-500' },
