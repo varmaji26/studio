@@ -44,7 +44,7 @@ import { formatTime, cn, isBettingClosed, formatGameResult } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateProfile } from 'firebase/auth';
-import { BottomNavbar } from '@/components/bottom-navbar';
+import { QuickLinks } from '@/components/quick-links';
 
 
 interface Game extends DocumentData {
@@ -428,6 +428,8 @@ export default function Home() {
                 <CarouselNext className="right-4" />
             </Carousel>
         )}
+        
+        <QuickLinks settings={settings} />
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
@@ -539,7 +541,6 @@ export default function Home() {
         </Card>
       </main>
       
-      {user && <BottomNavbar settings={settings} />}
     </div>
   );
 }
