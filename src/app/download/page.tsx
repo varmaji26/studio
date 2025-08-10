@@ -1,13 +1,37 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Loader } from '@/components/loader';
+
+interface DownloadPageSettings extends DocumentData {
+    downloadPageImage?: {
+        imageUrl: string;
+    };
+}
 
 export default function DownloadPage() {
+  const [settings, setSettings] = useState<DownloadPageSettings>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const settingsDocRef = doc(db, 'settings', 'app-settings');
+    const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setSettings(docSnap.data() as DownloadPageSettings);
+        }
+        setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+  
   const handleDownload = () => {
     window.open('https://files.appsgeyser.com/Matka%20King_19002963.apk', '_blank');
   };
@@ -22,14 +46,21 @@ export default function DownloadPage() {
         </div>
         
         <div className="relative w-full max-w-md mt-4">
-          <Image
-            src="https://placehold.co/600x800.png"
-            alt="A smiling woman in an orange sari holding playing cards"
-            width={600}
-            height={800}
-            className="w-full h-auto"
-            data-ai-hint="woman orange sari cards"
-          />
+            {loading ? (
+                <div className="w-full aspect-[600/800] flex items-center justify-center bg-gray-200">
+                    <Loader className="h-10 w-10 text-primary" />
+                </div>
+            ) : (
+                <Image
+                    src={settings.downloadPageImage?.imageUrl || "https://placehold.co/600x800.png"}
+                    alt="Matka King App"
+                    width={600}
+                    height={800}
+                    className="w-full h-auto"
+                    data-ai-hint="woman orange sari cards"
+                    unoptimized
+                />
+            )}
         </div>
 
         <div className="w-full max-w-md p-4 bg-[#E0F7FA]">

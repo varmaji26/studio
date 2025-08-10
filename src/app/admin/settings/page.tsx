@@ -45,6 +45,13 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
+  downloadPageImage: z.any()
+    .optional()
+    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
   marqueeTitle: z.string().optional(),
   marqueeText: z.string().optional(),
   marqueeBackgroundColor: z.string().optional(),
@@ -82,6 +89,8 @@ export default function SettingsPage() {
   const [existingQrStoragePath, setExistingQrStoragePath] = useState<string | null>(null);
   const [existingWelcomeBannerUrl, setExistingWelcomeBannerUrl] = useState<string | null>(null);
   const [existingWelcomeBannerStoragePath, setExistingWelcomeBannerStoragePath] = useState<string | null>(null);
+  const [existingDownloadImageUrl, setExistingDownloadImageUrl] = useState<string | null>(null);
+  const [existingDownloadImageStoragePath, setExistingDownloadImageStoragePath] = useState<string | null>(null);
   const [existingMarqueeLogoUrl, setExistingMarqueeLogoUrl] = useState<string | null>(null);
   const [existingMarqueeLogoStoragePath, setExistingMarqueeLogoStoragePath] = useState<string | null>(null);
 
@@ -106,6 +115,7 @@ export default function SettingsPage() {
 
   const qrCodeImageRef = form.register("qrCodeImage");
   const welcomeBannerImageRef = form.register("welcomeBannerImage");
+  const downloadPageImageRef = form.register("downloadPageImage");
   const marqueeLogoRef = form.register("marqueeLogo");
 
   useEffect(() => {
@@ -138,6 +148,10 @@ export default function SettingsPage() {
           if (data.welcomeBanner) {
             setExistingWelcomeBannerUrl(data.welcomeBanner.imageUrl);
             setExistingWelcomeBannerStoragePath(data.welcomeBanner.storagePath);
+          }
+          if (data.downloadPageImage) {
+            setExistingDownloadImageUrl(data.downloadPageImage.imageUrl);
+            setExistingDownloadImageStoragePath(data.downloadPageImage.storagePath);
           }
           if (data.marquee?.logo) {
             setExistingMarqueeLogoUrl(data.marquee.logo.imageUrl);
@@ -216,6 +230,11 @@ export default function SettingsPage() {
             imageUrl: existingWelcomeBannerUrl,
             storagePath: existingWelcomeBannerStoragePath,
         } : null;
+        
+        let downloadPageImageData = existingDownloadImageUrl ? {
+            imageUrl: existingDownloadImageUrl,
+            storagePath: existingDownloadImageStoragePath,
+        } : null;
 
         let marqueeLogoData = existingMarqueeLogoUrl ? {
             imageUrl: existingMarqueeLogoUrl,
@@ -245,6 +264,17 @@ export default function SettingsPage() {
             setExistingWelcomeBannerStoragePath(storagePath);
         }
 
+        const downloadPageImageFile = values.downloadPageImage?.[0];
+        if (downloadPageImageFile) {
+            const { downloadURL, storagePath } = await uploadFile(downloadPageImageFile, 'download-page', existingDownloadImageStoragePath);
+            downloadPageImageData = {
+                imageUrl: downloadURL,
+                storagePath: storagePath,
+            };
+            setExistingDownloadImageUrl(downloadURL);
+            setExistingDownloadImageStoragePath(storagePath);
+        }
+
         const marqueeLogoFile = values.marqueeLogo?.[0];
         if (marqueeLogoFile) {
             const { downloadURL, storagePath } = await uploadFile(marqueeLogoFile, 'marquee-logos', existingMarqueeLogoStoragePath);
@@ -271,6 +301,7 @@ export default function SettingsPage() {
                 'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
             },
             welcomeBanner: welcomeBannerData,
+            downloadPageImage: downloadPageImageData,
             marquee: {
               title: values.marqueeTitle,
               text: values.marqueeText,
@@ -301,7 +332,7 @@ export default function SettingsPage() {
             description: 'Settings have been saved.',
         });
 
-        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined, marqueeLogo: undefined });
+        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined });
         
     } catch (error: any) {
       console.error('Error updating settings: ', error);
@@ -344,6 +375,35 @@ export default function SettingsPage() {
         variant: 'destructive',
         title: 'Error',
         description: 'Failed to delete the welcome banner.',
+      });
+    }
+  };
+  
+  const handleDeleteDownloadImage = async () => {
+    if (!existingDownloadImageStoragePath) return;
+
+    try {
+      const storageRef = ref(storage, existingDownloadImageStoragePath);
+      await deleteObject(storageRef);
+
+      const settingsDocRef = doc(db, 'settings', 'app-settings');
+      await updateDoc(settingsDocRef, {
+        downloadPageImage: null
+      });
+
+      setExistingDownloadImageUrl(null);
+      setExistingDownloadImageStoragePath(null);
+
+      toast({
+        title: 'Success!',
+        description: 'Download page image has been deleted.',
+      });
+    } catch (error) {
+      console.error("Error deleting download page image: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete the image.',
       });
     }
   };
@@ -641,6 +701,57 @@ export default function SettingsPage() {
                       </FormControl>
                        <FormDescriptionComponent>
                         Upload a banner image for the home page (recommended 1200x400).
+                      </FormDescriptionComponent>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Separator />
+                
+                <h3 className="text-lg font-semibold">Download Page Image</h3>
+                {existingDownloadImageUrl && (
+                  <div className="flex flex-col items-center gap-4">
+                    <p className="text-sm text-muted-foreground mb-2">Current Image:</p>
+                    <Image src={existingDownloadImageUrl} alt="Current Download Page Image" width={200} height={266} className="rounded-md border p-1" unoptimized />
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="destructive" size="sm">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Image
+                           </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the image. The page will show a placeholder.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteDownloadImage}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+                 <FormField
+                  control={form.control}
+                  name="downloadPageImage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{existingDownloadImageUrl ? 'Upload New Image' : 'Upload Image'}</FormLabel>
+                      <FormControl>
+                        <Input 
+                            type="file" 
+                            className="bg-input h-12 rounded-lg" 
+                            accept={ACCEPTED_IMAGE_TYPES.join(',')} 
+                            {...downloadPageImageRef}
+                         />
+                      </FormControl>
+                       <FormDescriptionComponent>
+                        Upload an image for the download page (recommended 600x800).
                       </FormDescriptionComponent>
                       <FormMessage />
                     </FormItem>
