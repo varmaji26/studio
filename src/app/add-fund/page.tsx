@@ -101,7 +101,7 @@ export default function AddFundPage() {
             </header>
 
             <main className="flex-1 p-4">
-                 <div className="bg-[#004D40] text-white rounded-lg p-4 text-center">
+                 <div className="bg-[#112a45] text-white rounded-lg p-4 text-center">
                     <h2 className="text-lg font-bold">{user.displayName}</h2>
                     <p className="text-lg">{mobileNumber}</p>
                     <div className="bg-black/50 mt-2 p-2 rounded-md">
@@ -153,7 +153,7 @@ export default function AddFundPage() {
 
             <footer className="p-4 bg-white sticky bottom-0">
                 <Button 
-                    className="w-full h-14 bg-[#004D40] hover:bg-[#00382e] text-white font-bold text-lg rounded-full"
+                    className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full"
                     onClick={handlePayNow}
                 >
                     Pay Now
