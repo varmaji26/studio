@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,7 +20,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { BottomNavbar } from '@/components/bottom-navbar';
 
+interface AppSettings extends DocumentData {
+    whatsappNumber?: string;
+    callSupportNumber?: string;
+}
 
 interface Transaction extends DocumentData {
     id: string;
@@ -48,6 +53,7 @@ export default function PaymentHistoryPage() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+    const [settings, setSettings] = useState<AppSettings>({});
 
     useEffect(() => {
         if (authLoading) return;
@@ -78,9 +84,17 @@ export default function PaymentHistoryPage() {
             setLoading(false);
         });
         
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setSettings(docSnap.data() as AppSettings);
+            }
+        });
+
         return () => {
             depositsUnsub();
             withdrawalsUnsub();
+            unsubscribeSettings();
         };
 
     }, [user, authLoading, router]);
@@ -239,8 +253,8 @@ export default function PaymentHistoryPage() {
     }
     
     return (
-        <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-            <div className="max-w-4xl mx-auto">
+        <div className="dark min-h-screen bg-background text-foreground pb-28">
+            <div className="max-w-4xl mx-auto p-4 sm:p-6">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader>
                         <div className="flex justify-between items-start">
@@ -317,6 +331,9 @@ export default function PaymentHistoryPage() {
                     </CardContent>
                 </Card>
             </div>
+             { user && (
+                <BottomNavbar settings={settings} />
+            )}
         </div>
     )
 }

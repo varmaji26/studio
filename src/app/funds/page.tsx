@@ -9,16 +9,40 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, ChevronRight, IndianRupee, Landmark, History, Banknote } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { BottomNavbar } from '@/components/bottom-navbar';
+import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+interface AppSettings extends DocumentData {
+    whatsappNumber?: string;
+    callSupportNumber?: string;
+}
 
 const FundsPage = () => {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const [settings, setSettings] = useState<AppSettings>({});
 
     useEffect(() => {
         if (!authLoading && !user) {
             router.replace('/login');
         }
     }, [user, authLoading, router]);
+
+    useEffect(() => {
+        if (!user) return;
+        
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setSettings(docSnap.data() as AppSettings);
+            }
+        });
+
+        return () => {
+            unsubscribeSettings();
+        };
+    }, [user]);
 
     if (authLoading || !user) {
         return (
@@ -29,7 +53,7 @@ const FundsPage = () => {
     }
     
     return (
-        <div className="dark min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-background text-foreground">
+        <div className="dark min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-background text-foreground pb-28">
             <header className="p-4 flex items-center gap-4 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-10">
                 <Link href="/">
                     <Button variant="ghost" size="icon">
@@ -101,6 +125,9 @@ const FundsPage = () => {
                     </Link>
                 </div>
             </main>
+             { user && (
+                <BottomNavbar settings={settings} />
+            )}
         </div>
     );
 };

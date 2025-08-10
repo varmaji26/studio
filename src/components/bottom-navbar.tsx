@@ -33,20 +33,22 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
     }
 
     const activePosition = getActivePosition();
-    const indicatorPosition = `calc(${((activePosition -1) * 25) + 12.5}% - 32px)`;
-    const wavePosition = `calc(${((activePosition -1) * 25) + 12.5}% - 40px)`;
     
-    // Position for the middle home button is special
-    const homeIndicatorPosition = 'calc(50% - 32px)';
-    const homeWavePosition = 'calc(50% - 40px)';
+    const totalItems = 5;
+    const itemWidthPercentage = 100 / totalItems;
+    const indicatorCenterPercentage = itemWidthPercentage * (activePosition - 0.5);
+
+    const indicatorPosition = `calc(${indicatorCenterPercentage}% - 32px)`;
+    const wavePosition = `calc(${indicatorCenterPercentage}% - 40px)`;
+    
 
     return (
         <footer className="bottom-nav">
-            <svg className="nav-wave" style={{ left: activePosition === 3 ? homeWavePosition : wavePosition }} viewBox="0 0 80 20" preserveAspectRatio="none">
+            <svg className="nav-wave" style={{ left: wavePosition }} viewBox="0 0 80 20" preserveAspectRatio="none">
                 <path d="M0,20 Q20,0 40,20 Q60,0 80,20 Z" />
             </svg>
             <div className="nav-container">
-                 <div className="nav-active-indicator" style={{ left: activePosition === 3 ? homeIndicatorPosition : indicatorPosition }} />
+                 <div className="nav-active-indicator" style={{ left: indicatorPosition }} />
                 
                 {navItems.map(({ href, icon: Icon, label, position }) => (
                     <Link key={href} href={href} className={cn("nav-item w-1/5", { 'active': pathname === href || (href !== '/' && pathname.startsWith(href)) })}>
