@@ -79,7 +79,7 @@ export default function DownloadPage() {
 
         <div className="w-full max-w-md p-4 bg-background">
           <Button
-            className="w-full h-16 bg-gradient-to-b from-green-400 to-green-600 text-white text-2xl font-bold py-8 px-16 rounded-lg shadow-lg border-2 border-white/50 transform hover:scale-105 transition-transform"
+            className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-2xl font-bold rounded-lg shadow-lg"
             onClick={handleDownload}
           >
             <Download className="mr-3 h-8 w-8" />
