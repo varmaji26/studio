@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Star } from 'lucide-react';
+import { Star, Download } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -30,7 +30,6 @@ export default function DownloadPage() {
             }
         } catch (error) {
             console.error("Error fetching settings for download page:", error);
-            // We can still render the page with default values
         } finally {
             setLoading(false);
         }
@@ -44,7 +43,15 @@ export default function DownloadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E0F7FA] text-black font-sans">
+    <div className="min-h-screen bg-background text-foreground font-sans">
+        <header className="w-full p-4 bg-black text-white flex justify-between items-center">
+             <h1 className="text-2xl font-bold">Matka King</h1>
+             <div className="flex flex-col items-center">
+                 <Image src="https://placehold.co/40x40.png" alt="Matka King Logo" width={32} height={32} data-ai-hint="crown logo" />
+                 <span className="text-xs">MATKA KING</span>
+             </div>
+        </header>
+
       <main className="flex flex-col items-center">
         <div className="w-full text-center py-4 bg-[#E0F7FA]">
            <h1 className="text-5xl font-bold text-blue-800">
@@ -52,9 +59,9 @@ export default function DownloadPage() {
           </h1>
         </div>
         
-        <div className="relative w-full max-w-md mt-4">
+        <div className="relative w-full max-w-md mt-4 bg-gray-200">
             {loading ? (
-                <div className="w-full aspect-[600/800] flex items-center justify-center bg-gray-200">
+                <div className="w-full aspect-[3/4] flex items-center justify-center">
                     <Loader className="h-10 w-10 text-primary" />
                 </div>
             ) : (
@@ -70,16 +77,17 @@ export default function DownloadPage() {
             )}
         </div>
 
-        <div className="w-full max-w-md p-4 bg-[#E0F7FA]">
+        <div className="w-full max-w-md p-4 bg-background">
           <Button
-            className="w-full h-16 bg-gradient-to-b from-yellow-400 to-orange-500 text-white text-3xl font-bold py-8 px-16 rounded-full shadow-lg border-4 border-white/50 transform hover:scale-105 transition-transform"
+            className="w-full h-16 bg-gradient-to-b from-green-400 to-green-600 text-white text-2xl font-bold py-8 px-16 rounded-lg shadow-lg border-2 border-white/50 transform hover:scale-105 transition-transform"
             onClick={handleDownload}
           >
+            <Download className="mr-3 h-8 w-8" />
             Download Now
           </Button>
         </div>
 
-        <div className="w-full max-w-2xl p-4 bg-white mt-4">
+        <div className="w-full max-w-2xl p-4 bg-card mt-4">
           <h2 className="text-xl font-semibold">Ratings and reviews</h2>
           <div className="flex items-center mt-2">
             <span className="text-4xl font-bold mr-4">4.8</span>
@@ -89,13 +97,13 @@ export default function DownloadPage() {
                     <Star fill="currentColor" className="w-5 h-5" />
                     <Star fill="currentColor" className="w-5 h-5" />
                     <Star fill="currentColor" className="w-5 h-5" />
-                    <Star className="w-5 h-5 text-gray-300" />
+                    <Star className="w-5 h-5 text-gray-500" />
                 </div>
-                <span className="text-sm text-gray-500">1.2M reviews</span>
+                <span className="text-sm text-muted-foreground">1.2M reviews</span>
             </div>
           </div>
           <Separator className="my-4" />
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Ratings and reviews are verified and are from people who use the same type of device that you use.
           </p>
         </div>
