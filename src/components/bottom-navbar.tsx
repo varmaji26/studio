@@ -44,7 +44,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                         )}
                     >
                         {icon}
-                        <span className="mt-1 text-sm font-bold [text-shadow:1px_1px_2px_#000]">{label}</span>
+                        <span className="mt-1 text-xs font-bold [text-shadow:1px_1px_2px_#000]">{label}</span>
                     </button>
                 ))}
             </div>
