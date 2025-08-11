@@ -65,7 +65,7 @@ const FundsPage = () => {
             <main className="p-4">
                 <div className="space-y-4">
                     <Link href="/add-fund" className="block mb-4">
-                        <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
+                        <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors shadow-lg shadow-white/10 transition-transform active:scale-95">
                             <div className="flex items-center gap-4">
                                 <div className="p-2 bg-primary/20 rounded-full">
                                    <IndianRupee className="h-6 w-6 text-primary" />
@@ -80,7 +80,7 @@ const FundsPage = () => {
                     </Link>
                     
                      <Link href="/withdrawal" className="block mb-4">
-                        <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
+                        <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors shadow-lg shadow-white/10 transition-transform active:scale-95">
                            <div className="flex items-center gap-4">
                                <div className="p-2 bg-primary/20 rounded-full">
                                    <Banknote className="h-6 w-6 text-primary" />
@@ -95,7 +95,7 @@ const FundsPage = () => {
                     </Link>
 
                     <Link href="/payment-history" className="block mb-4">
-                       <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
+                       <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors shadow-lg shadow-white/10 transition-transform active:scale-95">
                            <div className="flex items-center gap-4">
                                <div className="p-2 bg-primary/20 rounded-full">
                                    <History className="h-6 w-6 text-primary" />
@@ -110,7 +110,7 @@ const FundsPage = () => {
                     </Link>
 
                     <Link href="/payment-history" className="block mb-4">
-                       <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
+                       <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors shadow-lg shadow-white/10 transition-transform active:scale-95">
                            <div className="flex items-center gap-4">
                                <div className="p-2 bg-primary/20 rounded-full">
                                    <History className="h-6 w-6 text-primary" />
