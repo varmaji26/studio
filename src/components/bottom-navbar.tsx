@@ -39,7 +39,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                         key={label}
                         onClick={action}
                         className={cn(
-                            "flex flex-col items-center justify-center p-2 rounded-lg text-white shadow-md transform hover:scale-105 transition-transform duration-200",
+                            "flex flex-col items-center justify-center p-1 rounded-lg text-white shadow-md transform hover:scale-105 transition-transform duration-200",
                             color
                         )}
                     >
