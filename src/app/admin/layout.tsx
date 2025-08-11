@@ -35,7 +35,7 @@ import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { Loader } from '@/components/loader';
@@ -49,6 +49,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = React.useState(0);
+  const [newUsersCount, setNewUsersCount] = React.useState(0);
   
   const isActive = (path: string) => pathname === path;
 
@@ -66,6 +67,7 @@ export default function AdminLayout({
   }, [user, authLoading, router]);
 
   React.useEffect(() => {
+    // Listener for pending requests
     const depositsQuery = query(collection(db, "deposits"), where("status", "==", "pending"));
     const withdrawalsQuery = query(collection(db, "withdrawals"), where("status", "==", "pending"));
 
@@ -82,9 +84,21 @@ export default function AdminLayout({
         setPendingRequestsCount(depositsCount + withdrawalsCount);
     });
 
+    // Listener for new users today
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayTimestamp = Timestamp.fromDate(startOfToday);
+
+    const newUsersQuery = query(collection(db, "users"), where("createdAt", ">=", todayTimestamp));
+    const unsubNewUsers = onSnapshot(newUsersQuery, (snapshot) => {
+        setNewUsersCount(snapshot.size);
+    });
+
+
     return () => {
         unsubDeposits();
         unsubWithdrawals();
+        unsubNewUsers();
     };
   }, []);
 
@@ -175,6 +189,11 @@ export default function AdminLayout({
                 <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Manage Users"}}>
                   <Users />
                   <span>Manage Users</span>
+                   {newUsersCount > 0 && (
+                    <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                        {newUsersCount}
+                    </span>
+                 )}
                 </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
