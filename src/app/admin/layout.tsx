@@ -34,7 +34,8 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { Loader } from '@/components/loader';
@@ -47,6 +48,7 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = React.useState(0);
   
   const isActive = (path: string) => pathname === path;
 
@@ -62,6 +64,29 @@ export default function AdminLayout({
       }
     }
   }, [user, authLoading, router]);
+
+  React.useEffect(() => {
+    const depositsQuery = query(collection(db, "deposits"), where("status", "==", "pending"));
+    const withdrawalsQuery = query(collection(db, "withdrawals"), where("status", "==", "pending"));
+
+    let depositsCount = 0;
+    let withdrawalsCount = 0;
+
+    const unsubDeposits = onSnapshot(depositsQuery, (snapshot) => {
+        depositsCount = snapshot.size;
+        setPendingRequestsCount(depositsCount + withdrawalsCount);
+    });
+
+    const unsubWithdrawals = onSnapshot(withdrawalsQuery, (snapshot) => {
+        withdrawalsCount = snapshot.size;
+        setPendingRequestsCount(depositsCount + withdrawalsCount);
+    });
+
+    return () => {
+        unsubDeposits();
+        unsubWithdrawals();
+    };
+  }, []);
 
   const handleLinkClick = () => {
     if (isSidebarOpen) {
@@ -172,8 +197,15 @@ export default function AdminLayout({
            <SidebarMenuItem>
             <Link href="/admin/pending-requests" passHref onClick={handleLinkClick}>
               <SidebarMenuButton isActive={isActive('/admin/pending-requests')} tooltip={{children: "Customer Pending Requests"}}>
-                <MailQuestion />
-                <span>Customer Pending Requests</span>
+                <div className="flex items-center gap-2">
+                    <MailQuestion />
+                    <span>Customer Pending Requests</span>
+                </div>
+                 {pendingRequestsCount > 0 && (
+                    <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                        {pendingRequestsCount}
+                    </span>
+                 )}
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
