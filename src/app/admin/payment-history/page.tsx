@@ -253,7 +253,7 @@ export default function AdminPaymentHistoryPage() {
   );
 
   return (
-     <div className="flex-1 space-y-6 p-6">
+     <div className="flex-1 space-y-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <div className="flex justify-between items-start">
