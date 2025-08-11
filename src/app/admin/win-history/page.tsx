@@ -7,9 +7,14 @@ import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
-import { Search, Trophy } from 'lucide-react';
+import { Search, Trophy, Calendar as CalendarIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
 
 interface Win extends DocumentData {
     id: string;
@@ -31,6 +36,8 @@ export default function AdminWinHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+
 
    const fetchWins = useCallback(async () => {
     setLoading(true);
@@ -74,18 +81,37 @@ export default function AdminWinHistoryPage() {
   }, [fetchWins]);
   
   const filteredWins = useMemo(() => {
-    const lowercasedFilter = searchTerm.toLowerCase().trim();
-    if (!lowercasedFilter) {
-        return wins;
+    let filtered = wins;
+
+    // Filter by date
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        filtered = filtered.filter(win => {
+            if (!win.createdAt?.seconds) return false;
+            const winDate = new Date(win.createdAt.seconds * 1000);
+            return winDate >= startOfDay && winDate <= endOfDay;
+        });
     }
-    return wins.filter((win) => {
-      return (
-        win.displayName?.toLowerCase().includes(lowercasedFilter) ||
-        win.gameName?.toLowerCase().includes(lowercasedFilter) ||
-        win.mobile?.includes(lowercasedFilter)
-      );
-    });
-  }, [searchTerm, wins]);
+
+    // Filter by search term
+    const lowercasedFilter = searchTerm.toLowerCase().trim();
+    if (lowercasedFilter) {
+      filtered = filtered.filter((win) => {
+        return (
+          win.displayName?.toLowerCase().includes(lowercasedFilter) ||
+          win.gameName?.toLowerCase().includes(lowercasedFilter) ||
+          win.mobile?.includes(lowercasedFilter)
+        );
+      });
+    }
+
+    return filtered;
+  }, [searchTerm, wins, selectedDate]);
+
 
   const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
   const paginatedWins = useMemo(() => {
@@ -95,7 +121,7 @@ export default function AdminWinHistoryPage() {
 
   useEffect(() => {
       setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, selectedDate]);
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -144,16 +170,40 @@ export default function AdminWinHistoryPage() {
             <CardDescription>View all winning bids and payouts.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <h3 className="text-xl font-semibold">All Wins ({filteredWins.length})</h3>
-                <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Search by username, game, or mobile..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-input h-10 rounded-lg pl-10"
-                    />
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full sm:w-[280px] justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={setSelectedDate}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <div className="relative w-full sm:w-auto sm:max-w-xs">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by username, game, or mobile..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-input h-10 rounded-lg pl-10"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -203,7 +253,7 @@ export default function AdminWinHistoryPage() {
             )}
             {paginatedWins.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
-                  {searchTerm ? `No wins found for "${searchTerm}".` : "No wins found."}
+                  {searchTerm || selectedDate ? `No wins found for the selected criteria.` : "No wins found."}
                 </p>
             )}
           </CardContent>
