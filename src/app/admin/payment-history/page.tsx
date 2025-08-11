@@ -8,12 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, ArrowDown, ArrowUp, Download } from 'lucide-react';
+import { Search, ArrowDown, ArrowUp, Download, Calendar as CalendarIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
 
 interface Transaction extends DocumentData {
     id: string;
@@ -43,6 +48,7 @@ export default function AdminPaymentHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
   const fetchUserDetails = async (requests: DocumentData[]): Promise<Transaction[]> => {
     return Promise.all(
@@ -95,15 +101,32 @@ export default function AdminPaymentHistoryPage() {
   }, [fetchAllTransactions]);
   
   const filteredTransactions = useMemo(() => {
-    const lowercasedFilter = searchTerm.toLowerCase().trim();
-    if (!lowercasedFilter) {
-        return allTransactions;
+    let filtered = allTransactions;
+    
+    // Filter by date
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        filtered = filtered.filter(t => {
+            if (!t.createdAt?.seconds) return false;
+            const tDate = new Date(t.createdAt.seconds * 1000);
+            return tDate >= startOfDay && tDate <= endOfDay;
+        });
     }
-    return allTransactions.filter((t) => 
-      t.displayName?.toLowerCase().includes(lowercasedFilter) ||
-      t.mobile?.toLowerCase().includes(lowercasedFilter)
-    );
-  }, [searchTerm, allTransactions]);
+
+    // Filter by search term
+    const lowercasedFilter = searchTerm.toLowerCase().trim();
+    if (lowercasedFilter) {
+      filtered = filtered.filter((t) => 
+        t.displayName?.toLowerCase().includes(lowercasedFilter) ||
+        t.mobile?.toLowerCase().includes(lowercasedFilter)
+      );
+    }
+    return filtered;
+  }, [searchTerm, allTransactions, selectedDate]);
 
   const transactionsForTab = useMemo(() => {
       if (activeTab === 'deposits') {
@@ -123,7 +146,7 @@ export default function AdminPaymentHistoryPage() {
 
   useEffect(() => {
       setCurrentPage(1);
-  }, [searchTerm, activeTab]);
+  }, [searchTerm, activeTab, selectedDate]);
 
 
   const formatDate = (timestamp: Timestamp) => {
@@ -268,17 +291,41 @@ export default function AdminPaymentHistoryPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-between items-center mb-4">
+             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <h3 className="text-xl font-semibold">All Transactions ({transactionsForTab.length})</h3>
-                <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Search by username or mobile..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-input h-10 rounded-lg pl-10"
-                    />
-                </div>
+                 <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full sm:w-[280px] justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={setSelectedDate}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <div className="relative w-full sm:w-auto sm:max-w-xs">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by username or mobile..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-input h-10 rounded-lg pl-10"
+                        />
+                    </div>
+                 </div>
             </div>
 
             {loading ? (

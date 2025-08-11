@@ -156,7 +156,7 @@ export default function MarketLoadPage() {
                         <span className="font-bold text-primary">{selectedDate ? format(selectedDate, "PPP") : 'all time'}</span>.
                     </CardDescription>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                      <Popover>
                         <PopoverTrigger asChild>
                             <Button
@@ -179,7 +179,7 @@ export default function MarketLoadPage() {
                             />
                         </PopoverContent>
                     </Popover>
-                    <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={marketData.length === 0}>
+                    <Button onClick={handleDownloadPDF} variant="outline" className="w-full sm:w-auto" disabled={marketData.length === 0}>
                         <Download className="h-4 w-4 mr-2" />
                         PDF
                     </Button>
