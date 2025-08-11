@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef, Suspense, memo } from 'react';
+import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -83,7 +83,8 @@ interface AppSettings extends DocumentData {
         logoSize?: number;
         titleSize?: number;
         textSize?: number;
-    }
+    };
+    noticeText?: string;
 }
 
 interface UserProfile extends DocumentData {
@@ -201,7 +202,7 @@ export default function Home() {
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [theme, setTheme] = useState('dark');
   
-  const currentDay = new Date().toLocaleString('en-US', { weekday: 'long' });
+  const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme') || 'dark';
@@ -533,7 +534,7 @@ export default function Home() {
                 <CardTitle className="text-xl">Notice</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-muted-foreground">Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.</p>
+                <p className="text-muted-foreground">{settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}</p>
             </CardContent>
         </Card>
 

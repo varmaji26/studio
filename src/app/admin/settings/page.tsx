@@ -75,6 +75,7 @@ const settingsSchema = z.object({
      (val) => (String(val).trim() === '' ? undefined : Number(val)),
     z.number().min(8, 'Minimum size is 8px.').optional()
   ),
+  noticeText: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -110,6 +111,7 @@ export default function SettingsPage() {
       marqueeLogoSize: 24,
       marqueeTitleSize: 20,
       marqueeTextSize: 12,
+      noticeText: '',
     },
   });
 
@@ -140,6 +142,7 @@ export default function SettingsPage() {
             marqueeLogoSize: data.marquee?.logoSize || 24,
             marqueeTitleSize: data.marquee?.titleSize || 20,
             marqueeTextSize: data.marquee?.textSize || 12,
+            noticeText: data.noticeText || '',
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -312,6 +315,7 @@ export default function SettingsPage() {
               titleSize: values.marqueeTitleSize,
               textSize: values.marqueeTextSize,
             },
+            noticeText: values.noticeText,
         };
 
         if (qrCodeData) {
@@ -655,6 +659,27 @@ export default function SettingsPage() {
                       )}
                     />
                  </div>
+
+                <Separator />
+
+                <h3 className="text-lg font-semibold">Notice Board</h3>
+                 <FormField
+                  control={form.control}
+                  name="noticeText"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notice Text</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Enter the notice text to display on the home page."
+                          {...field}
+                          className="bg-input rounded-lg min-h-[100px]"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <Separator />
 
