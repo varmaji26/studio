@@ -4,7 +4,6 @@
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { History, BookText, MessageSquare, IndianRupee } from 'lucide-react';
-import { FaTelegramPlane } from "react-icons/fa";
 
 interface BottomNavbarProps {
     settings: {
@@ -14,21 +13,12 @@ interface BottomNavbarProps {
 
 export function BottomNavbar({ settings }: BottomNavbarProps) {
     const router = useRouter();
-
-    const handleTelegramClick = () => {
-        if (settings.telegramLink) {
-            window.open(settings.telegramLink, '_blank');
-        } else {
-            // Fallback or alert if the link is not available
-            alert('Telegram link not available.');
-        }
-    };
     
     const navItems = [
-        { label: 'My Bids', action: () => router.push('/bids-history'), color: 'bg-yellow-500', icon: <History className="h-5 w-5" /> },
-        { label: 'Passbook', action: () => router.push('/payment-history'), color: 'bg-green-500', icon: <BookText className="h-5 w-5" /> },
-        { label: 'Support', action: () => router.push('/contact'), color: 'bg-sky-500', icon: <MessageSquare className="h-5 w-5" /> },
-        { label: 'Funds', action: () => router.push('/funds'), color: 'bg-red-500', icon: <IndianRupee className="h-5 w-5" /> },
+        { label: 'My Bids', action: () => router.push('/bids-history'), color: 'bg-yellow-500', icon: <History className="h-5 w-5 [text-shadow:1px_1px_2px_#000]" /> },
+        { label: 'Passbook', action: () => router.push('/payment-history'), color: 'bg-green-500', icon: <BookText className="h-5 w-5 [text-shadow:1px_1px_2px_#000]" /> },
+        { label: 'Support', action: () => router.push('/contact'), color: 'bg-sky-500', icon: <MessageSquare className="h-5 w-5 [text-shadow:1px_1px_2px_#000]" /> },
+        { label: 'Funds', action: () => router.push('/funds'), color: 'bg-red-500', icon: <IndianRupee className="h-5 w-5 [text-shadow:1px_1px_2px_#000]" /> },
     ];
     
     return (
@@ -39,7 +29,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                         key={label}
                         onClick={action}
                         className={cn(
-                            "flex flex-col items-center justify-center p-1 rounded-lg text-white shadow-md transform hover:scale-105 transition-transform duration-200",
+                            "flex flex-col items-center justify-center p-2 rounded-lg text-white shadow-md transform hover:scale-105 transition-transform duration-200",
                             color
                         )}
                     >
