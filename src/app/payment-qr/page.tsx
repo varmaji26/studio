@@ -166,13 +166,6 @@ function PaymentQRContent() {
                             <Clock className="h-4 w-4" />
                             <span>This QR is valid for: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
                         </div>
-
-                        <Button asChild className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-bold" disabled={!upiUrl}>
-                            <a href={upiUrl}>
-                                <Image src="https://placehold.co/24x24.png" alt="UPI Logo" width={24} height={24} className="mr-2" data-ai-hint="upi logo"/>
-                                Pay using UPI App
-                            </a>
-                        </Button>
                         
                         <div className="border-t pt-4 space-y-2">
                            <div className="flex items-center gap-2 font-semibold text-gray-800">
