@@ -10,7 +10,7 @@ import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Search, Calendar as CalendarIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { UpdateBalanceDialog } from '@/components/update-balance-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
 interface User extends DocumentData {
@@ -44,6 +48,7 @@ export default function ManageUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
@@ -79,17 +84,35 @@ export default function ManageUsersPage() {
   }, [fetchUsers]);
   
   const filteredUsers = useMemo(() => {
-    const lowercasedFilter = searchTerm.toLowerCase().trim();
-    if (!lowercasedFilter) {
-        return users;
+    let filtered = users;
+
+    // Filter by date
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        filtered = filtered.filter(user => {
+            if (!user.createdAt?.seconds) return false;
+            const userDate = new Date(user.createdAt.seconds * 1000);
+            return userDate >= startOfDay && userDate <= endOfDay;
+        });
     }
-    return users.filter((user) => {
-      return (
-        user.displayName?.toLowerCase().includes(lowercasedFilter) ||
-        user.mobile?.toLowerCase().includes(lowercasedFilter)
-      );
-    });
-  }, [searchTerm, users]);
+
+    // Filter by search term
+    const lowercasedFilter = searchTerm.toLowerCase().trim();
+    if (lowercasedFilter) {
+      filtered = filtered.filter((user) => {
+        return (
+          user.displayName?.toLowerCase().includes(lowercasedFilter) ||
+          user.mobile?.toLowerCase().includes(lowercasedFilter)
+        );
+      });
+    }
+
+    return filtered;
+  }, [searchTerm, users, selectedDate]);
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
 
@@ -100,7 +123,7 @@ export default function ManageUsersPage() {
 
   useEffect(() => {
       setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, selectedDate]);
 
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
@@ -188,16 +211,40 @@ export default function ManageUsersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <h3 className="text-xl font-semibold">All Users ({filteredUsers.length})</h3>
-                <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Search by name or mobile..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-input h-10 rounded-lg pl-10"
-                    />
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full sm:w-[280px] justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={setSelectedDate}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <div className="relative w-full sm:w-auto sm:max-w-xs">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by name or mobile..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-input h-10 rounded-lg pl-10"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -267,7 +314,7 @@ export default function ManageUsersPage() {
             )}
             {paginatedUsers.length === 0 && !usersLoading && (
                 <p className="text-center text-muted-foreground mt-4">
-                  {searchTerm ? `No users found for "${searchTerm}".` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
+                  {searchTerm || selectedDate ? `No users found matching the criteria.` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
                 </p>
             )}
           </CardContent>
