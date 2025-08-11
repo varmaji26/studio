@@ -63,7 +63,7 @@ const FundsPage = () => {
                 <h1 className="text-xl font-bold">Funds</h1>
             </header>
             <main className="p-4">
-                <div className="space-y-3">
+                <div className="space-y-4">
                     <Link href="/add-fund">
                         <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
                             <div className="flex items-center gap-4">
