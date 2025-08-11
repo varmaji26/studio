@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -393,6 +393,7 @@ export default function Home() {
                         className="w-full h-auto object-cover rounded-lg"
                         data-ai-hint="king"
                         unoptimized
+                        priority
                     />
                 </CardContent>
             </Card>

@@ -238,7 +238,6 @@ export default function ManageUsersPage() {
                                             <UpdateBalanceDialog user={user}>
                                                 <Button size="sm" variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400">Add/Remove Balance</Button>
                                             </UpdateBalanceDialog>
-                                            <Button size="sm" variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10 hover:text-green-400">View</Button>
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button size="sm" variant="destructive">Delete</Button>
