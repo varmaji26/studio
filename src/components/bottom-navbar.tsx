@@ -24,11 +24,11 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
     };
     
     const navItems = [
-        { label: 'My Bids', action: () => router.push('/bids-history'), color: 'bg-yellow-500', icon: <History className="h-6 w-6" /> },
-        { label: 'Passbook', action: () => router.push('/payment-history'), color: 'bg-green-500', icon: <BookText className="h-6 w-6" /> },
-        { label: 'Support', action: () => router.push('/contact'), color: 'bg-blue-500', icon: <MessageSquare className="h-6 w-6" /> },
-        { label: 'Funds', action: () => router.push('/funds'), color: 'bg-red-500', icon: <IndianRupee className="h-6 w-6" /> },
-        { label: 'Telegram', action: handleTelegramClick, color: 'bg-sky-500', icon: <FaTelegramPlane className="h-6 w-6" /> },
+        { label: 'My Bids', action: () => router.push('/bids-history'), color: 'bg-yellow-500', icon: <History className="h-5 w-5" /> },
+        { label: 'Passbook', action: () => router.push('/payment-history'), color: 'bg-green-500', icon: <BookText className="h-5 w-5" /> },
+        { label: 'Support', action: () => router.push('/contact'), color: 'bg-blue-500', icon: <MessageSquare className="h-5 w-5" /> },
+        { label: 'Funds', action: () => router.push('/funds'), color: 'bg-red-500', icon: <IndianRupee className="h-5 w-5" /> },
+        { label: 'Telegram', action: handleTelegramClick, color: 'bg-sky-500', icon: <FaTelegramPlane className="h-5 w-5" /> },
     ];
     
     return (
