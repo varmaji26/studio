@@ -22,8 +22,8 @@ const standardGameRates = [
 
 const RateItem = ({ name, rate }: { name: string; rate: string }) => (
     <div className="bg-indigo-600 text-white flex justify-between items-center p-3 rounded-lg shadow-md">
-        <span className="font-semibold text-sm">{name}</span>
-        <span className="font-bold text-sm">{rate}</span>
+        <span className="font-semibold text-xs">{name}</span>
+        <span className="font-bold text-xs">{rate}</span>
     </div>
 );
 
