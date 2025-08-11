@@ -65,11 +65,11 @@ export default function WithdrawalPage() {
 
     const handleSendRequest = async () => {
         const parsedAmount = parseInt(amount, 10);
-        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        if (isNaN(parsedAmount) || parsedAmount < 1000) {
             toast({
                 variant: 'destructive',
                 title: 'Invalid Amount',
-                description: 'Please enter a valid amount to withdraw.',
+                description: 'Minimum withdrawal amount is ₹1000.',
             });
             return;
         }
