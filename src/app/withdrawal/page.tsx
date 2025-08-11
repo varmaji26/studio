@@ -59,6 +59,10 @@ export default function WithdrawalPage() {
         };
     }, [user]);
 
+    const handleQuickAmount = (value: string) => {
+        setAmount(value);
+    };
+
     const handleSendRequest = async () => {
         const parsedAmount = parseInt(amount, 10);
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -172,6 +176,7 @@ export default function WithdrawalPage() {
                 <hr className="border-gray-300" />
                 
                 <div className="my-4">
+                    <p className="text-center text-gray-600 mb-2">Enter Amount</p>
                     <div className="relative">
                         <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400"/>
                          <Input 
@@ -181,6 +186,12 @@ export default function WithdrawalPage() {
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
                         />
+                    </div>
+                     <div className="grid grid-cols-2 gap-3 mt-3">
+                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('1000')}>1000</Button>
+                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('2000')}>2000</Button>
+                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('5000')}>5000</Button>
+                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('10000')}>10000</Button>
                     </div>
                 </div>
             </main>
