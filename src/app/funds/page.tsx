@@ -63,8 +63,8 @@ const FundsPage = () => {
                 <h1 className="text-xl font-bold">Funds</h1>
             </header>
             <main className="p-4">
-                <div className="space-y-6">
-                    <Link href="/add-fund">
+                <div className="space-y-4">
+                    <Link href="/add-fund" className="block mb-4">
                         <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
                             <div className="flex items-center gap-4">
                                 <div className="p-2 bg-primary/20 rounded-full">
@@ -79,7 +79,7 @@ const FundsPage = () => {
                         </div>
                     </Link>
                     
-                     <Link href="/withdrawal">
+                     <Link href="/withdrawal" className="block mb-4">
                         <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
                            <div className="flex items-center gap-4">
                                <div className="p-2 bg-primary/20 rounded-full">
@@ -94,7 +94,7 @@ const FundsPage = () => {
                         </div>
                     </Link>
 
-                    <Link href="/payment-history">
+                    <Link href="/payment-history" className="block mb-4">
                        <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
                            <div className="flex items-center gap-4">
                                <div className="p-2 bg-primary/20 rounded-full">
@@ -109,7 +109,7 @@ const FundsPage = () => {
                         </div>
                     </Link>
 
-                    <Link href="/payment-history">
+                    <Link href="/payment-history" className="block mb-4">
                        <div className="bg-card/80 border border-white/10 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-card/90 transition-colors">
                            <div className="flex items-center gap-4">
                                <div className="p-2 bg-primary/20 rounded-full">
