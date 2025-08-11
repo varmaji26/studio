@@ -32,7 +32,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
     ];
     
     return (
-         <div className="fixed bottom-0 left-0 w-full bg-[#005A9C] border-t border-white/10 z-50">
+         <div className="fixed bottom-0 left-0 w-full bg-[#0A2342] border-t border-white/10 z-50">
             <div className="grid grid-cols-5 gap-1 p-2">
                 {navItems.map(({ label, action, color, icon }) => (
                      <button
