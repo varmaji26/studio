@@ -50,6 +50,8 @@ export default function AdminLayout({
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = React.useState(0);
   const [newUsersCount, setNewUsersCount] = React.useState(0);
+  const [todaysBidsCount, setTodaysBidsCount] = React.useState(0);
+  const [todaysWinsCount, setTodaysWinsCount] = React.useState(0);
   
   const isActive = (path: string) => pathname === path;
 
@@ -93,12 +95,30 @@ export default function AdminLayout({
     const unsubNewUsers = onSnapshot(newUsersQuery, (snapshot) => {
         setNewUsersCount(snapshot.size);
     });
+    
+    // Listener for today's bids and wins
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const startOfTodayTimestamp = Timestamp.fromDate(startOfToday);
+
+    const todaysBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfTodayTimestamp));
+    const unsubTodaysBids = onSnapshot(todaysBidsQuery, (snapshot) => {
+        let winsCount = 0;
+        snapshot.docs.forEach(doc => {
+            if (doc.data().status === 'won') {
+                winsCount++;
+            }
+        });
+        setTodaysBidsCount(snapshot.size);
+        setTodaysWinsCount(winsCount);
+    });
 
 
     return () => {
         unsubDeposits();
         unsubWithdrawals();
         unsubNewUsers();
+        unsubTodaysBids();
     };
   }, []);
 
@@ -265,6 +285,11 @@ export default function AdminLayout({
                 <SidebarMenuButton isActive={isActive('/admin/bid-history')} tooltip={{children: "Bid History"}}>
                   <History />
                   <span>Bid History</span>
+                   {todaysBidsCount > 0 && (
+                    <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                        {todaysBidsCount}
+                    </span>
+                 )}
                 </SidebarMenuButton>
               </Link>
           </SidebarMenuItem>
@@ -273,6 +298,11 @@ export default function AdminLayout({
                 <SidebarMenuButton isActive={isActive('/admin/win-history')} tooltip={{children: "Win History"}}>
                  <Trophy />
                  <span>Win History</span>
+                  {todaysWinsCount > 0 && (
+                    <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                        {todaysWinsCount}
+                    </span>
+                 )}
                 </SidebarMenuButton>
               </Link>
           </SidebarMenuItem>
