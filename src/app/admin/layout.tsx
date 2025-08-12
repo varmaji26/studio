@@ -108,9 +108,10 @@ export default function AdminLayout({
         setTodaysBidsCount(snapshot.size);
     });
 
-    const todaysWinsQuery = query(collection(db, "bids"), where("status", "==", "won"), where("createdAt", ">=", Timestamp.fromDate(lastViewedWinsDate)));
+    const todaysWinsQuery = query(collection(db, "bids"), where("createdAt", ">=", Timestamp.fromDate(lastViewedWinsDate)));
     const unsubTodaysWins = onSnapshot(todaysWinsQuery, (snapshot) => {
-        setTodaysWinsCount(snapshot.size);
+        const winningBids = snapshot.docs.filter(doc => doc.data().status === 'won');
+        setTodaysWinsCount(winningBids.length);
     });
 
 
