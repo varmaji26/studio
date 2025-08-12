@@ -41,7 +41,6 @@ import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firest
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { Loader } from '@/components/loader';
-import { motion, AnimatePresence } from 'framer-motion';
 
 
 export default function AdminLayout({
@@ -404,18 +403,9 @@ export default function AdminLayout({
         isSidebarOpen={isSidebarOpen}
         setSidebarOpen={setIsSidebarOpen}
     >
-        <AnimatePresence mode="wait">
-            <motion.div
-                key={pathname}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="p-4 sm:p-6"
-            >
-              {children}
-            </motion.div>
-        </AnimatePresence>
+        <div className="p-4 sm:p-6">
+            {children}
+        </div>
     </LayoutProvider>
   );
 }
