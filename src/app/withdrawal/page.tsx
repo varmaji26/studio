@@ -163,7 +163,7 @@ export default function WithdrawalPage() {
                     </Button>
                 </Link>
                 <h1 className="text-xl font-bold">Withdrawal Fund</h1>
-                <div className="ml-auto flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-full">
+                <div className="ml-auto flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-full">
                     <Wallet className="h-5 w-5" />
                     <span>₹{totalBalance.toFixed(1) || '0.0'}</span>
                 </div>
