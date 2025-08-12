@@ -408,6 +408,8 @@ export default function Home() {
         ))}
     </div>
   );
+  
+  const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -490,14 +492,8 @@ export default function Home() {
             <div className="flex flex-col items-end">
                 <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
                     <Wallet className="h-5 w-5 text-green-400" />
-                    <span className="font-bold text-md text-white">₹{userProfile?.balance?.toFixed(0) ?? '0'}</span>
+                    <span className="font-bold text-md text-white">₹{totalBalance.toFixed(0) ?? '0'}</span>
                 </div>
-                {(userProfile?.bonusBalance ?? 0) > 0 && (
-                     <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-2 py-0.5 mt-1">
-                        <Gift className="h-4 w-4 text-yellow-400" />
-                        <span className="font-bold text-xs text-white">₹{userProfile?.bonusBalance?.toFixed(0) ?? '0'}</span>
-                    </div>
-                )}
             </div>
           {isAdmin && (
             <Link href="/admin">

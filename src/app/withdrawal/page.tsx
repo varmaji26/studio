@@ -128,6 +128,7 @@ export default function WithdrawalPage() {
     }
     
     const mobileNumber = user.email?.split('@')[0];
+    const totalBalance = (profile.balance || 0) + (profile.bonusBalance || 0);
 
     return (
         <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
@@ -140,7 +141,7 @@ export default function WithdrawalPage() {
                 <h1 className="text-xl font-bold">Withdrawal Fund</h1>
                 <div className="ml-auto flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-full">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="white"/></svg>
-                    <span>₹{profile.balance?.toFixed(1) || '0.0'}</span>
+                    <span>₹{totalBalance.toFixed(1) || '0.0'}</span>
                 </div>
             </header>
 
@@ -151,11 +152,6 @@ export default function WithdrawalPage() {
                     <div className="bg-black/50 mt-2 p-2 rounded-md">
                         <p className="text-sm">Withdrawable Balance</p>
                         <p className="text-xl font-bold">₹ {profile.balance?.toFixed(1) || '0.0'}</p>
-                        {(profile.bonusBalance ?? 0) > 0 && (
-                             <p className="text-sm font-bold text-yellow-400 flex items-center justify-center gap-1 mt-1">
-                                <Gift className="h-4 w-4" /> Bonus: ₹{profile.bonusBalance?.toFixed(1) || '0.0'}
-                            </p>
-                        )}
                     </div>
                 </div>
 

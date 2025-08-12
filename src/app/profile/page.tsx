@@ -73,6 +73,8 @@ export default function ProfilePage() {
   const creationDate = user.metadata.creationTime
     ? new Date(user.metadata.creationTime).toLocaleDateString()
     : 'N/A';
+    
+  const totalBalance = (profile.balance || 0) + (profile.bonusBalance || 0);
   
   return (
     <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
@@ -117,13 +119,8 @@ export default function ProfilePage() {
                         Current Balance
                         </label>
                         <p className="text-2xl font-bold text-primary flex items-center gap-2">
-                           <Wallet className="h-6 w-6" /> ₹{profile.balance || 0}
+                           <Wallet className="h-6 w-6" /> ₹{totalBalance.toFixed(0)}
                         </p>
-                         {(profile.bonusBalance ?? 0) > 0 && (
-                            <p className="text-lg font-bold text-yellow-400 flex items-center gap-2 mt-1">
-                                <Gift className="h-5 w-5" /> Bonus: ₹{profile.bonusBalance || 0}
-                            </p>
-                        )}
                     </div>
                 </div>
             </div>
