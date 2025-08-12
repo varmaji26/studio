@@ -566,9 +566,11 @@ export default function Home() {
                             unoptimized
                         />
                         <div className="p-4 bg-background">
-                            <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handleClaimBonus}>
-                                Claim Bonus Now
-                            </Button>
+                            <motion.div whileTap={{ scale: 0.95 }}>
+                                <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handleClaimBonus}>
+                                    Claim Bonus Now
+                                </Button>
+                            </motion.div>
                         </div>
                     </motion.div>
                 </div>
