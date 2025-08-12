@@ -30,11 +30,16 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { DocumentData } from 'firebase/firestore';
+import { Separator } from './ui/separator';
 
 const balanceSchema = z.object({
-  amount: z.preprocess(
-    (a) => parseInt(z.string().parse(a), 10),
-    z.number().int('Amount must be an integer.')
+  balanceAmount: z.preprocess(
+    (a) => (a === '' ? 0 : parseInt(z.string().parse(a), 10)),
+    z.number().int('Amount must be an integer.').optional()
+  ),
+  bonusAmount: z.preprocess(
+    (a) => (a === '' ? 0 : parseInt(z.string().parse(a), 10)),
+    z.number().int('Amount must be an integer.').optional()
   ),
 });
 
@@ -53,11 +58,20 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
   const form = useForm<BalanceFormValues>({
     resolver: zodResolver(balanceSchema),
     defaultValues: {
-      amount: 0,
+      balanceAmount: 0,
+      bonusAmount: 0,
     },
   });
 
   const onSubmit = async (values: BalanceFormValues) => {
+    const balanceAmount = values.balanceAmount || 0;
+    const bonusAmount = values.bonusAmount || 0;
+    
+    if (balanceAmount === 0 && bonusAmount === 0) {
+        toast({ variant: 'destructive', title: 'No change', description: 'Please enter an amount to add or remove.' });
+        return;
+    }
+
     setIsSubmitting(true);
     const userDocRef = doc(db, 'users', user.id);
     const statsDocRef = doc(db, 'app-stats', 'dashboard');
@@ -70,14 +84,31 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
         }
 
         const currentBalance = userDoc.data().balance || 0;
-        const newBalance = currentBalance + values.amount;
-
+        const newBalance = currentBalance + balanceAmount;
         if (newBalance < 0) {
-            throw new Error("Balance cannot be negative.");
+            throw new Error("Real balance cannot be negative.");
+        }
+        
+        const currentBonusBalance = userDoc.data().bonusBalance || 0;
+        const newBonusBalance = currentBonusBalance + bonusAmount;
+        if (newBonusBalance < 0) {
+            throw new Error("Bonus balance cannot be negative.");
         }
 
-        transaction.update(userDocRef, { balance: newBalance });
-        transaction.update(statsDocRef, { totalBalance: increment(values.amount) });
+        const updates: { [key: string]: any } = {
+            balance: increment(balanceAmount),
+            bonusBalance: increment(bonusAmount)
+        };
+        
+        if (bonusAmount > 0) {
+            updates.totalBonusGiven = increment(bonusAmount);
+        }
+
+        transaction.update(userDocRef, updates);
+
+        if (balanceAmount !== 0) {
+            transaction.update(statsDocRef, { totalBalance: increment(balanceAmount) });
+        }
       });
 
       toast({
@@ -106,25 +137,45 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
         <DialogHeader>
           <DialogTitle>Update Balance for {user.displayName}</DialogTitle>
           <DialogDescription>
-            Enter the amount to add or remove. Use a negative number to remove balance.
-            Current Balance: ₹{user.balance || 0}
+            Enter amounts to add or remove. Use negative numbers to subtract.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Amount to Add/Remove</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="e.g., 100 or -50" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="rounded-md border p-4 space-y-4">
+                <p className="text-sm">Current Real Balance: <span className="font-bold">₹{user.balance || 0}</span></p>
+                <FormField
+                  control={form.control}
+                  name="balanceAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Add/Remove Real Balance</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 100 or -50" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+            <Separator />
+            <div className="rounded-md border p-4 space-y-4">
+                <p className="text-sm">Current Bonus Balance: <span className="font-bold">₹{user.bonusBalance || 0}</span></p>
+                 <FormField
+                  control={form.control}
+                  name="bonusAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Add/Remove Bonus Balance</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 50 or -20" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+
             <DialogFooter className="gap-2 sm:gap-0">
                <DialogClose asChild>
                 <Button type="button" variant="outline">
@@ -133,7 +184,7 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
               </DialogClose>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? <Loader className="mr-2" /> : null}
-                Update Balance
+                Update Balances
               </Button>
             </DialogFooter>
           </form>

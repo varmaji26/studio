@@ -89,6 +89,9 @@ export function AuthForm({ mode }: AuthFormProps) {
                 mobile: values.mobile,
                 email: email,
                 balance: 0,
+                bonusBalance: 0,
+                totalBonusGiven: 0,
+                totalBonusUsed: 0,
                 createdAt: serverTimestamp(),
             });
             transaction.set(statsDocRef, { totalUsers: increment(1) }, { merge: true });
@@ -108,6 +111,9 @@ export function AuthForm({ mode }: AuthFormProps) {
             mobile: values.mobile,
             email: user.email,
             balance: 0,
+            bonusBalance: 0,
+            totalBonusGiven: 0,
+            totalBonusUsed: 0,
             createdAt: serverTimestamp(),
           });
           // Also increment user count if a logged-in user doc is created for the first time

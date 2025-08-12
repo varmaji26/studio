@@ -88,21 +88,35 @@ export default function WithdrawalPage() {
 
         if (!user) return;
         setIsSubmitting(true);
+        const userDocRef = doc(db, 'users', user.uid);
 
         try {
-            await addDoc(collection(db, 'withdrawals'), {
-                userId: user.uid,
-                displayName: user.displayName,
-                amount: parsedAmount,
-                withdrawalMethod: 'Bank Transfer', // Default or based on user profile
-                withdrawalDetails: 'Registered Bank Account', // Or fetch from profile
-                status: 'pending',
-                createdAt: serverTimestamp(),
+             await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userDocRef);
+                 if (!userDoc.exists()) {
+                    throw new Error("User not found.");
+                }
+
+                const withdrawalsCollectionRef = collection(db, 'withdrawals');
+                const newWithdrawalRef = doc(withdrawalsCollectionRef);
+
+                transaction.set(newWithdrawalRef, {
+                    userId: user.uid,
+                    displayName: user.displayName,
+                    amount: parsedAmount,
+                    withdrawalMethod: 'Bank Transfer',
+                    withdrawalDetails: 'Registered Bank Account',
+                    status: 'pending',
+                    createdAt: serverTimestamp(),
+                });
+
+                // Reset bonus balance on withdrawal request
+                transaction.update(userDocRef, { bonusBalance: 0 });
             });
 
             toast({
                 title: 'Request Sent!',
-                description: 'Your withdrawal request has been submitted for approval.',
+                description: 'Your withdrawal request has been submitted and your bonus balance has been reset.',
             });
             router.push('/funds');
 

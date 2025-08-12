@@ -37,6 +37,7 @@ interface User extends DocumentData {
     displayName: string;
     mobile: string;
     balance: number;
+    bonusBalance?: number;
     createdAt: {
         seconds: number;
         nanoseconds: number;
@@ -272,6 +273,7 @@ export default function ManageUsersPage() {
                                 <TableHead>Username</TableHead>
                                 <TableHead>Mobile</TableHead>
                                 <TableHead>Balance</TableHead>
+                                <TableHead>Bonus</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Joined</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
@@ -284,6 +286,7 @@ export default function ManageUsersPage() {
                                     <TableCell>{user.displayName}</TableCell>
                                     <TableCell>{user.mobile}</TableCell>
                                     <TableCell>₹{user.balance || 0}</TableCell>
+                                    <TableCell>₹{user.bonusBalance || 0}</TableCell>
                                     <TableCell>
                                         <Badge className="bg-green-500 text-white hover:bg-green-600">
                                             ACTIVE
