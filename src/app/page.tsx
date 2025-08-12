@@ -529,8 +529,8 @@ export default function Home() {
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
             <DialogContent className="p-0 border-0 bg-transparent max-w-[280px] shadow-none" onInteractOutside={handleBonusPopupClose}>
-                 <DialogHeader className="sr-only">
-                    <DialogTitle>Bonus Offer</DialogTitle>
+                 <DialogHeader>
+                    <DialogTitle className="sr-only">Bonus Offer</DialogTitle>
                 </DialogHeader>
                 <div className="relative">
                      <DialogClose asChild>
@@ -540,8 +540,20 @@ export default function Home() {
                      </DialogClose>
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.5, type: 'spring' }}
+                        animate={{ 
+                            scale: 1, 
+                            opacity: 1,
+                            rotate: [0, -1, 1, -1, 1, 0],
+                        }}
+                        transition={{ 
+                            duration: 0.5, 
+                            type: 'spring',
+                            rotate: {
+                                repeat: Infinity,
+                                repeatDelay: 1,
+                                duration: 0.4
+                            }
+                        }}
                         className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden"
                     >
                         <Image 
