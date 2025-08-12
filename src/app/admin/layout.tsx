@@ -25,6 +25,7 @@ import {
   Eye,
   ChevronDown,
   MailQuestion,
+  Send,
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
@@ -245,6 +246,14 @@ export default function AdminLayout({
                         {pendingRequestsCount}
                     </span>
                  )}
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/admin/send-notification" passHref onClick={handleLinkClick}>
+              <SidebarMenuButton isActive={isActive('/admin/send-notification')} tooltip={{children: "Send Notification"}}>
+                <Send />
+                <span>Send Notification</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

@@ -32,7 +32,9 @@ import {
   Gem,
   Sun,
   Moon,
-  Download
+  Download,
+  BellRing,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -45,6 +47,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 interface Game extends DocumentData {
@@ -63,6 +66,12 @@ interface Game extends DocumentData {
 interface Banner extends DocumentData {
     id: string;
     imageUrl: string;
+}
+
+interface Notification extends DocumentData {
+    id: string;
+    title: string;
+    message: string;
 }
 
 interface AppSettings extends DocumentData {
@@ -201,6 +210,8 @@ export default function Home() {
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [theme, setTheme] = useState('dark');
+  const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
 
@@ -285,14 +296,35 @@ export default function Home() {
         }
     });
 
+    // Fetch latest notification
+    const notificationsQuery = query(collection(db, "notifications"), orderBy("createdAt", "desc"), where("createdAt", "!=", null));
+    const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
+        if (!snapshot.empty) {
+            const latestNotif = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Notification;
+            const lastSeenNotifId = localStorage.getItem('lastSeenNotificationId');
+            if (latestNotif.id !== lastSeenNotifId) {
+                 setLatestNotification(latestNotif);
+                 setShowNotification(true);
+            }
+        }
+    });
 
     return () => {
         unsubscribeGames();
         unsubscribeBanners();
         unsubscribeSettings();
         unsubscribeUserProfile();
+        unsubscribeNotifications();
     };
   }, [user, currentDay]);
+
+  const handleDismissNotification = () => {
+    if (latestNotification) {
+        localStorage.setItem('lastSeenNotificationId', latestNotification.id);
+        setShowNotification(false);
+    }
+  };
+
 
   const handleLinkClick = () => {
     setIsSheetOpen(false);
@@ -453,6 +485,19 @@ export default function Home() {
       )}
       
       <main className="flex flex-col gap-4 p-4 pb-28">
+         {showNotification && latestNotification && (
+            <Alert variant="default" className="bg-primary/10 border-primary/20 relative">
+                 <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={handleDismissNotification}>
+                    <X className="h-4 w-4" />
+                 </Button>
+                <BellRing className="h-4 w-4" />
+                <AlertTitle className="font-bold">{latestNotification.title}</AlertTitle>
+                <AlertDescription>
+                    {latestNotification.message}
+                </AlertDescription>
+            </Alert>
+        )}
+
         {settings.welcomeBanner?.imageUrl && (
              <Card className="bg-card/80 border-white/10 shadow-lg">
                 <CardContent className="p-0">
