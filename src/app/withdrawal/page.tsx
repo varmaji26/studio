@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UserProfile extends DocumentData {
   balance?: number;
+  bonusBalance?: number;
 }
 
 interface AppSettings extends DocumentData {
@@ -73,25 +74,22 @@ export default function WithdrawalPage() {
             });
             return;
         }
+        
+        const currentBalance = profile.balance || 0;
+        if (currentBalance < parsedAmount) {
+             toast({
+                variant: 'destructive',
+                title: 'Insufficient Balance',
+                description: 'You do not have enough real balance to make this withdrawal.',
+            });
+            return;
+        }
+
 
         if (!user) return;
         setIsSubmitting(true);
 
         try {
-            const userDocRef = doc(db, 'users', user.uid);
-            
-            await runTransaction(db, async (transaction) => {
-                const userDoc = await transaction.get(userDocRef);
-                if (!userDoc.exists()) {
-                    throw new Error("User not found.");
-                }
-                const currentBalance = userDoc.data().balance || 0;
-                if (currentBalance < parsedAmount) {
-                    throw new Error("Insufficient balance for this withdrawal.");
-                }
-            });
-
-            // If transaction is successful, add withdrawal request
             await addDoc(collection(db, 'withdrawals'), {
                 userId: user.uid,
                 displayName: user.displayName,
