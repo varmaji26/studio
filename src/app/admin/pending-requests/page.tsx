@@ -155,23 +155,25 @@ export default function PendingRequestsPage() {
 
             if (status === 'approved') {
                 if (currentBalance < request.amount) {
-                     // If insufficient balance, reject the request but don't change balance.
-                     transaction.update(requestDocRef, { status: 'rejected' });
-                     throw new Error("Insufficient balance. Request automatically rejected.");
+                    // If insufficient balance for approval, reject the request and do not change balance.
+                    transaction.update(requestDocRef, { status: 'rejected' });
+                    throw new Error("Insufficient balance. Request automatically rejected.");
                 }
-                // If sufficient balance, deduct from user and stats.
+                // If sufficient balance, deduct from user and stats for approval.
                 transaction.update(userDocRef, { balance: increment(-request.amount) });
                 transaction.update(statsDocRef, { totalBalance: increment(-request.amount) });
+                transaction.update(requestDocRef, { status: 'approved' });
+            } else { // status is 'rejected'
+                // For rejection, simply update the request status. No balance change needed.
+                transaction.update(requestDocRef, { status: 'rejected' });
             }
-            
-            // Update request status for both 'approved' and 'rejected' cases.
-            transaction.update(requestDocRef, { status: status });
         });
         toast({ title: 'Success!', description: `Withdrawal request has been ${status}.` });
     } catch(error: any) {
         toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to process withdrawal.' });
     }
   };
+
 
   const sourceData = activeTab === 'deposits' ? depositRequests : withdrawalRequests;
 
