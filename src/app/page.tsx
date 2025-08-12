@@ -527,7 +527,7 @@ export default function Home() {
         
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
-            <DialogContent className="p-0 border-0 max-w-sm" onInteractOutside={handleBonusPopupClose}>
+            <DialogContent className="p-0 border-0 max-w-xs" onInteractOutside={handleBonusPopupClose}>
                 <DialogHeader className="sr-only">
                   <DialogTitle>Bonus Offer</DialogTitle>
                 </DialogHeader>
