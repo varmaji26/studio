@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, DocumentData, runTransaction, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, DocumentData, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
@@ -162,12 +162,27 @@ export default function JodiDigitPage() {
             }
 
             const currentBalance = userDoc.data().balance || 0;
-            if (currentBalance < totalAmount) {
-                throw new Error("Insufficient balance.");
+            const currentBonusBalance = userDoc.data().bonusBalance || 0;
+            const totalUserBalance = currentBalance + currentBonusBalance;
+
+            if (totalUserBalance < totalAmount) {
+                throw new Error("Insufficient total balance.");
             }
 
-            const newBalance = currentBalance - totalAmount;
-            transaction.update(userDocRef, { balance: newBalance });
+            let amountFromReal = 0;
+            let amountFromBonus = 0;
+
+            if (currentBalance >= totalAmount) {
+                amountFromReal = totalAmount;
+            } else {
+                amountFromReal = currentBalance;
+                amountFromBonus = totalAmount - currentBalance;
+            }
+
+            transaction.update(userDocRef, { 
+                balance: increment(-amountFromReal),
+                bonusBalance: increment(-amountFromBonus),
+            });
 
             const bidsCollectionRef = collection(db, 'bids');
             transaction.set(doc(bidsCollectionRef), {
