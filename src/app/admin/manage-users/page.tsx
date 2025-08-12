@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -51,6 +52,15 @@ export default function ManageUsersPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('viewed') === 'true') {
+        localStorage.setItem('lastViewedUsersTimestamp', Date.now().toString());
+         // Optionally, reload the page or trigger a re-render of the layout if needed
+        window.dispatchEvent(new Event('storage')); // To notify layout if it's listening
+    }
+  }, [searchParams]);
 
    const fetchUsers = useCallback(() => {
     setUsersLoading(true);

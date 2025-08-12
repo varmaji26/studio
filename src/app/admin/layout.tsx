@@ -84,12 +84,12 @@ export default function AdminLayout({
         setPendingRequestsCount(depositsCount + withdrawalsCount);
     });
 
-    // Listener for new users today
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const todayTimestamp = Timestamp.fromDate(startOfToday);
+    // Listener for new users
+    const lastViewedTimestamp = localStorage.getItem('lastViewedUsersTimestamp');
+    const lastViewedDate = lastViewedTimestamp ? new Date(parseInt(lastViewedTimestamp, 10)) : new Date(0);
+    const lastViewedFirestoreTimestamp = Timestamp.fromDate(lastViewedDate);
 
-    const newUsersQuery = query(collection(db, "users"), where("createdAt", ">=", todayTimestamp));
+    const newUsersQuery = query(collection(db, "users"), where("createdAt", ">=", lastViewedFirestoreTimestamp));
     const unsubNewUsers = onSnapshot(newUsersQuery, (snapshot) => {
         setNewUsersCount(snapshot.size);
     });
@@ -185,7 +185,7 @@ export default function AdminLayout({
               </CollapsibleContent>
            </Collapsible>
           <SidebarMenuItem>
-             <Link href="/admin/manage-users" passHref onClick={handleLinkClick}>
+             <Link href="/admin/manage-users?viewed=true" passHref onClick={handleLinkClick}>
                 <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Manage Users"}}>
                   <Users />
                   <span>Manage Users</span>
