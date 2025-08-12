@@ -20,6 +20,7 @@ import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
@@ -76,6 +77,11 @@ const settingsSchema = z.object({
     z.number().min(8, 'Minimum size is 8px.').optional()
   ),
   noticeText: z.string().optional(),
+  bonusEnabled: z.boolean().default(false),
+  bonusPercentage: z.preprocess(
+    (val) => (String(val).trim() === '' ? 0 : Number(val)),
+    z.number().min(0, 'Percentage cannot be negative.').max(100, 'Percentage cannot exceed 100.')
+  ),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -112,6 +118,8 @@ export default function SettingsPage() {
       marqueeTitleSize: 20,
       marqueeTextSize: 12,
       noticeText: '',
+      bonusEnabled: false,
+      bonusPercentage: 0,
     },
   });
 
@@ -143,6 +151,8 @@ export default function SettingsPage() {
             marqueeTitleSize: data.marquee?.titleSize || 20,
             marqueeTextSize: data.marquee?.textSize || 12,
             noticeText: data.noticeText || '',
+            bonusEnabled: data.bonus?.enabled || false,
+            bonusPercentage: data.bonus?.percentage || 0,
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -316,6 +326,10 @@ export default function SettingsPage() {
               textSize: values.marqueeTextSize,
             },
             noticeText: values.noticeText,
+            bonus: {
+              enabled: values.bonusEnabled,
+              percentage: values.bonusPercentage,
+            },
         };
 
         if (qrCodeData) {
@@ -484,6 +498,47 @@ export default function SettingsPage() {
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                
+                 <h3 className="text-lg font-semibold">Bonus Settings</h3>
+                <div className="space-y-4 rounded-md border p-4">
+                  <FormField
+                    control={form.control}
+                    name="bonusEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between">
+                        <div className="space-y-0.5">
+                          <FormLabel>Enable Deposit Bonus</FormLabel>
+                          <FormDescriptionComponent>
+                            Turn this on to give users a bonus on approved deposits.
+                          </FormDescriptionComponent>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  {form.watch('bonusEnabled') && (
+                    <FormField
+                      control={form.control}
+                      name="bonusPercentage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bonus Percentage (%)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="e.g., 10" {...field} className="bg-input h-12 rounded-lg" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+
+                <Separator />
                 
                 <h3 className="text-lg font-semibold">Support Details</h3>
                 <FormField
@@ -894,3 +949,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

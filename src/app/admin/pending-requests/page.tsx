@@ -104,6 +104,7 @@ export default function PendingRequestsPage() {
     const requestDocRef = doc(db, 'deposits', request.id);
     const userDocRef = doc(db, 'users', request.userId);
     const statsDocRef = doc(db, 'app-stats', 'dashboard');
+    const settingsDocRef = doc(db, 'settings', 'app-settings');
 
     try {
       await runTransaction(db, async (transaction) => {
@@ -113,7 +114,18 @@ export default function PendingRequestsPage() {
         }
 
         if (status === 'approved') {
-          transaction.update(userDocRef, { balance: increment(request.amount) });
+          const settingsDoc = await transaction.get(settingsDocRef);
+          const settings = settingsDoc.data()?.bonus || { enabled: false, percentage: 0 };
+          
+          let bonusAmount = 0;
+          if (settings.enabled && settings.percentage > 0) {
+              bonusAmount = (request.amount * settings.percentage) / 100;
+          }
+
+          transaction.update(userDocRef, { 
+              balance: increment(request.amount),
+              bonusBalance: increment(bonusAmount) 
+          });
           transaction.update(statsDocRef, { totalBalance: increment(request.amount) });
         }
         
@@ -364,3 +376,5 @@ export default function PendingRequestsPage() {
       </div>
   );
 }
+
+    
