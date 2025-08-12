@@ -528,6 +528,9 @@ export default function Home() {
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
             <DialogContent className="p-0 border-0 max-w-sm" onInteractOutside={handleBonusPopupClose}>
+                <DialogHeader className="sr-only">
+                  <DialogTitle>Bonus Offer</DialogTitle>
+                </DialogHeader>
                 <div className="relative">
                      <DialogClose asChild>
                         <button onClick={handleBonusPopupClose} className="absolute top-2 right-2 z-10 bg-black/50 text-white rounded-full p-1">
