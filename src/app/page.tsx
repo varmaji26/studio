@@ -49,6 +49,7 @@ import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { motion } from 'framer-motion';
 
 
 interface Game extends DocumentData {
@@ -527,30 +528,37 @@ export default function Home() {
         
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
-            <DialogContent className="p-0 border-0 max-w-xs" onInteractOutside={handleBonusPopupClose}>
-                <DialogHeader className="sr-only">
-                  <DialogTitle>Bonus Offer</DialogTitle>
+            <DialogContent className="p-0 border-0 bg-transparent max-w-2xs shadow-none" onInteractOutside={handleBonusPopupClose}>
+                 <DialogHeader className="sr-only">
+                    <DialogTitle>Bonus Offer</DialogTitle>
                 </DialogHeader>
                 <div className="relative">
                      <DialogClose asChild>
-                        <button onClick={handleBonusPopupClose} className="absolute top-2 right-2 z-10 bg-black/50 text-white rounded-full p-1">
+                        <button onClick={handleBonusPopupClose} className="absolute -top-2 -right-2 z-10 bg-black/50 text-white rounded-full p-1">
                            <X className="h-5 w-5" />
                         </button>
                      </DialogClose>
-                    <Image 
-                        src={settings.bonusPopup?.imageUrl || ''} 
-                        alt="Bonus Offer" 
-                        width={400} 
-                        height={400} 
-                        className="w-full h-auto rounded-t-lg"
-                        data-ai-hint="casino bonus"
-                        unoptimized
-                    />
-                    <div className="p-4">
-                        <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handleClaimBonus}>
-                            Claim Bonus Now
-                        </Button>
-                    </div>
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.5, type: 'spring' }}
+                        className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden"
+                    >
+                        <Image 
+                            src={settings.bonusPopup?.imageUrl || ''} 
+                            alt="Bonus Offer" 
+                            width={400} 
+                            height={400} 
+                            className="w-full h-auto"
+                            data-ai-hint="casino bonus"
+                            unoptimized
+                        />
+                        <div className="p-4 bg-background">
+                            <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handleClaimBonus}>
+                                Claim Bonus Now
+                            </Button>
+                        </div>
+                    </motion.div>
                 </div>
             </DialogContent>
         </Dialog>
