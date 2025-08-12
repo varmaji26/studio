@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Landmark, Phone, Gift } from 'lucide-react';
+import { ArrowLeft, Landmark, Phone, Gift, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { doc, onSnapshot, DocumentData, collection, addDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -97,6 +97,16 @@ export default function WithdrawalPage() {
                     throw new Error("User not found.");
                 }
 
+                const newBonusTransactionRef = doc(collection(db, 'bonusTransactions'));
+                transaction.set(newBonusTransactionRef, {
+                    userId: user.uid,
+                    displayName: user.displayName,
+                    amount: userDoc.data().bonusBalance || 0,
+                    type: 'Reset',
+                    description: 'Bonus reset on withdrawal request',
+                    createdAt: serverTimestamp(),
+                });
+
                 const withdrawalsCollectionRef = collection(db, 'withdrawals');
                 const newWithdrawalRef = doc(withdrawalsCollectionRef);
 
@@ -154,7 +164,7 @@ export default function WithdrawalPage() {
                 </Link>
                 <h1 className="text-xl font-bold">Withdrawal Fund</h1>
                 <div className="ml-auto flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-full">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="white"/></svg>
+                    <Wallet className="h-5 w-5" />
                     <span>₹{totalBalance.toFixed(1) || '0.0'}</span>
                 </div>
             </header>
@@ -169,16 +179,16 @@ export default function WithdrawalPage() {
                     </div>
                 </div>
 
-                 <div className="text-center my-4">
-                    <p className="text-sm text-gray-600">For Fund Query's please Call Or Whatsapp</p>
+                 <div className="text-center my-4 p-4 rounded-lg bg-green-100 border border-green-200">
+                    <p className="text-sm text-green-800 font-semibold">For Fund Query's please Call Or Whatsapp</p>
                     <div className="flex justify-center gap-4 mt-2">
                         {settings.callSupportNumber && (
-                             <Button variant="outline" className="rounded-full bg-white" onClick={() => window.location.href = `tel:${settings.callSupportNumber}`}>
+                             <Button className="rounded-full bg-red-500 hover:bg-red-600 text-white" onClick={() => window.location.href = `tel:${settings.callSupportNumber}`}>
                                 <Phone className="mr-2 h-4 w-4" /> Call
                             </Button>
                         )}
                          {settings.whatsappNumber && (
-                             <Button variant="outline" className="rounded-full bg-white" onClick={() => window.open(`https://wa.me/${settings.whatsappNumber}`)}>
+                             <Button className="rounded-full bg-[#25D366] hover:bg-[#1EBE55] text-white" onClick={() => window.open(`https://wa.me/${settings.whatsappNumber}`)}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="mr-2"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.269.655 4.357 1.846 6.166l-1.138 4.162 4.277-1.122z"/></svg>
                                 Whatsapp
                             </Button>
