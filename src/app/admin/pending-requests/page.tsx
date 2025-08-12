@@ -152,15 +152,19 @@ export default function PendingRequestsPage() {
             if (!userDoc.exists()) throw new Error(`User not found!`);
 
             const currentBalance = userDoc.data().balance || 0;
+
             if (status === 'approved') {
                 if (currentBalance < request.amount) {
+                     // If insufficient balance, reject the request but don't change balance.
                      transaction.update(requestDocRef, { status: 'rejected' });
-                     throw new Error("Insufficient balance. Request rejected.");
+                     throw new Error("Insufficient balance. Request automatically rejected.");
                 }
+                // If sufficient balance, deduct from user and stats.
                 transaction.update(userDocRef, { balance: increment(-request.amount) });
                 transaction.update(statsDocRef, { totalBalance: increment(-request.amount) });
             }
             
+            // Update request status for both 'approved' and 'rejected' cases.
             transaction.update(requestDocRef, { status: status });
         });
         toast({ title: 'Success!', description: `Withdrawal request has been ${status}.` });
