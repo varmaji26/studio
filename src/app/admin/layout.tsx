@@ -88,30 +88,29 @@ export default function AdminLayout({
     });
 
     // Listener for new users
-    const lastViewedTimestamp = localStorage.getItem('lastViewedUsersTimestamp');
-    const lastViewedDate = lastViewedTimestamp ? new Date(parseInt(lastViewedTimestamp, 10)) : new Date(0);
-    const lastViewedFirestoreTimestamp = Timestamp.fromDate(lastViewedDate);
+    const lastViewedUsersTimestamp = localStorage.getItem('lastViewedUsersTimestamp');
+    const lastViewedUsersDate = lastViewedUsersTimestamp ? new Date(parseInt(lastViewedUsersTimestamp, 10)) : new Date(0);
 
-    const newUsersQuery = query(collection(db, "users"), where("createdAt", ">=", lastViewedFirestoreTimestamp));
+    const newUsersQuery = query(collection(db, "users"), where("createdAt", ">=", Timestamp.fromDate(lastViewedUsersDate)));
     const unsubNewUsers = onSnapshot(newUsersQuery, (snapshot) => {
         setNewUsersCount(snapshot.size);
     });
     
     // Listener for today's bids and wins
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const startOfTodayTimestamp = Timestamp.fromDate(startOfToday);
+    const lastViewedBidsTimestamp = localStorage.getItem('lastViewedBidsTimestamp');
+    const lastViewedBidsDate = lastViewedBidsTimestamp ? new Date(parseInt(lastViewedBidsTimestamp, 10)) : new Date(0);
+    const lastViewedWinsTimestamp = localStorage.getItem('lastViewedWinsTimestamp');
+    const lastViewedWinsDate = lastViewedWinsTimestamp ? new Date(parseInt(lastViewedWinsTimestamp, 10)) : new Date(0);
 
-    const todaysBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfTodayTimestamp));
+
+    const todaysBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", Timestamp.fromDate(lastViewedBidsDate)));
     const unsubTodaysBids = onSnapshot(todaysBidsQuery, (snapshot) => {
-        let winsCount = 0;
-        snapshot.docs.forEach(doc => {
-            if (doc.data().status === 'won') {
-                winsCount++;
-            }
-        });
         setTodaysBidsCount(snapshot.size);
-        setTodaysWinsCount(winsCount);
+    });
+
+    const todaysWinsQuery = query(collection(db, "bids"), where("status", "==", "won"), where("createdAt", ">=", Timestamp.fromDate(lastViewedWinsDate)));
+    const unsubTodaysWins = onSnapshot(todaysWinsQuery, (snapshot) => {
+        setTodaysWinsCount(snapshot.size);
     });
 
 
@@ -120,6 +119,7 @@ export default function AdminLayout({
         unsubWithdrawals();
         unsubNewUsers();
         unsubTodaysBids();
+        unsubTodaysWins();
     };
   }, []);
 
@@ -290,7 +290,7 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
             <SidebarMenuItem>
-              <Link href="/admin/bid-history" passHref onClick={handleLinkClick}>
+              <Link href="/admin/bid-history?viewed=true" passHref onClick={handleLinkClick}>
                 <SidebarMenuButton isActive={isActive('/admin/bid-history')} tooltip={{children: "Bid History"}}>
                   <History />
                   <span>Bid History</span>
@@ -303,7 +303,7 @@ export default function AdminLayout({
               </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-              <Link href="/admin/win-history" passHref onClick={handleLinkClick}>
+              <Link href="/admin/win-history?viewed=true" passHref onClick={handleLinkClick}>
                 <SidebarMenuButton isActive={isActive('/admin/win-history')} tooltip={{children: "Win History"}}>
                  <Trophy />
                  <span>Win History</span>

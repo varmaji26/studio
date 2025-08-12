@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -39,6 +40,13 @@ export default function AdminBidHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('viewed') === 'true') {
+        localStorage.setItem('lastViewedBidsTimestamp', Date.now().toString());
+    }
+  }, [searchParams]);
 
 
    const fetchBids = useCallback(async () => {
