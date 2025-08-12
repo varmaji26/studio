@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Landmark, Phone } from 'lucide-react';
+import { ArrowLeft, Landmark, Phone, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UserProfile extends DocumentData {
   balance?: number;
+  bonusBalance?: number;
 }
 
 interface AppSettings extends DocumentData {
@@ -107,6 +108,11 @@ export default function AddFundPage() {
                     <div className="bg-black/50 mt-2 p-2 rounded-md">
                         <p className="text-sm">Available Balance</p>
                         <p className="text-xl font-bold">₹ {profile.balance?.toFixed(1) || '0.0'}</p>
+                         {(profile.bonusBalance ?? 0) > 0 && (
+                             <p className="text-sm font-bold text-yellow-400 flex items-center justify-center gap-1 mt-1">
+                                <Gift className="h-4 w-4" /> Bonus: ₹{profile.bonusBalance?.toFixed(1) || '0.0'}
+                            </p>
+                        )}
                     </div>
                 </div>
 

@@ -16,7 +16,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Loader } from '@/components/loader';
-import { ArrowLeft, Wallet } from 'lucide-react';
+import { ArrowLeft, Wallet, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { UpdateProfileDialog } from '@/components/update-profile-dialog';
@@ -25,6 +25,7 @@ import { ChangePasswordDialog } from '@/components/change-password-dialog';
 
 interface UserProfile extends DocumentData {
   balance?: number;
+  bonusBalance?: number;
 }
 
 export default function ProfilePage() {
@@ -115,7 +116,14 @@ export default function ProfilePage() {
                         <label className="text-sm font-medium text-muted-foreground">
                         Current Balance
                         </label>
-                        <p className="text-2xl font-bold text-primary">₹{profile.balance || 0}</p>
+                        <p className="text-2xl font-bold text-primary flex items-center gap-2">
+                           <Wallet className="h-6 w-6" /> ₹{profile.balance || 0}
+                        </p>
+                         {(profile.bonusBalance ?? 0) > 0 && (
+                            <p className="text-lg font-bold text-yellow-400 flex items-center gap-2 mt-1">
+                                <Gift className="h-5 w-5" /> Bonus: ₹{profile.bonusBalance || 0}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

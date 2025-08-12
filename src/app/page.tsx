@@ -35,6 +35,7 @@ import {
   Download,
   BellRing,
   X,
+  Gift,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -212,7 +213,7 @@ export default function Home() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(true);
   const [settings, setSettings] = useState<AppSettings>({});
-  const [userProfile, setUserProfile] = useState<UserProfile>({ balance: 0 });
+  const [userProfile, setUserProfile] = useState<UserProfile>({ balance: 0, bonusBalance: 0 });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
@@ -486,9 +487,17 @@ export default function Home() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
-                <Wallet className="h-6 w-6 text-green-400" />
-                <span className="font-bold text-lg text-white">₹{userProfile?.balance?.toFixed(0) ?? '0'}</span>
+            <div className="flex flex-col items-end">
+                <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
+                    <Wallet className="h-5 w-5 text-green-400" />
+                    <span className="font-bold text-md text-white">₹{userProfile?.balance?.toFixed(0) ?? '0'}</span>
+                </div>
+                {(userProfile?.bonusBalance ?? 0) > 0 && (
+                     <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-2 py-0.5 mt-1">
+                        <Gift className="h-4 w-4 text-yellow-400" />
+                        <span className="font-bold text-xs text-white">₹{userProfile?.bonusBalance?.toFixed(0) ?? '0'}</span>
+                    </div>
+                )}
             </div>
           {isAdmin && (
             <Link href="/admin">
