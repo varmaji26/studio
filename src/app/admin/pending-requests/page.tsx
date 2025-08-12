@@ -32,7 +32,7 @@ interface Request extends DocumentData {
 const formatDate = (timestamp: any) => {
     if (!timestamp) return 'N/A';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleString('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(',', '');
+    return date.toLocaleString('en-GB');
 };
 
 const PAGE_SIZES = [10, 25, 50];
@@ -267,6 +267,7 @@ export default function PendingRequestsPage() {
                         <TableHead>Username</TableHead>
                         <TableHead>Mobile</TableHead>
                         <TableHead>Amount</TableHead>
+                        <TableHead>Date</TableHead>
                         <TableHead>Method</TableHead>
                         <TableHead>Transaction ID</TableHead>
                         <TableHead className="text-center">Actions</TableHead>
@@ -279,6 +280,7 @@ export default function PendingRequestsPage() {
                             <TableCell>{request.displayName}</TableCell>
                             <TableCell>{request.mobile}</TableCell>
                             <TableCell>₹{request.amount}</TableCell>
+                            <TableCell>{formatDate(request.createdAt)}</TableCell>
                             <TableCell>{request.paymentMethod}</TableCell>
                             <TableCell>{request.transactionId}</TableCell>
                             <TableCell className="text-center">
