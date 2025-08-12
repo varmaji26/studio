@@ -82,6 +82,9 @@ const settingsSchema = z.object({
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
     z.number().min(0, 'Percentage cannot be negative.').max(100, 'Percentage cannot exceed 100.')
   ),
+  bonusPopupEnabled: z.boolean().default(false),
+  bonusPopupImage: z.any().optional(),
+  bonusPopupLink: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -100,6 +103,8 @@ export default function SettingsPage() {
   const [existingDownloadImageStoragePath, setExistingDownloadImageStoragePath] = useState<string | null>(null);
   const [existingMarqueeLogoUrl, setExistingMarqueeLogoUrl] = useState<string | null>(null);
   const [existingMarqueeLogoStoragePath, setExistingMarqueeLogoStoragePath] = useState<string | null>(null);
+  const [existingBonusPopupUrl, setExistingBonusPopupUrl] = useState<string | null>(null);
+  const [existingBonusPopupStoragePath, setExistingBonusPopupStoragePath] = useState<string | null>(null);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -120,6 +125,8 @@ export default function SettingsPage() {
       noticeText: '',
       bonusEnabled: false,
       bonusPercentage: 0,
+      bonusPopupEnabled: false,
+      bonusPopupLink: '/add-fund',
     },
   });
 
@@ -127,6 +134,7 @@ export default function SettingsPage() {
   const welcomeBannerImageRef = form.register("welcomeBannerImage");
   const downloadPageImageRef = form.register("downloadPageImage");
   const marqueeLogoRef = form.register("marqueeLogo");
+  const bonusPopupImageRef = form.register("bonusPopupImage");
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -153,6 +161,8 @@ export default function SettingsPage() {
             noticeText: data.noticeText || '',
             bonusEnabled: data.bonus?.enabled || false,
             bonusPercentage: data.bonus?.percentage || 0,
+            bonusPopupEnabled: data.bonusPopup?.enabled || false,
+            bonusPopupLink: data.bonusPopup?.link || '/add-fund',
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -169,6 +179,10 @@ export default function SettingsPage() {
           if (data.marquee?.logo) {
             setExistingMarqueeLogoUrl(data.marquee.logo.imageUrl);
             setExistingMarqueeLogoStoragePath(data.marquee.logo.storagePath);
+          }
+           if (data.bonusPopup) {
+            setExistingBonusPopupUrl(data.bonusPopup.imageUrl);
+            setExistingBonusPopupStoragePath(data.bonusPopup.storagePath);
           }
         }
       } catch (error) {
@@ -254,6 +268,13 @@ export default function SettingsPage() {
             storagePath: existingMarqueeLogoStoragePath,
         } : null;
         
+        let bonusPopupData = (existingBonusPopupUrl || values.bonusPopupEnabled) ? {
+            enabled: values.bonusPopupEnabled,
+            imageUrl: existingBonusPopupUrl,
+            storagePath: existingBonusPopupStoragePath,
+            link: values.bonusPopupLink,
+        } : null;
+        
         const qrFile = values.qrCodeImage?.[0];
         if (qrFile) {
             const { downloadURL, storagePath } = await uploadFile(qrFile, 'qrcodes', existingQrStoragePath);
@@ -299,6 +320,17 @@ export default function SettingsPage() {
             setExistingMarqueeLogoStoragePath(storagePath);
         }
 
+        const bonusPopupFile = values.bonusPopupImage?.[0];
+        if (bonusPopupFile) {
+             const { downloadURL, storagePath } = await uploadFile(bonusPopupFile, 'bonus-popups', existingBonusPopupStoragePath);
+             if (bonusPopupData) {
+                bonusPopupData.imageUrl = downloadURL;
+                bonusPopupData.storagePath = storagePath;
+             }
+            setExistingBonusPopupUrl(downloadURL);
+            setExistingBonusPopupStoragePath(storagePath);
+        }
+
         const settingsDoc = await getDoc(settingsDocRef);
         const currentData = settingsDoc.exists() ? settingsDoc.data() : {};
         const currentPaymentDetails = currentData.paymentDetails || {};
@@ -330,6 +362,7 @@ export default function SettingsPage() {
               enabled: values.bonusEnabled,
               percentage: values.bonusPercentage,
             },
+            bonusPopup: bonusPopupData,
         };
 
         if (qrCodeData) {
@@ -350,7 +383,7 @@ export default function SettingsPage() {
             description: 'Settings have been saved.',
         });
 
-        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined });
+        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined, bonusPopupImage: undefined });
         
     } catch (error: any) {
       console.error('Error updating settings: ', error);
@@ -482,6 +515,25 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteBonusPopupImage = async () => {
+    if (!existingBonusPopupStoragePath) return;
+    try {
+      const storageRef = ref(storage, existingBonusPopupStoragePath);
+      await deleteObject(storageRef);
+      const settingsDocRef = doc(db, 'settings', 'app-settings');
+      await updateDoc(settingsDocRef, { 
+          'bonusPopup.imageUrl': null,
+          'bonusPopup.storagePath': null,
+       });
+      setExistingBonusPopupUrl(null);
+      setExistingBonusPopupStoragePath(null);
+      toast({ title: 'Success!', description: 'Bonus popup image deleted.' });
+    } catch (error) {
+       console.error("Error deleting bonus popup image: ", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete bonus popup image.' });
+    }
+  };
+
 
   return (
     <div className="flex-1 space-y-6">
@@ -498,6 +550,72 @@ export default function SettingsPage() {
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                 
+                 <h3 className="text-lg font-semibold">Bonus Popup Settings</h3>
+                <div className="space-y-4 rounded-md border p-4">
+                  <FormField
+                    control={form.control}
+                    name="bonusPopupEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between">
+                        <div className="space-y-0.5">
+                          <FormLabel>Enable Bonus Popup</FormLabel>
+                           <FormDescriptionComponent>
+                            Show a bonus offer popup when users open the app.
+                          </FormDescriptionComponent>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  {form.watch('bonusPopupEnabled') && (
+                    <div className="space-y-4">
+                      {existingBonusPopupUrl && (
+                        <div className="flex flex-col items-center gap-4">
+                            <p className="text-sm text-muted-foreground">Current Popup Image:</p>
+                            <Image src={existingBonusPopupUrl} alt="Bonus Popup" width={200} height={200} className="rounded-md border p-1" unoptimized />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the popup image.</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteBonusPopupImage}>Delete</AlertDialogAction></AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                      )}
+                       <FormField
+                        control={form.control}
+                        name="bonusPopupImage"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>{existingBonusPopupUrl ? 'Upload New Image' : 'Upload Image'}</FormLabel>
+                            <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...bonusPopupImageRef} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="bonusPopupLink"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Popup Button Link</FormLabel>
+                            <FormControl><Input placeholder="/add-fund" {...field} className="bg-input h-12 rounded-lg" /></FormControl>
+                            <FormDescriptionComponent>Where users go when they click "Claim Bonus".</FormDescriptionComponent>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
                 
                  <h3 className="text-lg font-semibold">Bonus Settings</h3>
                 <div className="space-y-4 rounded-md border p-4">
@@ -949,5 +1067,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

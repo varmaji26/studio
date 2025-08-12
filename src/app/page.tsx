@@ -48,6 +48,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 
 
 interface Game extends DocumentData {
@@ -94,10 +95,16 @@ interface AppSettings extends DocumentData {
         textSize?: number;
     };
     noticeText?: string;
+    bonusPopup?: {
+        enabled: boolean;
+        imageUrl: string;
+        link: string;
+    }
 }
 
 interface UserProfile extends DocumentData {
   balance?: number;
+  bonusBalance?: number;
 }
 
 const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
@@ -212,6 +219,7 @@ export default function Home() {
   const [theme, setTheme] = useState('dark');
   const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
   const [showNotification, setShowNotification] = useState(false);
+  const [showBonusPopup, setShowBonusPopup] = useState(false);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
 
@@ -292,7 +300,14 @@ export default function Home() {
     const settingsDocRef = doc(db, 'settings', 'app-settings');
     const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
         if (docSnap.exists()) {
-            setSettings(docSnap.data() as AppSettings);
+            const appSettings = docSnap.data() as AppSettings;
+            setSettings(appSettings);
+            
+            // Bonus Popup Logic
+            const bonusPopupSeen = sessionStorage.getItem('bonusPopupSeen');
+            if (appSettings.bonusPopup?.enabled && appSettings.bonusPopup.imageUrl && !bonusPopupSeen) {
+                setShowBonusPopup(true);
+            }
         }
     });
 
@@ -322,6 +337,18 @@ export default function Home() {
     if (latestNotification) {
         localStorage.setItem('lastSeenNotificationId', latestNotification.id);
         setShowNotification(false);
+    }
+  };
+  
+  const handleBonusPopupClose = () => {
+    sessionStorage.setItem('bonusPopupSeen', 'true');
+    setShowBonusPopup(false);
+  };
+
+  const handleClaimBonus = () => {
+    if (settings.bonusPopup?.link) {
+        router.push(settings.bonusPopup.link);
+        handleBonusPopupClose();
     }
   };
 
@@ -497,6 +524,34 @@ export default function Home() {
                 </AlertDescription>
             </Alert>
         )}
+        
+        {/* Bonus Popup Dialog */}
+        <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
+            <DialogContent className="p-0 border-0 max-w-sm" onInteractOutside={handleBonusPopupClose}>
+                <div className="relative">
+                     <DialogClose asChild>
+                        <button onClick={handleBonusPopupClose} className="absolute top-2 right-2 z-10 bg-black/50 text-white rounded-full p-1">
+                           <X className="h-5 w-5" />
+                        </button>
+                     </DialogClose>
+                    <Image 
+                        src={settings.bonusPopup?.imageUrl || ''} 
+                        alt="Bonus Offer" 
+                        width={400} 
+                        height={400} 
+                        className="w-full h-auto rounded-t-lg"
+                        data-ai-hint="casino bonus"
+                        unoptimized
+                    />
+                    <div className="p-4">
+                        <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handleClaimBonus}>
+                            Claim Bonus Now
+                        </Button>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+
 
         {settings.welcomeBanner?.imageUrl && (
              <Card className="bg-card/80 border-white/10 shadow-lg">
