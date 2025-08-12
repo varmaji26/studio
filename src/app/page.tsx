@@ -536,11 +536,6 @@ export default function Home() {
                     <DialogTitle className="sr-only">Bonus Offer</DialogTitle>
                 </DialogHeader>
                 <div className="relative">
-                     <DialogClose asChild>
-                        <button onClick={handleBonusPopupClose} className="absolute -top-2 -right-2 z-10 bg-black/50 text-white rounded-full p-1">
-                           <X className="h-5 w-5" />
-                        </button>
-                     </DialogClose>
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ 
