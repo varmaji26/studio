@@ -306,8 +306,7 @@ export default function Home() {
             setSettings(appSettings);
             
             // Bonus Popup Logic
-            const bonusPopupSeen = sessionStorage.getItem('bonusPopupSeen');
-            if (appSettings.bonusPopup?.enabled && appSettings.bonusPopup.imageUrl && !bonusPopupSeen) {
+            if (appSettings.bonusPopup?.enabled && appSettings.bonusPopup.imageUrl) {
                 setShowBonusPopup(true);
             }
         }
@@ -343,7 +342,6 @@ export default function Home() {
   };
   
   const handleBonusPopupClose = () => {
-    sessionStorage.setItem('bonusPopupSeen', 'true');
     setShowBonusPopup(false);
   };
 
@@ -534,7 +532,7 @@ export default function Home() {
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
             <DialogContent className="p-0 border-0 bg-transparent max-w-[280px] shadow-none" onInteractOutside={handleBonusPopupClose}>
-                 <DialogHeader>
+                <DialogHeader>
                     <DialogTitle className="sr-only">Bonus Offer</DialogTitle>
                 </DialogHeader>
                 <div className="relative">
