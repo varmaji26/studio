@@ -26,6 +26,7 @@ import {
   ChevronDown,
   MailQuestion,
   Send,
+  Gift,
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
@@ -315,6 +316,14 @@ export default function AdminLayout({
                  )}
                 </SidebarMenuButton>
               </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/admin/bonus-history" passHref onClick={handleLinkClick}>
+                <SidebarMenuButton isActive={isActive('/admin/bonus-history')} tooltip={{children: "Bonus History"}}>
+                  <Gift />
+                  <span>Bonus History</span>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/admin/find-password" passHref onClick={handleLinkClick}>
