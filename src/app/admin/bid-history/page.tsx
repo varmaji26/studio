@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc, limit, startAfter, endBefore, limitToLast, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -38,7 +38,9 @@ export default function AdminBidHistoryPage() {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [allBids, setAllBids] = useState<Bid[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageDocs, setPageDocs] = useState<(QueryDocumentSnapshot<DocumentData> | null)[]>([null]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const searchParams = useSearchParams();
 
@@ -48,44 +50,64 @@ export default function AdminBidHistoryPage() {
     }
   }, [searchParams]);
 
-
-   const fetchBids = useCallback(async () => {
+   const fetchBids = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
     setLoading(true);
     try {
-        const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+        let q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+        
+        if (direction === 'next' && pageDocs[page -1]) {
+            q = query(q, startAfter(pageDocs[page - 1]), limit(ITEMS_PER_PAGE));
+        } else if (direction === 'prev' && page > 1 && pageDocs[page - 2]) {
+             q = query(query(collection(db, "bids"), orderBy("createdAt", "asc")), startAfter(pageDocs[page - 2]), limit(ITEMS_PER_PAGE));
+        }
+        else {
+             q = query(q, limit(ITEMS_PER_PAGE));
+        }
+
         const querySnapshot = await getDocs(q);
         
-        const bidsDataPromises = querySnapshot.docs.map(async (bidDoc) => {
-            const bidData = bidDoc.data();
-            let mobile = 'N/A';
-            if (bidData.userId) {
-                const userDocRef = doc(db, 'users', bidData.userId);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    mobile = userDoc.data().mobile || 'N/A';
-                }
-            }
-            return { id: bidDoc.id, ...bidData, mobile } as Bid;
-        });
-
-        const bidsData = await Promise.all(bidsDataPromises);
+        const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
+        
+        if (direction === 'prev' && page > 1) {
+            bidsData.reverse(); // Since we fetched in ascending order for 'prev'
+        }
+        
         setBids(bidsData);
+        
+        if(direction !== 'prev') {
+            const newPageDocs = [...pageDocs.slice(0, page)];
+            newPageDocs[page] = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+            setPageDocs(newPageDocs);
+        }
 
     } catch (error) {
         console.error("Error fetching bids: ", error);
     } finally {
         setLoading(false);
     }
-  }, []);
+  }, [pageDocs]);
 
   useEffect(() => {
-    fetchBids();
-  }, [fetchBids]);
+    fetchBids(1, 'first');
+    // For filtering, we still need all bids. This could be optimized further if needed.
+    const fetchAllForFilter = async () => {
+        const allQuery = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+        const allSnapshot = await getDocs(allQuery);
+        setAllBids(allSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Bid)));
+    }
+    fetchAllForFilter();
+  }, []);
+
+  const handlePageChange = (newPage: number) => {
+    const direction = newPage > currentPage ? 'next' : 'prev';
+    fetchBids(newPage, direction);
+    setCurrentPage(newPage);
+  }
   
   const filteredBids = useMemo(() => {
-    let filtered = bids;
+    let source = searchTerm || selectedDate ? allBids : bids;
+    let filtered = source;
 
-    // Filter by date
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
         startOfDay.setHours(0, 0, 0, 0);
@@ -99,7 +121,6 @@ export default function AdminBidHistoryPage() {
         });
     }
 
-    // Filter by search term
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (lowercasedFilter) {
       filtered = filtered.filter((bid) => {
@@ -112,19 +133,9 @@ export default function AdminBidHistoryPage() {
     }
     
     return filtered;
-  }, [searchTerm, bids, selectedDate]);
+  }, [searchTerm, bids, allBids, selectedDate]);
 
-
-  const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
-  const paginatedBids = useMemo(() => {
-      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-      return filteredBids.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredBids, currentPage]);
-
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, selectedDate]);
-
+  const displayBids = searchTerm || selectedDate ? filteredBids : bids;
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -142,28 +153,27 @@ export default function AdminBidHistoryPage() {
   };
 
   const renderPagination = () => {
-    if (totalPages <= 1) return null;
+    if(searchTerm || selectedDate) return null; // Pagination disabled during search/filter
 
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-            <div>
-                Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredBids.length)}</strong> of <strong>{filteredBids.length}</strong> entries
+             <div>
+                Page <strong>{currentPage}</strong>
             </div>
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                 >
                     Previous
                 </Button>
-                 <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!pageDocs[currentPage] || displayBids.length < ITEMS_PER_PAGE}
                 >
                     Next
                 </Button>
@@ -181,7 +191,7 @@ export default function AdminBidHistoryPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h3 className="text-xl font-semibold">All Bids ({filteredBids.length})</h3>
+                <h3 className="text-xl font-semibold">All Bids</h3>
                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                     <Popover>
                         <PopoverTrigger asChild>
@@ -237,7 +247,7 @@ export default function AdminBidHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedBids.map((bid) => (
+                            {displayBids.map((bid) => (
                                 <TableRow key={bid.id}>
                                     <TableCell>{formatDate(bid.createdAt)}</TableCell>
                                     <TableCell>{bid.displayName}</TableCell>
@@ -266,7 +276,7 @@ export default function AdminBidHistoryPage() {
                  {renderPagination()}
                 </>
             )}
-            {paginatedBids.length === 0 && !loading && (
+            {displayBids.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm || selectedDate ? `No bids found for the selected criteria.` : "No bids found."}
                 </p>
@@ -276,3 +286,4 @@ export default function AdminBidHistoryPage() {
       </div>
   );
 }
+

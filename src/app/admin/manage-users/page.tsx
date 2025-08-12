@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch, getDocs, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -48,56 +48,80 @@ const ITEMS_PER_PAGE = 10;
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageDocs, setPageDocs] = useState<(QueryDocumentSnapshot<DocumentData> | null)[]>([null]);
   const { toast } = useToast();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
         localStorage.setItem('lastViewedUsersTimestamp', Date.now().toString());
-         // Optionally, reload the page or trigger a re-render of the layout if needed
-        window.dispatchEvent(new Event('storage')); // To notify layout if it's listening
+        window.dispatchEvent(new Event('storage'));
     }
   }, [searchParams]);
 
-   const fetchUsers = useCallback(() => {
+   const fetchUsers = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
     setUsersLoading(true);
-    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const usersData: User[] = [];
-      querySnapshot.forEach((doc) => {
-        if (doc.data().displayName && doc.data().mobile) {
-            usersData.push({ id: doc.id, ...doc.data() } as User);
+    try {
+        let q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+
+        if (direction === 'next' && pageDocs[page - 1]) {
+            q = query(q, startAfter(pageDocs[page - 1]), limit(ITEMS_PER_PAGE));
+        } else {
+            q = query(q, limit(ITEMS_PER_PAGE));
         }
-      });
-      setUsers(usersData);
-      setUsersLoading(false);
-    }, (error) => {
+        
+        const querySnapshot = await getDocs(q);
+        const usersData: User[] = [];
+        querySnapshot.forEach((doc) => {
+            if (doc.data().displayName && doc.data().mobile) {
+                usersData.push({ id: doc.id, ...doc.data() } as User);
+            }
+        });
+        setUsers(usersData);
+
+        const newPageDocs = [...pageDocs.slice(0, page)];
+        newPageDocs[page] = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+        setPageDocs(newPageDocs);
+
+    } catch (error) {
         console.error("Error fetching users: ", error);
         toast({
             variant: 'destructive',
             title: 'Error fetching users',
-            description: 'Could not fetch user data. Please check Firestore rules and console for errors.'
+            description: 'Could not fetch user data.'
         });
+    } finally {
         setUsersLoading(false);
-    });
-
-    return unsubscribe;
-  }, [toast]);
+    }
+   }, [pageDocs, toast]);
 
   useEffect(() => {
-    const unsubscribe = fetchUsers();
-    return () => unsubscribe();
-  }, [fetchUsers]);
+    fetchUsers(1, 'first');
+    // Fetch all users for filtering purposes. 
+    const fetchAllForFilter = async () => {
+      const allQuery = query(collection(db, "users"), orderBy("createdAt", "desc"));
+      const allSnapshot = await getDocs(allQuery);
+      setAllUsers(allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+    };
+    fetchAllForFilter();
+  }, []);
+
+  const handlePageChange = (newPage: number) => {
+    const direction = newPage > currentPage ? 'next' : 'prev';
+    fetchUsers(newPage, direction);
+    setCurrentPage(newPage);
+  }
   
   const filteredUsers = useMemo(() => {
-    let filtered = users;
+    // If search/filter is active, use the allUsers array. Otherwise, use the paginated users array.
+    let source = searchTerm || selectedDate ? allUsers : users;
+    let filtered = source;
 
-    // Filter by date
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
         startOfDay.setHours(0, 0, 0, 0);
@@ -111,7 +135,6 @@ export default function ManageUsersPage() {
         });
     }
 
-    // Filter by search term
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (lowercasedFilter) {
       filtered = filtered.filter((user) => {
@@ -123,25 +146,15 @@ export default function ManageUsersPage() {
     }
 
     return filtered;
-  }, [searchTerm, users, selectedDate]);
-
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-
-  const paginatedUsers = useMemo(() => {
-      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-      return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredUsers, currentPage]);
-
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, selectedDate]);
-
+  }, [searchTerm, users, allUsers, selectedDate]);
+  
+  const displayUsers = searchTerm || selectedDate ? filteredUsers : users;
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
     if (!timestamp || typeof timestamp.seconds !== 'number') return 'N/A';
     try {
       const date = new Date(timestamp.seconds * 1000);
-      return date.toLocaleDateString('en-GB'); // Format as DD/MM/YYYY
+      return date.toLocaleDateString('en-GB');
     } catch (e) {
       console.error("Error formatting date: ", e);
       return 'Invalid Date';
@@ -177,28 +190,27 @@ export default function ManageUsersPage() {
   };
   
   const renderPagination = () => {
-    if (totalPages <= 1) return null;
+    if (searchTerm || selectedDate) return null; // Pagination is disabled when filtering/searching
 
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
             <div>
-                Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)}</strong> of <strong>{filteredUsers.length}</strong> entries
+                Page <strong>{currentPage}</strong>
             </div>
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                 >
                     Previous
                 </Button>
-                 <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!pageDocs[currentPage] || displayUsers.length < ITEMS_PER_PAGE}
                 >
                     Next
                 </Button>
@@ -223,7 +235,7 @@ export default function ManageUsersPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h3 className="text-xl font-semibold">All Users ({filteredUsers.length})</h3>
+                <h3 className="text-xl font-semibold">All Users</h3>
                 <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                      <Popover>
                         <PopoverTrigger asChild>
@@ -269,7 +281,7 @@ export default function ManageUsersPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>ID</TableHead>
+                                <TableHead>#</TableHead>
                                 <TableHead>Username</TableHead>
                                 <TableHead>Mobile</TableHead>
                                 <TableHead>Balance</TableHead>
@@ -280,7 +292,7 @@ export default function ManageUsersPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedUsers.map((user, index) => (
+                            {displayUsers.map((user, index) => (
                                 <TableRow key={user.id}>
                                     <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
                                     <TableCell>{user.displayName}</TableCell>
@@ -325,7 +337,7 @@ export default function ManageUsersPage() {
                 {renderPagination()}
                 </>
             )}
-            {paginatedUsers.length === 0 && !usersLoading && (
+            {displayUsers.length === 0 && !usersLoading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm || selectedDate ? `No users found matching the criteria.` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
                 </p>
@@ -335,3 +347,4 @@ export default function ManageUsersPage() {
       </div>
   );
 }
+

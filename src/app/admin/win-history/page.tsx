@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, where, getDoc, doc } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, where, getDoc, doc, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -34,9 +34,11 @@ const ITEMS_PER_PAGE = 10;
 
 export default function AdminWinHistoryPage() {
   const [wins, setWins] = useState<Win[]>([]);
+  const [allWins, setAllWins] = useState<Win[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageDocs, setPageDocs] = useState<(QueryDocumentSnapshot<DocumentData> | null)[]>([null]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const searchParams = useSearchParams();
 
@@ -47,51 +49,57 @@ export default function AdminWinHistoryPage() {
   }, [searchParams]);
 
 
-   const fetchWins = useCallback(async () => {
+   const fetchWins = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
     setLoading(true);
     try {
-        const q = query(
+        let q = query(
             collection(db, "bids"), 
-            where("status", "==", "won")
+            where("status", "==", "won"),
+            orderBy("createdAt", "desc")
         );
         
+        if (direction === 'next' && pageDocs[page - 1]) {
+            q = query(q, startAfter(pageDocs[page-1]), limit(ITEMS_PER_PAGE));
+        } else {
+            q = query(q, limit(ITEMS_PER_PAGE));
+        }
+        
         const querySnapshot = await getDocs(q);
-        
-        const winsDataPromises = querySnapshot.docs.map(async (bidDoc) => {
-            const bidData = bidDoc.data();
-            let mobile = 'N/A';
-            if (bidData.userId) {
-                const userDocRef = doc(db, 'users', bidData.userId);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    mobile = userDoc.data().mobile || 'N/A';
-                }
-            }
-            return { id: bidDoc.id, ...bidData, mobile } as Win;
-        });
-
-        let winsData = await Promise.all(winsDataPromises);
-        
-        // Sort on the client-side
-        winsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-
+        const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
         setWins(winsData);
+
+        const newPageDocs = [...pageDocs.slice(0, page)];
+        newPageDocs[page] = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+        setPageDocs(newPageDocs);
 
     } catch (error) {
         console.error("Error fetching wins: ", error);
     } finally {
         setLoading(false);
     }
-  }, []);
+  }, [pageDocs]);
 
   useEffect(() => {
-    fetchWins();
-  }, [fetchWins]);
+    fetchWins(1, 'first');
+    // Fetch all for filtering
+    const fetchAllForFilter = async () => {
+        const allQuery = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
+        const allSnapshot = await getDocs(allQuery);
+        setAllWins(allSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Win)));
+    };
+    fetchAllForFilter();
+  }, []);
+
+  const handlePageChange = (newPage: number) => {
+    const direction = newPage > currentPage ? 'next' : 'prev';
+    fetchWins(newPage, direction);
+    setCurrentPage(newPage);
+  }
   
   const filteredWins = useMemo(() => {
-    let filtered = wins;
+    let source = searchTerm || selectedDate ? allWins : wins;
+    let filtered = source;
 
-    // Filter by date
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
         startOfDay.setHours(0, 0, 0, 0);
@@ -105,7 +113,6 @@ export default function AdminWinHistoryPage() {
         });
     }
 
-    // Filter by search term
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (lowercasedFilter) {
       filtered = filtered.filter((win) => {
@@ -118,18 +125,9 @@ export default function AdminWinHistoryPage() {
     }
 
     return filtered;
-  }, [searchTerm, wins, selectedDate]);
+  }, [searchTerm, wins, allWins, selectedDate]);
 
-
-  const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
-  const paginatedWins = useMemo(() => {
-      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-      return filteredWins.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredWins, currentPage]);
-
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, selectedDate]);
+  const displayWins = searchTerm || selectedDate ? filteredWins : wins;
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -137,28 +135,25 @@ export default function AdminWinHistoryPage() {
   };
   
   const renderPagination = () => {
-    if (totalPages <= 1) return null;
+    if (searchTerm || selectedDate) return null;
 
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-            <div>
-                Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredWins.length)}</strong> of <strong>{filteredWins.length}</strong> entries
-            </div>
+            <div>Page <strong>{currentPage}</strong></div>
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                 >
                     Previous
                 </Button>
-                 <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!pageDocs[currentPage] || displayWins.length < ITEMS_PER_PAGE}
                 >
                     Next
                 </Button>
@@ -179,7 +174,7 @@ export default function AdminWinHistoryPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h3 className="text-xl font-semibold">All Wins ({filteredWins.length})</h3>
+                <h3 className="text-xl font-semibold">All Wins</h3>
                 <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                     <Popover>
                         <PopoverTrigger asChild>
@@ -235,7 +230,7 @@ export default function AdminWinHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedWins.map((win) => (
+                            {displayWins.map((win) => (
                                 <TableRow key={win.id}>
                                     <TableCell>{formatDate(win.createdAt)}</TableCell>
                                     <TableCell>{win.displayName}</TableCell>
@@ -259,7 +254,7 @@ export default function AdminWinHistoryPage() {
                  {renderPagination()}
                 </>
             )}
-            {paginatedWins.length === 0 && !loading && (
+            {displayWins.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm || selectedDate ? `No wins found for the selected criteria.` : "No wins found."}
                 </p>
@@ -269,3 +264,4 @@ export default function AdminWinHistoryPage() {
       </div>
   );
 }
+

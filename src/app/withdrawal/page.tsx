@@ -96,16 +96,8 @@ export default function WithdrawalPage() {
                  if (!userDoc.exists()) {
                     throw new Error("User not found.");
                 }
-
-                const newBonusTransactionRef = doc(collection(db, 'bonusTransactions'));
-                transaction.set(newBonusTransactionRef, {
-                    userId: user.uid,
-                    displayName: user.displayName,
-                    amount: userDoc.data().bonusBalance || 0,
-                    type: 'Reset',
-                    description: 'Bonus reset on withdrawal request',
-                    createdAt: serverTimestamp(),
-                });
+                
+                const bonusToReset = userDoc.data().bonusBalance || 0;
 
                 const withdrawalsCollectionRef = collection(db, 'withdrawals');
                 const newWithdrawalRef = doc(withdrawalsCollectionRef);
@@ -113,15 +105,28 @@ export default function WithdrawalPage() {
                 transaction.set(newWithdrawalRef, {
                     userId: user.uid,
                     displayName: user.displayName,
+                    mobile: user.email?.split('@')[0],
                     amount: parsedAmount,
                     withdrawalMethod: 'Bank Transfer',
                     withdrawalDetails: 'Registered Bank Account',
                     status: 'pending',
                     createdAt: serverTimestamp(),
                 });
-
-                // Reset bonus balance on withdrawal request
-                transaction.update(userDocRef, { bonusBalance: 0 });
+                
+                if (bonusToReset > 0) {
+                    const newBonusTransactionRef = doc(collection(db, 'bonusTransactions'));
+                    transaction.set(newBonusTransactionRef, {
+                        userId: user.uid,
+                        displayName: user.displayName,
+                        mobile: user.email?.split('@')[0],
+                        amount: bonusToReset,
+                        type: 'Reset',
+                        description: 'Bonus reset on withdrawal request',
+                        createdAt: serverTimestamp(),
+                    });
+                    // Reset bonus balance on withdrawal request
+                    transaction.update(userDocRef, { bonusBalance: 0 });
+                }
             });
 
             toast({
@@ -232,3 +237,4 @@ export default function WithdrawalPage() {
         </div>
     );
 }
+

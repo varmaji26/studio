@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -31,46 +31,59 @@ const ITEMS_PER_PAGE = 10;
 
 export default function AdminBonusHistoryPage() {
   const [transactions, setTransactions] = useState<BonusTransaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<BonusTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageDocs, setPageDocs] = useState<(QueryDocumentSnapshot<DocumentData> | null)[]>([null]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
-   const fetchTransactions = useCallback(async () => {
+   const fetchTransactions = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
     setLoading(true);
     try {
-        const q = query(collection(db, "bonusTransactions"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
+        let q = query(collection(db, "bonusTransactions"), orderBy("createdAt", "desc"));
         
-        const transactionsDataPromises = querySnapshot.docs.map(async (transDoc) => {
-            const transData = transDoc.data();
-            let mobile = 'N/A';
-            if (transData.userId) {
-                const userDocRef = doc(db, 'users', transData.userId);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    mobile = userDoc.data().mobile || 'N/A';
-                }
-            }
-            return { id: transDoc.id, ...transData, mobile } as BonusTransaction;
-        });
+        if (direction === 'next' && pageDocs[page - 1]) {
+            q = query(q, startAfter(pageDocs[page - 1]), limit(ITEMS_PER_PAGE));
+        } else {
+            q = query(q, limit(ITEMS_PER_PAGE));
+        }
 
-        const transactionsData = await Promise.all(transactionsDataPromises);
+        const querySnapshot = await getDocs(q);
+        const transactionsData = querySnapshot.docs.map(transDoc => ({ id: transDoc.id, ...transDoc.data() } as BonusTransaction));
         setTransactions(transactionsData);
+        
+        const newPageDocs = [...pageDocs.slice(0, page)];
+        newPageDocs[page] = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+        setPageDocs(newPageDocs);
 
     } catch (error) {
         console.error("Error fetching bonus transactions: ", error);
     } finally {
         setLoading(false);
     }
-  }, []);
+  }, [pageDocs]);
 
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    fetchTransactions(1, 'first');
+    // Fetch all for filtering
+    const fetchAllForFilter = async () => {
+        const allQuery = query(collection(db, "bonusTransactions"), orderBy("createdAt", "desc"));
+        const allSnapshot = await getDocs(allQuery);
+        setAllTransactions(allSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as BonusTransaction)));
+    };
+    fetchAllForFilter();
+  }, []);
   
+  const handlePageChange = (newPage: number) => {
+    const direction = newPage > currentPage ? 'next' : 'prev';
+    fetchTransactions(newPage, direction);
+    setCurrentPage(newPage);
+  }
+
   const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
+    let source = searchTerm || selectedDate ? allTransactions : transactions;
+    let filtered = source;
 
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
@@ -96,18 +109,9 @@ export default function AdminBonusHistoryPage() {
     }
     
     return filtered;
-  }, [searchTerm, transactions, selectedDate]);
-
-
-  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
-  const paginatedTransactions = useMemo(() => {
-      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-      return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredTransactions, currentPage]);
-
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, selectedDate]);
+  }, [searchTerm, transactions, allTransactions, selectedDate]);
+  
+  const displayTransactions = searchTerm || selectedDate ? filteredTransactions : transactions;
 
 
   const formatDate = (timestamp: Timestamp) => {
@@ -126,27 +130,25 @@ export default function AdminBonusHistoryPage() {
   };
 
   const renderPagination = () => {
-    if (totalPages <= 1) return null;
+    if(searchTerm || selectedDate) return null;
+
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-            <div>
-                Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredTransactions.length)}</strong> of <strong>{filteredTransactions.length}</strong> entries
-            </div>
+            <div>Page <strong>{currentPage}</strong></div>
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                 >
                     Previous
                 </Button>
-                 <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!pageDocs[currentPage] || displayTransactions.length < ITEMS_PER_PAGE}
                 >
                     Next
                 </Button>
@@ -164,7 +166,7 @@ export default function AdminBonusHistoryPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h3 className="text-xl font-semibold">All Transactions ({filteredTransactions.length})</h3>
+                <h3 className="text-xl font-semibold">All Transactions</h3>
                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                     <Popover>
                         <PopoverTrigger asChild>
@@ -219,7 +221,7 @@ export default function AdminBonusHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedTransactions.map((t) => (
+                            {displayTransactions.map((t) => (
                                 <TableRow key={t.id}>
                                     <TableCell>{formatDate(t.createdAt)}</TableCell>
                                     <TableCell>{t.displayName}</TableCell>
@@ -255,7 +257,7 @@ export default function AdminBonusHistoryPage() {
                  {renderPagination()}
                 </>
             )}
-            {paginatedTransactions.length === 0 && !loading && (
+            {displayTransactions.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm || selectedDate ? `No bonus transactions found for the selected criteria.` : "No bonus transactions found."}
                 </p>
@@ -265,3 +267,4 @@ export default function AdminBonusHistoryPage() {
       </div>
   );
 }
+

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -49,44 +49,39 @@ export default function AdminPaymentHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [pageDocs, setPageDocs] = useState<{ [key: string]: (QueryDocumentSnapshot<DocumentData> | null)[] }>({ all: [null], deposits: [null], withdrawals: [null] });
 
-  const fetchUserDetails = async (requests: DocumentData[]): Promise<Transaction[]> => {
-    return Promise.all(
-        requests.map(async (request) => {
-            if (!request.userId) return { ...request, mobile: 'N/A' } as Transaction;
-            const userDocRef = doc(db, 'users', request.userId);
-            const userDoc = await getDoc(userDocRef);
-            const userData = userDoc.exists() ? userDoc.data() : {};
-            return {
-                ...request,
-                mobile: userData.mobile || 'N/A',
-            } as Transaction;
-        })
-    );
-  };
-
-  const fetchAllTransactions = useCallback(async () => {
+  const fetchTransactions = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
     setLoading(true);
     try {
-        const depositsQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
-        const withdrawalsQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
+        const fetchCollection = async (collectionName: 'deposits' | 'withdrawals', type: 'deposit' | 'withdrawal') => {
+            let q = query(collection(db, collectionName), orderBy("createdAt", "desc"));
+             if (direction === 'next' && pageDocs[type][page - 1]) {
+                q = query(q, startAfter(pageDocs[type][page - 1]), limit(ITEMS_PER_PAGE));
+            } else {
+                q = query(q, limit(ITEMS_PER_PAGE));
+            }
+            const snapshot = await getDocs(q);
+            const newLastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+            setPageDocs(prev => {
+                const newDocs = [...(prev[type] || [null]).slice(0, page)];
+                newDocs[page] = newLastVisible;
+                return { ...prev, [type]: newDocs };
+            });
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type } as Transaction));
+        };
 
-        const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([
-            getDocs(depositsQuery),
-            getDocs(withdrawalsQuery)
-        ]);
+        let deposits: Transaction[] = [];
+        let withdrawals: Transaction[] = [];
 
-        const depositsData = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const withdrawalsData = withdrawalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (activeTab === 'all' || activeTab === 'deposits') {
+            deposits = await fetchCollection('deposits', 'deposit');
+        }
+        if (activeTab === 'all' || activeTab === 'withdrawals') {
+            withdrawals = await fetchCollection('withdrawals', 'withdrawal');
+        }
         
-        const depositsWithUsers = await fetchUserDetails(depositsData);
-        const withdrawalsWithUsers = await fetchUserDetails(withdrawalsData);
-
-        const deposits = depositsWithUsers.map(t => ({...t, type: 'deposit'})) as Transaction[];
-        const withdrawals = withdrawalsWithUsers.map(t => ({...t, type: 'withdrawal'})) as Transaction[];
-
         const combined = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-        
         setAllTransactions(combined);
         
     } catch (error) {
@@ -94,16 +89,22 @@ export default function AdminPaymentHistoryPage() {
     } finally {
         setLoading(false);
     }
-  }, []);
+  }, [activeTab, pageDocs]);
 
   useEffect(() => {
-    fetchAllTransactions();
-  }, [fetchAllTransactions]);
+    fetchTransactions(1, 'first');
+  }, [fetchTransactions, activeTab]);
+
+  const handlePageChange = (newPage: number) => {
+    const direction = newPage > currentPage ? 'next' : 'prev';
+    fetchTransactions(newPage, direction);
+    setCurrentPage(newPage);
+  }
   
   const filteredTransactions = useMemo(() => {
     let filtered = allTransactions;
     
-    // Filter by date
+    // Date/search filtering can be improved to work with pagination, but for now it will search on the currently loaded data.
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
         startOfDay.setHours(0, 0, 0, 0);
@@ -117,7 +118,6 @@ export default function AdminPaymentHistoryPage() {
         });
     }
 
-    // Filter by search term
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (lowercasedFilter) {
       filtered = filtered.filter((t) => 
@@ -137,12 +137,6 @@ export default function AdminPaymentHistoryPage() {
       }
       return filteredTransactions;
   }, [filteredTransactions, activeTab]);
-
-  const totalPages = Math.ceil(transactionsForTab.length / ITEMS_PER_PAGE);
-  const paginatedTransactions = useMemo(() => {
-      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-      return transactionsForTab.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [transactionsForTab, currentPage]);
 
   useEffect(() => {
       setCurrentPage(1);
@@ -171,6 +165,7 @@ export default function AdminPaymentHistoryPage() {
     const tableColumn = ["Date", "Username", "Mobile", "Type", "Amount", "Method", "Status"];
     const tableRows: (string | number)[][] = [];
     
+    // Note: PDF download will only contain currently visible data due to pagination.
     transactionsForTab.forEach(t => {
         const transactionData = [
             formatDate(t.createdAt),
@@ -194,28 +189,26 @@ export default function AdminPaymentHistoryPage() {
   };
   
   const renderPagination = () => {
-    if (totalPages <= 1) return null;
+    if(searchTerm || selectedDate) return null;
+    const currentTabKey = activeTab === 'all' ? 'all' : (activeTab === 'deposits' ? 'deposits' : 'withdrawals');
 
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-            <div>
-                Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, transactionsForTab.length)}</strong> of <strong>{transactionsForTab.length}</strong> entries
-            </div>
+            <div>Page <strong>{currentPage}</strong></div>
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                 >
                     Previous
                 </Button>
-                 <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!pageDocs[currentTabKey][currentPage] || transactionsForTab.length < ITEMS_PER_PAGE}
                 >
                     Next
                 </Button>
@@ -292,7 +285,7 @@ export default function AdminPaymentHistoryPage() {
           </CardHeader>
           <CardContent>
              <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h3 className="text-xl font-semibold">All Transactions ({transactionsForTab.length})</h3>
+                <h3 className="text-xl font-semibold">All Transactions</h3>
                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                      <Popover>
                         <PopoverTrigger asChild>
@@ -340,13 +333,13 @@ export default function AdminPaymentHistoryPage() {
                         <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
                     </TabsList>
                     <TabsContent value="all">
-                        {renderTable(paginatedTransactions)}
+                        {renderTable(transactionsForTab)}
                     </TabsContent>
                     <TabsContent value="deposits">
-                        {renderTable(paginatedTransactions)}
+                        {renderTable(transactionsForTab)}
                     </TabsContent>
                     <TabsContent value="withdrawals">
-                        {renderTable(paginatedTransactions)}
+                        {renderTable(transactionsForTab)}
                     </TabsContent>
                 </Tabs>
             )}
@@ -356,3 +349,4 @@ export default function AdminPaymentHistoryPage() {
       </div>
   );
 }
+
