@@ -162,7 +162,7 @@ function PaymentQRContent() {
                 <div className="w-10"></div>
             </header>
             <main className="flex-1 p-4 bg-white">
-                <div className="max-w-sm mx-auto">
+                <div className="max-w-xs mx-auto">
                     
                     <div className="bg-white p-4 rounded-lg shadow-lg space-y-2">
                         <div className="flex items-center gap-2 text-gray-700">
