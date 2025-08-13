@@ -38,7 +38,6 @@ export default function AdminWinHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageDocs, setPageDocs] = useState<(QueryDocumentSnapshot<DocumentData> | null)[]>([null]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const searchParams = useSearchParams();
 
@@ -49,60 +48,36 @@ export default function AdminWinHistoryPage() {
   }, [searchParams]);
 
 
-   const fetchWins = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
+   const fetchWins = useCallback(async () => {
     setLoading(true);
     try {
         const baseQuery = query(
             collection(db, "bids"), 
-            where("status", "==", "won"),
-            orderBy("createdAt", "desc")
+            where("status", "==", "won")
         );
-        let q;
         
-        if (direction === 'next' && pageDocs[page - 1]) {
-            q = query(baseQuery, startAfter(pageDocs[page-1]), limit(ITEMS_PER_PAGE));
-        } else if (direction === 'prev' && page > 1 && pageDocs[page-1]) {
-            q = query(baseQuery, endBefore(pageDocs[page - 2]), limitToLast(ITEMS_PER_PAGE));
-        } else {
-            q = query(baseQuery, limit(ITEMS_PER_PAGE));
-        }
-        
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(baseQuery);
         const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
-        setWins(winsData);
+        
+        // Sort client-side
+        winsData.sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
-        if (direction !== 'prev') {
-            const newPageDocs = [...pageDocs.slice(0, page)];
-            newPageDocs[page] = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
-            setPageDocs(newPageDocs);
-        }
+        setWins(winsData);
+        setAllWins(winsData);
 
     } catch (error) {
         console.error("Error fetching wins: ", error);
     } finally {
         setLoading(false);
     }
-  }, [pageDocs]);
+  }, []);
 
   useEffect(() => {
-    fetchWins(1, 'first');
-    // Fetch all for filtering
-    const fetchAllForFilter = async () => {
-        const allQuery = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
-        const allSnapshot = await getDocs(allQuery);
-        setAllWins(allSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Win)));
-    };
-    fetchAllForFilter();
+    fetchWins();
   }, [fetchWins]);
-
-  const handlePageChange = (newPage: number) => {
-    const direction = newPage > currentPage ? 'next' : 'prev';
-    fetchWins(newPage, direction);
-    setCurrentPage(newPage);
-  }
   
   const filteredWins = useMemo(() => {
-    let source = searchTerm || selectedDate ? allWins : wins;
+    let source = allWins;
     let filtered = source;
 
     if (selectedDate) {
@@ -130,9 +105,18 @@ export default function AdminWinHistoryPage() {
     }
 
     return filtered;
-  }, [searchTerm, wins, allWins, selectedDate]);
+  }, [searchTerm, allWins, selectedDate]);
+  
+  const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
+  const paginatedWins = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredWins.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredWins, currentPage]);
 
-  const displayWins = searchTerm || selectedDate ? filteredWins : wins;
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [searchTerm, selectedDate]);
+
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -140,16 +124,16 @@ export default function AdminWinHistoryPage() {
   };
   
   const renderPagination = () => {
-    if (searchTerm || selectedDate) return null;
+    if (totalPages <= 1) return null;
 
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-            <div>Page <strong>{currentPage}</strong></div>
+            <div>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></div>
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                 >
                     Previous
@@ -157,8 +141,8 @@ export default function AdminWinHistoryPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={!pageDocs[currentPage] || displayWins.length < ITEMS_PER_PAGE}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
                 >
                     Next
                 </Button>
@@ -235,7 +219,7 @@ export default function AdminWinHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {displayWins.map((win) => (
+                            {paginatedWins.map((win) => (
                                 <TableRow key={win.id}>
                                     <TableCell>{formatDate(win.createdAt)}</TableCell>
                                     <TableCell>{win.displayName}</TableCell>
@@ -259,7 +243,7 @@ export default function AdminWinHistoryPage() {
                  {renderPagination()}
                 </>
             )}
-            {displayWins.length === 0 && !loading && (
+            {paginatedWins.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm || selectedDate ? `No wins found for the selected criteria.` : "No wins found."}
                 </p>
