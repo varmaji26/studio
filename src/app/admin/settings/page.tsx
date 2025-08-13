@@ -40,6 +40,20 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png, .webp, and .svg files are accepted."
     ),
+  gpayImage: z.any()
+    .optional()
+    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
+  paytmImage: z.any()
+    .optional()
+    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
   phonepeImage: z.any()
     .optional()
     .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
@@ -105,6 +119,10 @@ export default function SettingsPage() {
   
   const [existingQrUrl, setExistingQrUrl] = useState<string | null>(null);
   const [existingQrStoragePath, setExistingQrStoragePath] = useState<string | null>(null);
+  const [existingGpayImageUrl, setExistingGpayImageUrl] = useState<string | null>(null);
+  const [existingGpayImageStoragePath, setExistingGpayImageStoragePath] = useState<string | null>(null);
+  const [existingPaytmImageUrl, setExistingPaytmImageUrl] = useState<string | null>(null);
+  const [existingPaytmImageStoragePath, setExistingPaytmImageStoragePath] = useState<string | null>(null);
   const [existingPhonepeImageUrl, setExistingPhonepeImageUrl] = useState<string | null>(null);
   const [existingPhonepeImageStoragePath, setExistingPhonepeImageStoragePath] = useState<string | null>(null);
   const [existingWelcomeBannerUrl, setExistingWelcomeBannerUrl] = useState<string | null>(null);
@@ -142,6 +160,8 @@ export default function SettingsPage() {
   });
 
   const qrCodeImageRef = form.register("qrCodeImage");
+  const gpayImageRef = form.register("gpayImage");
+  const paytmImageRef = form.register("paytmImage");
   const phonepeImageRef = form.register("phonepeImage");
   const welcomeBannerImageRef = form.register("welcomeBannerImage");
   const downloadPageImageRef = form.register("downloadPageImage");
@@ -180,6 +200,14 @@ export default function SettingsPage() {
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
             setExistingQrStoragePath(data.paymentDetails['Scan QR Code'].storagePath);
+          }
+          if (data.paymentDetails?.GPay) {
+            setExistingGpayImageUrl(data.paymentDetails.GPay.imageUrl);
+            setExistingGpayImageStoragePath(data.paymentDetails.GPay.storagePath);
+          }
+          if (data.paymentDetails?.Paytm) {
+            setExistingPaytmImageUrl(data.paymentDetails.Paytm.imageUrl);
+            setExistingPaytmImageStoragePath(data.paymentDetails.Paytm.storagePath);
           }
           if (data.paymentDetails?.PhonePe) {
             setExistingPhonepeImageUrl(data.paymentDetails.PhonePe.imageUrl);
@@ -269,12 +297,11 @@ export default function SettingsPage() {
             imageUrl: existingQrUrl,
             storagePath: existingQrStoragePath
         } : undefined;
+        
+        let gpayData = existingGpayImageUrl ? { title: 'GPay', imageUrl: existingGpayImageUrl, storagePath: existingGpayImageStoragePath } : { title: 'GPay' };
+        let paytmData = existingPaytmImageUrl ? { title: 'Paytm', imageUrl: existingPaytmImageUrl, storagePath: existingPaytmImageStoragePath } : { title: 'Paytm' };
+        let phonepeData = existingPhonepeImageUrl ? { title: 'PhonePe', imageUrl: existingPhonepeImageUrl, storagePath: existingPhonepeImageStoragePath } : { title: 'PhonePe' };
 
-        let phonepeData = existingPhonepeImageUrl ? {
-            title: 'PhonePe',
-            imageUrl: existingPhonepeImageUrl,
-            storagePath: existingPhonepeImageStoragePath
-        } : { title: 'PhonePe' };
 
         let welcomeBannerData = existingWelcomeBannerUrl ? {
             imageUrl: existingWelcomeBannerUrl,
@@ -308,6 +335,22 @@ export default function SettingsPage() {
             };
             setExistingQrUrl(downloadURL);
             setExistingQrStoragePath(storagePath);
+        }
+
+        const gpayFile = values.gpayImage?.[0];
+        if (gpayFile) {
+            const { downloadURL, storagePath } = await uploadFile(gpayFile, 'payment-logos', existingGpayImageStoragePath);
+            gpayData = { ...gpayData, imageUrl: downloadURL, storagePath: storagePath };
+            setExistingGpayImageUrl(downloadURL);
+            setExistingGpayImageStoragePath(storagePath);
+        }
+
+        const paytmFile = values.paytmImage?.[0];
+        if (paytmFile) {
+            const { downloadURL, storagePath } = await uploadFile(paytmFile, 'payment-logos', existingPaytmImageStoragePath);
+            paytmData = { ...paytmData, imageUrl: downloadURL, storagePath: storagePath };
+            setExistingPaytmImageUrl(downloadURL);
+            setExistingPaytmImageStoragePath(storagePath);
         }
         
         const phonepeFile = values.phonepeImage?.[0];
@@ -380,6 +423,8 @@ export default function SettingsPage() {
                 'UPI': { title: "UPI Payment", details: values.upiId },
                 'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
                 'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
+                'GPay': gpayData,
+                'Paytm': paytmData,
                 'PhonePe': phonepeData,
             },
             welcomeBanner: welcomeBannerData,
@@ -420,7 +465,7 @@ export default function SettingsPage() {
             description: 'Settings have been saved.',
         });
 
-        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined, bonusPopupImage: undefined, phonepeImage: undefined });
+        form.reset({ ...values, qrCodeImage: undefined, gpayImage: undefined, paytmImage: undefined, phonepeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined, bonusPopupImage: undefined });
         
     } catch (error: any) {
       console.error('Error updating settings: ', error);
@@ -551,6 +596,57 @@ export default function SettingsPage() {
         setIsSubmitting(false);
     }
   };
+
+  const handleDeleteGpayImage = async () => {
+    if (!existingGpayImageStoragePath) return;
+    setIsSubmitting(true);
+    try {
+      const storageRef = ref(storage, existingGpayImageStoragePath);
+      await deleteObject(storageRef);
+      
+      const settingsDocRef = doc(db, 'settings', 'app-settings');
+      await updateDoc(settingsDocRef, { 
+          'paymentDetails.GPay.imageUrl': null,
+          'paymentDetails.GPay.storagePath': null,
+       });
+
+      setExistingGpayImageUrl(null);
+      setExistingGpayImageStoragePath(null);
+
+      toast({ title: 'Success!', description: 'GPay image deleted.' });
+    } catch (error) {
+       console.error("Error deleting GPay image: ", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete GPay image.' });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
+  const handleDeletePaytmImage = async () => {
+    if (!existingPaytmImageStoragePath) return;
+    setIsSubmitting(true);
+    try {
+      const storageRef = ref(storage, existingPaytmImageStoragePath);
+      await deleteObject(storageRef);
+      
+      const settingsDocRef = doc(db, 'settings', 'app-settings');
+      await updateDoc(settingsDocRef, { 
+          'paymentDetails.Paytm.imageUrl': null,
+          'paymentDetails.Paytm.storagePath': null,
+       });
+
+      setExistingPaytmImageUrl(null);
+      setExistingPaytmImageStoragePath(null);
+
+      toast({ title: 'Success!', description: 'Paytm image deleted.' });
+    } catch (error) {
+       console.error("Error deleting Paytm image: ", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete Paytm image.' });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
 
   const handleDeletePhonepeImage = async () => {
     if (!existingPhonepeImageStoragePath) return;
@@ -1070,48 +1166,60 @@ export default function SettingsPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="paytmNumber"
-                  render={({ field }) => (
+
+                <Separator />
+                <h4 className="text-md font-semibold">Payment App Logos</h4>
+
+                {existingGpayImageUrl && (
+                  <div className="flex flex-col items-center gap-4">
+                    <p className="text-sm text-muted-foreground mb-2">Current GPay Image:</p>
+                    <Image src={existingGpayImageUrl} alt="Current GPay Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete GPay Image</Button></AlertDialogTrigger>
+                      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the GPay image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteGpayImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+                <FormField control={form.control} name="gpayImage" render={() => (
                     <FormItem>
-                      <FormLabel>Paytm Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 9876543210" {...field} className="bg-input h-12 rounded-lg" />
-                      </FormControl>
-                      <FormMessage />
+                      <FormLabel>{existingGpayImageUrl ? 'Upload New GPay Image' : 'Upload GPay Image'}</FormLabel>
+                      <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...gpayImageRef} /></FormControl><FormMessage />
                     </FormItem>
-                  )}
-                />
+                )}/>
+
+                {existingPaytmImageUrl && (
+                  <div className="flex flex-col items-center gap-4">
+                    <p className="text-sm text-muted-foreground mb-2">Current Paytm Image:</p>
+                    <Image src={existingPaytmImageUrl} alt="Current Paytm Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Paytm Image</Button></AlertDialogTrigger>
+                      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the Paytm image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePaytmImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+                 <FormField control={form.control} name="paytmImage" render={() => (
+                    <FormItem>
+                      <FormLabel>{existingPaytmImageUrl ? 'Upload New Paytm Image' : 'Upload Paytm Image'}</FormLabel>
+                      <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...paytmImageRef} /></FormControl><FormMessage />
+                    </FormItem>
+                )}/>
                 
                 {existingPhonepeImageUrl && (
                   <div className="flex flex-col items-center gap-4">
                     <p className="text-sm text-muted-foreground mb-2">Current PhonePe Image:</p>
                     <Image src={existingPhonepeImageUrl} alt="Current PhonePe Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
                     <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete PhonePe Image</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the PhonePe image.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePhonepeImage}>Delete</AlertDialogAction></AlertDialogFooter>
-                      </AlertDialogContent>
+                      <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete PhonePe Image</Button></AlertDialogTrigger>
+                      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the PhonePe image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePhonepeImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                     </AlertDialog>
                   </div>
                 )}
-                 <FormField
-                  control={form.control}
-                  name="phonepeImage"
-                  render={() => (
+                 <FormField control={form.control} name="phonepeImage" render={() => (
                     <FormItem>
                       <FormLabel>{existingPhonepeImageUrl ? 'Upload New PhonePe Image' : 'Upload PhonePe Image'}</FormLabel>
-                      <FormControl>
-                        <Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...phonepeImageRef} />
-                      </FormControl>
-                      <FormMessage />
+                      <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...phonepeImageRef} /></FormControl><FormMessage />
                     </FormItem>
-                  )}
-                />
+                  )}/>
 
                 <Separator />
                 <h3 className="text-lg font-semibold">Payment QR Code</h3>

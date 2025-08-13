@@ -18,9 +18,9 @@ interface AppSettings extends DocumentData {
     upiId?: string;
     whatsappNumber?: string;
     paymentDetails?: {
-        PhonePe?: {
-            imageUrl: string;
-        }
+        GPay?: { imageUrl: string; };
+        Paytm?: { imageUrl: string; };
+        PhonePe?: { imageUrl: string; };
     }
 }
 
@@ -183,11 +183,19 @@ function PaymentQRContent() {
                         </div>
                         
                          <div className="grid grid-cols-3 gap-2">
-                            <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('gpay')}>
-                                <Image src="https://placehold.co/100x70.png" data-ai-hint="google pay logo" alt="GPay" layout="fill" objectFit="contain" />
+                             <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('gpay')}>
+                                {settings?.paymentDetails?.GPay?.imageUrl ? (
+                                    <Image src={settings.paymentDetails.GPay.imageUrl} alt="GPay" layout="fill" objectFit="contain" unoptimized />
+                                ) : (
+                                    <Image src="https://placehold.co/100x70.png" data-ai-hint="google pay logo" alt="GPay" layout="fill" objectFit="contain" />
+                                )}
                             </Button>
                              <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('paytm')}>
-                                <Image src="https://placehold.co/100x70.png" data-ai-hint="paytm logo" alt="Paytm" layout="fill" objectFit="contain" />
+                                {settings?.paymentDetails?.Paytm?.imageUrl ? (
+                                    <Image src={settings.paymentDetails.Paytm.imageUrl} alt="Paytm" layout="fill" objectFit="contain" unoptimized />
+                                ) : (
+                                    <Image src="https://placehold.co/100x70.png" data-ai-hint="paytm logo" alt="Paytm" layout="fill" objectFit="contain" />
+                                )}
                             </Button>
                              <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('phonepe')}>
                                 {settings?.paymentDetails?.PhonePe?.imageUrl ? (
