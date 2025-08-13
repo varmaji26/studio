@@ -28,12 +28,8 @@ function PaymentQRContent() {
     const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
-    const [orderId, setOrderId] = useState<string | null>(null);
-    const [dateTime, setDateTime] = useState<string | null>(null);
-    const [upiUrl, setUpiUrl] = useState('');
     const [transactionId, setTransactionId] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-
 
     useEffect(() => {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
@@ -52,9 +48,8 @@ function PaymentQRContent() {
     useEffect(() => {
         if (settings && settings.upiId && amount && user) {
             const payeeName = "Matka King";
-            const generatedUpiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
-            setUpiUrl(generatedUpiUrl);
-            QRCode.toDataURL(generatedUpiUrl)
+            const upiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+            QRCode.toDataURL(upiUrl)
                 .then(url => setQrCodeDataUrl(url))
                 .catch(err => console.error(err));
         }
@@ -66,18 +61,12 @@ function PaymentQRContent() {
         return () => clearInterval(timerId);
     }, [timeLeft]);
 
-    useEffect(() => {
-        // Generate orderId and dateTime on the client side to avoid hydration mismatch
-        setOrderId(`#${Date.now()}`);
-        setDateTime(new Date().toLocaleString('en-GB'));
-    }, []);
-    
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     
     const handleContactSupport = () => {
         if (settings?.whatsappNumber) {
-            window.open(`https://wa.me/${settings.whatsappNumber}?text=I%20need%20help%20with%20my%20payment%20(Order%20ID:%20${orderId})`, '_blank');
+            window.open(`https://wa.me/${settings.whatsappNumber}?text=I%20need%20help%20with%20my%20payment.`, '_blank');
         } else {
             alert('Support contact not available.');
         }
@@ -124,11 +113,14 @@ function PaymentQRContent() {
         }
     };
     
-    const handlePayWithUpi = () => {
-        if (upiUrl) {
+    const handlePayWithSpecificApp = (appPackage: string) => {
+        if (settings?.upiId && amount) {
+            const payeeName = "Matka King";
+            const upiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&googlePayPackage=${appPackage}`;
             window.location.href = upiUrl;
         }
     };
+
 
     if (!amount) {
         return (
@@ -168,10 +160,21 @@ function PaymentQRContent() {
                                 <Skeleton className="h-[200px] w-[200px]" />
                             )}
                         </div>
-
-                         <Button onClick={handlePayWithUpi} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold" disabled={!upiUrl}>
-                            Pay using UPI App
-                         </Button>
+                        
+                         <div className="grid grid-cols-3 gap-2">
+                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('com.google.android.apps.nbu.paisa.user')}>
+                                <Image src="https://placehold.co/32x32.png" data-ai-hint="google pay logo" alt="GPay" width={24} height={24} />
+                                <span className="text-xs mt-1">GPay</span>
+                            </Button>
+                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('net.one97.paytm')}>
+                                <Image src="https://placehold.co/32x32.png" data-ai-hint="paytm logo" alt="Paytm" width={24} height={24} />
+                                <span className="text-xs mt-1">Paytm</span>
+                            </Button>
+                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('com.phonepe.app')}>
+                                <Image src="https://placehold.co/32x32.png" data-ai-hint="phonepe logo" alt="PhonePe" width={24} height={24} />
+                                <span className="text-xs mt-1">PhonePe</span>
+                            </Button>
+                         </div>
                         
                         <div className="bg-yellow-100 text-yellow-800 text-sm p-2 rounded-md flex items-center justify-center gap-2">
                             <Clock className="h-4 w-4" />
@@ -212,7 +215,6 @@ function PaymentQRContent() {
         </div>
     );
 }
-
 
 export default function PaymentQRPage() {
     return (
