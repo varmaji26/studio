@@ -31,59 +31,31 @@ const ITEMS_PER_PAGE = 10;
 
 export default function AdminBonusHistoryPage() {
   const [transactions, setTransactions] = useState<BonusTransaction[]>([]);
-  const [allTransactions, setAllTransactions] = useState<BonusTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageDocs, setPageDocs] = useState<(QueryDocumentSnapshot<DocumentData> | null)[]>([null]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
-   const fetchTransactions = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
+   const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
-        let q = query(collection(db, "bonusTransactions"), orderBy("createdAt", "desc"));
-        
-        if (direction === 'next' && pageDocs[page - 1]) {
-            q = query(q, startAfter(pageDocs[page - 1]), limit(ITEMS_PER_PAGE));
-        } else {
-            q = query(q, limit(ITEMS_PER_PAGE));
-        }
-
+        const q = query(collection(db, "bonusTransactions"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         const transactionsData = querySnapshot.docs.map(transDoc => ({ id: transDoc.id, ...transDoc.data() } as BonusTransaction));
         setTransactions(transactionsData);
-        
-        const newPageDocs = [...pageDocs.slice(0, page)];
-        newPageDocs[page] = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
-        setPageDocs(newPageDocs);
-
     } catch (error) {
         console.error("Error fetching bonus transactions: ", error);
     } finally {
         setLoading(false);
     }
-  }, [pageDocs]);
+  }, []);
 
   useEffect(() => {
-    fetchTransactions(1, 'first');
-    // Fetch all for filtering
-    const fetchAllForFilter = async () => {
-        const allQuery = query(collection(db, "bonusTransactions"), orderBy("createdAt", "desc"));
-        const allSnapshot = await getDocs(allQuery);
-        setAllTransactions(allSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as BonusTransaction)));
-    };
-    fetchAllForFilter();
-  }, []);
+    fetchTransactions();
+  }, [fetchTransactions]);
   
-  const handlePageChange = (newPage: number) => {
-    const direction = newPage > currentPage ? 'next' : 'prev';
-    fetchTransactions(newPage, direction);
-    setCurrentPage(newPage);
-  }
-
   const filteredTransactions = useMemo(() => {
-    let source = searchTerm || selectedDate ? allTransactions : transactions;
-    let filtered = source;
+    let filtered = transactions;
 
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
@@ -109,9 +81,17 @@ export default function AdminBonusHistoryPage() {
     }
     
     return filtered;
-  }, [searchTerm, transactions, allTransactions, selectedDate]);
+  }, [searchTerm, transactions, selectedDate]);
   
-  const displayTransactions = searchTerm || selectedDate ? filteredTransactions : transactions;
+  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredTransactions, currentPage]);
+
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [searchTerm, selectedDate]);
 
 
   const formatDate = (timestamp: Timestamp) => {
@@ -130,16 +110,16 @@ export default function AdminBonusHistoryPage() {
   };
 
   const renderPagination = () => {
-    if(searchTerm || selectedDate) return null;
+    if(totalPages <= 1) return null;
 
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-            <div>Page <strong>{currentPage}</strong></div>
+            <div>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></div>
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                 >
                     Previous
@@ -147,8 +127,8 @@ export default function AdminBonusHistoryPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={!pageDocs[currentPage] || displayTransactions.length < ITEMS_PER_PAGE}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
                 >
                     Next
                 </Button>
@@ -221,7 +201,7 @@ export default function AdminBonusHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {displayTransactions.map((t) => (
+                            {paginatedTransactions.map((t) => (
                                 <TableRow key={t.id}>
                                     <TableCell>{formatDate(t.createdAt)}</TableCell>
                                     <TableCell>{t.displayName}</TableCell>
@@ -257,7 +237,7 @@ export default function AdminBonusHistoryPage() {
                  {renderPagination()}
                 </>
             )}
-            {displayTransactions.length === 0 && !loading && (
+            {paginatedTransactions.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm || selectedDate ? `No bonus transactions found for the selected criteria.` : "No bonus transactions found."}
                 </p>
@@ -267,4 +247,3 @@ export default function AdminBonusHistoryPage() {
       </div>
   );
 }
-
