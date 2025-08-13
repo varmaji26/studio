@@ -184,27 +184,24 @@ function PaymentQRContent() {
                         </div>
                         
                          <div className="grid grid-cols-3 gap-2">
-                            <Button variant="outline" className="flex-col h-16 p-1" onClick={() => handlePayWithSpecificApp('gpay')}>
-                                <div className="w-full h-full flex items-center justify-center bg-black rounded-sm relative">
+                            <Button variant="outline" className="h-14 p-1" onClick={() => handlePayWithSpecificApp('gpay')}>
+                                <div className="w-full h-full flex items-center justify-center rounded-sm relative">
                                     <Image src="https://placehold.co/100x70.png" data-ai-hint="google pay logo" alt="GPay" layout="fill" objectFit="contain" />
                                 </div>
-                                <span className="text-xs mt-1">GPay</span>
                             </Button>
-                             <Button variant="outline" className="flex-col h-16 p-1" onClick={() => handlePayWithSpecificApp('paytm')}>
-                                <div className="w-full h-full flex items-center justify-center bg-black rounded-sm relative">
+                             <Button variant="outline" className="h-14 p-1" onClick={() => handlePayWithSpecificApp('paytm')}>
+                                <div className="w-full h-full flex items-center justify-center rounded-sm relative">
                                      <Image src="https://placehold.co/100x70.png" data-ai-hint="paytm logo" alt="Paytm" layout="fill" objectFit="contain" />
                                 </div>
-                                <span className="text-xs mt-1">Paytm</span>
                             </Button>
-                             <Button variant="outline" className="flex-col h-16 p-1" onClick={() => handlePayWithSpecificApp('phonepe')}>
-                               <div className="relative w-full h-full flex items-center justify-center bg-black rounded-sm overflow-hidden">
+                             <Button variant="outline" className="h-14 p-1" onClick={() => handlePayWithSpecificApp('phonepe')}>
+                               <div className="relative w-full h-full flex items-center justify-center rounded-sm overflow-hidden">
                                 {settings?.paymentDetails?.PhonePe?.imageUrl ? (
                                     <Image src={settings.paymentDetails.PhonePe.imageUrl} alt="PhonePe" layout="fill" objectFit="contain" unoptimized />
                                 ) : (
                                      <Image src="https://placehold.co/100x70.png" data-ai-hint="phonepe logo" alt="PhonePe" layout="fill" objectFit="contain" />
                                 )}
                                </div>
-                               <span className="text-xs mt-1">PhonePe</span>
                             </Button>
                          </div>
                         
