@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, runTransaction, increment, collection } from 'firebase/firestore';
+import { doc, runTransaction, increment, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -111,7 +111,7 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
                 amount: Math.abs(bonusAmount),
                 type: bonusAmount > 0 ? 'Given' : 'Used',
                 description: `Admin ${bonusAmount > 0 ? 'added' : 'removed'} bonus.`,
-                createdAt: new Date(),
+                createdAt: serverTimestamp(),
             });
         }
 
@@ -126,7 +126,7 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
         title: 'Success!',
         description: `Balance for ${user.displayName} updated successfully.`,
       });
-      form.reset();
+      form.reset({balanceAmount: 0, bonusAmount: 0});
       setOpen(false);
 
     } catch (error: any) {
