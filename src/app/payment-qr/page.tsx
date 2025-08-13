@@ -224,7 +224,7 @@ function PaymentQRContent() {
                                         value={transactionId}
                                         onChange={(e) => setTransactionId(e.target.value)}
                                         placeholder="Enter 12-digit UTR number"
-                                        className="mt-1"
+                                        className="mt-1 bg-white text-black"
                                         required
                                    />
                                </div>
