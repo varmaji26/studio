@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, runTransaction, increment } from 'firebase/firestore';
+import { doc, runTransaction, increment, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -75,6 +75,7 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
     setIsSubmitting(true);
     const userDocRef = doc(db, 'users', user.id);
     const statsDocRef = doc(db, 'app-stats', 'dashboard');
+    const bonusTransactionsCollectionRef = collection(db, 'bonusTransactions');
 
     try {
       await runTransaction(db, async (transaction) => {
@@ -100,8 +101,18 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
             bonusBalance: increment(bonusAmount)
         };
         
-        if (bonusAmount > 0) {
+        if (bonusAmount !== 0) {
             updates.totalBonusGiven = increment(bonusAmount);
+            const newBonusTransactionRef = doc(bonusTransactionsCollectionRef);
+            transaction.set(newBonusTransactionRef, {
+                userId: user.id,
+                displayName: user.displayName,
+                mobile: user.mobile,
+                amount: Math.abs(bonusAmount),
+                type: bonusAmount > 0 ? 'Given' : 'Used',
+                description: `Admin ${bonusAmount > 0 ? 'added' : 'removed'} bonus.`,
+                createdAt: new Date(),
+            });
         }
 
         transaction.update(userDocRef, updates);
