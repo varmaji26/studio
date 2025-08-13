@@ -191,12 +191,15 @@ function PaymentQRContent() {
                                 <Image src="https://placehold.co/32x32.png" data-ai-hint="paytm logo" alt="Paytm" width={24} height={24} />
                                 <span className="text-xs mt-1">Paytm</span>
                             </Button>
-                             <Button variant="outline" className="flex-col h-16 p-1 bg-black hover:bg-black/90" onClick={() => handlePayWithSpecificApp('phonepe')}>
+                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('phonepe')}>
+                               <div className="relative w-16 h-6">
                                 {settings?.paymentDetails?.PhonePe?.imageUrl ? (
                                     <Image src={settings.paymentDetails.PhonePe.imageUrl} alt="PhonePe" layout="fill" objectFit="contain" unoptimized />
                                 ) : (
-                                     <Image src="https://placehold.co/64x24.png" data-ai-hint="phonepe logo" alt="PhonePe" width={64} height={24} />
+                                     <Image src="https://placehold.co/64x24.png" data-ai-hint="phonepe logo" alt="PhonePe" layout="fill" objectFit="contain" />
                                 )}
+                               </div>
+                               <span className="text-xs mt-1">PhonePe</span>
                             </Button>
                          </div>
                         
