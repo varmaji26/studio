@@ -128,12 +128,12 @@ function PaymentQRContent() {
             const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=Payment for Matka King`;
 
             const upiUrls = {
-                gpay: `tez://upi/pay?${baseParams}`,
+                gpay: `gpay://upi/pay?${baseParams}`,
                 paytm: `paytmmp://upi/pay?${baseParams}`,
                 phonepe: `phonepe://pay?${baseParams}`
             };
 
-            window.location.href = upiUrls[app];
+            window.open(upiUrls[app], '_blank');
         } else {
             toast({
                 variant: 'destructive',
