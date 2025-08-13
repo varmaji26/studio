@@ -6,9 +6,13 @@ import { collection, getDocs, DocumentData, query, orderBy, where, onSnapshot } 
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader } from '@/components/loader';
-import { Play } from 'lucide-react';
+import { Play, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { format } from 'date-fns';
 
 interface Game extends DocumentData {
     id: string;
@@ -33,6 +37,13 @@ interface BetTypeLoadDetails {
     betType: string;
     totalLoad: number;
     numberLoads: { [key: string]: number };
+}
+
+// Extend jsPDF with autoTable for TypeScript
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
 }
 
 export default function ViewGameTypeLoadPage() {
@@ -112,14 +123,65 @@ export default function ViewGameTypeLoadPage() {
 
   }, [selectedGameId, allBids, games]);
 
+  const handleDownloadPDF = () => {
+    if (!selectedGameId) return;
+    const selectedGame = games.find(g => g.id === selectedGameId);
+    if (!selectedGame) return;
+
+    const doc = new jsPDF();
+    const today = format(new Date(), "PPP");
+    doc.text(`Game-Type Load Report for ${selectedGame.name} - ${today}`, 14, 16);
+    
+    let startY = 24;
+
+    betTypeLoadDetails.forEach(details => {
+        if (details.totalLoad > 0) {
+            doc.autoTable({
+                head: [[`${details.betType} - Total Load: ₹${details.totalLoad.toFixed(2)}`]],
+                body: [],
+                startY: startY,
+                headStyles: { fillColor: [22, 163, 74] }
+            });
+
+            const tableColumn = ["Number", "Load"];
+            const tableRows: (string | number)[][] = Object.entries(details.numberLoads)
+              .sort(([numA], [numB]) => numA.localeCompare(numB, undefined, { numeric: true }))
+              .map(([number, load]) => [number, `₹${load.toFixed(2)}`]);
+              
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: doc.autoTable.previous.finalY + 2,
+                theme: 'grid'
+            });
+
+            startY = doc.autoTable.previous.finalY + 10;
+        }
+    });
+
+    if (startY === 24) { // No data was added
+        doc.text("No bidding has occurred for this game today.", 14, 24);
+    }
+    
+    doc.save(`gametype-load-report-${selectedGame.name.toLowerCase().replace(/\s/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  };
+
 
   return (
     <div className="flex-1 space-y-6">
       <div className="grid gap-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
-              <CardTitle className="text-3xl font-bold">View Game-Type wise Load (Today)</CardTitle>
-              <CardDescription>Select a game to see its live bidding details for each bet type for today.</CardDescription>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                 <div>
+                    <CardTitle className="text-3xl font-bold">View Game-Type wise Load (Today)</CardTitle>
+                    <CardDescription>Select a game to see its live bidding details for each bet type for today.</CardDescription>
+                 </div>
+                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={!selectedGameId || betTypeLoadDetails.every(d => d.totalLoad === 0)}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                </Button>
+              </div>
           </CardHeader>
           <CardContent>
             {loading ? (
