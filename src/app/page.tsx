@@ -152,7 +152,7 @@ const GameCard = memo(function GameCard({
         <div
             id={game.id}
             className={cn(
-                "rounded-lg p-4 text-center space-y-3 bg-slate-800/80 border border-slate-700 shadow-[0_0_15px_rgba(255,255,255,0.2)] animate-pulse-slow",
+                "rounded-lg p-4 text-center space-y-3 bg-slate-800/80 border border-slate-700 shadow-[0_0_15px_rgba(255,255,255,0.2)]",
                 animatingGameId === game.id && "animate-pulse-once"
             )}
         >
@@ -169,7 +169,7 @@ const GameCard = memo(function GameCard({
                     >
                         Jodi
                     </Link>
-                    <span>{formatGameResult(game)}</span>
+                    <span className={cn(animatingGameId === game.id && "animate-shake")}>{formatGameResult(game)}</span>
                     <Link
                         href={`/games/${game.id}/panel-chart`}
                         onClick={(e) => handleChartLinkClick(e, game.id, 'panel')}
@@ -221,8 +221,25 @@ export default function Home() {
   const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
+  const [theme, setTheme] = useState('dark');
+  const prevGamesRef = useRef<Game[]>([]);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(storedTheme);
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(storedTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -268,6 +285,20 @@ export default function Home() {
       filteredGames.sort((a, b) => {
           return a.openTime.localeCompare(b.openTime);
       });
+      
+      // Check for result updates to trigger animation
+      const prevGames = prevGamesRef.current;
+      if (prevGames.length > 0) {
+        filteredGames.forEach(newGame => {
+          const oldGame = prevGames.find(g => g.id === newGame.id);
+          if (oldGame && oldGame.result !== newGame.result) {
+            setAnimatingGameId(newGame.id);
+            setTimeout(() => setAnimatingGameId(null), 1000); // Animation duration
+          }
+        });
+      }
+      prevGamesRef.current = filteredGames;
+
 
       setGames(filteredGames);
       setGamesLoading(false);
@@ -343,10 +374,7 @@ export default function Home() {
   
   const handlePlayNowClick = (e: React.MouseEvent<HTMLButtonElement>, gameId: string) => {
     e.preventDefault();
-    setAnimatingGameId(gameId);
-    setTimeout(() => {
-        router.push(`/games/${gameId}`);
-    }, 500); // Animation duration
+    router.push(`/games/${gameId}`);
   };
 
   const handleChartLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, gameId: string, type: 'jodi' | 'panel') => {
@@ -473,6 +501,9 @@ export default function Home() {
                     <span className="font-bold text-md text-white">₹{totalBalance.toFixed(0) ?? '0'}</span>
                 </div>
             </div>
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="ml-2">
+                {theme === 'dark' ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5 text-blue-400" />}
+            </Button>
           {isAdmin && (
             <Link href="/admin">
               <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600">
