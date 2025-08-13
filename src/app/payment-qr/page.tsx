@@ -113,10 +113,26 @@ function PaymentQRContent() {
         }
     };
     
-    const handlePayWithSpecificApp = (appPackage: string) => {
+    const handlePayWithSpecificApp = (app: 'gpay' | 'paytm' | 'phonepe') => {
         if (settings?.upiId && amount) {
             const payeeName = "Matka King";
-            const upiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&googlePayPackage=${appPackage}`;
+            let upiUrl = '';
+
+            const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+
+            switch (app) {
+                case 'gpay':
+                    upiUrl = `gpay://upi/pay?${baseParams}`;
+                    break;
+                case 'paytm':
+                    upiUrl = `paytmmp://pay?${baseParams}`;
+                    break;
+                case 'phonepe':
+                    upiUrl = `phonepe://pay?${baseParams}`;
+                    break;
+                default:
+                    upiUrl = `upi://pay?${baseParams}`; // Fallback to generic chooser
+            }
             window.location.href = upiUrl;
         }
     };
@@ -162,15 +178,15 @@ function PaymentQRContent() {
                         </div>
                         
                          <div className="grid grid-cols-3 gap-2">
-                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('com.google.android.apps.nbu.paisa.user')}>
+                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('gpay')}>
                                 <Image src="https://placehold.co/32x32.png" data-ai-hint="google pay logo" alt="GPay" width={24} height={24} />
                                 <span className="text-xs mt-1">GPay</span>
                             </Button>
-                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('net.one97.paytm')}>
+                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('paytm')}>
                                 <Image src="https://placehold.co/32x32.png" data-ai-hint="paytm logo" alt="Paytm" width={24} height={24} />
                                 <span className="text-xs mt-1">Paytm</span>
                             </Button>
-                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('com.phonepe.app')}>
+                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('phonepe')}>
                                 <Image src="https://placehold.co/32x32.png" data-ai-hint="phonepe logo" alt="PhonePe" width={24} height={24} />
                                 <span className="text-xs mt-1">PhonePe</span>
                             </Button>
