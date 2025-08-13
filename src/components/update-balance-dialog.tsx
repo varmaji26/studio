@@ -53,7 +53,7 @@ interface UpdateBalanceDialogProps {
 export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingType, setSubmittingType] = useState<'real' | 'bonus' | null>(null);
 
   const form = useForm<BalanceFormValues>({
     resolver: zodResolver(balanceSchema),
@@ -63,83 +63,90 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
     },
   });
 
-  const onSubmit = async (values: BalanceFormValues) => {
+  const handleUpdate = async (type: 'real' | 'bonus') => {
+    const values = form.getValues();
     const balanceAmount = values.balanceAmount || 0;
     const bonusAmount = values.bonusAmount || 0;
-    
-    if (balanceAmount === 0 && bonusAmount === 0) {
-        toast({ variant: 'destructive', title: 'No change', description: 'Please enter an amount to add or remove.' });
+
+    if (type === 'real' && balanceAmount === 0) {
+        toast({ variant: 'destructive', title: 'No change', description: 'Please enter an amount for real balance.' });
+        return;
+    }
+    if (type === 'bonus' && bonusAmount === 0) {
+        toast({ variant: 'destructive', title: 'No change', description: 'Please enter an amount for bonus balance.' });
         return;
     }
 
-    setIsSubmitting(true);
+    setSubmittingType(type);
     const userDocRef = doc(db, 'users', user.id);
     const statsDocRef = doc(db, 'app-stats', 'dashboard');
     const bonusTransactionsCollectionRef = collection(db, 'bonusTransactions');
 
     try {
-      await runTransaction(db, async (transaction) => {
-        const userDoc = await transaction.get(userDocRef);
-        if (!userDoc.exists()) {
-          throw new Error("User document does not exist!");
-        }
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userDocRef);
+            if (!userDoc.exists()) {
+                throw new Error("User document does not exist!");
+            }
 
-        const currentBalance = userDoc.data().balance || 0;
-        const newBalance = currentBalance + balanceAmount;
-        if (newBalance < 0) {
-            throw new Error("Real balance cannot be negative.");
-        }
+            if (type === 'real') {
+                const currentBalance = userDoc.data().balance || 0;
+                if (currentBalance + balanceAmount < 0) {
+                    throw new Error("Real balance cannot be negative.");
+                }
+                transaction.update(userDocRef, { balance: increment(balanceAmount) });
+                transaction.update(statsDocRef, { totalBalance: increment(balanceAmount) });
+            }
+
+            if (type === 'bonus') {
+                const currentBonusBalance = userDoc.data().bonusBalance || 0;
+                if (currentBonusBalance + bonusAmount < 0) {
+                    throw new Error("Bonus balance cannot be negative.");
+                }
+                
+                transaction.update(userDocRef, {
+                    bonusBalance: increment(bonusAmount),
+                    totalBonusGiven: increment(bonusAmount > 0 ? bonusAmount : 0),
+                    totalBonusUsed: increment(bonusAmount < 0 ? Math.abs(bonusAmount) : 0),
+                });
+                
+                const newBonusTransactionRef = doc(bonusTransactionsCollectionRef);
+                transaction.set(newBonusTransactionRef, {
+                    userId: user.id,
+                    displayName: user.displayName,
+                    mobile: user.mobile,
+                    amount: Math.abs(bonusAmount),
+                    type: bonusAmount > 0 ? 'Given' : 'Used',
+                    description: `Admin ${bonusAmount > 0 ? 'added' : 'removed'} bonus.`,
+                    createdAt: serverTimestamp(),
+                });
+            }
+        });
+
+        toast({
+            title: 'Success!',
+            description: `${type === 'real' ? 'Real' : 'Bonus'} balance for ${user.displayName} updated.`,
+        });
         
-        const currentBonusBalance = userDoc.data().bonusBalance || 0;
-        const newBonusBalance = currentBonusBalance + bonusAmount;
-        if (newBonusBalance < 0) {
-            throw new Error("Bonus balance cannot be negative.");
-        }
+        form.reset({
+            balanceAmount: 0,
+            bonusAmount: 0,
+        });
 
-        const updates: { [key: string]: any } = {
-            balance: increment(balanceAmount),
-            bonusBalance: increment(bonusAmount)
-        };
-        
-        if (bonusAmount !== 0) {
-            updates.totalBonusGiven = increment(bonusAmount);
-            const newBonusTransactionRef = doc(bonusTransactionsCollectionRef);
-            transaction.set(newBonusTransactionRef, {
-                userId: user.id,
-                displayName: user.displayName,
-                mobile: user.mobile,
-                amount: Math.abs(bonusAmount),
-                type: bonusAmount > 0 ? 'Given' : 'Used',
-                description: `Admin ${bonusAmount > 0 ? 'added' : 'removed'} bonus.`,
-                createdAt: serverTimestamp(),
-            });
-        }
-
-        transaction.update(userDocRef, updates);
-
-        if (balanceAmount !== 0) {
-            transaction.update(statsDocRef, { totalBalance: increment(balanceAmount) });
-        }
-      });
-
-      toast({
-        title: 'Success!',
-        description: `Balance for ${user.displayName} updated successfully.`,
-      });
-      form.reset({balanceAmount: 0, bonusAmount: 0});
-      setOpen(false);
+        setOpen(false);
 
     } catch (error: any) {
-      console.error('Error updating balance: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to update balance. Please try again.',
-      });
+        console.error(`Error updating ${type} balance: `, error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error.message || `Failed to update ${type} balance.`,
+        });
     } finally {
-      setIsSubmitting(false);
+        setSubmittingType(null);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -152,7 +159,7 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form className="space-y-4">
             <div className="rounded-md border p-4 space-y-4">
                 <p className="text-sm">Current Real Balance: <span className="font-bold">₹{user.balance || 0}</span></p>
                 <FormField
@@ -168,6 +175,10 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
                     </FormItem>
                   )}
                 />
+                 <Button onClick={() => handleUpdate('real')} disabled={!!submittingType} className="w-full">
+                    {submittingType === 'real' ? <Loader className="mr-2" /> : null}
+                    Update Real Balance
+                </Button>
             </div>
             <Separator />
             <div className="rounded-md border p-4 space-y-4">
@@ -185,18 +196,18 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
                     </FormItem>
                   )}
                 />
+                 <Button onClick={() => handleUpdate('bonus')} disabled={!!submittingType} className="w-full">
+                    {submittingType === 'bonus' ? <Loader className="mr-2" /> : null}
+                    Update Bonus Balance
+                </Button>
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0">
                <DialogClose asChild>
                 <Button type="button" variant="outline">
-                    Cancel
+                    Close
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader className="mr-2" /> : null}
-                Update Balances
-              </Button>
             </DialogFooter>
           </form>
         </Form>
