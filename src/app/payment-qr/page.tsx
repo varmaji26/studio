@@ -122,7 +122,7 @@ function PaymentQRContent() {
         }
     };
     
-     const handlePayWithSpecificApp = (app: 'gpay' | 'paytm' | 'phonepe') => {
+    const handlePayWithSpecificApp = (app: 'gpay' | 'paytm' | 'phonepe') => {
         if (settings?.upiId && amount) {
             const payeeName = "Matka King";
             const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=Payment for Matka King`;
@@ -142,7 +142,6 @@ function PaymentQRContent() {
             });
         }
     };
-
 
     if (!amount) {
         return (
@@ -184,13 +183,13 @@ function PaymentQRContent() {
                         </div>
                         
                          <div className="grid grid-cols-3 gap-2">
-                            <Button variant="outline" className="h-16 p-0 overflow-hidden relative" onClick={() => handlePayWithSpecificApp('gpay')}>
+                            <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('gpay')}>
                                 <Image src="https://placehold.co/100x70.png" data-ai-hint="google pay logo" alt="GPay" layout="fill" objectFit="contain" />
                             </Button>
-                             <Button variant="outline" className="h-16 p-0 overflow-hidden relative" onClick={() => handlePayWithSpecificApp('paytm')}>
+                             <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('paytm')}>
                                 <Image src="https://placehold.co/100x70.png" data-ai-hint="paytm logo" alt="Paytm" layout="fill" objectFit="contain" />
                             </Button>
-                             <Button variant="outline" className="h-16 p-0 overflow-hidden relative" onClick={() => handlePayWithSpecificApp('phonepe')}>
+                             <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('phonepe')}>
                                 {settings?.paymentDetails?.PhonePe?.imageUrl ? (
                                     <Image src={settings.paymentDetails.PhonePe.imageUrl} alt="PhonePe" layout="fill" objectFit="contain" unoptimized />
                                 ) : (
