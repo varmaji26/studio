@@ -123,11 +123,11 @@ function PaymentQRContent() {
             const payeeName = "Matka King";
             let upiUrl = '';
 
-            const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+            const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=Payment for Matka King`;
 
             switch (app) {
                 case 'gpay':
-                    upiUrl = `gpay://upi/pay?${baseParams}`;
+                    upiUrl = `tez://upi/pay?${baseParams}`;
                     break;
                 case 'paytm':
                     upiUrl = `paytmmp://upi/pay?${baseParams}`;
@@ -191,15 +191,15 @@ function PaymentQRContent() {
                                 <Image src="https://placehold.co/32x32.png" data-ai-hint="paytm logo" alt="Paytm" width={24} height={24} />
                                 <span className="text-xs mt-1">Paytm</span>
                             </Button>
-                             <Button variant="outline" className="flex-col h-16" onClick={() => handlePayWithSpecificApp('phonepe')}>
-                               <div className="relative w-16 h-6">
+                             <Button variant="outline" className="flex-col h-16 justify-center" onClick={() => handlePayWithSpecificApp('phonepe')}>
+                               <div className="relative w-full h-10">
                                 {settings?.paymentDetails?.PhonePe?.imageUrl ? (
                                     <Image src={settings.paymentDetails.PhonePe.imageUrl} alt="PhonePe" layout="fill" objectFit="contain" unoptimized />
                                 ) : (
                                      <Image src="https://placehold.co/64x24.png" data-ai-hint="phonepe logo" alt="PhonePe" layout="fill" objectFit="contain" />
                                 )}
                                </div>
-                               <span className="text-xs mt-1">PhonePe</span>
+                               <span className="text-xs">PhonePe</span>
                             </Button>
                          </div>
                         
