@@ -182,22 +182,22 @@ function PaymentQRContent() {
                             )}
                         </div>
                         
-                         <div className="grid grid-cols-3 gap-2">
-                             <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('gpay')}>
+                         <div className="flex justify-around items-center">
+                             <Button variant="ghost" className="h-20 w-1/3 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('gpay')}>
                                 {settings?.paymentDetails?.GPay?.imageUrl ? (
                                     <Image src={settings.paymentDetails.GPay.imageUrl} alt="GPay" layout="fill" objectFit="contain" unoptimized />
                                 ) : (
                                     <Image src="https://placehold.co/100x70.png" data-ai-hint="google pay logo" alt="GPay" layout="fill" objectFit="contain" />
                                 )}
                             </Button>
-                             <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('paytm')}>
+                             <Button variant="ghost" className="h-20 w-1/3 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('paytm')}>
                                 {settings?.paymentDetails?.Paytm?.imageUrl ? (
                                     <Image src={settings.paymentDetails.Paytm.imageUrl} alt="Paytm" layout="fill" objectFit="contain" unoptimized />
                                 ) : (
                                     <Image src="https://placehold.co/100x70.png" data-ai-hint="paytm logo" alt="Paytm" layout="fill" objectFit="contain" />
                                 )}
                             </Button>
-                             <Button variant="ghost" className="h-16 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('phonepe')}>
+                             <Button variant="ghost" className="h-20 w-1/3 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('phonepe')}>
                                 {settings?.paymentDetails?.PhonePe?.imageUrl ? (
                                     <Image src={settings.paymentDetails.PhonePe.imageUrl} alt="PhonePe" layout="fill" objectFit="contain" unoptimized />
                                 ) : (
