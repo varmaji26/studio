@@ -497,7 +497,7 @@ export default function Home() {
       
       <main className="flex flex-col gap-4 p-4 pb-28">
          {showNotification && latestNotification && (
-            <Alert variant="default" className="bg-primary/10 border-primary/20 relative">
+            <Alert variant="default" className="bg-primary/10 border-primary/20 relative animate-shake">
                  <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={handleDismissNotification}>
                     <X className="h-4 w-4" />
                  </Button>
