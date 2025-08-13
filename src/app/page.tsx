@@ -480,9 +480,9 @@ export default function Home() {
             </div>
           </SheetContent>
         </Sheet>
-        <div className="flex items-center gap-2 rounded-lg bg-black/30 px-3 py-1.5 border border-white/10">
-          <Crown className="h-6 w-6 text-primary" />
-          <span className="font-bold text-2xl text-white">
+        <div className="flex items-center gap-2 rounded-lg bg-black/30 px-2 py-1 border border-white/10">
+          <Crown className="h-5 w-5 text-primary" />
+          <span className="font-bold text-xl text-white">
             MATKA <span className="text-primary">KING</span>
           </span>
         </div>
