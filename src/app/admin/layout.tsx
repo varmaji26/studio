@@ -209,9 +209,9 @@ export default function AdminLayout({
            </Collapsible>
           <SidebarMenuItem>
              <Link href="/admin/manage-users?viewed=true" passHref onClick={handleLinkClick}>
-                <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Manage Users"}}>
+                <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Registered Users"}}>
                   <Users />
-                  <span>Manage Users</span>
+                  <span>Registered Users</span>
                    {newUsersCount > 0 && (
                     <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
                         {newUsersCount}
