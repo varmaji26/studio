@@ -40,6 +40,13 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png, .webp, and .svg files are accepted."
     ),
+  phonepeImage: z.any()
+    .optional()
+    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png, and .webp files are accepted."
+    ),
   welcomeBannerImage: z.any()
     .optional()
     .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
@@ -98,6 +105,8 @@ export default function SettingsPage() {
   
   const [existingQrUrl, setExistingQrUrl] = useState<string | null>(null);
   const [existingQrStoragePath, setExistingQrStoragePath] = useState<string | null>(null);
+  const [existingPhonepeImageUrl, setExistingPhonepeImageUrl] = useState<string | null>(null);
+  const [existingPhonepeImageStoragePath, setExistingPhonepeImageStoragePath] = useState<string | null>(null);
   const [existingWelcomeBannerUrl, setExistingWelcomeBannerUrl] = useState<string | null>(null);
   const [existingWelcomeBannerStoragePath, setExistingWelcomeBannerStoragePath] = useState<string | null>(null);
   const [existingDownloadImageUrl, setExistingDownloadImageUrl] = useState<string | null>(null);
@@ -133,6 +142,7 @@ export default function SettingsPage() {
   });
 
   const qrCodeImageRef = form.register("qrCodeImage");
+  const phonepeImageRef = form.register("phonepeImage");
   const welcomeBannerImageRef = form.register("welcomeBannerImage");
   const downloadPageImageRef = form.register("downloadPageImage");
   const marqueeLogoRef = form.register("marqueeLogo");
@@ -170,6 +180,10 @@ export default function SettingsPage() {
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
             setExistingQrStoragePath(data.paymentDetails['Scan QR Code'].storagePath);
+          }
+          if (data.paymentDetails?.PhonePe) {
+            setExistingPhonepeImageUrl(data.paymentDetails.PhonePe.imageUrl);
+            setExistingPhonepeImageStoragePath(data.paymentDetails.PhonePe.storagePath);
           }
           if (data.welcomeBanner) {
             setExistingWelcomeBannerUrl(data.welcomeBanner.imageUrl);
@@ -256,6 +270,12 @@ export default function SettingsPage() {
             storagePath: existingQrStoragePath
         } : undefined;
 
+        let phonepeData = existingPhonepeImageUrl ? {
+            title: 'PhonePe',
+            imageUrl: existingPhonepeImageUrl,
+            storagePath: existingPhonepeImageStoragePath
+        } : { title: 'PhonePe' };
+
         let welcomeBannerData = existingWelcomeBannerUrl ? {
             imageUrl: existingWelcomeBannerUrl,
             storagePath: existingWelcomeBannerStoragePath,
@@ -288,6 +308,18 @@ export default function SettingsPage() {
             };
             setExistingQrUrl(downloadURL);
             setExistingQrStoragePath(storagePath);
+        }
+        
+        const phonepeFile = values.phonepeImage?.[0];
+        if (phonepeFile) {
+            const { downloadURL, storagePath } = await uploadFile(phonepeFile, 'payment-logos', existingPhonepeImageStoragePath);
+            phonepeData = {
+                ...phonepeData,
+                imageUrl: downloadURL,
+                storagePath: storagePath,
+            };
+            setExistingPhonepeImageUrl(downloadURL);
+            setExistingPhonepeImageStoragePath(storagePath);
         }
 
         const welcomeBannerFile = values.welcomeBannerImage?.[0];
@@ -348,6 +380,7 @@ export default function SettingsPage() {
                 'UPI': { title: "UPI Payment", details: values.upiId },
                 'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
                 'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
+                'PhonePe': phonepeData,
             },
             welcomeBanner: welcomeBannerData,
             downloadPageImage: downloadPageImageData,
@@ -387,7 +420,7 @@ export default function SettingsPage() {
             description: 'Settings have been saved.',
         });
 
-        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined, bonusPopupImage: undefined });
+        form.reset({ ...values, qrCodeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined, bonusPopupImage: undefined, phonepeImage: undefined });
         
     } catch (error: any) {
       console.error('Error updating settings: ', error);
@@ -518,6 +551,32 @@ export default function SettingsPage() {
         setIsSubmitting(false);
     }
   };
+
+  const handleDeletePhonepeImage = async () => {
+    if (!existingPhonepeImageStoragePath) return;
+    setIsSubmitting(true);
+    try {
+      const storageRef = ref(storage, existingPhonepeImageStoragePath);
+      await deleteObject(storageRef);
+      
+      const settingsDocRef = doc(db, 'settings', 'app-settings');
+      await updateDoc(settingsDocRef, { 
+          'paymentDetails.PhonePe.imageUrl': null,
+          'paymentDetails.PhonePe.storagePath': null,
+       });
+
+      setExistingPhonepeImageUrl(null);
+      setExistingPhonepeImageStoragePath(null);
+
+      toast({ title: 'Success!', description: 'PhonePe image deleted.' });
+    } catch (error) {
+       console.error("Error deleting PhonePe image: ", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete PhonePe image.' });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
 
   const handleDeleteBonusPopupImage = async () => {
     if (!existingBonusPopupStoragePath) return;
@@ -1016,9 +1075,38 @@ export default function SettingsPage() {
                   name="paytmNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Paytm/PhonePe Number</FormLabel>
+                      <FormLabel>Paytm Number</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., 9876543210" {...field} className="bg-input h-12 rounded-lg" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {existingPhonepeImageUrl && (
+                  <div className="flex flex-col items-center gap-4">
+                    <p className="text-sm text-muted-foreground mb-2">Current PhonePe Image:</p>
+                    <Image src={existingPhonepeImageUrl} alt="Current PhonePe Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete PhonePe Image</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the PhonePe image.</AlertDialogDescription></AlertDialogHeader>
+                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePhonepeImage}>Delete</AlertDialogAction></AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+                 <FormField
+                  control={form.control}
+                  name="phonepeImage"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>{existingPhonepeImageUrl ? 'Upload New PhonePe Image' : 'Upload PhonePe Image'}</FormLabel>
+                      <FormControl>
+                        <Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...phonepeImageRef} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
