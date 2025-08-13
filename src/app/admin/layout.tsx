@@ -56,7 +56,7 @@ export default function AdminLayout({
   const [newUsersCount, setNewUsersCount] = React.useState(0);
   const [todaysBidsCount, setTodaysBidsCount] = React.useState(0);
   const [todaysWinsCount, setTodaysWinsCount] = React.useState(0);
-  const [theme, setTheme] = React.useState('dark');
+  const [theme, setTheme] = React.useState('light');
   
   const isActive = (path: string) => pathname === path;
 
@@ -66,8 +66,10 @@ export default function AdminLayout({
   const router = useRouter();
 
   React.useEffect(() => {
-    const storedTheme = localStorage.getItem('theme') || 'dark';
+    const storedTheme = localStorage.getItem('theme') || 'light';
     setTheme(storedTheme);
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(storedTheme);
   }, []);
   
   const toggleTheme = () => {

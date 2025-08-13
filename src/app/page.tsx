@@ -221,25 +221,9 @@ export default function Home() {
   const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
-  const [theme, setTheme] = useState('dark');
   const prevGamesRef = useRef<Game[]>([]);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(storedTheme);
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(storedTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -501,12 +485,9 @@ export default function Home() {
                     <span className="font-bold text-md text-white">₹{totalBalance.toFixed(0) ?? '0'}</span>
                 </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="ml-2">
-                {theme === 'dark' ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5 text-blue-400" />}
-            </Button>
           {isAdmin && (
             <Link href="/admin">
-              <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600">
+              <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600 ml-2">
                 <ShieldCheck className="h-6 w-6" strokeWidth={2.5} />
               </Button>
             </Link>

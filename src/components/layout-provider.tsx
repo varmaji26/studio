@@ -1,33 +1,16 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Sidebar,
   SidebarInset,
   SidebarTrigger,
   SidebarProvider,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import {
-  LogOut,
-  Settings,
-  Home,
-  Sun,
-  Moon
-} from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader as SheetHeaderComponent } from '@/components/ui/sheet';
-import Link from 'next/link';
 
 export function LayoutProvider({
   children,
