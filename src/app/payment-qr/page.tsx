@@ -5,7 +5,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, FileText, HelpCircle, Loader, Scan, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Clock, FileText, HelpCircle, Loader, Scan, ShieldCheck, Copy } from 'lucide-react';
 import QRCode from 'qrcode';
 import { doc, onSnapshot, DocumentData, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -143,6 +143,24 @@ function PaymentQRContent() {
         }
     };
 
+    const handleCopyToClipboard = () => {
+        if (settings?.upiId) {
+            navigator.clipboard.writeText(settings.upiId).then(() => {
+                toast({
+                    title: 'Copied!',
+                    description: 'UPI ID has been copied to clipboard.',
+                });
+            }, (err) => {
+                console.error('Could not copy text: ', err);
+                 toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: 'Failed to copy UPI ID.',
+                });
+            });
+        }
+    };
+
     if (!amount) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-white">
@@ -164,10 +182,10 @@ function PaymentQRContent() {
             <main className="flex-1 p-4 bg-white">
                 <div className="max-w-xs mx-auto">
                     
-                    <div className="bg-white p-4 rounded-lg shadow-lg space-y-2">
-                        <div className="flex items-center gap-2 text-gray-700">
+                    <div className="bg-white p-4 rounded-lg shadow-lg space-y-3">
+                        <div className="flex items-center gap-2 text-gray-700 text-center flex-col">
                            <Scan className="h-5 w-5"/>
-                           <span className="font-semibold">Scan QR or use a UPI app to Pay</span>
+                           <span className="font-semibold">Scan QR, Copy UPI ID, or use a UPI app to Pay</span>
                         </div>
                         
                         <p className="text-center text-3xl font-bold text-black">
@@ -182,7 +200,16 @@ function PaymentQRContent() {
                             )}
                         </div>
                         
-                         <div className="flex justify-around items-center">
+                        {settings?.upiId && (
+                            <div className="flex items-center justify-center gap-2 bg-gray-100 p-2 rounded-md">
+                                <span className="text-sm font-mono text-gray-800 break-all">{settings.upiId}</span>
+                                <Button size="icon" variant="ghost" onClick={handleCopyToClipboard} className="h-8 w-8">
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+                        
+                         <div className="flex justify-around items-center pt-2">
                              <Button variant="ghost" className="h-20 w-1/3 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('gpay')}>
                                 {settings?.paymentDetails?.GPay?.imageUrl ? (
                                     <Image src={settings.paymentDetails.GPay.imageUrl} alt="GPay" layout="fill" objectFit="contain" unoptimized />
@@ -211,7 +238,7 @@ function PaymentQRContent() {
                             <span>This session is valid for: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
                         </div>
                         
-                        <div className="border-t pt-2 space-y-2">
+                        <div className="border-t pt-3 space-y-2">
                            <div className="flex items-center gap-2 font-semibold text-gray-800">
                                <FileText className="h-5 w-5 text-gray-500"/>
                                <h3>After Payment, Submit Details</h3>
@@ -235,7 +262,7 @@ function PaymentQRContent() {
                            </form>
                         </div>
 
-                        <div className="text-center text-sm text-gray-500 space-y-1">
+                        <div className="text-center text-sm text-gray-500 space-y-1 pt-2">
                            <p className="flex items-center justify-center gap-1"><ShieldCheck className="h-4 w-4 text-green-500"/> 100% Secure Payment</p>
                            <button onClick={handleContactSupport} className="flex items-center justify-center gap-1 text-blue-600"><HelpCircle className="h-4 w-4"/> Need help? Contact Support</button>
                         </div>
