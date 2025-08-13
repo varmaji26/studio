@@ -162,9 +162,9 @@ function PaymentQRContent() {
                 <div className="w-10"></div>
             </header>
             <main className="flex-1 p-4 bg-white">
-                <div className="max-w-xs mx-auto">
+                <div className="max-w-sm mx-auto">
                     
-                    <div className="bg-white p-4 rounded-lg shadow-lg space-y-3">
+                    <div className="bg-white p-4 rounded-lg shadow-lg space-y-2">
                         <div className="flex items-center gap-2 text-gray-700">
                            <Scan className="h-5 w-5"/>
                            <span className="font-semibold">Scan QR or use a UPI app to Pay</span>
@@ -211,7 +211,7 @@ function PaymentQRContent() {
                             <span>This session is valid for: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
                         </div>
                         
-                        <div className="border-t pt-3 space-y-2">
+                        <div className="border-t pt-2 space-y-2">
                            <div className="flex items-center gap-2 font-semibold text-gray-800">
                                <FileText className="h-5 w-5 text-gray-500"/>
                                <h3>After Payment, Submit Details</h3>
@@ -235,7 +235,7 @@ function PaymentQRContent() {
                            </form>
                         </div>
 
-                        <div className="text-center text-sm text-gray-500 space-y-1 pt-1">
+                        <div className="text-center text-sm text-gray-500 space-y-1">
                            <p className="flex items-center justify-center gap-1"><ShieldCheck className="h-4 w-4 text-green-500"/> 100% Secure Payment</p>
                            <button onClick={handleContactSupport} className="flex items-center justify-center gap-1 text-blue-600"><HelpCircle className="h-4 w-4"/> Need help? Contact Support</button>
                         </div>
