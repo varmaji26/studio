@@ -21,6 +21,7 @@ interface UserProfile extends DocumentData {
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
+    upiId?: string;
 }
 
 export default function AddFundPage() {
@@ -49,7 +50,9 @@ export default function AddFundPage() {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
             if (docSnap.exists()) {
-                setSettings(docSnap.data() as AppSettings);
+                const data = docSnap.data();
+                const upiId = data.paymentDetails?.UPI?.details;
+                setSettings({ ...data, upiId: upiId } as AppSettings);
             }
         });
 
@@ -73,7 +76,25 @@ export default function AddFundPage() {
             });
             return;
         }
+
+        if (!settings.upiId) {
+             toast({
+                variant: 'destructive',
+                title: 'Payment Error',
+                description: 'UPI payment is not configured. Please contact support.',
+            });
+            return;
+        }
+
+        // Construct the UPI URL
+        const payeeName = "Matka King";
+        const upiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${parsedAmount}&cu=INR`;
+        
+        // Redirect to a page where the user can submit their transaction ID after payment
         router.push(`/payment-qr?amount=${parsedAmount}`);
+
+        // Open the UPI app chooser
+        window.location.href = upiUrl;
     };
 
     if (authLoading || !user) {
@@ -96,7 +117,7 @@ export default function AddFundPage() {
                     </Button>
                 </Link>
                 <h1 className="text-xl font-bold">Add Fund</h1>
-                <div className="ml-auto flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-full">
+                <div className="ml-auto flex items-center gap-2 bg-green-500 text-white px-3 py-1.5 rounded-full">
                     <Wallet className="h-5 w-5" />
                     <span>₹{totalBalance.toFixed(1) || '0.0'}</span>
                 </div>

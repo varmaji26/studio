@@ -147,7 +147,7 @@ function PaymentQRContent() {
                     <div className="bg-white p-6 rounded-lg shadow-lg space-y-4">
                         <div className="flex items-center gap-2 text-gray-700">
                            <Scan className="h-5 w-5"/>
-                           <span className="font-semibold">Scan QR to Pay</span>
+                           <span className="font-semibold">Scan QR or use a UPI app to Pay</span>
                         </div>
                         
                         <p className="text-center text-4xl font-bold text-black">
@@ -164,7 +164,7 @@ function PaymentQRContent() {
                         
                         <div className="bg-yellow-100 text-yellow-800 text-sm p-2 rounded-md flex items-center justify-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>This QR is valid for: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
+                            <span>This session is valid for: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
                         </div>
                         
                         <div className="border-t pt-4 space-y-2">
