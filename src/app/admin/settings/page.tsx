@@ -47,6 +47,7 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
+  gpayEnabled: z.boolean().default(true),
   paytmImage: z.any()
     .optional()
     .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
@@ -54,6 +55,7 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
+  paytmEnabled: z.boolean().default(true),
   phonepeImage: z.any()
     .optional()
     .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
@@ -61,6 +63,7 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png, and .webp files are accepted."
     ),
+  phonepeEnabled: z.boolean().default(true),
   welcomeBannerImage: z.any()
     .optional()
     .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
@@ -144,6 +147,9 @@ export default function SettingsPage() {
       upiId: '',
       bankDetails: '',
       paytmNumber: '',
+      gpayEnabled: true,
+      paytmEnabled: true,
+      phonepeEnabled: true,
       marqueeTitle: 'MATKA KING',
       marqueeText: '',
       marqueeBackgroundColor: '#b91c1c', // default red-700
@@ -184,6 +190,9 @@ export default function SettingsPage() {
             upiId: data.paymentDetails?.UPI?.details || '',
             bankDetails: data.paymentDetails?.['Bank Transfer']?.details || '',
             paytmNumber: data.paymentDetails?.['Paytm/PhonePe']?.details || '',
+            gpayEnabled: data.paymentDetails?.GPay?.enabled ?? true,
+            paytmEnabled: data.paymentDetails?.Paytm?.enabled ?? true,
+            phonepeEnabled: data.paymentDetails?.PhonePe?.enabled ?? true,
             marqueeTitle: data.marquee?.title || 'MATKA KING',
             marqueeText: data.marquee?.text || '',
             marqueeBackgroundColor: data.marquee?.backgroundColor || '#b91c1c',
@@ -298,9 +307,24 @@ export default function SettingsPage() {
             storagePath: existingQrStoragePath
         } : undefined;
         
-        let gpayData = existingGpayImageUrl ? { title: 'GPay', imageUrl: existingGpayImageUrl, storagePath: existingGpayImageStoragePath } : { title: 'GPay' };
-        let paytmData = existingPaytmImageUrl ? { title: 'Paytm', imageUrl: existingPaytmImageUrl, storagePath: existingPaytmImageStoragePath } : { title: 'Paytm' };
-        let phonepeData = existingPhonepeImageUrl ? { title: 'PhonePe', imageUrl: existingPhonepeImageUrl, storagePath: existingPhonepeImageStoragePath } : { title: 'PhonePe' };
+        let gpayData = { 
+            title: 'GPay', 
+            imageUrl: existingGpayImageUrl, 
+            storagePath: existingGpayImageStoragePath,
+            enabled: values.gpayEnabled,
+        };
+        let paytmData = { 
+            title: 'Paytm', 
+            imageUrl: existingPaytmImageUrl, 
+            storagePath: existingPaytmImageStoragePath,
+            enabled: values.paytmEnabled,
+        };
+        let phonepeData = { 
+            title: 'PhonePe', 
+            imageUrl: existingPhonepeImageUrl, 
+            storagePath: existingPhonepeImageStoragePath,
+            enabled: values.phonepeEnabled,
+        };
 
 
         let welcomeBannerData = existingWelcomeBannerUrl ? {
@@ -1168,58 +1192,118 @@ export default function SettingsPage() {
                 />
 
                 <Separator />
-                <h4 className="text-md font-semibold">Payment App Logos</h4>
-
-                {existingGpayImageUrl && (
-                  <div className="flex flex-col items-center gap-4">
-                    <p className="text-sm text-muted-foreground mb-2">Current GPay Image:</p>
-                    <Image src={existingGpayImageUrl} alt="Current GPay Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete GPay Image</Button></AlertDialogTrigger>
-                      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the GPay image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteGpayImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                )}
-                <FormField control={form.control} name="gpayImage" render={() => (
-                    <FormItem>
-                      <FormLabel>{existingGpayImageUrl ? 'Upload New GPay Image' : 'Upload GPay Image'}</FormLabel>
-                      <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...gpayImageRef} /></FormControl><FormMessage />
-                    </FormItem>
-                )}/>
-
-                {existingPaytmImageUrl && (
-                  <div className="flex flex-col items-center gap-4">
-                    <p className="text-sm text-muted-foreground mb-2">Current Paytm Image:</p>
-                    <Image src={existingPaytmImageUrl} alt="Current Paytm Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Paytm Image</Button></AlertDialogTrigger>
-                      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the Paytm image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePaytmImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                )}
-                 <FormField control={form.control} name="paytmImage" render={() => (
-                    <FormItem>
-                      <FormLabel>{existingPaytmImageUrl ? 'Upload New Paytm Image' : 'Upload Paytm Image'}</FormLabel>
-                      <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...paytmImageRef} /></FormControl><FormMessage />
-                    </FormItem>
-                )}/>
+                <h4 className="text-md font-semibold">Payment App Logos & Toggles</h4>
                 
-                {existingPhonepeImageUrl && (
-                  <div className="flex flex-col items-center gap-4">
-                    <p className="text-sm text-muted-foreground mb-2">Current PhonePe Image:</p>
-                    <Image src={existingPhonepeImageUrl} alt="Current PhonePe Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete PhonePe Image</Button></AlertDialogTrigger>
-                      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the PhonePe image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePhonepeImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                )}
-                 <FormField control={form.control} name="phonepeImage" render={() => (
-                    <FormItem>
-                      <FormLabel>{existingPhonepeImageUrl ? 'Upload New PhonePe Image' : 'Upload PhonePe Image'}</FormLabel>
-                      <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...phonepeImageRef} /></FormControl><FormMessage />
-                    </FormItem>
-                  )}/>
+                {/* GPay Settings */}
+                <div className="p-4 border rounded-lg space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="gpayEnabled"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between">
+                            <div className="space-y-0.5">
+                            <FormLabel>Enable GPay</FormLabel>
+                            </div>
+                            <FormControl>
+                            <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                            </FormControl>
+                        </FormItem>
+                        )}
+                    />
+                    {existingGpayImageUrl && (
+                    <div className="flex flex-col items-center gap-4">
+                        <p className="text-sm text-muted-foreground mb-2">Current GPay Image:</p>
+                        <Image src={existingGpayImageUrl} alt="Current GPay Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
+                        <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete GPay Image</Button></AlertDialogTrigger>
+                        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the GPay image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteGpayImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                    )}
+                    <FormField control={form.control} name="gpayImage" render={() => (
+                        <FormItem>
+                        <FormLabel>{existingGpayImageUrl ? 'Upload New GPay Image' : 'Upload GPay Image'}</FormLabel>
+                        <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...gpayImageRef} /></FormControl><FormMessage />
+                        </FormItem>
+                    )}/>
+                </div>
+                
+                {/* Paytm Settings */}
+                <div className="p-4 border rounded-lg space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="paytmEnabled"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between">
+                            <div className="space-y-0.5">
+                            <FormLabel>Enable Paytm</FormLabel>
+                            </div>
+                            <FormControl>
+                            <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                            </FormControl>
+                        </FormItem>
+                        )}
+                    />
+                    {existingPaytmImageUrl && (
+                    <div className="flex flex-col items-center gap-4">
+                        <p className="text-sm text-muted-foreground mb-2">Current Paytm Image:</p>
+                        <Image src={existingPaytmImageUrl} alt="Current Paytm Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
+                        <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Paytm Image</Button></AlertDialogTrigger>
+                        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the Paytm image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePaytmImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                    )}
+                    <FormField control={form.control} name="paytmImage" render={() => (
+                        <FormItem>
+                        <FormLabel>{existingPaytmImageUrl ? 'Upload New Paytm Image' : 'Upload Paytm Image'}</FormLabel>
+                        <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...paytmImageRef} /></FormControl><FormMessage />
+                        </FormItem>
+                    )}/>
+                </div>
+
+                {/* PhonePe Settings */}
+                <div className="p-4 border rounded-lg space-y-4">
+                     <FormField
+                        control={form.control}
+                        name="phonepeEnabled"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between">
+                            <div className="space-y-0.5">
+                            <FormLabel>Enable PhonePe</FormLabel>
+                            </div>
+                            <FormControl>
+                            <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                            </FormControl>
+                        </FormItem>
+                        )}
+                    />
+                    {existingPhonepeImageUrl && (
+                    <div className="flex flex-col items-center gap-4">
+                        <p className="text-sm text-muted-foreground mb-2">Current PhonePe Image:</p>
+                        <Image src={existingPhonepeImageUrl} alt="Current PhonePe Image" width={100} height={100} className="rounded-md border p-1" unoptimized />
+                        <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete PhonePe Image</Button></AlertDialogTrigger>
+                        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the PhonePe image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePhonepeImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                    )}
+                    <FormField control={form.control} name="phonepeImage" render={() => (
+                        <FormItem>
+                        <FormLabel>{existingPhonepeImageUrl ? 'Upload New PhonePe Image' : 'Upload PhonePe Image'}</FormLabel>
+                        <FormControl><Input type="file" className="bg-input h-12 rounded-lg" accept={ACCEPTED_IMAGE_TYPES.join(',')} {...phonepeImageRef} /></FormControl><FormMessage />
+                        </FormItem>
+                    )}/>
+                </div>
 
                 <Separator />
                 <h3 className="text-lg font-semibold">Payment QR Code</h3>
