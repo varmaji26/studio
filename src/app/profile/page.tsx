@@ -114,12 +114,30 @@ export default function ProfilePage() {
                         </label>
                         <p className="text-lg font-semibold">{creationDate}</p>
                     </div>
-                     <div>
+                     <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-sm font-medium text-muted-foreground">
+                                Real Balance
+                            </label>
+                            <p className="text-2xl font-bold text-green-400 flex items-center gap-2">
+                               <Wallet className="h-6 w-6" /> ₹{profile.balance?.toFixed(0) || '0'}
+                            </p>
+                        </div>
+                         <div>
+                            <label className="text-sm font-medium text-muted-foreground">
+                                Bonus Balance
+                            </label>
+                            <p className="text-2xl font-bold text-amber-400 flex items-center gap-2">
+                               <Gift className="h-6 w-6" /> ₹{profile.bonusBalance?.toFixed(0) || '0'}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="md:col-span-2 border-t border-white/10 pt-4">
                         <label className="text-sm font-medium text-muted-foreground">
-                        Current Balance
+                            Total Balance
                         </label>
-                        <p className="text-2xl font-bold text-primary flex items-center gap-2">
-                           <Wallet className="h-6 w-6" /> ₹{totalBalance.toFixed(0)}
+                        <p className="text-3xl font-bold text-primary flex items-center gap-2">
+                           ₹{totalBalance.toFixed(0)}
                         </p>
                     </div>
                 </div>
