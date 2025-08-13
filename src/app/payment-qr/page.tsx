@@ -122,27 +122,18 @@ function PaymentQRContent() {
         }
     };
     
-    const handlePayWithSpecificApp = (app: 'gpay' | 'paytm' | 'phonepe') => {
+     const handlePayWithSpecificApp = (app: 'gpay' | 'paytm' | 'phonepe') => {
         if (settings?.upiId && amount) {
             const payeeName = "Matka King";
-            let upiUrl = '';
-
             const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=Payment for Matka King`;
 
-            switch (app) {
-                case 'gpay':
-                    upiUrl = `tez://upi/pay?${baseParams}`;
-                    break;
-                case 'paytm':
-                    upiUrl = `paytmmp://upi/pay?${baseParams}`;
-                    break;
-                case 'phonepe':
-                    upiUrl = `phonepe://pay?${baseParams}`;
-                    break;
-                default:
-                    upiUrl = `upi://pay?${baseParams}`; // Fallback to generic chooser
-            }
-            window.location.href = upiUrl;
+            const upiUrls = {
+                gpay: `tez://upi/pay?${baseParams}`,
+                paytm: `paytmmp://upi/pay?${baseParams}`,
+                phonepe: `phonepe://pay?${baseParams}`
+            };
+
+            window.location.href = upiUrls[app];
         } else {
             toast({
                 variant: 'destructive',
@@ -193,22 +184,22 @@ function PaymentQRContent() {
                         </div>
                         
                          <div className="grid grid-cols-3 gap-2">
-                             <Button variant="outline" className="flex-col h-16 p-1" onClick={() => handlePayWithSpecificApp('gpay')}>
-                                <div className="w-full h-full flex items-center justify-center bg-black rounded-sm">
-                                    <Image src="https://placehold.co/100x40.png" data-ai-hint="google pay logo" alt="GPay" width={80} height={32} />
+                            <Button variant="outline" className="flex-col h-16 p-1" onClick={() => handlePayWithSpecificApp('gpay')}>
+                                <div className="w-full h-full flex items-center justify-center bg-black rounded-sm relative">
+                                    <Image src="https://placehold.co/100x40.png" data-ai-hint="google pay logo" alt="GPay" layout="fill" objectFit="contain" />
                                 </div>
                                 <span className="text-xs mt-1">GPay</span>
                             </Button>
                              <Button variant="outline" className="flex-col h-16 p-1" onClick={() => handlePayWithSpecificApp('paytm')}>
-                                <div className="w-full h-full flex items-center justify-center bg-black rounded-sm">
-                                    <Image src="https://placehold.co/100x40.png" data-ai-hint="paytm logo" alt="Paytm" width={80} height={32} />
+                                <div className="w-full h-full flex items-center justify-center bg-black rounded-sm relative">
+                                     <Image src="https://placehold.co/100x40.png" data-ai-hint="paytm logo" alt="Paytm" layout="fill" objectFit="contain" />
                                 </div>
                                 <span className="text-xs mt-1">Paytm</span>
                             </Button>
                              <Button variant="outline" className="flex-col h-16 p-1" onClick={() => handlePayWithSpecificApp('phonepe')}>
                                <div className="relative w-full h-full flex items-center justify-center bg-black rounded-sm overflow-hidden">
                                 {settings?.paymentDetails?.PhonePe?.imageUrl ? (
-                                    <Image src={settings.paymentDetails.PhonePe.imageUrl} alt="PhonePe" layout="fill" objectFit="cover" unoptimized />
+                                    <Image src={settings.paymentDetails.PhonePe.imageUrl} alt="PhonePe" layout="fill" objectFit="contain" unoptimized />
                                 ) : (
                                      <Image src="https://placehold.co/100x40.png" data-ai-hint="phonepe logo" alt="PhonePe" layout="fill" objectFit="contain" />
                                 )}
