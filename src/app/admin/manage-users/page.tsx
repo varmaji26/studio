@@ -48,12 +48,10 @@ const ITEMS_PER_PAGE = 10;
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageDocs, setPageDocs] = useState<(QueryDocumentSnapshot<DocumentData> | null)[]>([null]);
   const { toast } = useToast();
   const searchParams = useSearchParams();
 
@@ -64,18 +62,11 @@ export default function ManageUsersPage() {
     }
   }, [searchParams]);
 
-   const fetchUsers = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
+   useEffect(() => {
     setUsersLoading(true);
-    try {
-        let q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
 
-        if (direction === 'next' && pageDocs[page - 1]) {
-            q = query(q, startAfter(pageDocs[page - 1]), limit(ITEMS_PER_PAGE));
-        } else {
-            q = query(q, limit(ITEMS_PER_PAGE));
-        }
-        
-        const querySnapshot = await getDocs(q);
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const usersData: User[] = [];
         querySnapshot.forEach((doc) => {
             if (doc.data().displayName && doc.data().mobile) {
@@ -83,43 +74,22 @@ export default function ManageUsersPage() {
             }
         });
         setUsers(usersData);
-
-        const newPageDocs = [...pageDocs.slice(0, page)];
-        newPageDocs[page] = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
-        setPageDocs(newPageDocs);
-
-    } catch (error) {
+        setUsersLoading(false);
+    }, (error) => {
         console.error("Error fetching users: ", error);
         toast({
             variant: 'destructive',
             title: 'Error fetching users',
             description: 'Could not fetch user data.'
         });
-    } finally {
         setUsersLoading(false);
-    }
-   }, [pageDocs, toast]);
+    });
 
-  useEffect(() => {
-    fetchUsers(1, 'first');
-    // Fetch all users for filtering purposes. 
-    const fetchAllForFilter = async () => {
-      const allQuery = query(collection(db, "users"), orderBy("createdAt", "desc"));
-      const allSnapshot = await getDocs(allQuery);
-      setAllUsers(allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
-    };
-    fetchAllForFilter();
-  }, []);
-
-  const handlePageChange = (newPage: number) => {
-    const direction = newPage > currentPage ? 'next' : 'prev';
-    fetchUsers(newPage, direction);
-    setCurrentPage(newPage);
-  }
+    return () => unsubscribe();
+   }, [toast]);
   
   const filteredUsers = useMemo(() => {
-    // If search/filter is active, use the allUsers array. Otherwise, use the paginated users array.
-    let source = searchTerm || selectedDate ? allUsers : users;
+    let source = users;
     let filtered = source;
 
     if (selectedDate) {
@@ -146,9 +116,17 @@ export default function ManageUsersPage() {
     }
 
     return filtered;
-  }, [searchTerm, users, allUsers, selectedDate]);
+  }, [searchTerm, users, selectedDate]);
   
-  const displayUsers = searchTerm || selectedDate ? filteredUsers : users;
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
+
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [searchTerm, selectedDate]);
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
     if (!timestamp || typeof timestamp.seconds !== 'number') return 'N/A';
@@ -190,18 +168,18 @@ export default function ManageUsersPage() {
   };
   
   const renderPagination = () => {
-    if (searchTerm || selectedDate) return null; // Pagination is disabled when filtering/searching
+    if (totalPages <= 1) return null;
 
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
             <div>
-                Page <strong>{currentPage}</strong>
+                Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
             </div>
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                 >
                     Previous
@@ -209,8 +187,8 @@ export default function ManageUsersPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={!pageDocs[currentPage] || displayUsers.length < ITEMS_PER_PAGE}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
                 >
                     Next
                 </Button>
@@ -292,7 +270,7 @@ export default function ManageUsersPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {displayUsers.map((user, index) => (
+                            {paginatedUsers.map((user, index) => (
                                 <TableRow key={user.id}>
                                     <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
                                     <TableCell>{user.displayName}</TableCell>
@@ -337,7 +315,7 @@ export default function ManageUsersPage() {
                 {renderPagination()}
                 </>
             )}
-            {displayUsers.length === 0 && !usersLoading && (
+            {paginatedUsers.length === 0 && !usersLoading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm || selectedDate ? `No users found matching the criteria.` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
                 </p>
