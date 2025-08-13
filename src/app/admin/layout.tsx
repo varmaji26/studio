@@ -358,18 +358,6 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Registered Users"}}>
-              <UserCheck />
-              <span>Registered Users</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: "Payment"}}>
-              <CreditCard />
-              <span>Payment</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
             <Link href="/admin/settings" passHref onClick={handleLinkClick}>
               <SidebarMenuButton isActive={isActive('/admin/settings')} tooltip={{children: "Settings"}}>
                 <Settings />
