@@ -16,15 +16,21 @@ interface AppSettings extends DocumentData {
 }
 
 export default function GoldenAnkPage() {
-    const [settings, setSettings] = useState<AppSettings>({});
+    const [goldenAnk, setGoldenAnk] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
             if (docSnap.exists()) {
-                setSettings(docSnap.data() as AppSettings);
+                const data = docSnap.data() as AppSettings;
+                setGoldenAnk(data.goldenAnk || null);
+            } else {
+                setGoldenAnk(null);
             }
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching Golden Ank:", error);
             setLoading(false);
         });
         
@@ -53,7 +59,7 @@ export default function GoldenAnkPage() {
                                     className="text-5xl font-bold text-white tracking-widest"
                                     style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}
                                 >
-                                    {settings.goldenAnk || '----'}
+                                    {goldenAnk || '----'}
                                 </p>
                             )}
                         </div>
