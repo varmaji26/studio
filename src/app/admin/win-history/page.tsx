@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, where, getDoc, doc, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, where, getDoc, doc, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -52,25 +52,30 @@ export default function AdminWinHistoryPage() {
    const fetchWins = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
     setLoading(true);
     try {
-        let q = query(
+        const baseQuery = query(
             collection(db, "bids"), 
             where("status", "==", "won"),
             orderBy("createdAt", "desc")
         );
+        let q;
         
         if (direction === 'next' && pageDocs[page - 1]) {
-            q = query(q, startAfter(pageDocs[page-1]), limit(ITEMS_PER_PAGE));
+            q = query(baseQuery, startAfter(pageDocs[page-1]), limit(ITEMS_PER_PAGE));
+        } else if (direction === 'prev' && page > 1 && pageDocs[page-1]) {
+            q = query(baseQuery, endBefore(pageDocs[page - 2]), limitToLast(ITEMS_PER_PAGE));
         } else {
-            q = query(q, limit(ITEMS_PER_PAGE));
+            q = query(baseQuery, limit(ITEMS_PER_PAGE));
         }
         
         const querySnapshot = await getDocs(q);
         const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
         setWins(winsData);
 
-        const newPageDocs = [...pageDocs.slice(0, page)];
-        newPageDocs[page] = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
-        setPageDocs(newPageDocs);
+        if (direction !== 'prev') {
+            const newPageDocs = [...pageDocs.slice(0, page)];
+            newPageDocs[page] = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+            setPageDocs(newPageDocs);
+        }
 
     } catch (error) {
         console.error("Error fetching wins: ", error);
@@ -88,7 +93,7 @@ export default function AdminWinHistoryPage() {
         setAllWins(allSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Win)));
     };
     fetchAllForFilter();
-  }, []);
+  }, [fetchWins]);
 
   const handlePageChange = (newPage: number) => {
     const direction = newPage > currentPage ? 'next' : 'prev';
@@ -264,4 +269,3 @@ export default function AdminWinHistoryPage() {
       </div>
   );
 }
-
