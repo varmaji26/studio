@@ -26,6 +26,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
 
 const settingsSchema = z.object({
+  goldenAnk: z.string().optional(),
   whatsappNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
   callSupportNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
   telegramLink: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
@@ -109,6 +110,7 @@ export default function SettingsPage() {
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
+      goldenAnk: '',
       whatsappNumber: '',
       callSupportNumber: '',
       telegramLink: '',
@@ -145,6 +147,7 @@ export default function SettingsPage() {
         if (docSnap.exists()) {
           const data = docSnap.data() as DocumentData;
           form.reset({
+            goldenAnk: data.goldenAnk || '',
             whatsappNumber: data.whatsappNumber || '',
             callSupportNumber: data.callSupportNumber || '',
             telegramLink: data.telegramLink || '',
@@ -336,6 +339,7 @@ export default function SettingsPage() {
         const currentPaymentDetails = currentData.paymentDetails || {};
         
         const dataToSave: any = {
+            goldenAnk: values.goldenAnk,
             whatsappNumber: values.whatsappNumber,
             callSupportNumber: values.callSupportNumber,
             telegramLink: values.telegramLink,
@@ -551,6 +555,28 @@ export default function SettingsPage() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                  
+                 <h3 className="text-lg font-semibold">Golden Ank Settings</h3>
+                <div className="space-y-4 rounded-md border p-4">
+                  <FormField
+                    control={form.control}
+                    name="goldenAnk"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Golden Ank Numbers</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 4-9-2-7" {...field} className="bg-input h-12 rounded-lg" />
+                        </FormControl>
+                        <FormDescriptionComponent>
+                          Enter the lucky numbers separated by dashes.
+                        </FormDescriptionComponent>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Separator />
+
                  <h3 className="text-lg font-semibold">Bonus Popup Settings</h3>
                 <div className="space-y-4 rounded-md border p-4">
                   <FormField
