@@ -222,9 +222,9 @@ export default function AdminLayout({
           </SidebarMenuItem>
            <SidebarMenuItem>
              <Link href="/admin/manage-games" passHref onClick={handleLinkClick}>
-                <SidebarMenuButton isActive={isActive('/admin/manage-games')} tooltip={{children: "Manage Games"}}>
+                <SidebarMenuButton isActive={isActive('/admin/manage-games')} tooltip={{children: "Add New Game"}}>
                     <Gamepad />
-                    <span>Manage Games</span>
+                    <span>Add New Game</span>
                 </SidebarMenuButton>
              </Link>
           </SidebarMenuItem>
