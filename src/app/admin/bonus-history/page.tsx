@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -36,22 +36,25 @@ export default function AdminBonusHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
-   const fetchTransactions = useCallback(async () => {
+   const fetchTransactions = useCallback(() => {
     setLoading(true);
-    try {
-        const q = query(collection(db, "bonusTransactions"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
+    const q = query(collection(db, "bonusTransactions"), orderBy("createdAt", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const transactionsData = querySnapshot.docs.map(transDoc => ({ id: transDoc.id, ...transDoc.data() } as BonusTransaction));
         setTransactions(transactionsData);
-    } catch (error) {
-        console.error("Error fetching bonus transactions: ", error);
-    } finally {
         setLoading(false);
-    }
+    }, (error) => {
+        console.error("Error fetching bonus transactions: ", error);
+        setLoading(false);
+    });
+
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
-    fetchTransactions();
+    const unsubscribe = fetchTransactions();
+    return () => unsubscribe();
   }, [fetchTransactions]);
   
   const filteredTransactions = useMemo(() => {
