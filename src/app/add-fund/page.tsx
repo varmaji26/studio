@@ -85,16 +85,9 @@ export default function AddFundPage() {
             });
             return;
         }
-
-        // Construct the UPI URL
-        const payeeName = "Matka King";
-        const upiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${parsedAmount}&cu=INR`;
         
-        // Redirect to a page where the user can submit their transaction ID after payment
+        // Redirect to a page where the user can see QR code and submit their transaction ID
         router.push(`/payment-qr?amount=${parsedAmount}`);
-
-        // Open the UPI app chooser
-        window.location.href = upiUrl;
     };
 
     if (authLoading || !user) {

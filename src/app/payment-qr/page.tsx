@@ -100,6 +100,7 @@ function PaymentQRContent() {
             await addDoc(collection(db, 'deposits'), {
                 userId: user.uid,
                 displayName: user.displayName,
+                mobile: user.email?.split('@')[0],
                 amount: parseInt(amount, 10),
                 paymentMethod: 'UPI',
                 transactionId: transactionId,
@@ -120,6 +121,12 @@ function PaymentQRContent() {
             });
         } finally {
             setIsSubmitting(false);
+        }
+    };
+    
+    const handlePayWithUpi = () => {
+        if (upiUrl) {
+            window.location.href = upiUrl;
         }
     };
 
@@ -161,6 +168,10 @@ function PaymentQRContent() {
                                 <Skeleton className="h-[200px] w-[200px]" />
                             )}
                         </div>
+
+                         <Button onClick={handlePayWithUpi} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold" disabled={!upiUrl}>
+                            Pay using UPI App
+                         </Button>
                         
                         <div className="bg-yellow-100 text-yellow-800 text-sm p-2 rounded-md flex items-center justify-center gap-2">
                             <Clock className="h-4 w-4" />
