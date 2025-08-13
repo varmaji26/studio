@@ -218,27 +218,11 @@ export default function Home() {
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
-  const [theme, setTheme] = useState('dark');
   const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(storedTheme);
-  }, []);
-  
-  useEffect(() => {
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
-  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -441,10 +425,6 @@ export default function Home() {
                     <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
                         <LogOut className="h-5 w-5 text-primary" />
                         <span>Logout</span>
-                    </button>
-                    <button onClick={toggleTheme} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
-                        {theme === 'dark' ? <Sun className="h-5 w-5 text-primary" /> : <Moon className="h-5 w-5 text-primary" />}
-                        <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
                     </button>
                     <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
                         <HomeIcon className="h-5 w-5 text-primary" />
