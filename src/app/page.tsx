@@ -150,51 +150,49 @@ const GameCard = memo(function GameCard({
         <div
             id={game.id}
             className={cn(
-                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl shadow-white/20 animated-border"
+                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl shadow-white/20 transition-transform duration-300 hover:-translate-y-1"
             )}
         >
-             <div className="relative z-10">
-                <h3 className="text-xl font-bold text-white text-center">{game.name}</h3>
-                <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
-                    <Link
-                        href={`/games/${game.id}/jodi-chart`}
-                        onClick={(e) => handleChartLinkClick(e, game.id, 'jodi')}
-                        className={cn(
-                            "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
-                            animatingButton === `${game.id}-jodi` && "animate-pulse-once"
-                        )}
-                    >
-                        Jodi
-                    </Link>
-                    <span>{formatGameResult(game)}</span>
-                    <Link
-                        href={`/games/${game.id}/panel-chart`}
-                        onClick={(e) => handleChartLinkClick(e, game.id, 'panel')}
-                        className={cn(
-                            "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
-                            animatingButton === `${game.id}-panel` && "animate-pulse-once"
-                        )}
-                    >
-                        Panel
-                    </Link>
-                </div>
-                <p className={cn(
-                    "text-sm font-bold text-center",
-                    bettingClosed ? "text-red-500" : "text-green-500"
-                )}>
-                    {bettingClosed ? 'Betting Closed' : game.status}
-                </p>
-                <Button 
-                    onClick={(e) => handlePlayNowClick(e, game.id)}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg [text-shadow:2px_2px_4px_#000]"
-                    disabled={bettingClosed}
+            <h3 className="text-xl font-bold text-white text-center">{game.name}</h3>
+            <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
+                <Link
+                    href={`/games/${game.id}/jodi-chart`}
+                    onClick={(e) => handleChartLinkClick(e, game.id, 'jodi')}
+                    className={cn(
+                        "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
+                        animatingButton === `${game.id}-jodi` && "animate-pulse-once"
+                    )}
                 >
-                    Play Now
-                </Button>
-                <div className="flex items-center justify-center text-sm font-bold text-white mt-2 whitespace-nowrap">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
-                </div>
+                    Jodi
+                </Link>
+                <span>{formatGameResult(game)}</span>
+                <Link
+                    href={`/games/${game.id}/panel-chart`}
+                    onClick={(e) => handleChartLinkClick(e, game.id, 'panel')}
+                    className={cn(
+                        "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
+                        animatingButton === `${game.id}-panel` && "animate-pulse-once"
+                    )}
+                >
+                    Panel
+                </Link>
+            </div>
+            <p className={cn(
+                "text-sm font-bold text-center",
+                bettingClosed ? "text-red-500" : "text-green-500"
+            )}>
+                {bettingClosed ? 'Betting Closed' : game.status}
+            </p>
+            <Button 
+                onClick={(e) => handlePlayNowClick(e, game.id)}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg [text-shadow:2px_2px_4px_#000]"
+                disabled={bettingClosed}
+            >
+                Play Now
+            </Button>
+            <div className="flex items-center justify-center text-sm font-bold text-white mt-2 whitespace-nowrap">
+                <Clock className="h-4 w-4 mr-2" />
+                <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
             </div>
         </div>
     );
@@ -384,6 +382,24 @@ export default function Home() {
   );
   
   const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+    },
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -638,21 +654,29 @@ export default function Home() {
           <CardHeader>
             <CardTitle className="text-xl text-center">Matka Games</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             {gamesLoading ? (
               <div className="flex justify-center items-center h-24">
                 <Loader className="h-8 w-8 text-primary" />
               </div>
             ) : games.length > 0 ? (
-              games.map((game) => (
-                <GameCard 
-                    key={game.id}
-                    game={game}
-                    animatingButton={animatingButton}
-                    handlePlayNowClick={handlePlayNowClick}
-                    handleChartLinkClick={handleChartLinkClick}
-                />
-              ))
+                <motion.div 
+                    className="space-y-4"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                >
+                    {games.map((game) => (
+                        <motion.div key={game.id} variants={itemVariants}>
+                            <GameCard 
+                                game={game}
+                                animatingButton={animatingButton}
+                                handlePlayNowClick={handlePlayNowClick}
+                                handleChartLinkClick={handleChartLinkClick}
+                            />
+                        </motion.div>
+                    ))}
+                </motion.div>
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
             )}
