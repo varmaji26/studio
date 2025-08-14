@@ -150,8 +150,10 @@ const GameCard = memo(function GameCard({
                 {bettingClosed ? 'Betting Closed' : game.status}
             </p>
             
-             <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} passHref>
-                <PlayButton />
+             <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} passHref legacyBehavior>
+                <a className={cn(bettingClosed && "pointer-events-none")}>
+                    <PlayButton />
+                </a>
             </Link>
 
             <div className="flex items-center justify-center text-xs font-semibold text-white bg-slate-800 p-2 rounded-lg gap-2">
@@ -580,11 +582,11 @@ export default function Home() {
             ) : games.length > 0 ? (
               <div className="grid grid-cols-2 gap-3">
                 {games.map((game) => (
-                  <div key={game.id} className="flex flex-col items-center justify-center bg-emerald-800/80 p-2 rounded-lg border border-emerald-700 text-center">
+                  <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-2 rounded-lg border border-emerald-700 text-center">
                     <span className="text-xs font-medium text-white">{game.name}</span>
                     <div className="flex flex-wrap items-baseline justify-center gap-x-1">
-                        <span className="text-xs font-bold text-primary">{formatGameResult(game, true)}</span>
-                        <span className="text-xs text-muted-foreground">({formatTime(game.closeTime)})</span>
+                        <span className="text-xs font-bold text-white">{formatGameResult(game, true)}</span>
+                        <span className="text-xs text-black/70">({formatTime(game.closeTime)})</span>
                     </div>
                   </div>
                 ))}
