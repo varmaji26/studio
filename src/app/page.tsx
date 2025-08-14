@@ -153,7 +153,7 @@ const GameCard = memo(function GameCard({
             id={game.id}
             className={cn(
                 "rounded-lg p-4 text-center space-y-3 bg-slate-800/80 border border-slate-700 shadow-[0_0_15px_rgba(255,255,255,0.2)]",
-                animatingGameId === game.id && "animate-pulse-once"
+                animatingGameId === game.id && "animate-shake"
             )}
         >
             <div className="relative z-10 space-y-3">
@@ -169,7 +169,7 @@ const GameCard = memo(function GameCard({
                     >
                         Jodi
                     </Link>
-                    <span className={cn(animatingGameId === game.id && "animate-shake")}>{formatGameResult(game)}</span>
+                    <span>{formatGameResult(game)}</span>
                     <Link
                         href={`/games/${game.id}/panel-chart`}
                         onClick={(e) => handleChartLinkClick(e, game.id, 'panel')}
