@@ -135,66 +135,30 @@ const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
 
 // Memoized Game Card Component for performance optimization
 const GameCard = memo(function GameCard({ 
-    game, 
-    animatingButton, 
-    handlePlayNowClick, 
-    handleChartLinkClick 
+    game
 }: { 
-    game: Game, 
-    animatingButton: string | null,
-    handlePlayNowClick: (e: React.MouseEvent<HTMLButtonElement>, gameId: string) => void,
-    handleChartLinkClick: (e: React.MouseEvent<HTMLAnchorElement>, gameId: string, type: 'jodi' | 'panel') => void
+    game: Game
 }) {
     const bettingClosed = isBettingClosed(game.closeTime);
+    
     return (
-        <div
-            id={game.id}
+      <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} passHref>
+         <motion.div
+            variants={itemVariants}
             className={cn(
-                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl shadow-white/20 transition-transform duration-300 hover:-translate-y-1"
+                "bg-slate-800/80 border border-white/10 rounded-lg p-3 text-center space-y-1 shadow-2xl shadow-white/20 transition-transform duration-300 hover:-translate-y-1",
+                bettingClosed ? "cursor-not-allowed opacity-70" : "cursor-pointer"
             )}
         >
-            <h3 className="text-xl font-bold text-white text-center">{game.name}</h3>
-            <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
-                <Link
-                    href={`/games/${game.id}/jodi-chart`}
-                    onClick={(e) => handleChartLinkClick(e, game.id, 'jodi')}
-                    className={cn(
-                        "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
-                        animatingButton === `${game.id}-jodi` && "animate-pulse-once"
-                    )}
-                >
-                    Jodi
-                </Link>
-                <span>{formatGameResult(game)}</span>
-                <Link
-                    href={`/games/${game.id}/panel-chart`}
-                    onClick={(e) => handleChartLinkClick(e, game.id, 'panel')}
-                    className={cn(
-                        "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
-                        animatingButton === `${game.id}-panel` && "animate-pulse-once"
-                    )}
-                >
-                    Panel
-                </Link>
-            </div>
-            <p className={cn(
-                "text-sm font-bold text-center",
-                bettingClosed ? "text-red-500" : "text-green-500"
-            )}>
-                {bettingClosed ? 'Betting Closed' : game.status}
+            <h3 className="text-sm font-bold text-white truncate">{game.name}</h3>
+            <p className="text-lg font-bold text-yellow-400 tracking-wider">
+                {formatGameResult(game)}
             </p>
-            <Button 
-                onClick={(e) => handlePlayNowClick(e, game.id)}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg [text-shadow:2px_2px_4px_#000]"
-                disabled={bettingClosed}
-            >
-                Play Now
-            </Button>
-            <div className="flex items-center justify-center text-sm font-bold text-white mt-2 whitespace-nowrap">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
-            </div>
-        </div>
+            <p className="text-xs text-muted-foreground">
+                (Closes: {formatTime(game.closeTime)})
+            </p>
+        </motion.div>
+      </Link>
     );
 });
 
@@ -334,22 +298,6 @@ export default function Home() {
   const handleLinkClick = () => {
     setIsSheetOpen(false);
   };
-  
-  const handlePlayNowClick = (e: React.MouseEvent<HTMLButtonElement>, gameId: string) => {
-    e.preventDefault();
-    router.push(`/games/${gameId}`);
-  };
-
-  const handleChartLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, gameId: string, type: 'jodi' | 'panel') => {
-    e.preventDefault();
-    const animationKey = `${gameId}-${type}`;
-    setAnimatingButton(animationKey);
-    setTimeout(() => {
-        router.push(`/games/${gameId}/${type}-chart`);
-        setAnimatingButton(null);
-    }, 500); // Animation duration
-  };
-
 
   const handleLogout = async () => {
     try {
@@ -661,20 +609,16 @@ export default function Home() {
               </div>
             ) : games.length > 0 ? (
                 <motion.div 
-                    className="space-y-4"
+                    className="grid grid-cols-2 gap-3"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
                 >
                     {games.map((game) => (
-                        <motion.div key={game.id} variants={itemVariants}>
-                            <GameCard 
-                                game={game}
-                                animatingButton={animatingButton}
-                                handlePlayNowClick={handlePlayNowClick}
-                                handleChartLinkClick={handleChartLinkClick}
-                            />
-                        </motion.div>
+                        <GameCard 
+                            key={game.id}
+                            game={game}
+                        />
                     ))}
                 </motion.div>
             ) : (
