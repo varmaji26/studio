@@ -136,13 +136,11 @@ const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
 // Memoized Game Card Component for performance optimization
 const GameCard = memo(function GameCard({ 
     game, 
-    animatingGameId, 
     animatingButton, 
     handlePlayNowClick, 
     handleChartLinkClick 
 }: { 
     game: Game, 
-    animatingGameId: string | null, 
     animatingButton: string | null,
     handlePlayNowClick: (e: React.MouseEvent<HTMLButtonElement>, gameId: string) => void,
     handleChartLinkClick: (e: React.MouseEvent<HTMLAnchorElement>, gameId: string, type: 'jodi' | 'panel') => void
@@ -152,8 +150,7 @@ const GameCard = memo(function GameCard({
         <div
             id={game.id}
             className={cn(
-                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3",
-                animatingGameId === game.id && "animate-pulse-once"
+                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3 shadow-lg shadow-white/10 transition-transform hover:scale-105"
             )}
         >
             <h3 className="text-xl font-bold text-white">{game.name}</h3>
@@ -214,12 +211,10 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState<UserProfile>({ balance: 0, bonusBalance: 0 });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
-  const [animatingGameId, setAnimatingGameId] = useState<string | null>(null);
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
-  const prevGamesRef = useRef<Game[]>([]);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
 
@@ -267,20 +262,6 @@ export default function Home() {
       filteredGames.sort((a, b) => {
           return a.openTime.localeCompare(b.openTime);
       });
-      
-      // Check for result updates to trigger animation
-      const prevGames = prevGamesRef.current;
-      if (prevGames.length > 0) {
-        filteredGames.forEach(newGame => {
-          const oldGame = prevGames.find(g => g.id === newGame.id);
-          if (oldGame && oldGame.result !== newGame.result) {
-            setAnimatingGameId(newGame.id);
-            setTimeout(() => setAnimatingGameId(null), 1000); // Animation duration
-          }
-        });
-      }
-      prevGamesRef.current = filteredGames;
-
 
       setGames(filteredGames);
       setGamesLoading(false);
@@ -665,7 +646,6 @@ export default function Home() {
                 <GameCard 
                     key={game.id}
                     game={game}
-                    animatingGameId={animatingGameId}
                     animatingButton={animatingButton}
                     handlePlayNowClick={handlePlayNowClick}
                     handleChartLinkClick={handleChartLinkClick}
