@@ -144,13 +144,13 @@ const GameCard = memo(function GameCard({
             </div>
 
             <p className={cn(
-                "text-center font-semibold text-sm",
+                "text-center font-semibold p-1 rounded-md text-base",
                 bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
             )}>
                 {bettingClosed ? 'Betting Closed' : game.status}
             </p>
             
-             <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} className={cn(bettingClosed && "pointer-events-none")}>
+            <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} className={cn(bettingClosed && "pointer-events-none")}>
                 <PlayButton />
             </Link>
 
