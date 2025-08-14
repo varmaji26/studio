@@ -390,7 +390,6 @@ export default function Home() {
   }
 
   const mobileNumber = user.email?.split('@')[0];
-  const isAdmin = user.email === '8080601370@authcanvas.dev';
   
   const marqueeRepetitions = settings.marquee?.text ? 3 : 0;
   const marqueeItems = Array(marqueeRepetitions).fill(settings.marquee);
@@ -469,6 +468,14 @@ export default function Home() {
                 </nav>
             </div>
             <div className="p-4 border-t border-white/10">
+                 {user.isAdmin && (
+                    <Link href="/admin">
+                        <Button variant="secondary" className="w-full">
+                            <ShieldCheck className="mr-2 h-5 w-5" />
+                            Admin Panel
+                        </Button>
+                    </Link>
+                 )}
             </div>
           </SheetContent>
         </Sheet>
@@ -485,13 +492,6 @@ export default function Home() {
                     <span className="font-bold text-md text-white">₹{totalBalance.toFixed(0) ?? '0'}</span>
                 </div>
             </div>
-          {isAdmin && (
-            <Link href="/admin">
-              <Button size="icon" aria-label="Admin Panel" className="bg-green-500 text-white hover:bg-green-600 ml-2">
-                <ShieldCheck className="h-6 w-6" strokeWidth={2.5} />
-              </Button>
-            </Link>
-          )}
         </div>
       </header>
       
