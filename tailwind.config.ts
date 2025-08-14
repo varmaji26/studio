@@ -89,11 +89,6 @@ export default {
             height: '0',
           },
         },
-         'pulse-slow': {
-          '50%': {
-            transform: 'scale(1.02)',
-          },
-        },
         shake: {
           '0%, 100%': { transform: 'translateX(0)' },
           '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-5px)' },
@@ -103,7 +98,6 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'pulse-slow': 'pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         shake: 'shake 0.5s ease-in-out',
       },
     },
