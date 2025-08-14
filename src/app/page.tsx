@@ -109,74 +109,52 @@ interface UserProfile extends DocumentData {
   bonusBalance?: number;
 }
 
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
-  };
-
-const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
-    const title = settings?.title || 'MATKA KING';
-    const text = settings?.text || '';
-    const textColor = settings?.textColor || '#FFFFFF';
-    const logoUrl = settings?.logo?.imageUrl;
-    const logoSize = settings?.logoSize || 24;
-    const titleSize = settings?.titleSize || 20;
-    const textSize = settings?.textSize || 12;
-
-    return (
-        <div className="flex items-center mx-4" style={{ color: textColor }}>
-            {logoUrl ? (
-                <Image src={logoUrl} alt="Marquee Logo" width={logoSize} height={logoSize} className="mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} unoptimized/>
-            ) : (
-                <Trophy className="text-yellow-400 mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} />
-            )}
-            <div className="flex flex-col items-center">
-                <span className="font-bold tracking-wider" style={{ fontSize: `${titleSize}px` }}>{title}</span>
-                <span style={{ fontSize: `${textSize}px`}}>{text}</span>
-            </div>
-        </div>
-    );
-};
-
 // Memoized Game Card Component for performance optimization
-const GameCard = memo(function GameCard({ 
+const GameCard = memo(function GameCard({
     game
-}: { 
+}: {
     game: Game
 }) {
     const bettingClosed = isBettingClosed(game.closeTime);
-    
+
     return (
-      <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} passHref>
-         <motion.div
-            variants={itemVariants}
-            className={cn(
-                "bg-slate-800/80 border border-white/10 rounded-lg p-3 text-center space-y-1 shadow-2xl shadow-white/20",
-                bettingClosed ? "cursor-not-allowed opacity-70" : "cursor-pointer"
-            )}
-        >
-            <h3 className="text-sm font-bold text-white truncate text-center">{game.name}</h3>
-            <p className="text-lg font-bold text-yellow-400 tracking-wider text-center">
-                {formatGameResult(game)}
+        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-4 space-y-3 shadow-lg">
+            <h3 className="text-xl font-bold text-white text-center">{game.name}</h3>
+            
+            <div className="bg-yellow-400 rounded-full flex items-center justify-between p-1">
+                <Link href={`/games/${game.id}/jodi-chart`}>
+                    <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-8 shadow-md hover:bg-orange-600">Jodi</Button>
+                </Link>
+                <span className="text-black font-bold text-lg tracking-wider">{formatGameResult(game)}</span>
+                <Link href={`/games/${game.id}/panel-chart`}>
+                     <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-8 shadow-md hover:bg-orange-600">Panel</Button>
+                </Link>
+            </div>
+
+            <p className={cn(
+                "text-center font-semibold text-sm",
+                game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400'
+            )}>
+                {game.status}
             </p>
-            <p className="text-xs text-muted-foreground text-center">
-                (Closes: {formatTime(game.closeTime)})
-            </p>
-        </motion.div>
-      </Link>
+
+            <Link href={`/games/${game.id}`} passHref>
+                 <Button
+                    className={cn(
+                        "w-full h-12 text-lg font-bold text-white rounded-lg shadow-md transition-transform active:scale-95",
+                         bettingClosed ? "bg-gray-600 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700"
+                    )}
+                    disabled={bettingClosed}
+                 >
+                    Play Now
+                </Button>
+            </Link>
+
+            <div className="flex items-center justify-center text-xs text-muted-foreground gap-1">
+                <Clock className="h-3 w-3" />
+                <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+            </div>
+        </div>
     );
 });
 
@@ -338,6 +316,30 @@ export default function Home() {
   
   const marqueeRepetitions = settings.marquee?.text ? 3 : 0;
   const marqueeItems = Array(marqueeRepetitions).fill(settings.marquee);
+
+  const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
+    const title = settings?.title || 'MATKA KING';
+    const text = settings?.text || '';
+    const textColor = settings?.textColor || '#FFFFFF';
+    const logoUrl = settings?.logo?.imageUrl;
+    const logoSize = settings?.logoSize || 24;
+    const titleSize = settings?.titleSize || 20;
+    const textSize = settings?.textSize || 12;
+
+    return (
+        <div className="flex items-center mx-4" style={{ color: textColor }}>
+            {logoUrl ? (
+                <Image src={logoUrl} alt="Marquee Logo" width={logoSize} height={logoSize} className="mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} unoptimized/>
+            ) : (
+                <Trophy className="text-yellow-400 mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} />
+            )}
+            <div className="flex flex-col items-center">
+                <span className="font-bold tracking-wider" style={{ fontSize: `${titleSize}px` }}>{title}</span>
+                <span style={{ fontSize: `${textSize}px`}}>{text}</span>
+            </div>
+        </div>
+    );
+};
 
   const MarqueeContent = () => (
     <div className="flex">
@@ -608,19 +610,14 @@ export default function Home() {
                 <Loader className="h-8 w-8 text-primary" />
               </div>
             ) : games.length > 0 ? (
-                <motion.div 
-                    className="grid grid-cols-2 gap-3"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                >
+                <div className="grid grid-cols-1 gap-4">
                     {games.map((game) => (
                         <GameCard 
                             key={game.id}
                             game={game}
                         />
                     ))}
-                </motion.div>
+                </div>
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
             )}
