@@ -40,7 +40,8 @@ const dayAbbreviations: { [key: string]: string } = {
 };
 
 export default function JodiChartPage() {
-    const { gameId } = useParams();
+    const params = useParams();
+    const gameId = params.gameId;
     const router = useRouter();
     const [chartData, setChartData] = useState<JodiChartData | null>(null);
     const [loading, setLoading] = useState(true);

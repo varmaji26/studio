@@ -128,7 +128,8 @@ const betTypes = [
 
 export default function GamePage() {
   const router = useRouter();
-  const { gameId } = useParams();
+  const params = useParams();
+  const gameId = params.gameId;
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [animatingBetType, setAnimatingBetType] = useState<string | null>(null);

@@ -57,7 +57,8 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
 
 
 export default function PanelChartPage() {
-    const { gameId } = useParams();
+    const params = useParams();
+    const gameId = params.gameId;
     const [chartData, setChartData] = useState<PanelChartData | null>(null);
     const [loading, setLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);

@@ -28,7 +28,8 @@ const jodiSchema = /^\d{2}$/;
 
 export default function JodiDigitPage() {
   const router = useRouter();
-  const { gameId } = useParams();
+  const params = useParams();
+  const gameId = params.gameId;
   const { toast } = useToast();
   const { user } = useAuth();
 

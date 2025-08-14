@@ -28,7 +28,8 @@ const panaSchema = /^\d{3}$/;
 
 export default function TriplePanaPage() {
   const router = useRouter();
-  const { gameId } = useParams();
+  const params = useParams();
+  const gameId = params.gameId;
   const { toast } = useToast();
   const { user } = useAuth();
 

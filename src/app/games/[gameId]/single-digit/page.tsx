@@ -26,7 +26,8 @@ const numbers = Array.from({ length: 10 }, (_, i) => i.toString());
 
 export default function SingleDigitPage() {
   const router = useRouter();
-  const { gameId } = useParams();
+  const params = useParams();
+  const gameId = params.gameId;
   const { toast } = useToast();
   const { user } = useAuth();
 
