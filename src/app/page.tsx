@@ -150,10 +150,10 @@ const GameCard = memo(function GameCard({
         <div
             id={game.id}
             className={cn(
-                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl shadow-white/20 transition-transform hover:scale-105"
+                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl shadow-white/20 transition-transform hover:-translate-y-1"
             )}
         >
-            <h3 className="text-xl font-bold text-white">{game.name}</h3>
+            <h3 className="text-xl font-bold text-white text-center">{game.name}</h3>
             <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
                 <Link
                     href={`/games/${game.id}/jodi-chart`}
@@ -178,7 +178,7 @@ const GameCard = memo(function GameCard({
                 </Link>
             </div>
             <p className={cn(
-                "text-sm font-bold",
+                "text-sm font-bold text-center",
                 bettingClosed ? "text-red-500" : "text-green-500"
             )}>
                 {bettingClosed ? 'Betting Closed' : game.status}
