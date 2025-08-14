@@ -130,7 +130,7 @@ const GameCard = memo(function GameCard({
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-4 space-y-3 shadow-lg shadow-white/10 transition-transform duration-300 hover:-translate-y-1">
+        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-4 space-y-3 shadow-lg shadow-white/10">
             <h3 className="text-xl font-bold text-white text-center">{game.name}</h3>
             
             <div className="bg-yellow-400 rounded-full flex items-center justify-between p-1">
@@ -158,8 +158,8 @@ const GameCard = memo(function GameCard({
                 </Link>
             )}
 
-            <div className="flex items-center justify-center text-xs text-muted-foreground gap-1">
-                <Clock className="h-3 w-3" />
+            <div className="flex items-center justify-center text-sm font-semibold text-white bg-slate-800 p-2 rounded-lg gap-2">
+                <Clock className="h-4 w-4" />
                 <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
             </div>
         </div>
