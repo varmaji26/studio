@@ -624,7 +624,7 @@ export default function Home() {
                 <Loader className="h-8 w-8 text-primary" />
               </div>
             ) : games.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {games.map((game) => (
                   <div key={game.id} className="flex justify-between items-center bg-slate-800/80 p-3 rounded-lg border border-slate-700">
                     <span className="text-sm font-medium text-white">{game.name}</span>
