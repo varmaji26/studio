@@ -118,7 +118,7 @@ const GameCard = memo(function GameCard({
     const bettingClosed = isBettingClosed(game.closeTime);
 
     return (
-        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-4 space-y-3 shadow-lg">
+        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-4 space-y-3 shadow-2xl shadow-white/20 transition-transform duration-300 hover:-translate-y-1">
             <h3 className="text-xl font-bold text-white text-center">{game.name}</h3>
             
             <div className="bg-yellow-400 rounded-full flex items-center justify-between p-1">
@@ -133,9 +133,9 @@ const GameCard = memo(function GameCard({
 
             <p className={cn(
                 "text-center font-semibold text-sm",
-                game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400'
+                bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
             )}>
-                {game.status}
+                {bettingClosed ? 'Betting Closed' : game.status}
             </p>
 
             <Link href={`/games/${game.id}`} passHref>
@@ -145,6 +145,11 @@ const GameCard = memo(function GameCard({
                          bettingClosed ? "bg-gray-600 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700"
                     )}
                     disabled={bettingClosed}
+                    onClick={(e) => {
+                        if (bettingClosed) {
+                            e.preventDefault();
+                        }
+                    }}
                  >
                     Play Now
                 </Button>
