@@ -626,11 +626,11 @@ export default function Home() {
             ) : games.length > 0 ? (
               <div className="grid grid-cols-2 gap-3">
                 {games.map((game) => (
-                  <div key={game.id} className="flex justify-between items-center bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-                    <span className="text-sm font-medium text-white">{game.name}</span>
-                    <div className="text-right">
-                       <span className="text-sm font-bold text-primary">{formatGameResult(game)}</span>
-                      <span className="text-xs text-muted-foreground ml-2">({formatTime(game.closeTime)})</span>
+                  <div key={game.id} className="flex flex-col items-center justify-center bg-slate-800/80 p-2 rounded-lg border border-slate-700 text-center">
+                    <span className="text-xs font-medium text-white">{game.name}</span>
+                    <div className="flex flex-wrap items-baseline justify-center gap-x-1">
+                        <span className="text-xs font-bold text-primary">{formatGameResult(game, true)}</span>
+                        <span className="text-xs text-muted-foreground">({formatTime(game.closeTime)})</span>
                     </div>
                   </div>
                 ))}

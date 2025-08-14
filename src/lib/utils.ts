@@ -39,17 +39,17 @@ const calculateJodiDigit = (pana: string): string => {
     return (pana.split('').reduce((acc, digit) => acc + parseInt(digit, 10), 0) % 10).toString();
 };
 
-export function formatGameResult(game: DocumentData): string {
+export function formatGameResult(game: DocumentData, compact: boolean = false): string {
     const { openResult, closeResult } = game;
 
     const isOpenValid = openResult && /^\d{3}$/.test(openResult);
     const isCloseValid = closeResult && /^\d{3}$/.test(closeResult);
 
     const openPana = isOpenValid ? openResult : '***';
-    const closePana = isCloseValid ? closeResult : 'XXX';
+    const closePana = isCloseValid ? closeResult : (compact ? '***' : 'XXX');
 
     const openJodi = calculateJodiDigit(openPana) || '*';
-    const closeJodi = calculateJodiDigit(closePana) || 'X';
+    const closeJodi = calculateJodiDigit(closePana) || (compact ? '*' : 'X');
 
     if (isOpenValid && isCloseValid) {
         // Both results are in, show full result
@@ -58,9 +58,9 @@ export function formatGameResult(game: DocumentData): string {
 
     if (isOpenValid) {
         // Only open result is in, show partial result with placeholders
-        return `${openPana}-${openJodi}X-XXX`;
+         return `${openPana}-${openJodi}${closeJodi}-${closePana}`;
     }
     
     // Default placeholder if no results are in
-    return `***-**-XXX`;
+     return `***-${openJodi}${closeJodi}-***`;
 }
