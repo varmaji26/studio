@@ -152,52 +152,50 @@ const GameCard = memo(function GameCard({
         <div
             id={game.id}
             className={cn(
-                "animated-border rounded-lg p-px", // Add animated-border here
-                animatingGameId === game.id && "animate-shake"
+                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3",
+                animatingGameId === game.id && "animate-pulse-once"
             )}
         >
-            <div className="relative z-10 space-y-3 p-4 rounded-lg">
-                <h3 className="text-xl font-bold text-white">{game.name}</h3>
-                <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
-                    <Link
-                        href={`/games/${game.id}/jodi-chart`}
-                        onClick={(e) => handleChartLinkClick(e, game.id, 'jodi')}
-                        className={cn(
-                            "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
-                            animatingButton === `${game.id}-jodi` && "animate-pulse-once"
-                        )}
-                    >
-                        Jodi
-                    </Link>
-                    <span>{formatGameResult(game)}</span>
-                    <Link
-                        href={`/games/${game.id}/panel-chart`}
-                        onClick={(e) => handleChartLinkClick(e, game.id, 'panel')}
-                        className={cn(
-                            "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
-                            animatingButton === `${game.id}-panel` && "animate-pulse-once"
-                        )}
-                    >
-                        Panel
-                    </Link>
-                </div>
-                <p className={cn(
-                    "text-sm font-bold",
-                    bettingClosed ? "text-red-500" : "text-green-500"
-                )}>
-                    {bettingClosed ? 'Betting Closed' : game.status}
-                </p>
-                <Button 
-                    onClick={(e) => handlePlayNowClick(e, game.id)}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg [text-shadow:2px_2px_4px_#000]"
-                    disabled={bettingClosed}
+            <h3 className="text-xl font-bold text-white">{game.name}</h3>
+            <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
+                <Link
+                    href={`/games/${game.id}/jodi-chart`}
+                    onClick={(e) => handleChartLinkClick(e, game.id, 'jodi')}
+                    className={cn(
+                        "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
+                        animatingButton === `${game.id}-jodi` && "animate-pulse-once"
+                    )}
                 >
-                    Play Now
-                </Button>
-                <div className="flex items-center justify-center text-sm font-bold text-white mt-2 whitespace-nowrap">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
-                </div>
+                    Jodi
+                </Link>
+                <span>{formatGameResult(game)}</span>
+                <Link
+                    href={`/games/${game.id}/panel-chart`}
+                    onClick={(e) => handleChartLinkClick(e, game.id, 'panel')}
+                    className={cn(
+                        "bg-orange-500 text-white px-3 py-1 rounded-md text-sm font-bold shadow-md",
+                        animatingButton === `${game.id}-panel` && "animate-pulse-once"
+                    )}
+                >
+                    Panel
+                </Link>
+            </div>
+            <p className={cn(
+                "text-sm font-bold",
+                bettingClosed ? "text-red-500" : "text-green-500"
+            )}>
+                {bettingClosed ? 'Betting Closed' : game.status}
+            </p>
+            <Button 
+                onClick={(e) => handlePlayNowClick(e, game.id)}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg h-12 rounded-lg shadow-lg [text-shadow:2px_2px_4px_#000]"
+                disabled={bettingClosed}
+            >
+                Play Now
+            </Button>
+            <div className="flex items-center justify-center text-sm font-bold text-white mt-2 whitespace-nowrap">
+                <Clock className="h-4 w-4 mr-2" />
+                <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
             </div>
         </div>
     );
