@@ -150,7 +150,7 @@ const GameCard = memo(function GameCard({
         <div
             id={game.id}
             className={cn(
-                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl shadow-white/10 transition-transform hover:scale-105"
+                "bg-slate-800/80 border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl shadow-white/20 transition-transform hover:scale-105"
             )}
         >
             <h3 className="text-xl font-bold text-white">{game.name}</h3>
