@@ -150,10 +150,8 @@ const GameCard = memo(function GameCard({
                 {bettingClosed ? 'Betting Closed' : game.status}
             </p>
             
-             <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} passHref legacyBehavior>
-                <a className={cn(bettingClosed && "pointer-events-none")}>
-                    <PlayButton />
-                </a>
+             <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} className={cn(bettingClosed && "pointer-events-none")}>
+                <PlayButton />
             </Link>
 
             <div className="flex items-center justify-center text-xs font-semibold text-white bg-slate-800 p-2 rounded-lg gap-2">
