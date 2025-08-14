@@ -158,7 +158,7 @@ const GameCard = memo(function GameCard({
                 </Link>
             )}
 
-            <div className="flex items-center justify-center text-sm font-semibold text-white bg-slate-800 p-2 rounded-lg gap-2">
+            <div className="flex items-center justify-center text-xs font-semibold text-white bg-slate-800 p-2 rounded-lg gap-2">
                 <Clock className="h-4 w-4" />
                 <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
             </div>
