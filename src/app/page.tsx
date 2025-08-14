@@ -109,6 +109,24 @@ interface UserProfile extends DocumentData {
   bonusBalance?: number;
 }
 
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+    },
+  };
+
 const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
     const title = settings?.title || 'MATKA KING';
     const text = settings?.text || '';
@@ -146,15 +164,15 @@ const GameCard = memo(function GameCard({
          <motion.div
             variants={itemVariants}
             className={cn(
-                "bg-slate-800/80 border border-white/10 rounded-lg p-3 text-center space-y-1 shadow-2xl shadow-white/20 transition-transform duration-300 hover:-translate-y-1",
+                "bg-slate-800/80 border border-white/10 rounded-lg p-3 text-center space-y-1 shadow-2xl shadow-white/20",
                 bettingClosed ? "cursor-not-allowed opacity-70" : "cursor-pointer"
             )}
         >
-            <h3 className="text-sm font-bold text-white truncate">{game.name}</h3>
-            <p className="text-lg font-bold text-yellow-400 tracking-wider">
+            <h3 className="text-sm font-bold text-white truncate text-center">{game.name}</h3>
+            <p className="text-lg font-bold text-yellow-400 tracking-wider text-center">
                 {formatGameResult(game)}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground text-center">
                 (Closes: {formatTime(game.closeTime)})
             </p>
         </motion.div>
@@ -330,24 +348,6 @@ export default function Home() {
   );
   
   const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
