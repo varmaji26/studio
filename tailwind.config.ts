@@ -89,10 +89,6 @@ export default {
             height: '0',
           },
         },
-        'pulse-once': {
-          '0%, 100%': { transform: 'scale(1)' },
-          '50%': { transform: 'scale(1.02)' },
-        },
         'shake': {
           '0%, 100%': { transform: 'translateX(0)' },
           '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-2px)' },
@@ -102,7 +98,6 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'pulse-once': 'pulse-once 0.5s ease-in-out',
         'shake': 'shake 0.5s ease-in-out',
       },
     },
