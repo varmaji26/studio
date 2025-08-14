@@ -117,8 +117,20 @@ const GameCard = memo(function GameCard({
 }) {
     const bettingClosed = isBettingClosed(game.closeTime);
 
+    const PlayButton = () => (
+        <Button
+            className={cn(
+                "w-full h-12 text-lg font-bold text-white rounded-lg shadow-md transition-transform active:scale-95",
+                bettingClosed ? "bg-gray-600 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700"
+            )}
+            disabled={bettingClosed}
+        >
+            Play Now
+        </Button>
+    );
+
     return (
-        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-4 space-y-3 shadow-2xl shadow-white/20 transition-transform duration-300 hover:-translate-y-1">
+        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-4 space-y-3 shadow-lg shadow-white/10 transition-transform duration-300 hover:-translate-y-1">
             <h3 className="text-xl font-bold text-white text-center">{game.name}</h3>
             
             <div className="bg-yellow-400 rounded-full flex items-center justify-between p-1">
@@ -138,22 +150,13 @@ const GameCard = memo(function GameCard({
                 {bettingClosed ? 'Betting Closed' : game.status}
             </p>
 
-            <Link href={`/games/${game.id}`} passHref>
-                 <Button
-                    className={cn(
-                        "w-full h-12 text-lg font-bold text-white rounded-lg shadow-md transition-transform active:scale-95",
-                         bettingClosed ? "bg-gray-600 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700"
-                    )}
-                    disabled={bettingClosed}
-                    onClick={(e) => {
-                        if (bettingClosed) {
-                            e.preventDefault();
-                        }
-                    }}
-                 >
-                    Play Now
-                </Button>
-            </Link>
+            {bettingClosed ? (
+                <PlayButton />
+            ) : (
+                <Link href={`/games/${game.id}`} passHref>
+                    <PlayButton />
+                </Link>
+            )}
 
             <div className="flex items-center justify-center text-xs text-muted-foreground gap-1">
                 <Clock className="h-3 w-3" />
