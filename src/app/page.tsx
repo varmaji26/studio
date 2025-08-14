@@ -152,11 +152,11 @@ const GameCard = memo(function GameCard({
         <div
             id={game.id}
             className={cn(
-                "rounded-lg p-4 text-center space-y-3 bg-slate-800/80 border border-slate-700 shadow-[0_0_15px_rgba(255,255,255,0.2)]",
+                "animated-border rounded-lg p-px", // Add animated-border here
                 animatingGameId === game.id && "animate-shake"
             )}
         >
-            <div className="relative z-10 space-y-3">
+            <div className="relative z-10 space-y-3 p-4 rounded-lg">
                 <h3 className="text-xl font-bold text-white">{game.name}</h3>
                 <div className="bg-yellow-400 text-black font-bold text-lg rounded-lg py-2 shadow-lg flex items-center justify-between px-2">
                     <Link
