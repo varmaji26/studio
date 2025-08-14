@@ -149,14 +149,10 @@ const GameCard = memo(function GameCard({
             )}>
                 {bettingClosed ? 'Betting Closed' : game.status}
             </p>
-
-            {bettingClosed ? (
+            
+             <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} passHref>
                 <PlayButton />
-            ) : (
-                <Link href={`/games/${game.id}`} passHref>
-                    <PlayButton />
-                </Link>
-            )}
+            </Link>
 
             <div className="flex items-center justify-center text-xs font-semibold text-white bg-slate-800 p-2 rounded-lg gap-2">
                 <Clock className="h-4 w-4" />
@@ -584,7 +580,7 @@ export default function Home() {
             ) : games.length > 0 ? (
               <div className="grid grid-cols-2 gap-3">
                 {games.map((game) => (
-                  <div key={game.id} className="flex flex-col items-center justify-center bg-slate-800/80 p-2 rounded-lg border border-slate-700 text-center">
+                  <div key={game.id} className="flex flex-col items-center justify-center bg-emerald-800/80 p-2 rounded-lg border border-emerald-700 text-center">
                     <span className="text-xs font-medium text-white">{game.name}</span>
                     <div className="flex flex-wrap items-baseline justify-center gap-x-1">
                         <span className="text-xs font-bold text-primary">{formatGameResult(game, true)}</span>
