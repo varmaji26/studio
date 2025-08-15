@@ -526,7 +526,7 @@ export default function Home() {
 
 
         {settings.welcomeBanner?.imageUrl && (
-             <Card className="bg-card/80 border-white/10 shadow-lg">
+             <Card className="bg-card/80 border-white/10 shadow-lg shadow-white/10">
                 <CardContent className="p-0">
                     <Image
                         src={settings.welcomeBanner.imageUrl}
