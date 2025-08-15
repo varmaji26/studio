@@ -120,7 +120,7 @@ const GameCard = memo(function GameCard({
     const PlayButton = () => (
         <Button
             className={cn(
-                "w-full h-12 text-lg font-bold text-white rounded-lg shadow-md transition-transform active:scale-95",
+                "w-full h-10 text-base font-bold text-white rounded-lg shadow-md transition-transform active:scale-95",
                 bettingClosed ? "bg-gray-600 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700"
             )}
             disabled={bettingClosed}
@@ -130,31 +130,35 @@ const GameCard = memo(function GameCard({
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-4 space-y-3 shadow-lg shadow-white/10 animate-breathe">
-            <h3 className="text-xl font-bold text-white text-center">{game.name}</h3>
+        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-3 space-y-2 shadow-lg shadow-white/10 animate-breathe">
+            <h3 className="text-lg font-bold text-white text-center">{game.name}</h3>
             
             <div className="bg-yellow-400 rounded-full flex items-center justify-between p-1">
                 <Link href={`/games/${game.id}/jodi-chart`}>
                     <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-8 shadow-md hover:bg-orange-600">Jodi</Button>
                 </Link>
-                <span className="text-black font-bold text-lg tracking-wider">{formatGameResult(game)}</span>
+                <span className="text-black font-bold text-base tracking-wider">{formatGameResult(game)}</span>
                 <Link href={`/games/${game.id}/panel-chart`}>
                      <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-8 shadow-md hover:bg-orange-600">Panel</Button>
                 </Link>
             </div>
             
-            <div className="h-8 flex items-center justify-center">
+            <div className="h-7 flex items-center justify-center">
                 <p className={cn(
-                    "text-center font-semibold rounded-md text-base",
+                    "text-center font-semibold rounded-md text-sm",
                     bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                 )}>
                     {bettingClosed ? 'Betting Closed' : game.status}
                 </p>
             </div>
             
-            <Link href={bettingClosed ? `/#${game.id}` : `/games/${game.id}`} className={cn(bettingClosed && "pointer-events-none")}>
-                <PlayButton />
-            </Link>
+            {bettingClosed ? (
+                 <PlayButton />
+            ) : (
+                <Link href={`/games/${game.id}`} className="block">
+                    <PlayButton />
+                </Link>
+            )}
 
             <div className="flex items-center justify-center text-xs font-semibold text-white bg-slate-800 p-2 rounded-lg gap-2">
                 <Clock className="h-4 w-4" />
