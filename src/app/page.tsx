@@ -130,7 +130,7 @@ const GameCard = memo(function GameCard({
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-3 space-y-2 shadow-lg shadow-white/10 animate-breathe">
+        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-3 space-y-2 shadow-2xl shadow-black/50 animate-breathe">
             <h3 className="text-lg font-bold text-white text-center">{game.name}</h3>
             
             <div className="bg-yellow-400 rounded-full flex items-center justify-between p-1">
@@ -145,7 +145,7 @@ const GameCard = memo(function GameCard({
             
             <div className="h-7 flex items-center justify-center">
                 <p className={cn(
-                    "text-center font-semibold rounded-md text-sm",
+                    "text-center font-semibold rounded-md",
                     bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                 )}>
                     {bettingClosed ? 'Betting Closed' : game.status}
