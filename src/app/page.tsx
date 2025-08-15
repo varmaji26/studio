@@ -584,10 +584,8 @@ export default function Home() {
                 {games.map((game) => (
                   <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-1 rounded-lg border border-black text-center">
                     <span className="text-xs font-medium text-white [text-shadow:1px_1px_2px_#000]">{game.name}</span>
-                    <div className="flex flex-wrap items-baseline justify-center gap-x-1">
-                        <span className="text-xs font-bold text-black">{formatGameResult(game, true)}</span>
-                        <span className="text-xs text-black/70">({formatTime(game.closeTime)})</span>
-                    </div>
+                    <span className="text-xs font-bold text-black">{formatGameResult(game, true)}</span>
+                    <span className="text-xs text-black/70">({formatTime(game.closeTime)})</span>
                   </div>
                 ))}
               </div>
