@@ -145,7 +145,7 @@ const GameCard = memo(function GameCard({
             
             <div className="h-7 flex items-center justify-center">
                 <p className={cn(
-                    "text-center font-semibold rounded-md",
+                    "text-center font-semibold rounded-md text-base",
                     bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                 )}>
                     {bettingClosed ? 'Betting Closed' : game.status}
@@ -427,7 +427,7 @@ export default function Home() {
             <div className="p-4 border-t border-white/10">
                  {user.isAdmin && (
                     <Link href="/admin">
-                        <Button variant="secondary" className="w-full">
+                        <Button className="w-full bg-[#34a387] hover:bg-[#34a387]/90 text-white">
                             <ShieldCheck className="mr-2 h-5 w-5" />
                             Admin Panel
                         </Button>
