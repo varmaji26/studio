@@ -22,7 +22,7 @@ interface Game extends DocumentData {
 }
 
 const SingleDigitIcon = () => (
-    <svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M4.80005 17.5V30.5C4.80005 32.7091 6.59091 34.5 8.80005 34.5H21.8L33.8 22.5V9.5C33.8 7.29086 32.0092 5.5 29.8 5.5H16.8L4.80005 17.5Z" fill="#3F3F3F" fillOpacity="0.8"/>
         <path d="M21.8 34.5H34.8C37.0092 34.5 38.8 32.7091 38.8 30.5V17.5L21.8 34.5Z" fill="#2F2F2F" fillOpacity="0.8"/>
         <path d="M43.2 22.5L33.8 31.5V9.5L43.2 22.5Z" fill="#2F2F2F" fillOpacity="0.8"/>
@@ -35,7 +35,7 @@ const SingleDigitIcon = () => (
 );
 
 const JodiDigitIcon = () => (
-    <svg width="64" height="64" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="48" height="48" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g transform="translate(15, 0) scale(0.9)">
             <path d="M9.8 17.5V30.5C9.8 32.7091 11.5909 34.5 13.8 34.5H26.8L38.8 22.5V9.5C38.8 7.29086 37.0092 5.5 34.8 5.5H21.8L9.8 17.5Z" fill="#FFFFFF" fillOpacity="0.9"/>
             <path d="M26.8 34.5H39.8C42.0092 34.5 43.8 32.7091 43.8 30.5V17.5L26.8 34.5Z" fill="#E0E0E0" fillOpacity="0.9"/>
@@ -57,7 +57,7 @@ const JodiDigitIcon = () => (
 );
 
 const SinglePanaIcon = () => (
-    <svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_1_2)"/>
         <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_1_2)"/>
         <defs>
@@ -74,7 +74,7 @@ const SinglePanaIcon = () => (
 );
 
 const DoublePanaIcon = () => (
-     <svg width="64" height="64" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+     <svg width="48" height="48" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g transform="translate(8, 8) scale(0.8)" style={{opacity: 0.6}}>
             <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_2_2_double)"/>
             <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_2_2_double)"/>
@@ -93,7 +93,7 @@ const DoublePanaIcon = () => (
 );
 
 const TriplePanaIcon = () => (
-    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="48" height="48" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g transform="translate(16, 16) scale(0.7)" style={{opacity: 0.5}}>
             <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_3_2_triple2)"/>
             <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_3_2_triple2)"/>
@@ -185,18 +185,18 @@ export default function GamePage() {
     <div className="dark min-h-screen bg-background text-foreground p-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-2xl font-bold">
             Place Your Bet - <span className="text-primary bg-primary/20 px-2 rounded-md">{game.name}</span>
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-1">
             Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}
           </p>
-           <p className="text-muted-foreground mt-1">
+           <p className="text-muted-foreground mt-1 text-sm">
             Choose a bet type to start placing your bids.
           </p>
         </div>
         
-        <div className="my-6">
+        <div className="my-4">
             <Button asChild variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white">
                 <Link href={`/#${gameId}`}>
                     <div className="flex items-center gap-2">
@@ -209,9 +209,9 @@ export default function GamePage() {
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
             <CardHeader>
-                <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
+                <CardTitle className="text-xl text-center">Choose a Bet Type</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-2 gap-2">
                {betTypes.map((betType) => {
                   const isClickable = !!betType.href;
                   const Wrapper = isClickable ? Link : 'div';
@@ -220,7 +220,7 @@ export default function GamePage() {
                   return (
                     <Wrapper key={betType.title} {...props} onClick={() => handleBetTypeClick(betType.title)}>
                       <div className={cn(
-                        "rounded-lg p-4 text-white text-center flex flex-col items-center justify-between h-36",
+                        "rounded-lg p-2 text-white text-center flex flex-col items-center justify-between h-32",
                         "transition-all duration-300 transform hover:scale-105",
                         betType.gradient,
                         animatingBetType === betType.title && 'animate-pulse-once'
@@ -228,7 +228,7 @@ export default function GamePage() {
                           <div className="flex-grow flex items-center justify-center">
                             {betType.icon}
                           </div>
-                          <p className="font-bold text-lg">{betType.title}</p>
+                          <p className="font-bold">{betType.title}</p>
                       </div>
                     </Wrapper>
                   )
