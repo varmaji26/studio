@@ -66,7 +66,7 @@ export default function BidsHistoryPage() {
                 bidsData.push({ id: doc.id, ...doc.data() } as Bid);
             });
             // Sort client-side
-            bidsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+            bidsData.sort((a, b) => b.createdAt.toMillis() - b.createdAt.toMillis());
             setBids(bidsData);
         } catch (error) {
             console.error("Error fetching bids history: ", error);
@@ -179,26 +179,26 @@ export default function BidsHistoryPage() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Game</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Numbers</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="text-xs">Date</TableHead>
+                        <TableHead className="text-xs">Game</TableHead>
+                        <TableHead className="text-xs">Type</TableHead>
+                        <TableHead className="text-xs">Numbers</TableHead>
+                        <TableHead className="text-xs">Amount</TableHead>
+                        <TableHead className="text-xs">Status</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {data.map((bid) => (
                         <TableRow key={bid.id}>
-                            <TableCell>{formatDate(bid.createdAt)}</TableCell>
-                            <TableCell>{bid.gameName} ({bid.session})</TableCell>
-                            <TableCell>{bid.betType}</TableCell>
-                            <TableCell>{bid.numbers.join(', ')}</TableCell>
-                            <TableCell>₹{bid.totalAmount}</TableCell>
-                            <TableCell>
+                            <TableCell className="text-xs">{formatDate(bid.createdAt)}</TableCell>
+                            <TableCell className="text-xs">{bid.gameName} ({bid.session})</TableCell>
+                            <TableCell className="text-xs">{bid.betType}</TableCell>
+                            <TableCell className="text-xs">{bid.numbers.join(', ')}</TableCell>
+                            <TableCell className="text-xs">₹{bid.totalAmount}</TableCell>
+                            <TableCell className="text-xs">
                                 <Badge 
                                     variant={getStatusBadgeVariant(bid.status)}
-                                    className={bid.status === 'won' ? 'bg-green-500 text-white' : ''}
+                                    className={cn('text-xs', bid.status === 'won' ? 'bg-green-500 text-white' : '')}
                                 >
                                     {bid.status}
                                 </Badge>
