@@ -40,7 +40,7 @@ export default function AdminBidHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [allBids, setAllBids] = useState<Bid[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const searchParams = useSearchParams();
 
   useEffect(() => {
