@@ -20,10 +20,10 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
     <div className="dark min-h-screen bg-background text-foreground p-2">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-2">
-          <h1 className="text-base font-bold whitespace-nowrap">
+          <h1 className="text-sm font-bold whitespace-nowrap">
             Place Your Bet - <span className="text-primary">{gameName}</span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">{activeBetType}</p>
+          <p className="text-xs text-muted-foreground mt-1">{activeBetType}</p>
         </div>
 
         <div className="my-2">
