@@ -208,32 +208,33 @@ export default function PaymentHistoryPage() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="text-[9px]">Date</TableHead>
+                        <TableHead className="text-[9px]">Type</TableHead>
+                        <TableHead className="text-[9px]">Amount</TableHead>
+                        <TableHead className="text-[9px]">Method</TableHead>
+                        <TableHead className="text-[9px]">Status</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {data.map((t) => (
                         <TableRow key={t.id}>
-                            <TableCell>{formatDate(t.createdAt)}</TableCell>
-                            <TableCell>
-                                <Badge variant={t.type === 'deposit' ? 'default' : 'outline'} className={t.type === 'deposit' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
+                            <TableCell className="text-[9px]">{formatDate(t.createdAt)}</TableCell>
+                            <TableCell className="text-[9px]">
+                                <Badge variant={t.type === 'deposit' ? 'default' : 'outline'} className={cn('text-[9px]', t.type === 'deposit' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400')}>
                                     {t.type === 'deposit' ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
                                     {t.type}
                                 </Badge>
                             </TableCell>
-                            <TableCell>₹{t.amount}</TableCell>
-                            <TableCell>{t.paymentMethod || t.withdrawalMethod}</TableCell>
-                            <TableCell>
+                            <TableCell className="text-[9px]">₹{t.amount}</TableCell>
+                            <TableCell className="text-[9px]">{t.paymentMethod || t.withdrawalMethod}</TableCell>
+                            <TableCell className="text-[9px]">
                                 <Badge 
                                     variant={getStatusBadgeVariant(t.status)}
-                                    className={
+                                    className={cn(
+                                        'text-[9px]',
                                         t.status === 'approved' ? 'bg-green-500 text-white' : 
                                         t.status === 'rejected' ? 'bg-red-500 text-white' : ''
-                                    }
+                                    )}
                                 >
                                     {t.status}
                                 </Badge>
