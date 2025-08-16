@@ -19,7 +19,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { BottomNavbar } from '@/components/bottom-navbar';
-import type { DateRange } from 'react-day-picker';
 
 
 interface Bid extends DocumentData {
@@ -49,10 +48,8 @@ export default function BidsHistoryPage() {
     const [settings, setSettings] = useState<AppSettings>({});
     const [activeTab, setActiveTab] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
-    const [date, setDate] = useState<DateRange | undefined>({
-        from: new Date(),
-        to: new Date(),
-    });
+    const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
+    const [toDate, setToDate] = useState<Date | undefined>(new Date());
 
     const fetchBids = useCallback(async () => {
         if (!user) return;
@@ -116,11 +113,11 @@ export default function BidsHistoryPage() {
     const filteredBids = useMemo(() => {
         let filtered = bids;
         
-        if (date?.from) {
-            const startOfDay = new Date(date.from);
+        if (fromDate) {
+            const startOfDay = new Date(fromDate);
             startOfDay.setHours(0, 0, 0, 0);
 
-            const endOfDay = date.to ? new Date(date.to) : new Date(date.from);
+            const endOfDay = toDate ? new Date(toDate) : new Date(fromDate);
             endOfDay.setHours(23, 59, 59, 999);
             
             filtered = filtered.filter(bid => {
@@ -133,7 +130,7 @@ export default function BidsHistoryPage() {
             return filtered;
         }
         return filtered.filter(bid => bid.status === activeTab);
-    }, [bids, activeTab, date]);
+    }, [bids, activeTab, fromDate, toDate]);
 
     const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
     const paginatedBids = useMemo(() => {
@@ -143,7 +140,7 @@ export default function BidsHistoryPage() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [activeTab, date]);
+    }, [activeTab, fromDate, toDate]);
 
     const renderPagination = () => {
         if (totalPages <= 1) return null;
@@ -211,7 +208,7 @@ export default function BidsHistoryPage() {
             </Table>
             {data.length === 0 && (
                 <p className="text-center text-muted-foreground mt-4">
-                    {date?.from ? `No bids found for the selected date range.` : 
+                    {fromDate ? `No bids found for the selected date range.` : 
                      activeTab === 'all' ? "You haven't placed any bids yet." : `No ${activeTab} bids found.`}
                 </p>
             )}
@@ -243,43 +240,59 @@ export default function BidsHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex justify-end mb-4">
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    id="date"
-                                    variant={"outline"}
-                                    className={cn(
-                                      "w-[300px] justify-start text-left font-normal",
-                                      !date && "text-muted-foreground"
-                                    )}
-                                  >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date?.from ? (
-                                      date.to ? (
-                                        <>
-                                          {format(date.from, "LLL dd, y")} -{" "}
-                                          {format(date.to, "LLL dd, y")}
-                                        </>
-                                      ) : (
-                                        format(date.from, "LLL dd, y")
-                                      )
-                                    ) : (
-                                      <span>Pick a date</span>
-                                    )}
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="end">
-                                  <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={date?.from}
-                                    selected={date}
-                                    onSelect={setDate}
-                                    numberOfMonths={2}
-                                  />
-                                </PopoverContent>
-                              </Popover>
+                        <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
+                             <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <Label htmlFor="from-date" className="text-sm">From</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        id="from-date"
+                                        variant={"outline"}
+                                        className={cn(
+                                          "w-full sm:w-[150px] justify-start text-left font-normal",
+                                          !fromDate && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {fromDate ? format(fromDate, "dd/MM/yy") : <span>Pick a date</span>}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={fromDate}
+                                        onSelect={setFromDate}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <Label htmlFor="to-date" className="text-sm">To</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        id="to-date"
+                                        variant={"outline"}
+                                        className={cn(
+                                          "w-full sm:w-[150px] justify-start text-left font-normal",
+                                          !toDate && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {toDate ? format(toDate, "dd/MM/yy") : <span>Pick a date</span>}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="end">
+                                      <Calendar
+                                        mode="single"
+                                        selected={toDate}
+                                        onSelect={setToDate}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                            </div>
                         </div>
 
                         <Tabs defaultValue="all" onValueChange={setActiveTab}>
