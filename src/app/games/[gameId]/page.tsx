@@ -182,36 +182,36 @@ export default function GamePage() {
   }
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground p-4">
+    <div className="dark min-h-screen bg-background text-foreground p-2">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-bold">
+        <div className="text-center mb-2">
+          <h1 className="text-xl font-bold">
             Place Your Bet - <span className="text-primary bg-primary/20 px-2 rounded-md">{game.name}</span>
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-sm">
             Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}
           </p>
-           <p className="text-muted-foreground mt-1 text-sm">
+           <p className="text-muted-foreground mt-1 text-xs">
             Choose a bet type to start placing your bids.
           </p>
         </div>
         
-        <div className="my-4">
-            <Button asChild variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white">
+        <div className="my-2">
+            <Button asChild variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white h-9">
                 <Link href={`/#${gameId}`}>
                     <div className="flex items-center gap-2">
                         <ArrowLeft className="h-4 w-4"/>
-                        <span>Back to Home</span>
+                        <span className="text-sm">Back to Home</span>
                     </div>
                 </Link>
             </Button>
         </div>
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
-            <CardHeader>
-                <CardTitle className="text-xl text-center">Choose a Bet Type</CardTitle>
+            <CardHeader className="p-4">
+                <CardTitle className="text-lg text-center">Choose a Bet Type</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2">
+            <CardContent className="grid grid-cols-2 gap-2 p-2">
                {betTypes.map((betType) => {
                   const isClickable = !!betType.href;
                   const Wrapper = isClickable ? Link : 'div';
@@ -220,7 +220,7 @@ export default function GamePage() {
                   return (
                     <Wrapper key={betType.title} {...props} onClick={() => handleBetTypeClick(betType.title)}>
                       <div className={cn(
-                        "rounded-lg p-2 text-white text-center flex flex-col items-center justify-between h-32",
+                        "rounded-lg p-2 text-white text-center flex flex-col items-center justify-between h-28",
                         "transition-all duration-300 transform hover:scale-105",
                         betType.gradient,
                         animatingBetType === betType.title && 'animate-pulse-once'
@@ -228,7 +228,7 @@ export default function GamePage() {
                           <div className="flex-grow flex items-center justify-center">
                             {betType.icon}
                           </div>
-                          <p className="font-bold">{betType.title}</p>
+                          <p className="font-bold text-sm">{betType.title}</p>
                       </div>
                     </Wrapper>
                   )
