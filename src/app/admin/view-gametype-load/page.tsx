@@ -137,16 +137,16 @@ export default function ViewGameTypeLoadPage() {
     betTypeLoadDetails.forEach(details => {
         if (details.totalLoad > 0) {
             doc.autoTable({
-                head: [[`${details.betType} - Total Load: ₹${details.totalLoad.toFixed(2)}`]],
+                head: [[`${details.betType} - Total Load: INR ${details.totalLoad.toFixed(2)}`]],
                 body: [],
                 startY: startY,
                 headStyles: { fillColor: [22, 163, 74] }
             });
 
-            const tableColumn = ["Number", "Load"];
+            const tableColumn = ["Number", "Load (INR)"];
             const tableRows: (string | number)[][] = Object.entries(details.numberLoads)
               .sort(([numA], [numB]) => numA.localeCompare(numB, undefined, { numeric: true }))
-              .map(([number, load]) => [number, `₹${load.toFixed(2)}`]);
+              .map(([number, load]) => [number, load.toFixed(2)]);
               
             doc.autoTable({
                 head: [tableColumn],
