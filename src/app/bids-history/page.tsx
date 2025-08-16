@@ -16,9 +16,10 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { BottomNavbar } from '@/components/bottom-navbar';
+import type { DateRange } from 'react-day-picker';
 
 
 interface Bid extends DocumentData {
@@ -48,12 +49,10 @@ export default function BidsHistoryPage() {
     const [settings, setSettings] = useState<AppSettings>({});
     const [activeTab, setActiveTab] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-
-    useEffect(() => {
-        // This sets the initial date to today when the component mounts.
-        setSelectedDate(new Date());
-    }, []);
+    const [date, setDate] = useState<DateRange | undefined>({
+        from: new Date(),
+        to: new Date(),
+    });
 
     const fetchBids = useCallback(async () => {
         if (!user) return;
@@ -117,22 +116,24 @@ export default function BidsHistoryPage() {
     const filteredBids = useMemo(() => {
         let filtered = bids;
         
-        const dateToFilter = selectedDate || new Date(); // Default to today if no date is selected
-        const startOfDay = new Date(dateToFilter);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(dateToFilter);
-        endOfDay.setHours(23, 59, 59, 999);
+        if (date?.from) {
+            const startOfDay = new Date(date.from);
+            startOfDay.setHours(0, 0, 0, 0);
 
-        filtered = filtered.filter(bid => {
-            const bidDate = bid.createdAt.toDate();
-            return bidDate >= startOfDay && bidDate <= endOfDay;
-        });
+            const endOfDay = date.to ? new Date(date.to) : new Date(date.from);
+            endOfDay.setHours(23, 59, 59, 999);
+            
+            filtered = filtered.filter(bid => {
+                const bidDate = bid.createdAt.toDate();
+                return bidDate >= startOfDay && bidDate <= endOfDay;
+            });
+        }
         
         if (activeTab === 'all') {
             return filtered;
         }
         return filtered.filter(bid => bid.status === activeTab);
-    }, [bids, activeTab, selectedDate]);
+    }, [bids, activeTab, date]);
 
     const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
     const paginatedBids = useMemo(() => {
@@ -142,7 +143,7 @@ export default function BidsHistoryPage() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [activeTab, selectedDate]);
+    }, [activeTab, date]);
 
     const renderPagination = () => {
         if (totalPages <= 1) return null;
@@ -210,7 +211,7 @@ export default function BidsHistoryPage() {
             </Table>
             {data.length === 0 && (
                 <p className="text-center text-muted-foreground mt-4">
-                    {selectedDate ? `No bids found for ${format(selectedDate, 'PPP')}.` : 
+                    {date?.from ? `No bids found for the selected date range.` : 
                      activeTab === 'all' ? "You haven't placed any bids yet." : `No ${activeTab} bids found.`}
                 </p>
             )}
@@ -243,28 +244,42 @@ export default function BidsHistoryPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="flex justify-end mb-4">
-                            <Popover>
+                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button
+                                  <Button
+                                    id="date"
                                     variant={"outline"}
                                     className={cn(
-                                        "w-full sm:w-[280px] justify-start text-left font-normal",
-                                        !selectedDate && "text-muted-foreground"
+                                      "w-[300px] justify-start text-left font-normal",
+                                      !date && "text-muted-foreground"
                                     )}
-                                    >
+                                  >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                                    </Button>
+                                    {date?.from ? (
+                                      date.to ? (
+                                        <>
+                                          {format(date.from, "LLL dd, y")} -{" "}
+                                          {format(date.to, "LLL dd, y")}
+                                        </>
+                                      ) : (
+                                        format(date.from, "LLL dd, y")
+                                      )
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                  </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                    mode="single"
-                                    selected={selectedDate}
-                                    onSelect={setSelectedDate}
+                                <PopoverContent className="w-auto p-0" align="end">
+                                  <Calendar
                                     initialFocus
-                                    />
+                                    mode="range"
+                                    defaultMonth={date?.from}
+                                    selected={date}
+                                    onSelect={setDate}
+                                    numberOfMonths={2}
+                                  />
                                 </PopoverContent>
-                            </Popover>
+                              </Popover>
                         </div>
 
                         <Tabs defaultValue="all" onValueChange={setActiveTab}>
