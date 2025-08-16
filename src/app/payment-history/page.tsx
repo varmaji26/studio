@@ -52,8 +52,13 @@ export default function PaymentHistoryPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
     const [settings, setSettings] = useState<AppSettings>({});
+
+    useEffect(() => {
+        // This sets the initial date to today when the component mounts.
+        setSelectedDate(new Date());
+    }, []);
 
     useEffect(() => {
         if (authLoading) return;
@@ -100,18 +105,19 @@ export default function PaymentHistoryPage() {
     }, [user, authLoading, router]);
 
     const filteredTransactions = useMemo(() => {
-        if (!selectedDate) {
-            return transactions;
-        }
-        const startOfDay = new Date(selectedDate);
+        let filtered = transactions;
+        
+        const dateToFilter = selectedDate || new Date(); // Default to today if no date is selected
+        const startOfDay = new Date(dateToFilter);
         startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(selectedDate);
+        const endOfDay = new Date(dateToFilter);
         endOfDay.setHours(23, 59, 59, 999);
-
-        return transactions.filter(t => {
+        
+        filtered = filtered.filter(t => {
             const tDate = t.createdAt.toDate();
             return tDate >= startOfDay && tDate <= endOfDay;
         });
+        return filtered;
     }, [transactions, selectedDate]);
 
     useEffect(() => {
@@ -143,7 +149,7 @@ export default function PaymentHistoryPage() {
         const doc = new jsPDF();
         doc.text("Payment History", 14, 16);
 
-        const tableColumn = ["Date", "Type", "Amount (₹)", "Method", "Status"];
+        const tableColumn = ["Date", "Type", "Amount (INR)", "Method", "Status"];
         const tableRows: (string | number)[][] = [];
 
         transactions.forEach(t => {
