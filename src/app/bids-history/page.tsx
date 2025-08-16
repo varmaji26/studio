@@ -48,7 +48,12 @@ export default function BidsHistoryPage() {
     const [settings, setSettings] = useState<AppSettings>({});
     const [activeTab, setActiveTab] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+    useEffect(() => {
+        // This sets the initial date to today when the component mounts.
+        setSelectedDate(new Date());
+    }, []);
 
     const fetchBids = useCallback(async () => {
         if (!user) return;
@@ -112,18 +117,17 @@ export default function BidsHistoryPage() {
     const filteredBids = useMemo(() => {
         let filtered = bids;
         
-        if (selectedDate) {
-            const startOfDay = new Date(selectedDate);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(selectedDate);
-            endOfDay.setHours(23, 59, 59, 999);
+        const dateToFilter = selectedDate || new Date(); // Default to today if no date is selected
+        const startOfDay = new Date(dateToFilter);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(dateToFilter);
+        endOfDay.setHours(23, 59, 59, 999);
 
-            filtered = filtered.filter(bid => {
-                const bidDate = bid.createdAt.toDate();
-                return bidDate >= startOfDay && bidDate <= endOfDay;
-            });
-        }
-
+        filtered = filtered.filter(bid => {
+            const bidDate = bid.createdAt.toDate();
+            return bidDate >= startOfDay && bidDate <= endOfDay;
+        });
+        
         if (activeTab === 'all') {
             return filtered;
         }
