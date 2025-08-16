@@ -149,7 +149,7 @@ export default function AdminPaymentHistoryPage() {
     const doc = new jsPDF();
     doc.text("Admin Payment History", 14, 16);
 
-    const tableColumn = ["Date", "Username", "Mobile", "Type", "Amount", "Method", "Status"];
+    const tableColumn = ["Date", "Username", "Mobile", "Type", "Amount (₹)", "Method", "Status"];
     const tableRows: (string | number)[][] = [];
     
     // PDF download will contain all filtered data, not just the paginated view.
@@ -159,7 +159,7 @@ export default function AdminPaymentHistoryPage() {
             t.displayName,
             t.mobile || 'N/A',
             t.type,
-            `₹${t.amount}`,
+            t.amount,
             t.paymentMethod || t.withdrawalMethod || 'N/A',
             t.status,
         ];

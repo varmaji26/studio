@@ -137,7 +137,7 @@ export default function ViewGameTypeLoadPage() {
     betTypeLoadDetails.forEach(details => {
         if (details.totalLoad > 0) {
             doc.autoTable({
-                head: [[`${details.betType} - Total Load: INR ${details.totalLoad.toFixed(2)}`]],
+                head: [[`${details.betType} - Total Load: ${details.totalLoad.toFixed(2)} INR`]],
                 body: [],
                 startY: startY,
                 headStyles: { fillColor: [22, 163, 74] }

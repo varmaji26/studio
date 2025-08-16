@@ -143,14 +143,14 @@ export default function PaymentHistoryPage() {
         const doc = new jsPDF();
         doc.text("Payment History", 14, 16);
 
-        const tableColumn = ["Date", "Type", "Amount", "Method", "Status"];
+        const tableColumn = ["Date", "Type", "Amount (₹)", "Method", "Status"];
         const tableRows: (string | number)[][] = [];
 
         transactions.forEach(t => {
             const transactionData = [
                 formatDate(t.createdAt),
                 t.type,
-                `₹${t.amount}`,
+                t.amount,
                 t.paymentMethod || t.withdrawalMethod || 'N/A',
                 t.status,
             ];

@@ -111,24 +111,24 @@ export default function MarketLoadPage() {
     const reportDate = selectedDate ? format(selectedDate, "PPP") : 'All Time';
     doc.text(`Market-wise Load & Distribution - ${reportDate}`, 14, 16);
 
-    const tableColumn = ["NAME", "LOAD", "DISTRIBUTION", "PROFIT/LOSS"];
+    const tableColumn = ["NAME", "LOAD (₹)", "DISTRIBUTION (₹)", "PROFIT/LOSS (₹)"];
     const tableRows: (string | number)[][] = [];
 
     marketData.forEach(market => {
         const marketRow = [
             market.gameName,
-            `₹${market.load.toFixed(2)}`,
-            `₹${market.distribution.toFixed(2)}`,
-            `₹${market.profitLoss.toFixed(2)}`
+            market.load.toFixed(2),
+            market.distribution.toFixed(2),
+            market.profitLoss.toFixed(2)
         ];
         tableRows.push(marketRow);
     });
     
     const totalRow = [
         'Total',
-        `₹${totalLoad.toFixed(2)}`,
-        `₹${totalDistribution.toFixed(2)}`,
-        `₹${totalProfitLoss.toFixed(2)}`
+        totalLoad.toFixed(2),
+        totalDistribution.toFixed(2),
+        totalProfitLoss.toFixed(2)
     ];
 
     doc.autoTable({
