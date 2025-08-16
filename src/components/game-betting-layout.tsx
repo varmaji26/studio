@@ -19,19 +19,19 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
   return (
     <div className="dark min-h-screen bg-background text-foreground p-2">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-4">
-          <h1 className="text-xl font-bold">
+        <div className="text-center mb-2">
+          <h1 className="text-lg font-bold">
             Place Your Bet - <span className="text-primary">{gameName}</span>
           </h1>
-          <p className="text-base text-muted-foreground mt-1">{activeBetType}</p>
+          <p className="text-sm text-muted-foreground mt-1">{activeBetType}</p>
         </div>
 
-        <div className="my-4">
-             <Button asChild variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white">
+        <div className="my-2">
+             <Button asChild variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white h-9">
                 <Link href={`/games/${gameId}`}>
                     <div className="flex items-center gap-2">
                         <ArrowLeft className="h-4 w-4"/>
-                        <span>Back to Game</span>
+                        <span className="text-sm">Back to Game</span>
                     </div>
                 </Link>
             </Button>

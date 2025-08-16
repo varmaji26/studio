@@ -229,15 +229,15 @@ export default function SingleDigitPage() {
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Single Digit">
         <div className="space-y-4">
             <Card className="bg-card/80 border-white/10">
-                <CardHeader>
-                    <CardTitle>Select Number(s):</CardTitle>
+                <CardHeader className="p-4">
+                    <CardTitle className="text-base">Select Number(s):</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-5 gap-2">
+                <CardContent className="grid grid-cols-5 gap-2 p-4 pt-0">
                     {numbers.map((num) => (
                         <Button 
                             key={num}
                             variant={selectedNumbers.includes(num) ? 'default' : 'outline'}
-                            className="aspect-square text-lg font-bold h-10 w-10"
+                            className="aspect-square text-base font-bold h-9 w-9"
                             onClick={() => toggleNumber(num)}
                         >
                             {num}
@@ -248,33 +248,33 @@ export default function SingleDigitPage() {
 
             <div className="space-y-4">
                  <div className="space-y-2">
-                    <Label htmlFor="bet-amount" className="text-base">Bet Amount (₹):</Label>
+                    <Label htmlFor="bet-amount" className="text-sm">Bet Amount (₹):</Label>
                     <Input 
                         id="bet-amount"
                         type="number"
                         placeholder="Enter amount" 
-                        className="h-10 text-sm"
+                        className="h-9 text-sm"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                     />
                 </div>
                 
                 <div className="space-y-2">
-                     <Label className="text-base">Select Session:</Label>
+                     <Label className="text-sm">Select Session:</Label>
                      <RadioGroup 
                         value={session ?? undefined} 
                         onValueChange={(value) => setSession(value as 'Open' | 'Close')} 
-                        className="grid grid-cols-2 gap-4"
+                        className="grid grid-cols-2 gap-2"
                      >
                         <div>
                             <RadioGroupItem value="Open" id="open" className="sr-only peer" disabled={isOpenDisabled} />
-                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-2 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-1.5 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                                 Open
                             </Label>
                         </div>
                          <div>
                             <RadioGroupItem value="Close" id="close" className="sr-only peer" disabled={isCloseDisabled}/>
-                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-2 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-1.5 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                                 Close
                             </Label>
                         </div>
@@ -283,10 +283,10 @@ export default function SingleDigitPage() {
             </div>
         
             <Card className="bg-card/80 border-white/10">
-                <CardHeader>
-                    <CardTitle className="text-lg">Bet Summary:</CardTitle>
+                <CardHeader className="p-4">
+                    <CardTitle className="text-base">Bet Summary:</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-1 text-sm">
+                <CardContent className="space-y-1 text-xs p-4 pt-0">
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Game:</span>
                         <span className="font-semibold">{game.name}</span>
@@ -314,9 +314,9 @@ export default function SingleDigitPage() {
                 </CardContent>
             </Card>
             
-            <div className="mt-6">
-                <p className="text-center text-muted-foreground mb-2">Total Bids: {selectedNumbers.length}</p>
-                <Button className="w-full h-11 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
+            <div className="mt-4">
+                <p className="text-center text-muted-foreground mb-2 text-xs">Total Bids: {selectedNumbers.length}</p>
+                <Button className="w-full h-10 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
                     {isSubmitting ? <Loader className="mr-2" /> : null}
                     {isBettingDisabled ? 'Betting Closed' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
                 </Button>
