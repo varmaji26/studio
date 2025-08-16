@@ -182,10 +182,10 @@ export default function GamePage() {
   }
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold">
+    <div className="dark min-h-screen bg-background text-foreground p-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-4">
+          <h1 className="text-3xl font-bold">
             Place Your Bet - <span className="text-primary bg-primary/20 px-2 rounded-md">{game.name}</span>
           </h1>
           <p className="text-muted-foreground mt-2">
