@@ -198,7 +198,7 @@ export default function GamePage() {
         
         <div className="my-2">
             <Button asChild variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white h-9">
-                <Link href={`/#${gameId}`}>
+                <Link href={`/#${game.id}`}>
                     <div className="flex items-center gap-2">
                         <ArrowLeft className="h-4 w-4"/>
                         <span className="text-sm">Back to Home</span>
@@ -209,7 +209,7 @@ export default function GamePage() {
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
             <CardHeader className="p-4">
-                <CardTitle className="text-lg text-center">Choose a Bet Type</CardTitle>
+                <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2 p-2">
                {betTypes.map((betType) => {
@@ -220,7 +220,7 @@ export default function GamePage() {
                   return (
                     <Wrapper key={betType.title} {...props} onClick={() => handleBetTypeClick(betType.title)}>
                       <div className={cn(
-                        "rounded-lg p-2 text-white text-center flex flex-col items-center justify-between h-28",
+                        "rounded-lg p-2 text-white text-center flex flex-col items-center justify-between h-32",
                         "transition-all duration-300 transform hover:scale-105",
                         betType.gradient,
                         animatingBetType === betType.title && 'animate-pulse-once'
@@ -228,7 +228,7 @@ export default function GamePage() {
                           <div className="flex-grow flex items-center justify-center">
                             {betType.icon}
                           </div>
-                          <p className="font-bold text-sm">{betType.title}</p>
+                          <p className="font-bold text-base">{betType.title}</p>
                       </div>
                     </Wrapper>
                   )
