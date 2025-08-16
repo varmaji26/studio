@@ -19,6 +19,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { BottomNavbar } from '@/components/bottom-navbar';
+import { Label } from '@/components/ui/label';
 
 
 interface Bid extends DocumentData {
