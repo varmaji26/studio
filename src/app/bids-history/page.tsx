@@ -179,26 +179,26 @@ export default function BidsHistoryPage() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="text-xs">Date</TableHead>
-                        <TableHead className="text-xs">Game</TableHead>
-                        <TableHead className="text-xs">Type</TableHead>
-                        <TableHead className="text-xs">Numbers</TableHead>
-                        <TableHead className="text-xs">Amount</TableHead>
-                        <TableHead className="text-xs">Status</TableHead>
+                        <TableHead className="text-[11px]">Date</TableHead>
+                        <TableHead className="text-[11px]">Game</TableHead>
+                        <TableHead className="text-[11px]">Type</TableHead>
+                        <TableHead className="text-[11px]">Numbers</TableHead>
+                        <TableHead className="text-[11px]">Amount</TableHead>
+                        <TableHead className="text-[11px]">Status</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {data.map((bid) => (
                         <TableRow key={bid.id}>
-                            <TableCell className="text-xs">{formatDate(bid.createdAt)}</TableCell>
-                            <TableCell className="text-xs">{bid.gameName} ({bid.session})</TableCell>
-                            <TableCell className="text-xs">{bid.betType}</TableCell>
-                            <TableCell className="text-xs">{bid.numbers.join(', ')}</TableCell>
-                            <TableCell className="text-xs">₹{bid.totalAmount}</TableCell>
-                            <TableCell className="text-xs">
+                            <TableCell className="text-[11px]">{formatDate(bid.createdAt)}</TableCell>
+                            <TableCell className="text-[11px]">{bid.gameName} ({bid.session})</TableCell>
+                            <TableCell className="text-[11px]">{bid.betType}</TableCell>
+                            <TableCell className="text-[11px]">{bid.numbers.join(', ')}</TableCell>
+                            <TableCell className="text-[11px]">₹{bid.totalAmount}</TableCell>
+                            <TableCell className="text-[11px]">
                                 <Badge 
                                     variant={getStatusBadgeVariant(bid.status)}
-                                    className={cn('text-xs', bid.status === 'won' ? 'bg-green-500 text-white' : '')}
+                                    className={cn('text-[11px]', bid.status === 'won' ? 'bg-green-500 text-white' : '')}
                                 >
                                     {bid.status}
                                 </Badge>
