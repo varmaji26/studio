@@ -241,18 +241,18 @@ export default function JodiDigitPage() {
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Jodi Digit">
-        <div className="space-y-6">
+        <div className="space-y-4">
             <Card className="bg-card/80 border-white/10">
-                <CardHeader>
-                    <CardTitle>Enter Jodi Number(s):</CardTitle>
+                <CardHeader className="p-4">
+                    <CardTitle className="text-base">Enter Jodi Number(s):</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 pt-0">
                     <div className="flex items-center gap-2">
                         <Input 
                             type="tel"
                             maxLength={2}
                             placeholder="Enter 2 digits (e.g., 23)"
-                            className="h-12 text-lg"
+                            className="h-9 text-sm"
                             value={currentJodi}
                             onChange={(e) => {
                                 if (/^\d{0,2}$/.test(e.target.value)) {
@@ -260,12 +260,12 @@ export default function JodiDigitPage() {
                                 }
                             }}
                         />
-                         <Button onClick={handleAddJodi}>Add</Button>
+                         <Button onClick={handleAddJodi} size="sm">Add</Button>
                     </div>
                     {selectedJodi.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                             {selectedJodi.map((jodi) => (
-                                <Badge key={jodi} className="text-lg py-1 px-3 bg-green-500 text-white">
+                                <Badge key={jodi} className="text-sm py-1 px-2 bg-green-500 text-white">
                                     {jodi}
                                     <button onClick={() => handleRemoveJodi(jodi)} className="ml-2 rounded-full hover:bg-destructive/80 p-0.5">
                                         <X className="h-3 w-3" />
@@ -279,33 +279,33 @@ export default function JodiDigitPage() {
 
             <div className="space-y-4">
                  <div className="space-y-2">
-                    <Label htmlFor="bet-amount" className="text-lg">Bet Amount (₹):</Label>
+                    <Label htmlFor="bet-amount" className="text-sm">Bet Amount (₹):</Label>
                     <Input 
                         id="bet-amount"
                         type="number"
                         placeholder="Enter amount" 
-                        className="h-12 text-lg"
+                        className="h-9 text-sm"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                     />
                 </div>
                 
                 <div className="space-y-2">
-                     <Label className="text-lg">Select Session:</Label>
+                     <Label className="text-sm">Select Session:</Label>
                      <RadioGroup 
                         value={session ?? undefined} 
                         onValueChange={(value) => setSession(value as 'Open' | 'Close')} 
-                        className="grid grid-cols-2 gap-4"
+                        className="grid grid-cols-2 gap-2"
                      >
                         <div>
                             <RadioGroupItem value="Open" id="open" className="sr-only peer" disabled={isOpenDisabled} />
-                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 text-lg hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-1.5 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                                 Open
                             </Label>
                         </div>
                          <div>
                             <RadioGroupItem value="Close" id="close" className="sr-only peer" disabled={isCloseDisabled} />
-                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 text-lg hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-1.5 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                                 Close
                             </Label>
                         </div>
@@ -314,10 +314,10 @@ export default function JodiDigitPage() {
             </div>
         
             <Card className="bg-card/80 border-white/10">
-                <CardHeader>
-                    <CardTitle className="text-xl">Bet Summary:</CardTitle>
+                <CardHeader className="p-4">
+                    <CardTitle className="text-base">Bet Summary:</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 text-lg">
+                <CardContent className="space-y-1 text-xs p-4 pt-0">
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Game:</span>
                         <span className="font-semibold">{game.name}</span>
@@ -345,9 +345,9 @@ export default function JodiDigitPage() {
                 </CardContent>
             </Card>
             
-            <div className="mt-6">
-                <p className="text-center text-muted-foreground mb-2">Total Bids: {selectedJodi.length}</p>
-                 <Button className="w-full h-16 text-xl font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
+            <div className="mt-4">
+                <p className="text-center text-muted-foreground mb-2 text-xs">Total Bids: {selectedJodi.length}</p>
+                 <Button className="w-full h-10 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
                     {isSubmitting ? <Loader className="mr-2" /> : null}
                     {isBettingDisabled ? 'Betting Closed' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
                 </Button>
@@ -356,3 +356,5 @@ export default function JodiDigitPage() {
     </GameBettingLayout>
   );
 }
+
+    
