@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
@@ -21,6 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { BottomNavbar } from '@/components/bottom-navbar';
+import { Label } from '@/components/ui/label';
 
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
@@ -52,13 +53,9 @@ export default function PaymentHistoryPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+    const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
+    const [toDate, setToDate] = useState<Date | undefined>(new Date());
     const [settings, setSettings] = useState<AppSettings>({});
-
-    useEffect(() => {
-        // This sets the initial date to today when the component mounts.
-        setSelectedDate(new Date());
-    }, []);
 
     useEffect(() => {
         if (authLoading) return;
@@ -107,22 +104,25 @@ export default function PaymentHistoryPage() {
     const filteredTransactions = useMemo(() => {
         let filtered = transactions;
         
-        const dateToFilter = selectedDate || new Date(); // Default to today if no date is selected
-        const startOfDay = new Date(dateToFilter);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(dateToFilter);
-        endOfDay.setHours(23, 59, 59, 999);
-        
-        filtered = filtered.filter(t => {
-            const tDate = t.createdAt.toDate();
-            return tDate >= startOfDay && tDate <= endOfDay;
-        });
+        if (fromDate) {
+            const startOfDay = new Date(fromDate);
+            startOfDay.setHours(0, 0, 0, 0);
+            
+            const endOfDay = toDate ? new Date(toDate) : new Date(fromDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            filtered = filtered.filter(t => {
+                if (!t.createdAt?.toDate) return false;
+                const tDate = t.createdAt.toDate();
+                return tDate >= startOfDay && tDate <= endOfDay;
+            });
+        }
         return filtered;
-    }, [transactions, selectedDate]);
+    }, [transactions, fromDate, toDate]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [selectedDate]);
+    }, [fromDate, toDate]);
 
     const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
     const paginatedTransactions = useMemo(() => {
@@ -287,29 +287,59 @@ export default function PaymentHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex justify-end mb-4">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full sm:w-[280px] justify-start text-left font-normal",
-                                        !selectedDate && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                    mode="single"
-                                    selected={selectedDate}
-                                    onSelect={setSelectedDate}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
+                        <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
+                             <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <Label htmlFor="from-date" className="text-sm">From</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        id="from-date"
+                                        variant={"outline"}
+                                        className={cn(
+                                          "w-full sm:w-[150px] justify-start text-left font-normal",
+                                          !fromDate && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {fromDate ? format(fromDate, "dd/MM/yy") : <span>Pick a date</span>}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={fromDate}
+                                        onSelect={setFromDate}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <Label htmlFor="to-date" className="text-sm">To</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        id="to-date"
+                                        variant={"outline"}
+                                        className={cn(
+                                          "w-full sm:w-[150px] justify-start text-left font-normal",
+                                          !toDate && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {toDate ? format(toDate, "dd/MM/yy") : <span>Pick a date</span>}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="end">
+                                      <Calendar
+                                        mode="single"
+                                        selected={toDate}
+                                        onSelect={setToDate}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                            </div>
                         </div>
 
                         <Tabs defaultValue="all">
