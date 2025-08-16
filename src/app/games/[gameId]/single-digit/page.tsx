@@ -227,17 +227,17 @@ export default function SingleDigitPage() {
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Single Digit">
-        <div className="space-y-6">
+        <div className="space-y-4">
             <Card className="bg-card/80 border-white/10">
                 <CardHeader>
                     <CardTitle>Select Number(s):</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-5 gap-3">
+                <CardContent className="grid grid-cols-5 gap-2">
                     {numbers.map((num) => (
                         <Button 
                             key={num}
                             variant={selectedNumbers.includes(num) ? 'default' : 'outline'}
-                            className="aspect-square text-2xl font-bold"
+                            className="aspect-square text-xl font-bold h-12 w-12"
                             onClick={() => toggleNumber(num)}
                         >
                             {num}
@@ -253,7 +253,7 @@ export default function SingleDigitPage() {
                         id="bet-amount"
                         type="number"
                         placeholder="Enter amount" 
-                        className="h-12 text-lg"
+                        className="h-11 text-base"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                     />
@@ -268,13 +268,13 @@ export default function SingleDigitPage() {
                      >
                         <div>
                             <RadioGroupItem value="Open" id="open" className="sr-only peer" disabled={isOpenDisabled} />
-                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 text-lg hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-3 text-base hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                                 Open
                             </Label>
                         </div>
                          <div>
                             <RadioGroupItem value="Close" id="close" className="sr-only peer" disabled={isCloseDisabled}/>
-                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-4 text-lg hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-3 text-base hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                                 Close
                             </Label>
                         </div>
@@ -286,7 +286,7 @@ export default function SingleDigitPage() {
                 <CardHeader>
                     <CardTitle className="text-xl">Bet Summary:</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 text-lg">
+                <CardContent className="space-y-2 text-base">
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Game:</span>
                         <span className="font-semibold">{game.name}</span>
@@ -316,7 +316,7 @@ export default function SingleDigitPage() {
             
             <div className="mt-6">
                 <p className="text-center text-muted-foreground mb-2">Total Bids: {selectedNumbers.length}</p>
-                <Button className="w-full h-16 text-xl font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
+                <Button className="w-full h-12 text-lg font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
                     {isSubmitting ? <Loader className="mr-2" /> : null}
                     {isBettingDisabled ? 'Betting Closed' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
                 </Button>
