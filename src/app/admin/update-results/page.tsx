@@ -127,6 +127,9 @@ export default function UpdateResultsPage() {
           batch.update(bidDoc.ref, { status: 'won', winningAmount });
           const userDocRef = doc(db, 'users', bid.userId);
           batch.update(userDocRef, { balance: increment(winningAmount) });
+        } else {
+          // Mark non-winning bids as 'lost'
+          batch.update(bidDoc.ref, { status: 'lost' });
         }
       });
       

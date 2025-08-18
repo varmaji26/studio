@@ -162,6 +162,8 @@ export default function UpdateResultsClosePage() {
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
         const bidsSnapshot = await getDocs(bidsQuery);
         let winnersFound = 0;
+        let totalWinningAmount = 0;
+
         bidsSnapshot.forEach(bidDoc => {
             const bid = bidDoc.data();
             const bidNumbers = bid.numbers as string[];
@@ -180,6 +182,7 @@ export default function UpdateResultsClosePage() {
             if (isWinner) {
                 winnersFound++;
                 winningAmount = amountPerNumber * winRate;
+                totalWinningAmount += winningAmount;
                 batch.update(bidDoc.ref, { status: 'won', winningAmount });
                 const userDocRef = doc(db, 'users', bid.userId);
                 batch.update(userDocRef, { balance: increment(winningAmount) });
@@ -190,12 +193,12 @@ export default function UpdateResultsClosePage() {
         
         await batch.commit();
         form.reset();
-        toast({ title: 'Result Published!', description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found.` });
+        toast({ title: 'Result Published!', description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found, and other running bids marked as lost.` });
     } catch (error) {
         console.error('Error updating result: ', error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to update result. Please try again.' });
     } finally {
-        setIsSubmitting(null);
+        setIsSubmitting(false);
     }
   };
   
