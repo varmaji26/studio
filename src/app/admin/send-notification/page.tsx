@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, Timestamp, getDocs, writeBatch, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
 
 const notificationSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -35,6 +38,8 @@ export default function SendNotificationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [isClearing, setIsClearing] = useState(false);
 
   const form = useForm<NotificationFormValues>({
     resolver: zodResolver(notificationSchema),
@@ -45,8 +50,9 @@ export default function SendNotificationPage() {
   });
 
   useEffect(() => {
+    // Fetch notifications history
     const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const unsubscribeNotifications = onSnapshot(q, (querySnapshot) => {
       const notificationsData: Notification[] = [];
       querySnapshot.forEach((doc) => {
         notificationsData.push({ id: doc.id, ...doc.data() } as Notification);
@@ -55,8 +61,40 @@ export default function SendNotificationPage() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Fetch notification enabled status
+    const settingsDocRef = doc(db, 'settings', 'app-settings');
+    const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            setNotificationsEnabled(data.notifications?.enabled ?? true);
+        }
+    });
+
+    return () => {
+        unsubscribeNotifications();
+        unsubscribeSettings();
+    };
   }, []);
+
+  const handleToggleNotifications = async (enabled: boolean) => {
+    setNotificationsEnabled(enabled);
+    try {
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        await updateDoc(settingsDocRef, { 'notifications.enabled': enabled }, { merge: true });
+        toast({
+            title: 'Success!',
+            description: `Notifications have been ${enabled ? 'enabled' : 'disabled'}.`
+        });
+    } catch (error) {
+        console.error('Error toggling notifications:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to update notification settings.'
+        });
+        setNotificationsEnabled(!enabled); // Revert on error
+    }
+  };
 
   const onSubmit = async (values: NotificationFormValues) => {
     setIsSubmitting(true);
@@ -82,6 +120,41 @@ export default function SendNotificationPage() {
     }
   };
 
+  const handleClearHistory = async () => {
+    setIsClearing(true);
+    try {
+        const notificationsQuery = query(collection(db, 'notifications'));
+        const querySnapshot = await getDocs(notificationsQuery);
+        
+        if (querySnapshot.empty) {
+            toast({ title: 'History is already empty.' });
+            setIsClearing(false);
+            return;
+        }
+
+        const batch = writeBatch(db);
+        querySnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        
+        toast({
+            title: 'Success!',
+            description: 'Notification history has been cleared.'
+        });
+    } catch (error) {
+        console.error('Error clearing history:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to clear notification history.'
+        });
+    } finally {
+        setIsClearing(false);
+    }
+  };
+
+
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
     return new Date(timestamp.seconds * 1000).toLocaleString('en-GB');
@@ -92,8 +165,22 @@ export default function SendNotificationPage() {
       <div className="grid gap-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl">Send Notification</CardTitle>
-              <CardDescription>Send a message to all application users. This will appear as a popup in their app.</CardDescription>
+              <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl">Send Notification</CardTitle>
+                    <CardDescription>Send a message to all application users. This will appear as a popup in their app.</CardDescription>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                        id="notifications-enabled"
+                        checked={notificationsEnabled}
+                        onCheckedChange={handleToggleNotifications}
+                    />
+                    <FormLabel htmlFor="notifications-enabled" className="text-sm">
+                        {notificationsEnabled ? 'Enabled' : 'Disabled'}
+                    </FormLabel>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -135,7 +222,29 @@ export default function SendNotificationPage() {
           
           <Card className="bg-card/80 border-white/10 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl">Sent Notifications History</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">Sent Notifications History</CardTitle>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" disabled={notifications.length === 0 || isClearing}>
+                           {isClearing ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                           Clear History
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete all sent notifications.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleClearHistory}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
