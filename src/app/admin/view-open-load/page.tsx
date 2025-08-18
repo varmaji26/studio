@@ -2,12 +2,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, DocumentData, query, orderBy, where, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, DocumentData, query, orderBy, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader } from '@/components/loader';
-import { Play } from 'lucide-react';
+import { Play, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 
 interface Game extends DocumentData {
     id: string;
@@ -42,6 +46,7 @@ export default function ViewOpenLoadPage() {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [liveBiddingDetails, setLiveBiddingDetails] = useState<LiveBiddingDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   // Fetch games once
   useEffect(() => {
@@ -59,14 +64,22 @@ export default function ViewOpenLoadPage() {
     fetchGames();
   }, []);
 
-  // Listen for real-time bid updates for the current day
+  // Listen for real-time bid updates for the selected date
   useEffect(() => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    if (!selectedDate) {
+        setAllOpenBids([]);
+        return;
+    }
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
     
     const bidsQuery = query(
         collection(db, 'bids'), 
-        where('createdAt', '>=', startOfToday)
+        where('createdAt', '>=', Timestamp.fromDate(startOfDay)),
+        where('createdAt', '<=', Timestamp.fromDate(endOfDay))
     );
 
     const unsubscribe = onSnapshot(bidsQuery, (bidsSnapshot) => {
@@ -74,11 +87,10 @@ export default function ViewOpenLoadPage() {
       const openBids = bidsData.filter(bid => bid.session === 'Open');
       setAllOpenBids(openBids);
     }, (error) => {
-        console.error("Error fetching today's open bids: ", error);
-        // This might indicate a missing Firestore index.
+        console.error("Error fetching bids for selected date: ", error);
     });
     return () => unsubscribe();
-  }, []);
+  }, [selectedDate]);
 
   // Recalculate loads when games or bids change
   useEffect(() => {
@@ -134,8 +146,32 @@ export default function ViewOpenLoadPage() {
       <div className="grid gap-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
-              <CardTitle className="text-3xl font-bold">View Open Load (Today)</CardTitle>
-              <CardDescription>Click on a game to see its live bidding details for today's Open session below.</CardDescription>
+              <CardTitle className="text-3xl font-bold">View Open Load</CardTitle>
+              <CardDescription>Click on a game to see its live bidding details for the selected date's Open session below.</CardDescription>
+              <div className="pt-4">
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-full sm:w-[280px] justify-start text-left font-normal",
+                            !selectedDate && "text-muted-foreground"
+                        )}
+                        >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        initialFocus
+                        />
+                    </PopoverContent>
+                </Popover>
+              </div>
           </CardHeader>
           <CardContent>
             {loading ? (
