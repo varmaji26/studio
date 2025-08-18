@@ -182,7 +182,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 <FormItem>
                   <FormLabel>Mobile Number</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="Enter your mobile number" {...field} className="bg-input h-12 rounded-lg" />
+                    <Input type="tel" placeholder="Enter your mobile number" {...field} className="bg-input h-12 rounded-lg" maxLength={10} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
