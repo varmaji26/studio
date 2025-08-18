@@ -142,7 +142,7 @@ export default function JodiPanelPage() {
 
   const filteredCharts = useMemo(() => {
     if (!selectedGameId) {
-        return charts;
+        return [];
     }
     return charts.filter(chart => chart.id === selectedGameId);
   }, [charts, selectedGameId]);
@@ -285,12 +285,11 @@ export default function JodiPanelPage() {
         </CardHeader>
         <CardContent>
            <div className="mb-4">
-                <Select value={selectedGameId} onValueChange={(value) => setSelectedGameId(value === "all" ? "" : value)}>
+                <Select value={selectedGameId} onValueChange={(value) => setSelectedGameId(value)}>
                     <SelectTrigger className="w-full sm:w-[280px]">
                         <SelectValue placeholder="Filter by game..." />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Games</SelectItem>
                         {games.map((game) => (
                             <SelectItem key={game.id} value={game.id}>
                                 {game.name}
@@ -346,7 +345,7 @@ export default function JodiPanelPage() {
             </Table>
              {filteredCharts.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
-                  {selectedGameId ? "No chart found for the selected game." : "No charts found. Click 'Add New Chart' to create one."}
+                  {selectedGameId ? "No chart found for the selected game." : "Please select a game to view its chart."}
                 </p>
             )}
           </div>
