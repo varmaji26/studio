@@ -261,7 +261,7 @@ export default function UpdateResultsClosePage() {
                                     <Input 
                                         placeholder="Enter 3-digit pana"
                                         {...field} 
-                                        className="bg-muted rounded-lg text-center text-lg"
+                                        className="bg-input rounded-lg text-center text-lg"
                                         maxLength={3}
                                     />
                                 </FormControl>
@@ -275,7 +275,7 @@ export default function UpdateResultsClosePage() {
                              <Input
                                 readOnly
                                 value={autoCloseJodi}
-                                className="bg-muted border-none font-bold text-center text-lg"
+                                className="bg-input border-none font-bold text-center text-lg"
                             />
                         </div>
                         <div className="flex flex-col items-center">
@@ -283,7 +283,7 @@ export default function UpdateResultsClosePage() {
                              <Input
                                 readOnly
                                 value={autoFullJodi}
-                                className="bg-muted border-none font-bold text-center text-lg"
+                                className="bg-input border-none font-bold text-center text-lg"
                             />
                         </div>
                     </div>

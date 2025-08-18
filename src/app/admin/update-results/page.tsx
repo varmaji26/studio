@@ -120,8 +120,11 @@ export default function UpdateResultsPage() {
               isWinner = true;
           }
         }
-
-        if (isWinner) {
+        
+        // Jodi bets are decided on close result, so they are not lost on open result
+        if (bid.betType === 'Jodi Digit') {
+             // Do nothing, wait for close result
+        } else if (isWinner) {
           winnersFound++;
           winningAmount = amountPerNumber * winRate;
           totalWinningAmount += winningAmount;
@@ -129,8 +132,8 @@ export default function UpdateResultsPage() {
           const userDocRef = doc(db, 'users', bid.userId);
           batch.update(userDocRef, { balance: increment(winningAmount) });
         } else {
-          // If the bet is for the Open session or Jodi and did not win, it's lost.
-          if (bid.session === 'Open' || bid.betType === 'Jodi Digit') {
+          // If the bet is for the Open session and did not win, it's lost.
+          if (bid.session === 'Open') {
             batch.update(bidDoc.ref, { status: 'lost' });
           }
         }
@@ -202,7 +205,7 @@ export default function UpdateResultsPage() {
                                     <Input 
                                         placeholder="Enter 3-digit pana"
                                         {...field} 
-                                        className="bg-muted rounded-lg text-center text-lg"
+                                        className="bg-input rounded-lg text-center text-lg"
                                         maxLength={3}
                                     />
                                 </FormControl>
@@ -215,7 +218,7 @@ export default function UpdateResultsPage() {
                          <Input
                             readOnly
                             value={autoJodi}
-                            className="bg-muted border-none font-bold text-center text-lg w-1/2"
+                            className="bg-input border-none font-bold text-center text-lg w-1/2"
                         />
                     </div>
                      <Button 
