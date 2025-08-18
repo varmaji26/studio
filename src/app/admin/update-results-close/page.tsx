@@ -232,7 +232,7 @@ export default function UpdateResultsClosePage() {
                   <FormLabel>Select Game</FormLabel>
                   <Select onValueChange={setSelectedGameId} value={selectedGameId ?? ''}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-green-500 text-white hover:bg-green-600">
                         <SelectValue placeholder="Select a game to update" />
                       </SelectTrigger>
                     </FormControl>
