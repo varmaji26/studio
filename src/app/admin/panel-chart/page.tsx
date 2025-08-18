@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -47,6 +47,7 @@ export default function PanelChartPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedGameId, setSelectedGameId] = useState<string>('');
   const { toast } = useToast();
 
   const form = useForm<ChartFormValues>({
@@ -129,6 +130,13 @@ export default function PanelChartPage() {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete chart.' });
     }
   };
+
+  const filteredCharts = useMemo(() => {
+    if (!selectedGameId) {
+        return [];
+    }
+    return charts.filter(chart => chart.id === selectedGameId);
+  }, [charts, selectedGameId]);
   
   return (
     <div className="flex-1 space-y-6">
@@ -220,6 +228,20 @@ export default function PanelChartPage() {
            </Dialog>
         </CardHeader>
         <CardContent>
+           <div className="mb-4">
+                <Select value={selectedGameId} onValueChange={(value) => setSelectedGameId(value)}>
+                    <SelectTrigger className="w-full sm:w-[280px]">
+                        <SelectValue placeholder="Filter by game..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {games.map((game) => (
+                            <SelectItem key={game.id} value={game.id}>
+                                {game.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
           {loading ? <div className="flex justify-center"><Loader/></div> : (
           <div className="overflow-x-auto">
             <Table>
@@ -231,7 +253,7 @@ export default function PanelChartPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {charts.map((item) => (
+                {filteredCharts.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.gameName}</TableCell>
                     <TableCell>{item.title}</TableCell>
@@ -263,9 +285,9 @@ export default function PanelChartPage() {
                 ))}
               </TableBody>
             </Table>
-             {charts.length === 0 && !loading && (
+             {filteredCharts.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
-                  No charts found. Click "Add New Chart" to create one.
+                  {selectedGameId ? "No chart found for the selected game." : "Please select a game to view its chart."}
                 </p>
             )}
           </div>
