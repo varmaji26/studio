@@ -148,6 +148,11 @@ export default function AdminLayout({
       setIsSidebarOpen(false);
     }
   };
+  
+  const handleBadgeClick = (setter: React.Dispatch<React.SetStateAction<number>>) => {
+    handleLinkClick();
+    setter(0);
+  };
 
   const handleLogout = async () => {
     try {
@@ -226,7 +231,7 @@ export default function AdminLayout({
               </CollapsibleContent>
            </Collapsible>
           <SidebarMenuItem>
-             <Link href="/admin/manage-users?viewed=true" passHref onClick={handleLinkClick}>
+             <Link href="/admin/manage-users?viewed=true" passHref onClick={() => handleBadgeClick(setNewUsersCount)}>
                 <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Registered Users"}}>
                   <Users />
                   <span>Registered Users</span>
@@ -255,7 +260,7 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href="/admin/pending-requests" passHref onClick={handleLinkClick}>
+            <Link href="/admin/pending-requests" passHref onClick={() => handleBadgeClick(setPendingRequestsCount)}>
               <SidebarMenuButton isActive={isActive('/admin/pending-requests')} tooltip={{children: "Customer Pending Requests"}}>
                 <div className="flex items-center gap-2">
                     <MailQuestion />
@@ -310,7 +315,7 @@ export default function AdminLayout({
             </Link>
           </SidebarMenuItem>
             <SidebarMenuItem>
-              <Link href="/admin/bid-history?viewed=true" passHref onClick={handleLinkClick}>
+              <Link href="/admin/bid-history?viewed=true" passHref onClick={() => handleBadgeClick(setTodaysBidsCount)}>
                 <SidebarMenuButton isActive={isActive('/admin/bid-history')} tooltip={{children: "Bid History"}}>
                   <History />
                   <span>Bid History</span>
@@ -323,7 +328,7 @@ export default function AdminLayout({
               </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-              <Link href="/admin/win-history?viewed=true" passHref onClick={handleLinkClick}>
+              <Link href="/admin/win-history?viewed=true" passHref onClick={() => handleBadgeClick(setTodaysWinsCount)}>
                 <SidebarMenuButton isActive={isActive('/admin/win-history')} tooltip={{children: "Win History"}}>
                  <Trophy />
                  <span>Win History</span>
