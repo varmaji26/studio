@@ -9,13 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, Calendar as CalendarIcon } from 'lucide-react';
+import { Search, Calendar as CalendarIcon, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 
 interface Bid extends DocumentData {
@@ -30,6 +32,13 @@ interface Bid extends DocumentData {
     totalAmount: number;
     status: 'running' | 'won' | 'lost';
     createdAt: Timestamp;
+}
+
+// Extend jsPDF with autoTable for TypeScript
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -118,6 +127,38 @@ export default function AdminBidHistoryPage() {
     if (!timestamp) return 'N/A';
     return new Date(timestamp.seconds * 1000).toLocaleString('en-GB');
   };
+  
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    const reportDate = selectedDate ? format(selectedDate, "PPP") : 'All Time';
+    doc.text(`Bid History Report - ${reportDate}`, 14, 16);
+
+    const tableColumn = ["Date", "Username", "Mobile", "Game", "Bet Details", "Amount (₹)", "Status"];
+    const tableRows: (string | number)[][] = [];
+
+    filteredBids.forEach(bid => {
+        const bidRow = [
+            formatDate(bid.createdAt),
+            bid.displayName,
+            bid.mobile || 'N/A',
+            `${bid.gameName} (${bid.session})`,
+            `${bid.betType} - ${bid.numbers.join(', ')}`,
+            bid.totalAmount.toFixed(2),
+            bid.status
+        ];
+        tableRows.push(bidRow);
+    });
+
+    doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 24,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [22, 163, 74] }
+    });
+
+    doc.save(`bid-history-report-${selectedDate ? format(selectedDate, "yyyy-MM-dd") : 'all-time'}.pdf`);
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -163,8 +204,16 @@ export default function AdminBidHistoryPage() {
      <div className="flex-1 space-y-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-3xl font-bold">Bid History</CardTitle>
-            <CardDescription>View all bids placed by users across all games.</CardDescription>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <CardTitle className="text-3xl font-bold">Bid History</CardTitle>
+                <CardDescription>View all bids placed by users across all games.</CardDescription>
+              </div>
+              <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={filteredBids.length === 0}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
