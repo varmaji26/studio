@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc, limit, startAfter, endBefore, limitToLast, QueryDocumentSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -35,10 +35,9 @@ interface Bid extends DocumentData {
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminBidHistoryPage() {
-  const [bids, setBids] = useState<Bid[]>([]);
+  const [allBids, setAllBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [allBids, setAllBids] = useState<Bid[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const searchParams = useSearchParams();
@@ -49,28 +48,29 @@ export default function AdminBidHistoryPage() {
     }
   }, [searchParams]);
 
-   const fetchBids = useCallback(async () => {
+   const fetchBids = useCallback(() => {
     setLoading(true);
-    try {
-        const q = query(collection(db, "bids"));
-        const querySnapshot = await getDocs(q);
+    const q = query(collection(db, "bids"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
         
         // Sort client-side
         bidsData.sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
-        setBids(bidsData);
         setAllBids(bidsData);
-
-    } catch (error) {
-        console.error("Error fetching bids: ", error);
-    } finally {
         setLoading(false);
-    }
+    }, (error) => {
+        console.error("Error fetching bids: ", error);
+        setLoading(false);
+    });
+
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
-    fetchBids();
+    const unsubscribe = fetchBids();
+    return () => unsubscribe();
   }, [fetchBids]);
   
   const filteredBids = useMemo(() => {

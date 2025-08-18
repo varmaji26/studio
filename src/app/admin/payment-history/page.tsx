@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, doc, getDoc, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -43,45 +43,48 @@ declare module 'jspdf' {
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminPaymentHistoryPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [pageDocs, setPageDocs] = useState<(QueryDocumentSnapshot<DocumentData> | null)[]>([null]);
 
-
-  const fetchTransactions = useCallback(async (page: number, direction: 'next' | 'prev' | 'first' = 'first') => {
+  const fetchTransactions = useCallback(() => {
     setLoading(true);
-    try {
-        const fetchCollection = async (collectionName: 'deposits' | 'withdrawals') => {
-            const snapshot = await getDocs(query(collection(db, collectionName), orderBy("createdAt", "desc")));
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: collectionName.slice(0, -1) } as Transaction));
-        };
 
-        const deposits = await fetchCollection('deposits');
-        const withdrawals = await fetchCollection('withdrawals');
-        const combined = [...deposits, ...withdrawals].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-        
-        setAllTransactions(combined); // Store all for filtering
+    const depositsQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
+    const withdrawalsQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
 
-    } catch (error) {
-        console.error("Error fetching all transactions for filter: ", error);
-    } finally {
+    let depositsData: Transaction[] = [];
+    let withdrawalsData: Transaction[] = [];
+
+    const unsubscribeDeposits = onSnapshot(depositsQuery, (snapshot) => {
+        depositsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'deposit' as const }));
+        const combined = [...depositsData, ...withdrawalsData].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        setAllTransactions(combined);
         setLoading(false);
-    }
+    });
+
+    const unsubscribeWithdrawals = onSnapshot(withdrawalsQuery, (snapshot) => {
+        withdrawalsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'withdrawal' as const }));
+        const combined = [...depositsData, ...withdrawalsData].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        setAllTransactions(combined);
+        setLoading(false);
+    });
+
+    return () => {
+        unsubscribeDeposits();
+        unsubscribeWithdrawals();
+    };
   }, []);
 
   useEffect(() => {
-    fetchTransactions(1, 'first');
+    const unsubscribe = fetchTransactions();
+    return () => unsubscribe();
   }, [fetchTransactions]);
 
   const handlePageChange = (newPage: number) => {
-    const direction = newPage > currentPage ? 'next' : 'prev';
-    // Re-fetch paginated data.
-    // This is simplified; a full implementation might re-trigger a paginated query here.
     setCurrentPage(newPage);
   }
   

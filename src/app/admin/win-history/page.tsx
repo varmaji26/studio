@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, getDocs, DocumentData, orderBy, Timestamp, where, getDoc, doc, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -33,7 +33,6 @@ interface Win extends DocumentData {
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminWinHistoryPage() {
-  const [wins, setWins] = useState<Win[]>([]);
   const [allWins, setAllWins] = useState<Win[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,32 +47,32 @@ export default function AdminWinHistoryPage() {
   }, [searchParams]);
 
 
-   const fetchWins = useCallback(async () => {
+   const fetchWins = useCallback(() => {
     setLoading(true);
-    try {
-        const baseQuery = query(
-            collection(db, "bids"), 
-            where("status", "==", "won")
-        );
-        
-        const querySnapshot = await getDocs(baseQuery);
+    const q = query(
+        collection(db, "bids"), 
+        where("status", "==", "won")
+    );
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
         
         // Sort client-side
         winsData.sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
-        setWins(winsData);
         setAllWins(winsData);
-
-    } catch (error) {
-        console.error("Error fetching wins: ", error);
-    } finally {
         setLoading(false);
-    }
+    }, (error) => {
+        console.error("Error fetching wins: ", error);
+        setLoading(false);
+    });
+
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
-    fetchWins();
+    const unsubscribe = fetchWins();
+    return () => unsubscribe();
   }, [fetchWins]);
   
   const filteredWins = useMemo(() => {
