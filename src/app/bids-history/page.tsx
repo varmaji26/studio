@@ -52,37 +52,31 @@ export default function BidsHistoryPage() {
     const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
     const [toDate, setToDate] = useState<Date | undefined>(new Date());
 
-    const fetchBids = useCallback(async () => {
-        if (!user) return;
-        setLoading(true);
-        try {
-            const bidsQuery = query(
-                collection(db, 'bids'),
-                where('userId', '==', user.uid)
-            );
-            const querySnapshot = await getDocs(bidsQuery);
-            const bidsData: Bid[] = [];
-            querySnapshot.forEach((doc) => {
-                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
-            });
-            // Sort client-side
-            bidsData.sort((a, b) => b.createdAt.toMillis() - b.createdAt.toMillis());
-            setBids(bidsData);
-        } catch (error) {
-            console.error("Error fetching bids history: ", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [user]);
-
     useEffect(() => {
         if (authLoading) return;
         if (!user) {
             router.replace('/login');
             return;
         }
+        setLoading(true);
 
-        fetchBids();
+        const bidsQuery = query(
+            collection(db, 'bids'),
+            where('userId', '==', user.uid),
+            orderBy('createdAt', 'desc')
+        );
+
+        const unsubscribeBids = onSnapshot(bidsQuery, (querySnapshot) => {
+            const bidsData: Bid[] = [];
+            querySnapshot.forEach((doc) => {
+                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
+            });
+            setBids(bidsData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching bids history: ", error);
+            setLoading(false);
+        });
         
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
@@ -92,9 +86,10 @@ export default function BidsHistoryPage() {
         });
 
         return () => {
+            unsubscribeBids();
             unsubscribeSettings();
         };
-    }, [user, authLoading, router, fetchBids]);
+    }, [user, authLoading, router]);
 
     const formatDate = (timestamp: Timestamp) => {
         if (!timestamp) return 'N/A';
@@ -324,3 +319,5 @@ export default function BidsHistoryPage() {
         </div>
     )
 }
+
+    

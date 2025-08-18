@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, getDocs, orderBy, DocumentData, Timestamp, doc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -47,37 +47,32 @@ export default function WinHistoryPage() {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
     const [settings, setSettings] = useState<AppSettings>({});
 
-    const fetchWins = useCallback(async () => {
-        if (!user) return;
-        setLoading(true);
-        try {
-            const winsQuery = query(
-                collection(db, 'bids'),
-                where('userId', '==', user.uid),
-                where('status', '==', 'won')
-            );
-            const querySnapshot = await getDocs(winsQuery);
-            const winsData: Win[] = [];
-            querySnapshot.forEach((doc) => {
-                winsData.push({ id: doc.id, ...doc.data() } as Win);
-            });
-            // Sort client-side
-            winsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-            setWins(winsData);
-        } catch (error) {
-            console.error("Error fetching wins history: ", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [user]);
-
     useEffect(() => {
         if (authLoading) return;
         if (!user) {
             router.replace('/login');
             return;
         }
-        fetchWins();
+        setLoading(true);
+
+        const winsQuery = query(
+            collection(db, 'bids'),
+            where('userId', '==', user.uid),
+            where('status', '==', 'won'),
+            orderBy('createdAt', 'desc')
+        );
+
+        const unsubscribeWins = onSnapshot(winsQuery, (querySnapshot) => {
+            const winsData: Win[] = [];
+            querySnapshot.forEach((doc) => {
+                winsData.push({ id: doc.id, ...doc.data() } as Win);
+            });
+            setWins(winsData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching wins history: ", error);
+            setLoading(false);
+        });
         
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
@@ -86,8 +81,11 @@ export default function WinHistoryPage() {
             }
         });
         
-        return () => unsubscribeSettings();
-    }, [user, authLoading, router, fetchWins]);
+        return () => {
+            unsubscribeWins();
+            unsubscribeSettings();
+        };
+    }, [user, authLoading, router]);
 
     const filteredWins = useMemo(() => {
         if (!selectedDate) {
@@ -249,3 +247,5 @@ export default function WinHistoryPage() {
         </div>
     )
 }
+
+    
