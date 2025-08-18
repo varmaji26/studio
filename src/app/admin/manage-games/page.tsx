@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,6 +19,7 @@ import { EditGameDialog } from '@/components/edit-game-dialog';
 import { Switch } from '@/components/ui/switch';
 import { formatTime } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -53,6 +53,8 @@ export default function ManageGamesPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDay, setCurrentDay] = useState('');
+  const [selectedGameId, setSelectedGameId] = useState<string>('');
+
 
   useEffect(() => {
     const date = new Date();
@@ -180,6 +182,13 @@ export default function ManageGamesPage() {
     if (!game.activeDays || game.activeDays.length === 0) return true; // if no days are set, assume it runs everyday
     return game.activeDays.includes(currentDay);
   };
+  
+  const filteredGames = useMemo(() => {
+    if (!selectedGameId) {
+        return games;
+    }
+    return games.filter(game => game.id === selectedGameId);
+  }, [games, selectedGameId]);
 
 
   return (
@@ -195,7 +204,7 @@ export default function ManageGamesPage() {
                   <FormField
                     control={form.control}
                     name="name"
-                    render={({ field }) => (
+                    render= {({ field }) => (
                       <FormItem>
                         <FormLabel>Game Name</FormLabel>
                         <FormControl>
@@ -208,7 +217,7 @@ export default function ManageGamesPage() {
                   <FormField
                     control={form.control}
                     name="status"
-                    render={({ field }) => (
+                    render= {({ field }) => (
                       <FormItem>
                         <FormLabel>Initial Betting Status</FormLabel>
                         <FormControl>
@@ -222,7 +231,7 @@ export default function ManageGamesPage() {
                     <FormField
                       control={form.control}
                       name="openTime"
-                      render={({ field }) => (
+                      render= {({ field }) => (
                           <FormItem>
                           <FormLabel>Open Time</FormLabel>
                           <FormControl>
@@ -235,7 +244,7 @@ export default function ManageGamesPage() {
                       <FormField
                       control={form.control}
                       name="closeTime"
-                      render={({ field }) => (
+                      render= {({ field }) => (
                           <FormItem>
                           <FormLabel>Close Time</FormLabel>
                           <FormControl>
@@ -249,7 +258,7 @@ export default function ManageGamesPage() {
                   <FormField
                     control={form.control}
                     name="activeDays"
-                    render={() => (
+                    render= {() => (
                       <FormItem>
                         <div className="mb-4">
                           <FormLabel className="text-base">Game Active Days</FormLabel>
@@ -260,7 +269,7 @@ export default function ManageGamesPage() {
                               key={day}
                               control={form.control}
                               name="activeDays"
-                              render={({ field }) => {
+                              render= {({ field }) => {
                                 return (
                                   <FormItem
                                     key={day}
@@ -269,7 +278,7 @@ export default function ManageGamesPage() {
                                     <FormControl>
                                       <Checkbox
                                         checked={field.value?.includes(day)}
-                                        onCheckedChange={(checked) => {
+                                        onCheckedChange= {(checked) => {
                                           return checked
                                             ? field.onChange([...field.value, day])
                                             : field.onChange(
@@ -308,6 +317,21 @@ export default function ManageGamesPage() {
               <CardDescription>View, edit, or delete existing games. Today is {currentDay}.</CardDescription>
             </CardHeader>
             <CardContent>
+               <div className="mb-4">
+                    <Select value={selectedGameId} onValueChange= {(value) => setSelectedGameId(value === "all" ? "" : value)}>
+                        <SelectTrigger className="w-full sm:w-[280px]">
+                            <SelectValue placeholder="Filter by game..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Games</SelectItem>
+                            {games.map((game) => (
+                                <SelectItem key={game.id} value={game.id}>
+                                    {game.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
               {loading ? (
                   <div className="flex justify-center items-center h-48">
                       <Loader className="h-8 w-8 text-primary" />
@@ -326,7 +350,7 @@ export default function ManageGamesPage() {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {games.map((game, index) => {
+                              {filteredGames.map((game, index) => {
                                   const isActiveToday = isGameActiveToday(game);
                                   return (
                                   <TableRow key={game.id}>
@@ -347,8 +371,8 @@ export default function ManageGamesPage() {
                                           <div className="flex items-center space-x-2">
                                               <Switch
                                                   checked={game.active}
-                                                  onCheckedChange={() => handleStatusToggle(game.id, game.active)}
-                                                  aria-label={`Toggle game master status for ${game.name}`}
+                                                  onCheckedChange= {() => handleStatusToggle(game.id, game.active)}
+                                                  aria-label= {`Toggle game master status for ${game.name}`}
                                               />
                                               <span className="text-xs text-muted-foreground">{game.active ? 'On' : 'Off'}</span>
                                           </div>
@@ -371,7 +395,7 @@ export default function ManageGamesPage() {
                                                       </AlertDialogHeader>
                                                       <AlertDialogFooter>
                                                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                          <AlertDialogAction onClick={() => handleDeleteGame(game.id)}>Continue</AlertDialogAction>
+                                                          <AlertDialogAction onClick= {() => handleDeleteGame(game.id)}>Continue</AlertDialogAction>
                                                       </AlertDialogFooter>
                                                   </AlertDialogContent>
                                               </AlertDialog>
@@ -384,7 +408,7 @@ export default function ManageGamesPage() {
                       </Table>
                   </div>
               )}
-              {games.length === 0 && !loading && (
+              {filteredGames.length === 0 && !loading && (
                   <p className="text-center text-muted-foreground mt-4">No games found. Add a new game to get started.</p>
               )}
             </CardContent>
@@ -393,3 +417,5 @@ export default function ManageGamesPage() {
     </div>
   );
 }
+
+    
