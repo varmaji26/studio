@@ -129,9 +129,8 @@ export default function UpdateResultsPage() {
           const userDocRef = doc(db, 'users', bid.userId);
           batch.update(userDocRef, { balance: increment(winningAmount) });
         } else {
-          // If the bet is for the Open session and did not win, it's lost.
-          // Jodi bets will remain running until the Close result.
-          if (bid.session === 'Open') {
+          // If the bet is for the Open session or Jodi and did not win, it's lost.
+          if (bid.session === 'Open' || bid.betType === 'Jodi Digit') {
             batch.update(bidDoc.ref, { status: 'lost' });
           }
         }
@@ -203,7 +202,7 @@ export default function UpdateResultsPage() {
                                     <Input 
                                         placeholder="Enter 3-digit pana"
                                         {...field} 
-                                        className="bg-input rounded-lg text-center text-lg"
+                                        className="bg-muted rounded-lg text-center text-lg"
                                         maxLength={3}
                                     />
                                 </FormControl>

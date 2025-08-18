@@ -261,7 +261,7 @@ export default function UpdateResultsClosePage() {
                                     <Input 
                                         placeholder="Enter 3-digit pana"
                                         {...field} 
-                                        className="bg-input rounded-lg text-center text-lg"
+                                        className="bg-muted rounded-lg text-center text-lg"
                                         maxLength={3}
                                     />
                                 </FormControl>
