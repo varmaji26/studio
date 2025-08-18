@@ -82,7 +82,6 @@ export default function UpdateResultsPage() {
 
     setIsSubmitting(true);
     const newOpenPana = values.newOpenPana;
-    const session = 'Open';
     const openJodiDigit = calculateJodiDigit(newOpenPana);
     
     try {
@@ -98,7 +97,6 @@ export default function UpdateResultsPage() {
       const bidsQuery = query(
         collection(db, 'bids'),
         where('gameId', '==', game.id),
-        where('session', '==', session),
         where('status', '==', 'running')
       );
       const bidsSnapshot = await getDocs(bidsQuery);
@@ -114,12 +112,15 @@ export default function UpdateResultsPage() {
         const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
         const amountPerNumber = bid.totalAmount / bidNumbers.length;
 
-        if (bid.betType.includes('Pana') && bidNumbers.includes(newOpenPana)) {
-            isWinner = true;
-        } else if (bid.betType === 'Single Digit' && bidNumbers.includes(openJodiDigit)) {
-            isWinner = true;
+        // Check only Open session bets for winning
+        if (bid.session === 'Open') {
+          if (bid.betType.includes('Pana') && bidNumbers.includes(newOpenPana)) {
+              isWinner = true;
+          } else if (bid.betType === 'Single Digit' && bidNumbers.includes(openJodiDigit)) {
+              isWinner = true;
+          }
         }
-        
+
         if (isWinner) {
           winnersFound++;
           winningAmount = amountPerNumber * winRate;
@@ -128,8 +129,11 @@ export default function UpdateResultsPage() {
           const userDocRef = doc(db, 'users', bid.userId);
           batch.update(userDocRef, { balance: increment(winningAmount) });
         } else {
-          // Mark non-winning bids as 'lost'
-          batch.update(bidDoc.ref, { status: 'lost' });
+          // If the bet is for the Open session and did not win, it's lost.
+          // Jodi bets will remain running until the Close result.
+          if (bid.session === 'Open') {
+            batch.update(bidDoc.ref, { status: 'lost' });
+          }
         }
       });
       

@@ -100,6 +100,12 @@ export default function UpdateResultsClosePage() {
         const currentGameData = gameDocSnap.data();
         
         const openPana = currentGameData?.openResult || '***';
+        if (openPana === '***') {
+            toast({ variant: 'destructive', title: 'Error', description: 'Open result has not been declared yet for this game.' });
+            setIsSubmitting(false);
+            return;
+        }
+
         const openJodiDigit = calculateJodiDigit(openPana);
         const finalJodi = `${openJodiDigit}${closeJodiDigit}`;
         const finalResult = `${openPana}-${finalJodi}-${newClosePana}`;
