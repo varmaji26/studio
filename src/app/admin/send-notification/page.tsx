@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 const notificationSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -176,9 +177,9 @@ export default function SendNotificationPage() {
                         checked={notificationsEnabled}
                         onCheckedChange={handleToggleNotifications}
                     />
-                    <FormLabel htmlFor="notifications-enabled" className="text-sm">
+                    <Label htmlFor="notifications-enabled" className="text-sm">
                         {notificationsEnabled ? 'Enabled' : 'Disabled'}
-                    </FormLabel>
+                    </Label>
                 </div>
               </div>
             </CardHeader>
