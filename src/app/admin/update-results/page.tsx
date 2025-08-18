@@ -2,28 +2,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc } from 'firebase/firestore';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as z from 'zod';
 
 const formSchema = z.object({
-  games: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      openResult: z.string(),
-      closeResult: z.string(),
-      newOpenPana: z.string().optional(),
-    })
-  ),
+  newOpenPana: z.string().length(3, 'Pana must be 3 digits.'),
 });
 
 type GameResultFormValues = z.infer<typeof formSchema>;
@@ -33,6 +26,7 @@ interface Game extends DocumentData {
     name: string;
     openResult: string;
     closeResult: string;
+    result: string;
 }
 
 const WIN_RATES = {
@@ -43,7 +37,6 @@ const WIN_RATES = {
   'Triple Pana': 600,
 };
 
-// Helper to calculate jodi from pana
 const calculateJodiDigit = (pana: string): string => {
     if (!pana || pana.length !== 3 || !/^\d+$/.test(pana)) return '';
     return (pana.split('').reduce((acc, digit) => acc + parseInt(digit, 10), 0) % 10).toString();
@@ -52,60 +45,56 @@ const calculateJodiDigit = (pana: string): string => {
 export default function UpdateResultsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [games, setGames] = useState<Game[]>([]);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
 
   const form = useForm<GameResultFormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      games: [],
+      newOpenPana: '',
     },
-  });
-
-  const { fields, replace } = useFieldArray({
-    control: form.control,
-    name: "games",
   });
 
   useEffect(() => {
     const q = query(collection(db, "games"), orderBy("openTime", "asc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const gamesData: Game[] = [];
-      querySnapshot.forEach((doc) => {
-        gamesData.push({ id: doc.id, ...doc.data() } as Game);
-      });
-      replace(gamesData.map(g => ({...g, newOpenPana: ''})));
+      const gamesData: Game[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+      setGames(gamesData);
+      if (gamesData.length > 0 && !selectedGameId) {
+        setSelectedGameId(gamesData[0].id);
+      }
       setLoading(false);
     });
-
     return () => unsubscribe();
-  }, [replace]);
+  }, [selectedGameId]);
 
-  const handleUpdateResult = async (gameIndex: number) => {
-    const game = form.getValues(`games.${gameIndex}`);
-    const newOpenPana = game.newOpenPana;
-    const session = 'Open';
-
-    if (!newOpenPana || newOpenPana.length !== 3) {
-      form.setError(`games.${gameIndex}.newOpenPana`, {
-        type: 'manual',
-        message: 'Pana must be 3 digits.',
-      });
-      return;
+  const handleUpdateResult = async (values: GameResultFormValues) => {
+    if (!selectedGameId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please select a game first.' });
+        return;
     }
-    
-    setIsSubmitting(game.id);
+    const game = games.find(g => g.id === selectedGameId);
+    if (!game) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Selected game not found.' });
+        return;
+    }
+
+    setIsSubmitting(true);
+    const newOpenPana = values.newOpenPana;
+    const session = 'Open';
     const openJodiDigit = calculateJodiDigit(newOpenPana);
     
     try {
       const batch = writeBatch(db);
       const gameDocRef = doc(db, 'games', game.id);
       
-      // Update the open result and RESET the close result to a placeholder
       batch.update(gameDocRef, { 
         openResult: newOpenPana,
-        closeResult: '**' // Reset close result
+        closeResult: '**',
+        result: `${newOpenPana}-**-**` // Update result with placeholder
       });
 
-      // Process bets for Open Pana and Open Single Digit
       const bidsQuery = query(
         collection(db, 'bids'),
         where('gameId', '==', game.id),
@@ -135,45 +124,36 @@ export default function UpdateResultsPage() {
           winnersFound++;
           winningAmount = amountPerNumber * winRate;
           totalWinningAmount += winningAmount;
-          
           batch.update(bidDoc.ref, { status: 'won', winningAmount });
-          
           const userDocRef = doc(db, 'users', bid.userId);
           batch.update(userDocRef, { balance: increment(winningAmount) });
-        } else {
-          // Note: We don't mark as lost here, as they might win on the close or jodi bet.
-          // This will be handled in the close result update.
         }
       });
       
       await batch.commit();
-      
-      form.setValue(`games.${gameIndex}.newOpenPana`, '');
-      form.clearErrors(`games.${gameIndex}.newOpenPana`);
-
+      form.reset();
       toast({
         title: 'Result Published!',
-        description: `Open result for ${game.name} updated. ${winnersFound} winner(s) found and paid out a total of ₹${totalWinningAmount.toFixed(2)}.`,
+        description: `Open result for ${game.name} updated. ${winnersFound} winner(s) paid out ₹${totalWinningAmount.toFixed(2)}.`,
       });
     } catch (error) {
       console.error('Error updating result: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update result. Please try again.',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update result. Please try again.' });
     } finally {
-      setIsSubmitting(null);
+      setIsSubmitting(false);
     }
   };
 
+  const selectedGame = games.find(g => g.id === selectedGameId);
+  const newOpenPana = form.watch('newOpenPana');
+  const autoJodi = calculateJodiDigit(newOpenPana);
 
   return (
     <div className="flex-1 space-y-6">
       <Card className="bg-card/80 border-white/10 shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl">Update Game Results (Open)</CardTitle>
-          <CardDescription>Update the Open Pana results for all available games here. Open Jodi will be calculated automatically.</CardDescription>
+          <CardDescription>Select a game and enter the Open Pana to update the results. The Jodi will be calculated automatically.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -181,70 +161,71 @@ export default function UpdateResultsPage() {
               <Loader className="h-8 w-8 text-primary" />
             </div>
           ) : (
-             <Form {...form}>
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Game Name</TableHead>
-                                <TableHead>Current Result</TableHead>
-                                <TableHead>New Open Pana</TableHead>
-                                <TableHead>Auto Jodi (Open)</TableHead>
-                                <TableHead className="text-right">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                             {fields.map((field, index) => (
-                                <TableRow key={field.id}>
-                                    <TableCell>{field.name}</TableCell>
-                                    <TableCell>{`${field.openResult || '***'}-${field.closeResult || '**'}`}</TableCell>
-                                    <TableCell>
-                                        <FormField
-                                            control={form.control}
-                                            name={`games.${index}.newOpenPana`}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormControl>
-                                                        <Input 
-                                                            placeholder="Enter 3-digit pana"
-                                                            {...field} 
-                                                            className="bg-input rounded-lg"
-                                                            maxLength={3}
-                                                            onChange={(e) => {
-                                                                field.onChange(e);
-                                                                form.trigger(`games.${index}.newOpenPana`);
-                                                            }}
-                                                         />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            readOnly
-                                            value={calculateJodiDigit(form.watch(`games.${index}.newOpenPana`) || '')}
-                                            className="bg-muted border-none font-bold text-center"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button 
-                                            size="sm" 
-                                            onClick={() => handleUpdateResult(index)}
-                                            disabled={!!isSubmitting}
-                                        >
-                                          {isSubmitting === field.id ? <Loader className="h-4 w-4" /> : 'Update'}
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                             ))}
-                        </TableBody>
-                    </Table>
-                </div>
-             </Form>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleUpdateResult)} className="space-y-6 max-w-md mx-auto">
+                <FormItem>
+                  <FormLabel>Select Game</FormLabel>
+                  <Select onValueChange={setSelectedGameId} value={selectedGameId ?? ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a game to update" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {games.map((game) => (
+                        <SelectItem key={game.id} value={game.id}>
+                          {game.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+
+                {selectedGame && (
+                    <>
+                    <p className="text-sm text-center text-muted-foreground">
+                        Current Result: <span className="font-bold text-foreground">{selectedGame.result || `${selectedGame.openResult || '***'}-**-${selectedGame.closeResult || '**'}`}</span>
+                    </p>
+                     <FormField
+                        control={form.control}
+                        name="newOpenPana"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>New Open Pana</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        placeholder="Enter 3-digit pana"
+                                        {...field} 
+                                        className="bg-input rounded-lg text-center text-lg"
+                                        maxLength={3}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <div className="flex flex-col items-center">
+                        <FormLabel className="text-sm mb-2">Auto Jodi (Open)</FormLabel>
+                         <Input
+                            readOnly
+                            value={autoJodi}
+                            className="bg-muted border-none font-bold text-center text-lg w-1/2"
+                        />
+                    </div>
+                     <Button 
+                        type="submit"
+                        className="w-full"
+                        disabled={isSubmitting}
+                    >
+                      {isSubmitting ? <Loader className="h-4 w-4 mr-2" /> : null}
+                      {isSubmitting ? 'Updating...' : 'Update & Process Winners'}
+                    </Button>
+                    </>
+                )}
+              </form>
+            </Form>
           )}
-          {fields.length === 0 && !loading && (
+          {games.length === 0 && !loading && (
               <p className="text-center text-muted-foreground mt-4">No games found. Please add a game first.</p>
           )}
         </CardContent>
