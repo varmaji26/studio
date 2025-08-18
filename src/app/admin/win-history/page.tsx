@@ -8,13 +8,15 @@ import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
-import { Search, Trophy, Calendar as CalendarIcon } from 'lucide-react';
+import { Search, Trophy, Calendar as CalendarIcon, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 
 interface Win extends DocumentData {
@@ -28,6 +30,13 @@ interface Win extends DocumentData {
     totalAmount: number;
     winningAmount: number;
     createdAt: Timestamp;
+}
+
+// Extend jsPDF with autoTable for TypeScript
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -122,6 +131,38 @@ export default function AdminWinHistoryPage() {
     return new Date(timestamp.seconds * 1000).toLocaleString('en-GB');
   };
   
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    const reportDate = selectedDate ? format(selectedDate, "PPP") : 'All Time';
+    doc.text(`Win History Report - ${reportDate}`, 14, 16);
+
+    const tableColumn = ["Date", "Username", "Mobile", "Game", "Bet Details", "Bet (₹)", "Win (₹)"];
+    const tableRows: (string | number)[][] = [];
+
+    filteredWins.forEach(win => {
+        const winRow = [
+            formatDate(win.createdAt),
+            win.displayName,
+            win.mobile || 'N/A',
+            `${win.gameName} (${win.session})`,
+            `${win.betType} - ${win.numbers.join(', ')}`,
+            win.totalAmount.toFixed(2),
+            win.winningAmount.toFixed(2)
+        ];
+        tableRows.push(winRow);
+    });
+
+    doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 24,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [22, 163, 74] }
+    });
+
+    doc.save(`win-history-report-${selectedDate ? format(selectedDate, "yyyy-MM-dd") : 'all-time'}.pdf`);
+  };
+
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
@@ -154,11 +195,19 @@ export default function AdminWinHistoryPage() {
      <div className="flex-1 space-y-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-3xl font-bold flex items-center gap-2">
-                <Trophy className="text-amber-400" />
-                Win History
-            </CardTitle>
-            <CardDescription>View all winning bids and payouts.</CardDescription>
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <CardTitle className="text-3xl font-bold flex items-center gap-2">
+                        <Trophy className="text-amber-400" />
+                        Win History
+                    </CardTitle>
+                    <CardDescription>View all winning bids and payouts.</CardDescription>
+                </div>
+                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={filteredWins.length === 0}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                </Button>
+             </div>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
