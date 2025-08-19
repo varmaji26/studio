@@ -40,7 +40,7 @@ export default function JodiDigitPage() {
   const [currentJodi, setCurrentJodi] = useState('');
   const [selectedJodi, setSelectedJodi] = useState<string[]>([]);
   const [amount, setAmount] = useState<string>('');
-  const [session, setSession] = useState<'Open' | 'Close' | null>(null);
+  const [session, setSession] = useState<'Open' | 'Close' | null>('Open');
   
   const [totalAmount, setTotalAmount] = useState(0);
   const [potentialWin, setPotentialWin] = useState(0);
@@ -84,25 +84,19 @@ export default function JodiDigitPage() {
   }
 
   const openTime = game ? getTimeParts(game.openTime) : { hours: 0, minutes: 0 };
-  const closeTime = game ? getTimeParts(game.closeTime) : { hours: 0, minutes: 0 };
-
+  
   const openDateTime = new Date(now);
   openDateTime.setHours(openTime.hours, openTime.minutes, 0, 0);
 
-  const closeDateTime = new Date(now);
-  closeDateTime.setHours(closeTime.hours, closeTime.minutes, 0, 0);
-
-  const isTimeOver = now >= openDateTime;
+  const isTimeOver = isMounted && now >= openDateTime;
   
   useEffect(() => {
-    if (now >= closeDateTime) {
-        setSession(null); // Betting fully closed for the day
-    } else if (now >= openDateTime) {
+    if (isTimeOver) {
         setSession(null); // Jodi time is over
     } else {
         setSession('Open'); // Jodi betting is open
     }
-  }, [now, openDateTime, closeDateTime]);
+  }, [isTimeOver]);
 
   useEffect(() => {
     const parsedAmount = parseInt(amount, 10);
@@ -239,14 +233,14 @@ export default function JodiDigitPage() {
   }
   
   const isOpenResultDeclared = game.openResult && game.openResult !== '***';
-  const isBettingDisabled = isTimeOver || !session || isOpenResultDeclared;
+  const isBettingDisabled = isTimeOver || isOpenResultDeclared;
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Jodi Digit">
         <div className="space-y-4">
-            {isTimeOver && !isOpenResultDeclared && (
+            {isTimeOver && (
                  <Alert variant="destructive">
-                    <AlertTitle>Jodi Time Over</AlertTitle>
+                    <AlertTitle>JODI TIME OVER</AlertTitle>
                     <AlertDescription>
                        Jodi betting for this game is now closed.
                     </AlertDescription>
@@ -340,7 +334,7 @@ export default function JodiDigitPage() {
                 <p className="text-center text-muted-foreground mb-2 text-xs">Total Bids: {selectedJodi.length}</p>
                  <Button className="w-full h-10 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
                     {isSubmitting ? <Loader className="mr-2" /> : null}
-                    {isBettingDisabled ? 'Jodi Time Over' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
+                    {isBettingDisabled ? 'JODI TIME OVER' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
                 </Button>
             </div>
         </div>
