@@ -58,8 +58,7 @@ export default function WinHistoryPage() {
         const winsQuery = query(
             collection(db, 'bids'),
             where('userId', '==', user.uid),
-            where('status', '==', 'won'),
-            orderBy('createdAt', 'desc')
+            where('status', '==', 'won')
         );
 
         const unsubscribeWins = onSnapshot(winsQuery, (querySnapshot) => {
@@ -67,6 +66,8 @@ export default function WinHistoryPage() {
             querySnapshot.forEach((doc) => {
                 winsData.push({ id: doc.id, ...doc.data() } as Win);
             });
+            // Sort client-side
+            winsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
             setWins(winsData);
             setLoading(false);
         }, (error) => {
@@ -247,5 +248,7 @@ export default function WinHistoryPage() {
         </div>
     )
 }
+
+    
 
     

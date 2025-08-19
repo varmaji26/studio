@@ -62,8 +62,7 @@ export default function BidsHistoryPage() {
 
         const bidsQuery = query(
             collection(db, 'bids'),
-            where('userId', '==', user.uid),
-            orderBy('createdAt', 'desc')
+            where('userId', '==', user.uid)
         );
 
         const unsubscribeBids = onSnapshot(bidsQuery, (querySnapshot) => {
@@ -71,6 +70,8 @@ export default function BidsHistoryPage() {
             querySnapshot.forEach((doc) => {
                 bidsData.push({ id: doc.id, ...doc.data() } as Bid);
             });
+            // Sort client-side
+            bidsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
             setBids(bidsData);
             setLoading(false);
         }, (error) => {
@@ -319,5 +320,7 @@ export default function BidsHistoryPage() {
         </div>
     )
 }
+
+    
 
     
