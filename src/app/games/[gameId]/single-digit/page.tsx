@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { GameBettingLayout } from '@/components/game-betting-layout';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface Game extends DocumentData {
   id: string;
@@ -35,7 +36,7 @@ export default function SingleDigitPage() {
 
   const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
   const [amount, setAmount] = useState<string>('');
-  const [session, setSession] = useState<'Open' | 'Close' | null>(null);
+  const [session, setSession] = useState<'Open' | 'Close'>('Open');
   
   const [totalAmount, setTotalAmount] = useState(0);
   const [potentialWin, setPotentialWin] = useState(0);
@@ -89,14 +90,12 @@ export default function SingleDigitPage() {
 
   const isOpenDisabled = now >= openDateTime;
   const isCloseDisabled = now >= closeDateTime;
-
-  useEffect(() => {
-    if (isCloseDisabled) {
-        setSession(null); // Betting fully closed
-    } else if (isOpenDisabled) {
-        setSession('Close');
+  
+   useEffect(() => {
+    if (isOpenDisabled && !isCloseDisabled) {
+      setSession('Close');
     } else {
-        setSession('Open');
+      setSession('Open');
     }
   }, [isOpenDisabled, isCloseDisabled]);
 
@@ -222,8 +221,8 @@ export default function SingleDigitPage() {
       </div>
     );
   }
-
-  const isBettingDisabled = !session;
+  
+  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || isCloseDisabled;
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Single Digit">
@@ -257,6 +256,27 @@ export default function SingleDigitPage() {
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                     />
+                </div>
+                <div className="space-y-2">
+                    <Label className="text-sm">Select Session:</Label>
+                     <RadioGroup 
+                        value={session} 
+                        onValueChange={(value) => setSession(value as 'Open' | 'Close')}
+                        className="grid grid-cols-2 gap-2"
+                    >
+                        <Label 
+                            className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : ''} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                        >
+                            <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
+                            Open
+                        </Label>
+                         <Label 
+                            className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : ''} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                        >
+                            <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
+                            Close
+                        </Label>
+                    </RadioGroup>
                 </div>
             </div>
         
