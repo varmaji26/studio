@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { GameBettingLayout } from '@/components/game-betting-layout';
 import { Badge } from '@/components/ui/badge';
@@ -39,7 +38,7 @@ export default function DoublePanaPage() {
   const [currentPana, setCurrentPana] = useState('');
   const [selectedPana, setSelectedPana] = useState<string[]>([]);
   const [amount, setAmount] = useState<string>('');
-  const [session, setSession] = useState<'Open' | 'Close'>();
+  const [session, setSession] = useState<'Open' | 'Close' | null>(null);
   
   const [totalAmount, setTotalAmount] = useState(0);
   const [potentialWin, setPotentialWin] = useState(0);
@@ -77,6 +76,7 @@ export default function DoublePanaPage() {
   }, [gameId, router]);
 
   const getTimeParts = (timeStr: string) => {
+    if (!timeStr) return { hours: 0, minutes: 0 };
     const [hours, minutes] = timeStr.split(':').map(Number);
     return { hours, minutes };
   }
@@ -94,12 +94,14 @@ export default function DoublePanaPage() {
   const isCloseDisabled = now >= closeDateTime;
 
   useEffect(() => {
-    if (isOpenDisabled) {
+    if (isCloseDisabled) {
+        setSession(null); // Betting fully closed
+    } else if (isOpenDisabled) {
         setSession('Close');
     } else {
         setSession('Open');
     }
-  }, [isOpenDisabled]);
+  }, [isOpenDisabled, isCloseDisabled]);
   
   useEffect(() => {
     const parsedAmount = parseInt(amount, 10);
@@ -108,7 +110,6 @@ export default function DoublePanaPage() {
     if (!isNaN(parsedAmount) && parsedAmount > 0 && numSelected > 0) {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
-      // Assuming a rate of 300 for Double Pana wins
       setPotentialWin(parsedAmount * 300);
     } else {
       setTotalAmount(0);
@@ -166,7 +167,7 @@ export default function DoublePanaPage() {
       return;
     }
     if (!session) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please select a session.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Betting is currently closed for this session.' });
         return;
     }
     
@@ -224,7 +225,6 @@ export default function DoublePanaPage() {
             description: `Your bet of ₹${totalAmount} has been placed for ${game?.name}.`,
         });
 
-        // Reset form
         setSelectedPana([]);
         setAmount('');
     } catch (error: any) {
@@ -255,7 +255,7 @@ export default function DoublePanaPage() {
     );
   }
 
-  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || (isOpenDisabled && isCloseDisabled);
+  const isBettingDisabled = !session;
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Double Pana">
@@ -307,28 +307,6 @@ export default function DoublePanaPage() {
                         onChange={(e) => setAmount(e.target.value)}
                     />
                 </div>
-                
-                <div className="space-y-2">
-                     <Label className="text-sm">Select Session:</Label>
-                     <RadioGroup 
-                        value={session ?? undefined} 
-                        onValueChange={(value) => setSession(value as 'Open' | 'Close')} 
-                        className="grid grid-cols-2 gap-2"
-                     >
-                        <div>
-                            <RadioGroupItem value="Open" id="open" className="sr-only peer" disabled={isOpenDisabled} />
-                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-1.5 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
-                                Open
-                            </Label>
-                        </div>
-                         <div>
-                            <RadioGroupItem value="Close" id="close" className="sr-only peer" disabled={isCloseDisabled} />
-                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-1.5 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
-                                Close
-                            </Label>
-                        </div>
-                     </RadioGroup>
-                </div>
             </div>
         
             <Card className="bg-card/80 border-white/10">
@@ -354,7 +332,7 @@ export default function DoublePanaPage() {
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Session:</span>
-                        <span className="font-semibold">{session || '-'}</span>
+                        <span className="font-semibold">{session || 'Closed'}</span>
                     </div>
                     <div className="flex justify-between text-primary">
                         <span className="text-primary/80">Potential Win:</span>
@@ -374,5 +352,3 @@ export default function DoublePanaPage() {
     </GameBettingLayout>
   );
 }
-
-    

@@ -11,18 +11,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { GameBettingLayout } from '@/components/game-betting-layout';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Game extends DocumentData {
   id: string;
   name: string;
   openTime: string;
   closeTime: string;
-  openResult: string; // Add this to check if open result is declared
+  openResult: string;
 }
 
 const jodiSchema = /^\d{2}$/;
@@ -40,7 +40,7 @@ export default function JodiDigitPage() {
   const [currentJodi, setCurrentJodi] = useState('');
   const [selectedJodi, setSelectedJodi] = useState<string[]>([]);
   const [amount, setAmount] = useState<string>('');
-  const [session, setSession] = useState<'Open' | 'Close'>();
+  const [session, setSession] = useState<'Open' | 'Close' | null>(null);
   
   const [totalAmount, setTotalAmount] = useState(0);
   const [potentialWin, setPotentialWin] = useState(0);
@@ -78,6 +78,7 @@ export default function JodiDigitPage() {
   }, [gameId, router]);
   
   const getTimeParts = (timeStr: string) => {
+    if (!timeStr) return { hours: 0, minutes: 0 };
     const [hours, minutes] = timeStr.split(':').map(Number);
     return { hours, minutes };
   }
@@ -95,12 +96,14 @@ export default function JodiDigitPage() {
   const isCloseDisabled = now >= closeDateTime;
 
   useEffect(() => {
-    if (isOpenDisabled) {
+    if (isCloseDisabled) {
+        setSession(null); // Betting fully closed
+    } else if (isOpenDisabled) {
         setSession('Close');
     } else {
         setSession('Open');
     }
-  }, [isOpenDisabled]);
+  }, [isOpenDisabled, isCloseDisabled]);
 
   useEffect(() => {
     const parsedAmount = parseInt(amount, 10);
@@ -109,7 +112,6 @@ export default function JodiDigitPage() {
     if (!isNaN(parsedAmount) && parsedAmount > 0 && numSelected > 0) {
       const total = parsedAmount * numSelected;
       setTotalAmount(total);
-      // Assuming a rate of 100 for Jodi wins
       setPotentialWin(parsedAmount * 100);
     } else {
       setTotalAmount(0);
@@ -149,7 +151,7 @@ export default function JodiDigitPage() {
       return;
     }
     if (!session) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please select a session.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Betting is currently closed for this session.' });
         return;
     }
     
@@ -207,7 +209,6 @@ export default function JodiDigitPage() {
             description: `Your bet of ₹${totalAmount} has been placed for ${game?.name}.`,
         });
 
-        // Reset form
         setSelectedJodi([]);
         setAmount('');
     } catch (error: any) {
@@ -240,8 +241,7 @@ export default function JodiDigitPage() {
   
   const isOpenResultDeclared = game.openResult && game.openResult !== '***';
   const isJodiDisabledForClose = session === 'Close' && isOpenResultDeclared;
-
-  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || (isOpenDisabled && isCloseDisabled) || isJodiDisabledForClose;
+  const isBettingDisabled = !session || isJodiDisabledForClose;
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Jodi Digit">
@@ -267,9 +267,6 @@ export default function JodiDigitPage() {
                         />
                          <Button onClick={handleAddJodi} size="sm" disabled={isJodiDisabledForClose}>Add</Button>
                     </div>
-                    {isJodiDisabledForClose && (
-                        <p className="text-xs text-red-400 mt-2">Jodi betting for the Close session is disabled after the Open result is declared.</p>
-                    )}
                     {selectedJodi.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                             {selectedJodi.map((jodi) => (
@@ -284,6 +281,15 @@ export default function JodiDigitPage() {
                     )}
                 </CardContent>
             </Card>
+            
+            {isJodiDisabledForClose && (
+                <Alert variant="destructive">
+                    <AlertTitle>Betting Closed for Jodi</AlertTitle>
+                    <AlertDescription>
+                        Open result is declared. You can no longer place Jodi bets for the Close session.
+                    </AlertDescription>
+                </Alert>
+            )}
 
             <div className="space-y-4">
                  <div className="space-y-2">
@@ -296,28 +302,6 @@ export default function JodiDigitPage() {
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                     />
-                </div>
-                
-                <div className="space-y-2">
-                     <Label className="text-sm">Select Session:</Label>
-                     <RadioGroup 
-                        value={session ?? undefined} 
-                        onValueChange={(value) => setSession(value as 'Open' | 'Close')} 
-                        className="grid grid-cols-2 gap-2"
-                     >
-                        <div>
-                            <RadioGroupItem value="Open" id="open" className="sr-only peer" disabled={isOpenDisabled} />
-                            <Label htmlFor="open" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-1.5 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
-                                Open
-                            </Label>
-                        </div>
-                         <div>
-                            <RadioGroupItem value="Close" id="close" className="sr-only peer" disabled={isCloseDisabled || isJodiDisabledForClose} />
-                            <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-1.5 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
-                                Close
-                            </Label>
-                        </div>
-                     </RadioGroup>
                 </div>
             </div>
         
@@ -344,7 +328,7 @@ export default function JodiDigitPage() {
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Session:</span>
-                        <span className="font-semibold">{session || '-'}</span>
+                        <span className="font-semibold">{session || 'Closed'}</span>
                     </div>
                     <div className="flex justify-between text-primary">
                         <span className="text-primary/80">Potential Win:</span>
