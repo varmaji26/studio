@@ -22,6 +22,7 @@ interface Game extends DocumentData {
   name: string;
   openTime: string;
   closeTime: string;
+  openResult: string; // Add this to check if open result is declared
 }
 
 const jodiSchema = /^\d{2}$/;
@@ -237,7 +238,10 @@ export default function JodiDigitPage() {
     );
   }
   
-  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || (isOpenDisabled && isCloseDisabled);
+  const isOpenResultDeclared = game.openResult && game.openResult !== '***';
+  const isJodiDisabledForClose = session === 'Close' && isOpenResultDeclared;
+
+  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || (isOpenDisabled && isCloseDisabled) || isJodiDisabledForClose;
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Jodi Digit">
@@ -259,9 +263,13 @@ export default function JodiDigitPage() {
                                     setCurrentJodi(e.target.value)
                                 }
                             }}
+                            disabled={isJodiDisabledForClose}
                         />
-                         <Button onClick={handleAddJodi} size="sm">Add</Button>
+                         <Button onClick={handleAddJodi} size="sm" disabled={isJodiDisabledForClose}>Add</Button>
                     </div>
+                    {isJodiDisabledForClose && (
+                        <p className="text-xs text-red-400 mt-2">Jodi betting for the Close session is disabled after the Open result is declared.</p>
+                    )}
                     {selectedJodi.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                             {selectedJodi.map((jodi) => (
@@ -304,7 +312,7 @@ export default function JodiDigitPage() {
                             </Label>
                         </div>
                          <div>
-                            <RadioGroupItem value="Close" id="close" className="sr-only peer" disabled={isCloseDisabled} />
+                            <RadioGroupItem value="Close" id="close" className="sr-only peer" disabled={isCloseDisabled || isJodiDisabledForClose} />
                             <Label htmlFor="close" className="flex items-center justify-center rounded-md border-2 border-muted bg-transparent p-1.5 text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                                 Close
                             </Label>
@@ -356,5 +364,3 @@ export default function JodiDigitPage() {
     </GameBettingLayout>
   );
 }
-
-    
