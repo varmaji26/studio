@@ -239,7 +239,7 @@ export default function JodiDigitPage() {
   }
   
   const isOpenResultDeclared = game.openResult && game.openResult !== '***';
-  const isBettingDisabled = isTimeOver || !session;
+  const isBettingDisabled = isTimeOver || !session || isOpenResultDeclared;
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Jodi Digit">
@@ -288,15 +288,6 @@ export default function JodiDigitPage() {
                     )}
                 </CardContent>
             </Card>
-            
-            {isOpenResultDeclared && (
-                <Alert variant="destructive">
-                    <AlertTitle>Betting Closed for Jodi</AlertTitle>
-                    <AlertDescription>
-                        Open result is declared. You can no longer place Jodi bets.
-                    </AlertDescription>
-                </Alert>
-            )}
 
             <div className="space-y-4">
                  <div className="space-y-2">
