@@ -92,18 +92,17 @@ export default function JodiDigitPage() {
   const closeDateTime = new Date(now);
   closeDateTime.setHours(closeTime.hours, closeTime.minutes, 0, 0);
 
-  const isOpenDisabled = now >= openDateTime;
-  const isCloseDisabled = now >= closeDateTime;
-
+  const isTimeOver = now >= openDateTime;
+  
   useEffect(() => {
-    if (isCloseDisabled) {
-        setSession(null); // Betting fully closed
-    } else if (isOpenDisabled) {
-        setSession('Close');
+    if (now >= closeDateTime) {
+        setSession(null); // Betting fully closed for the day
+    } else if (now >= openDateTime) {
+        setSession(null); // Jodi time is over
     } else {
-        setSession('Open');
+        setSession('Open'); // Jodi betting is open
     }
-  }, [isOpenDisabled, isCloseDisabled]);
+  }, [now, openDateTime, closeDateTime]);
 
   useEffect(() => {
     const parsedAmount = parseInt(amount, 10);
@@ -195,7 +194,7 @@ export default function JodiDigitPage() {
                 gameId,
                 gameName: game?.name,
                 betType: 'Jodi Digit',
-                session,
+                session: 'Open', // Jodi is always considered for the full game based on open time
                 numbers: selectedJodi,
                 amountPerBet: parseInt(amount),
                 totalAmount: totalAmount,
@@ -240,12 +239,20 @@ export default function JodiDigitPage() {
   }
   
   const isOpenResultDeclared = game.openResult && game.openResult !== '***';
-  const isJodiDisabledForClose = session === 'Close' && isOpenResultDeclared;
-  const isBettingDisabled = !session || isJodiDisabledForClose;
+  const isBettingDisabled = isTimeOver || !session;
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Jodi Digit">
         <div className="space-y-4">
+            {isTimeOver && !isOpenResultDeclared && (
+                 <Alert variant="destructive">
+                    <AlertTitle>Jodi Time Over</AlertTitle>
+                    <AlertDescription>
+                       Jodi betting for this game is now closed.
+                    </AlertDescription>
+                </Alert>
+            )}
+            
             <Card className="bg-card/80 border-white/10">
                 <CardHeader className="p-4">
                     <CardTitle className="text-base">Enter Jodi Number(s):</CardTitle>
@@ -263,9 +270,9 @@ export default function JodiDigitPage() {
                                     setCurrentJodi(e.target.value)
                                 }
                             }}
-                            disabled={isJodiDisabledForClose}
+                            disabled={isBettingDisabled}
                         />
-                         <Button onClick={handleAddJodi} size="sm" disabled={isJodiDisabledForClose}>Add</Button>
+                         <Button onClick={handleAddJodi} size="sm" disabled={isBettingDisabled}>Add</Button>
                     </div>
                     {selectedJodi.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -282,11 +289,11 @@ export default function JodiDigitPage() {
                 </CardContent>
             </Card>
             
-            {isJodiDisabledForClose && (
+            {isOpenResultDeclared && (
                 <Alert variant="destructive">
                     <AlertTitle>Betting Closed for Jodi</AlertTitle>
                     <AlertDescription>
-                        Open result is declared. You can no longer place Jodi bets for the Close session.
+                        Open result is declared. You can no longer place Jodi bets.
                     </AlertDescription>
                 </Alert>
             )}
@@ -301,6 +308,7 @@ export default function JodiDigitPage() {
                         className="h-9 text-sm"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
+                        disabled={isBettingDisabled}
                     />
                 </div>
             </div>
@@ -341,7 +349,7 @@ export default function JodiDigitPage() {
                 <p className="text-center text-muted-foreground mb-2 text-xs">Total Bids: {selectedJodi.length}</p>
                  <Button className="w-full h-10 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
                     {isSubmitting ? <Loader className="mr-2" /> : null}
-                    {isBettingDisabled ? 'Betting Closed' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
+                    {isBettingDisabled ? 'Jodi Time Over' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
                 </Button>
             </div>
         </div>
