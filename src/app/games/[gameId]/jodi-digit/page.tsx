@@ -232,8 +232,7 @@ export default function JodiDigitPage() {
     );
   }
   
-  const isOpenResultDeclared = game.openResult && game.openResult !== '***';
-  const isBettingDisabled = isTimeOver || isOpenResultDeclared;
+  const isBettingDisabled = isTimeOver;
 
   return (
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Jodi Digit">
