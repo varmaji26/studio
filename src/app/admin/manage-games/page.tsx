@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, deleteDoc, doc, updateDoc, writeBatch, increment } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, deleteDoc, doc, updateDoc, writeBatch, increment, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { formatTime } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RotateCcw } from 'lucide-react';
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -54,6 +56,7 @@ export default function ManageGamesPage() {
   const [loading, setLoading] = useState(true);
   const [currentDay, setCurrentDay] = useState('');
   const [selectedGameId, setSelectedGameId] = useState<string>('');
+  const [isResetting, setIsResetting] = useState(false);
 
 
   useEffect(() => {
@@ -174,6 +177,44 @@ export default function ManageGamesPage() {
             title: 'Error',
             description: 'Failed to update game status. Please try again.'
         });
+    }
+  };
+
+  const handleResetAllResults = async () => {
+    setIsResetting(true);
+    try {
+        const gamesQuery = query(collection(db, 'games'));
+        const querySnapshot = await getDocs(gamesQuery);
+        
+        if (querySnapshot.empty) {
+            toast({ title: 'No games to reset.' });
+            setIsResetting(false);
+            return;
+        }
+
+        const batch = writeBatch(db);
+        querySnapshot.docs.forEach(doc => {
+            batch.update(doc.ref, {
+                result: '***-**-***',
+                openResult: '***',
+                closeResult: '**',
+            });
+        });
+        await batch.commit();
+        
+        toast({
+            title: 'Success!',
+            description: 'All game results have been reset.'
+        });
+    } catch (error) {
+        console.error('Error resetting results:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to reset game results.'
+        });
+    } finally {
+        setIsResetting(false);
     }
   };
   
@@ -313,8 +354,32 @@ export default function ManageGamesPage() {
           
           <Card className="bg-card/80 border-white/10 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl">All Games</CardTitle>
-              <CardDescription>View, edit, or delete existing games. Today is {currentDay}.</CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-2xl">All Games</CardTitle>
+                        <CardDescription>View, edit, or delete existing games. Today is {currentDay}.</CardDescription>
+                    </div>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" disabled={isResetting || games.length === 0}>
+                               {isResetting ? <Loader className="mr-2 h-4 w-4" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                               Reset All Results
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will reset all game results to "***-**-***". This action is useful for starting a new day but cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleResetAllResults}>Reset</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
             </CardHeader>
             <CardContent>
                <div className="mb-4">
