@@ -599,12 +599,12 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/80 border-white/10 shadow-lg">
+        <Card className="bg-red-600 border-red-700 shadow-lg">
             <CardHeader>
-                <CardTitle className="text-xl">Notice</CardTitle>
+                <CardTitle className="text-xl text-white">Notice</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-muted-foreground">{settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}</p>
+                <p className="text-white font-bold">{settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}</p>
             </CardContent>
         </Card>
 
