@@ -226,7 +226,7 @@ export default function ManageGamesPage() {
   
   const filteredGames = useMemo(() => {
     if (!selectedGameId) {
-        return games;
+        return [];
     }
     return games.filter(game => game.id === selectedGameId);
   }, [games, selectedGameId]);
@@ -245,7 +245,7 @@ export default function ManageGamesPage() {
                   <FormField
                     control={form.control}
                     name="name"
-                    render= {({ field }) => (
+                    render={({ field }) => (
                       <FormItem>
                         <FormLabel>Game Name</FormLabel>
                         <FormControl>
@@ -258,7 +258,7 @@ export default function ManageGamesPage() {
                   <FormField
                     control={form.control}
                     name="status"
-                    render= {({ field }) => (
+                    render={({ field }) => (
                       <FormItem>
                         <FormLabel>Initial Betting Status</FormLabel>
                         <FormControl>
@@ -272,7 +272,7 @@ export default function ManageGamesPage() {
                     <FormField
                       control={form.control}
                       name="openTime"
-                      render= {({ field }) => (
+                      render={({ field }) => (
                           <FormItem>
                           <FormLabel>Open Time</FormLabel>
                           <FormControl>
@@ -285,7 +285,7 @@ export default function ManageGamesPage() {
                       <FormField
                       control={form.control}
                       name="closeTime"
-                      render= {({ field }) => (
+                      render={({ field }) => (
                           <FormItem>
                           <FormLabel>Close Time</FormLabel>
                           <FormControl>
@@ -299,7 +299,7 @@ export default function ManageGamesPage() {
                   <FormField
                     control={form.control}
                     name="activeDays"
-                    render= {() => (
+                    render={() => (
                       <FormItem>
                         <div className="mb-4">
                           <FormLabel className="text-base">Game Active Days</FormLabel>
@@ -310,7 +310,7 @@ export default function ManageGamesPage() {
                               key={day}
                               control={form.control}
                               name="activeDays"
-                              render= {({ field }) => {
+                              render={({ field }) => {
                                 return (
                                   <FormItem
                                     key={day}
@@ -319,7 +319,7 @@ export default function ManageGamesPage() {
                                     <FormControl>
                                       <Checkbox
                                         checked={field.value?.includes(day)}
-                                        onCheckedChange= {(checked) => {
+                                        onCheckedChange={(checked) => {
                                           return checked
                                             ? field.onChange([...field.value, day])
                                             : field.onChange(
@@ -435,8 +435,8 @@ export default function ManageGamesPage() {
                                           <div className="flex items-center space-x-2">
                                               <Switch
                                                   checked={game.active}
-                                                  onCheckedChange= {() => handleStatusToggle(game.id, game.active)}
-                                                  aria-label= {`Toggle game master status for ${game.name}`}
+                                                  onCheckedChange={() => handleStatusToggle(game.id, game.active)}
+                                                  aria-label={`Toggle game master status for ${game.name}`}
                                               />
                                               <span className="text-xs text-muted-foreground">{game.active ? 'On' : 'Off'}</span>
                                           </div>
@@ -459,7 +459,7 @@ export default function ManageGamesPage() {
                                                       </AlertDialogHeader>
                                                       <AlertDialogFooter>
                                                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                          <AlertDialogAction onClick= {() => handleDeleteGame(game.id)}>Continue</AlertDialogAction>
+                                                          <AlertDialogAction onClick={() => handleDeleteGame(game.id)}>Continue</AlertDialogAction>
                                                       </AlertDialogFooter>
                                                   </AlertDialogContent>
                                               </AlertDialog>
@@ -472,8 +472,11 @@ export default function ManageGamesPage() {
                       </Table>
                   </div>
               )}
-              {filteredGames.length === 0 && !loading && (
-                  <p className="text-center text-muted-foreground mt-4">No games found. Add a new game to get started.</p>
+              {filteredGames.length === 0 && !loading && selectedGameId && (
+                  <p className="text-center text-muted-foreground mt-4">No game found for the selection.</p>
+              )}
+               {filteredGames.length === 0 && !loading && !selectedGameId && (
+                  <p className="text-center text-muted-foreground mt-4">Please select a game to view details.</p>
               )}
             </CardContent>
           </Card>
@@ -481,5 +484,3 @@ export default function ManageGamesPage() {
     </div>
   );
 }
-
-    
