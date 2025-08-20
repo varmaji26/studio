@@ -15,10 +15,10 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
     const router = useRouter();
     
     const navItems = [
-        { label: 'My Bids', action: () => router.push('/bids-history'), color: 'bg-yellow-500', icon: <Trophy className="h-5 w-5 [text-shadow:1px_1px_2px_#000]" /> },
-        { label: 'Passbook', action: () => router.push('/payment-history'), color: 'bg-green-500', icon: <BookText className="h-5 w-5 [text-shadow:1px_1px_2px_#000]" /> },
-        { label: 'Support', action: () => router.push('/contact'), color: 'bg-sky-500', icon: <MessageSquare className="h-5 w-5 [text-shadow:1px_1px_2px_#000]" /> },
-        { label: 'Funds', action: () => router.push('/funds'), color: 'bg-red-500', icon: <IndianRupee className="h-5 w-5 [text-shadow:1px_1px_2px_#000]" /> },
+        { label: 'My Bids', action: () => router.push('/bids-history'), color: 'bg-yellow-500', icon: <Trophy className="h-5 w-5" style={{ filter: 'drop-shadow(1px 1px 2px #000000A0)' }} /> },
+        { label: 'Passbook', action: () => router.push('/payment-history'), color: 'bg-green-500', icon: <BookText className="h-5 w-5" style={{ filter: 'drop-shadow(1px 1px 2px #000000A0)' }} /> },
+        { label: 'Support', action: () => router.push('/contact'), color: 'bg-sky-500', icon: <MessageSquare className="h-5 w-5" style={{ filter: 'drop-shadow(1px 1px 2px #000000A0)' }} /> },
+        { label: 'Funds', action: () => router.push('/funds'), color: 'bg-red-500', icon: <IndianRupee className="h-5 w-5" style={{ filter: 'drop-shadow(1px 1px 2px #000000A0)' }} /> },
     ];
     
     return (
@@ -34,7 +34,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                         )}
                     >
                         {icon}
-                        <span className="mt-1 text-xs font-bold [text-shadow:1px_1px_2px_#000]">{label}</span>
+                        <span className="mt-1 text-xs font-bold" style={{ textShadow: '1px 1px 2px #000000A0' }}>{label}</span>
                     </button>
                 ))}
             </div>
