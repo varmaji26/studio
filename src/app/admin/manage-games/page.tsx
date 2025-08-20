@@ -383,12 +383,11 @@ export default function ManageGamesPage() {
             </CardHeader>
             <CardContent>
                <div className="mb-4">
-                    <Select value={selectedGameId} onValueChange= {(value) => setSelectedGameId(value === "all" ? "" : value)}>
+                    <Select value={selectedGameId} onValueChange={setSelectedGameId}>
                         <SelectTrigger className="w-full sm:w-[280px]">
                             <SelectValue placeholder="Filter by game..." />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Games</SelectItem>
                             {games.map((game) => (
                                 <SelectItem key={game.id} value={game.id}>
                                     {game.name}
