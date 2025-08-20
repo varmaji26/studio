@@ -451,17 +451,17 @@ export default function Home() {
         </div>
          <div className="flex justify-center items-center gap-4">
             <Link href="/add-fund" className="flex-1">
-                <Button className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-lg">
-                    <div className="bg-white/90 rounded-full p-1.5 mr-2">
-                        <IndianRupee className="h-5 w-5 text-green-600" />
+                <Button className="w-full h-10 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-lg">
+                    <div className="bg-white/90 rounded-full p-1 mr-2">
+                        <IndianRupee className="h-4 w-4 text-green-600" />
                     </div>
                     ADD MONEY
                 </Button>
             </Link>
              <Link href="/withdrawal" className="flex-1">
-                <Button className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow-lg">
-                     <div className="bg-white/90 rounded-full p-1.5 mr-2">
-                        <Landmark className="h-5 w-5 text-red-600" />
+                <Button className="w-full h-10 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow-lg">
+                     <div className="bg-white/90 rounded-full p-1 mr-2">
+                        <Landmark className="h-4 w-4 text-red-600" />
                     </div>
                     WITHDRAW
                 </Button>
