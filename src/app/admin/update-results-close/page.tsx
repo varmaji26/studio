@@ -116,6 +116,61 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
+        // Update Jodi Chart
+        const jodiChartRef = doc(db, 'jodiCharts', game.id);
+        const jodiChartSnap = await getDoc(jodiChartRef);
+        if (jodiChartSnap.exists()) {
+            const jodiData = jodiChartSnap.data();
+            const today = new Date();
+            const todayDay = today.toLocaleDateString('en-US', { weekday: 'long' });
+            const activeDays = jodiData.activeDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            
+            if (activeDays.includes(todayDay)) {
+                let newData = jodiData.data ? `${jodiData.data} ${finalJodi}` : finalJodi;
+                batch.update(jodiChartRef, { data: newData });
+            }
+        }
+        
+        // Update Panel Chart
+        const panelChartRef = doc(db, 'panelCharts', game.id);
+        const panelChartSnap = await getDoc(panelChartRef);
+        if (panelChartSnap.exists()) {
+            const panelData = panelChartSnap.data().data || '';
+            const today = new Date();
+            const todayFormatted = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+            
+            const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
+            let match;
+            let lastMatch: RegExpExecArray | null = null;
+            while ((match = dateRangeRegex.exec(panelData)) !== null) {
+                lastMatch = match;
+            }
+
+            if (lastMatch) {
+                const startDateStr = lastMatch[1];
+                const endDateStr = lastMatch[2];
+                const startDate = parseDateString(startDateStr);
+                const endDate = parseDateString(endDateStr);
+
+                if (startDate && endDate && today >= startDate && today <= endDate) {
+                    const todayDayIndex = (today.getDay() + 6) % 7; // Monday is 0
+                    const weeklyDataBlockIndex = lastMatch.index + lastMatch[0].length;
+                    const weeklyDataString = panelData.substring(weeklyDataBlockIndex).trim().split('\n')[0];
+                    
+                    let parts = weeklyDataString.trim().split(/\s+/).join('');
+                    const newDayData = `${openPana}${finalJodi}${newClosePana}`;
+
+                    const start = todayDayIndex * 8;
+                    const end = start + 8;
+                    
+                    let updatedParts = parts.substring(0, start) + newDayData + parts.substring(end);
+                    
+                    const newData = panelData.substring(0, weeklyDataBlockIndex) + '\n' + updatedParts;
+                    batch.update(panelChartRef, { data: newData });
+                }
+            }
+        }
+
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
         const bidsSnapshot = await getDocs(bidsQuery);
         let winnersFound = 0;
