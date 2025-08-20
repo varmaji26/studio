@@ -46,10 +46,10 @@ export function formatGameResult(game: DocumentData, compact: boolean = false): 
     const isCloseValid = closeResult && /^\d{3}$/.test(closeResult);
 
     const openPana = isOpenValid ? openResult : '***';
-    const closePana = isCloseValid ? closeResult : (compact ? '***' : 'XXX');
+    const closePana = isCloseValid ? closeResult : (compact ? '***' : '***');
 
     const openJodi = calculateJodiDigit(openPana) || '*';
-    const closeJodi = calculateJodiDigit(closePana) || (compact ? '*' : 'X');
+    const closeJodi = calculateJodiDigit(closePana) || '*';
 
     if (isOpenValid && isCloseValid) {
         // Both results are in, show full result
