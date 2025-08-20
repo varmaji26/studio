@@ -116,55 +116,6 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
-        const jodiChartDocRef = doc(db, 'jodiCharts', game.id);
-        const jodiChartDocSnap = await getDoc(jodiChartDocRef);
-        if (jodiChartDocSnap.exists()) {
-            const currentChartData = jodiChartDocSnap.data().data || '';
-            const updatedChartData = `${currentChartData} ${finalJodi}`.trim();
-            batch.update(jodiChartDocRef, { data: updatedChartData });
-        }
-        
-        const panelChartDocRef = doc(db, 'panelCharts', game.id);
-        const panelChartDocSnap = await getDoc(panelChartDocRef);
-        if (panelChartDocSnap.exists()) {
-            const chartDataStr = panelChartDocSnap.data().data || '';
-            const today = new Date();
-            const todayDayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
-            const newDayResult = `${openPana}${finalJodi}${newClosePana}`;
-            const lines = chartDataStr.split('\n');
-            let chartWasUpdated = false;
-
-            const updatedLines = lines.map(line => {
-                const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/;
-                const match = line.match(dateRangeRegex);
-                
-                if (match) {
-                    const startDate = parseDateString(match[1]);
-                    const endDate = parseDateString(match[2]);
-                    if (startDate && endDate) {
-                         endDate.setHours(23, 59, 59, 999);
-                         if (today >= startDate && today <= endDate) {
-                            const dataPart = line.substring(match[0].length).trim();
-                            const weekData = dataPart.split(/\s+/).filter(Boolean);
-                            while(weekData.length < 7) { weekData.push('********'); }
-                            if (weekData.length > todayDayIndex) {
-                                weekData[todayDayIndex] = newDayResult;
-                                const updatedDataPart = weekData.join(' ');
-                                chartWasUpdated = true;
-                                return `${match[0]} ${updatedDataPart}`;
-                            }
-                         }
-                    }
-                }
-                return line;
-            });
-            
-            if (chartWasUpdated) {
-                const finalUpdatedChartData = updatedLines.join('\n');
-                batch.update(panelChartDocRef, { data: finalUpdatedChartData });
-            }
-        }
-
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
         const bidsSnapshot = await getDocs(bidsQuery);
         let winnersFound = 0;
