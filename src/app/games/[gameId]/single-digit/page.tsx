@@ -190,6 +190,7 @@ export default function SingleDigitPage() {
         toast({
             title: 'Bet Placed Successfully!',
             description: `Your bet of ₹${totalAmount} has been placed for ${game?.name}.`,
+            className: 'bg-green-600 text-white border-green-700',
         });
 
         setSelectedNumbers([]);
