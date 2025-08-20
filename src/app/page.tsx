@@ -604,7 +604,12 @@ export default function Home() {
                 <CardTitle className="text-xl text-white">Notice</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-white font-bold">{settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}</p>
+                <p 
+                  className="text-white font-bold" 
+                  style={{ whiteSpace: 'pre-wrap' }}
+                >
+                  {settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}
+                </p>
             </CardContent>
         </Card>
 
