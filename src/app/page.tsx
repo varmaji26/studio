@@ -393,35 +393,35 @@ export default function Home() {
                     <Separator className="bg-white/10 my-2" />
                     <nav className="flex flex-col gap-2 p-4">
                         <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
-                            <LogOut className="h-5 w-5 text-primary" />
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><LogOut className="h-5 w-5" /></div>
                             <span>Logout</span>
                         </button>
                         <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                            <HomeIcon className="h-5 w-5 text-primary" />
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><HomeIcon className="h-5 w-5" /></div>
                             <span>Home</span>
                         </Link>
                         <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                            <UserIcon className="h-5 w-5 text-primary" />
+                           <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><UserIcon className="h-5 w-5" /></div>
                             <span>Profile</span>
                         </Link>
                         <Link href="/time-table" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                            <Clock className="h-5 w-5 text-primary" />
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Clock className="h-5 w-5" /></div>
                             <span>Time Table</span>
                         </Link>
                         <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                            <BookUser className="h-5 w-5 text-primary" />
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><BookUser className="h-5 w-5" /></div>
                             <span>Contact</span>
                         </Link>
                         <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                            <Download className="h-5 w-5 text-primary" />
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Download className="h-5 w-5" /></div>
                             <span>Download App</span>
                         </Link>
                         <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                            <Star className="h-5 w-5 text-primary" />
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Star className="h-5 w-5" /></div>
                             <span>Rate Card</span>
                         </Link>
                         <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                            <BarChart2 className="h-5 w-5 text-primary" />
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><BarChart2 className="h-5 w-5" /></div>
                             <span>Chart</span>
                         </Link>
                     </nav>
@@ -441,7 +441,7 @@ export default function Home() {
             <div className="flex items-center gap-2 rounded-lg bg-black/30 px-2 py-1 border border-white/10">
               <Crown className="h-5 w-5 text-primary" />
               <span className="font-bold text-lg text-foreground">
-                MATKA <span className="text-primary">KING</span>
+                MATKA KING
               </span>
             </div>
             <div className="flex items-center gap-2">
