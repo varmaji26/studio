@@ -36,6 +36,7 @@ import {
   BellRing,
   X,
   Gift,
+  IndianRupee,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -363,92 +364,112 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="flex items-center justify-between p-4 bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10">
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-8 w-8 text-green-500" strokeWidth={3} />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="bg-card border-r-0 text-foreground flex flex-col p-0">
-             <div className="flex-1 overflow-y-auto">
-                <SheetHeader className="p-6 flex flex-row justify-between items-center">
-                    <SheetTitle className="text-primary text-2xl flex items-center gap-2">
-                        <Crown className="h-7 w-7" />
-                        MATKA KING
-                    </SheetTitle>
-                </SheetHeader>
-                <div className="py-4">
-                <div className="flex flex-col items-center space-y-2">
-                     <Avatar className="h-20 w-20">
-                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                        <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
-                    </Avatar>
-                    <p className="font-bold text-lg">{user.displayName}</p>
-                    <p className="text-muted-foreground">+91 {mobileNumber}</p>
+      <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
+        <div className="flex items-center justify-between">
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-8 w-8 text-green-500" strokeWidth={3} />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-card border-r-0 text-foreground flex flex-col p-0">
+                 <div className="flex-1 overflow-y-auto">
+                    <SheetHeader className="p-6 flex flex-row justify-between items-center">
+                        <SheetTitle className="text-primary text-2xl flex items-center gap-2">
+                            <Crown className="h-7 w-7" />
+                            MATKA KING
+                        </SheetTitle>
+                    </SheetHeader>
+                    <div className="py-4">
+                    <div className="flex flex-col items-center space-y-2">
+                         <Avatar className="h-20 w-20">
+                            <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                            <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
+                        </Avatar>
+                        <p className="font-bold text-lg">{user.displayName}</p>
+                        <p className="text-muted-foreground">+91 {mobileNumber}</p>
+                    </div>
+                    </div>
+                    <Separator className="bg-white/10 my-2" />
+                    <nav className="flex flex-col gap-2 p-4">
+                        <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
+                            <LogOut className="h-5 w-5 text-primary" />
+                            <span>Logout</span>
+                        </button>
+                        <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                            <HomeIcon className="h-5 w-5 text-primary" />
+                            <span>Home</span>
+                        </Link>
+                        <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                            <UserIcon className="h-5 w-5 text-primary" />
+                            <span>Profile</span>
+                        </Link>
+                        <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                            <BookUser className="h-5 w-5 text-primary" />
+                            <span>Contact</span>
+                        </Link>
+                        <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                            <Download className="h-5 w-5 text-primary" />
+                            <span>Download App</span>
+                        </Link>
+                         <Link href="/golden-ank" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                            <Gem className="h-5 w-5 text-primary" />
+                            <span>Golden Ank</span>
+                        </Link>
+                        <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                            <Star className="h-5 w-5 text-primary" />
+                            <span>Rate Card</span>
+                        </Link>
+                        <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                            <BarChart2 className="h-5 w-5 text-primary" />
+                            <span>Chart</span>
+                        </Link>
+                    </nav>
                 </div>
+                <div className="p-4 border-t border-white/10">
+                     {user.isAdmin && (
+                        <Link href="/admin">
+                            <Button className="w-full bg-[#34a387] hover:bg-[#34a387]/90 text-white">
+                                <ShieldCheck className="mr-2 h-5 w-5" />
+                                Admin Panel
+                            </Button>
+                        </Link>
+                     )}
                 </div>
-                <Separator className="bg-white/10 my-2" />
-                <nav className="flex flex-col gap-2 p-4">
-                    <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
-                        <LogOut className="h-5 w-5 text-primary" />
-                        <span>Logout</span>
-                    </button>
-                    <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <HomeIcon className="h-5 w-5 text-primary" />
-                        <span>Home</span>
-                    </Link>
-                    <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <UserIcon className="h-5 w-5 text-primary" />
-                        <span>Profile</span>
-                    </Link>
-                    <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <BookUser className="h-5 w-5 text-primary" />
-                        <span>Contact</span>
-                    </Link>
-                    <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <Download className="h-5 w-5 text-primary" />
-                        <span>Download App</span>
-                    </Link>
-                     <Link href="/golden-ank" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <Gem className="h-5 w-5 text-primary" />
-                        <span>Golden Ank</span>
-                    </Link>
-                    <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <Star className="h-5 w-5 text-primary" />
-                        <span>Rate Card</span>
-                    </Link>
-                    <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
-                        <BarChart2 className="h-5 w-5 text-primary" />
-                        <span>Chart</span>
-                    </Link>
-                </nav>
+              </SheetContent>
+            </Sheet>
+            <div className="flex items-center gap-2 rounded-lg bg-black/30 px-2 py-1 border border-white/10">
+              <Crown className="h-5 w-5 text-primary" />
+              <span className="font-bold text-xl text-foreground">
+                MATKA <span className="text-primary">KING</span>
+              </span>
             </div>
-            <div className="p-4 border-t border-white/10">
-                 {user.isAdmin && (
-                    <Link href="/admin">
-                        <Button className="w-full bg-[#34a387] hover:bg-[#34a387]/90 text-white">
-                            <ShieldCheck className="mr-2 h-5 w-5" />
-                            Admin Panel
-                        </Button>
-                    </Link>
-                 )}
+            <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
+                        <Wallet className="h-5 w-5 text-green-400" />
+                        <span className="font-bold text-md text-white">₹{totalBalance.toFixed(0) ?? '0'}</span>
+                    </div>
+                </div>
             </div>
-          </SheetContent>
-        </Sheet>
-        <div className="flex items-center gap-2 rounded-lg bg-black/30 px-2 py-1 border border-white/10">
-          <Crown className="h-5 w-5 text-primary" />
-          <span className="font-bold text-xl text-foreground">
-            MATKA <span className="text-primary">KING</span>
-          </span>
         </div>
-        <div className="flex items-center gap-2">
-            <div className="flex flex-col items-end">
-                <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
-                    <Wallet className="h-5 w-5 text-green-400" />
-                    <span className="font-bold text-md text-white">₹{totalBalance.toFixed(0) ?? '0'}</span>
-                </div>
-            </div>
+         <div className="flex justify-center items-center gap-4">
+            <Link href="/add-fund" className="flex-1">
+                <Button className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-lg">
+                    <div className="bg-white/90 rounded-full p-1.5 mr-2">
+                        <IndianRupee className="h-5 w-5 text-green-600" />
+                    </div>
+                    ADD MONEY
+                </Button>
+            </Link>
+             <Link href="/withdrawal" className="flex-1">
+                <Button className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow-lg">
+                     <div className="bg-white/90 rounded-full p-1.5 mr-2">
+                        <Landmark className="h-5 w-5 text-red-600" />
+                    </div>
+                    WITHDRAW
+                </Button>
+            </Link>
         </div>
       </header>
       
