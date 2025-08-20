@@ -238,9 +238,9 @@ export default function JodiDigitPage() {
     <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Jodi Digit">
         <div className="space-y-4">
             {isTimeOver && (
-                 <Alert variant="destructive">
-                    <AlertTitle>JODI TIME OVER</AlertTitle>
-                    <AlertDescription>
+                 <Alert variant="destructive" className="bg-red-600 border-red-700 text-white">
+                    <AlertTitle className="font-bold">JODI TIME OVER</AlertTitle>
+                    <AlertDescription className="text-white/90">
                        Jodi betting for this game is now closed.
                     </AlertDescription>
                 </Alert>
