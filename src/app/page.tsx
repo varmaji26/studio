@@ -599,7 +599,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="bg-red-600 border-red-700 shadow-lg">
+        <Card className="bg-[#3D1C27] border-[#3D1C27] shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl text-white">Notice</CardTitle>
             </CardHeader>
