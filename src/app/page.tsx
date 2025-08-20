@@ -436,7 +436,7 @@ export default function Home() {
             </Sheet>
             <div className="flex items-center gap-2 rounded-lg bg-black/30 px-2 py-1 border border-white/10">
               <Crown className="h-5 w-5 text-primary" />
-              <span className="font-bold text-xl text-foreground">
+              <span className="font-bold text-lg text-foreground">
                 MATKA <span className="text-primary">KING</span>
               </span>
             </div>
