@@ -139,8 +139,8 @@ export default function JodiDigitPage() {
       toast({ variant: 'destructive', title: 'Error', description: 'Please add at least one Jodi number.' });
       return;
     }
-    if (!amount || parseInt(amount) <= 0) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please enter a valid bet amount.' });
+    if (!amount || parseInt(amount) < 5) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Minimum bet amount for Jodi is ₹5.' });
       return;
     }
     if (!session) {
