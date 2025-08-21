@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { auth, db, storage } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc, getDocs } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -52,6 +52,7 @@ import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 
 
 interface Game extends DocumentData {
@@ -604,12 +605,12 @@ export default function Home() {
                 <Loader className="h-8 w-8 text-primary" />
               </div>
             ) : games.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1">
                 {games.map((game) => (
                   <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-0.5 rounded-lg border border-black text-center">
-                    <span className="text-[10px] font-medium text-white">{game.name}</span>
-                    <span className="text-[10px] font-bold text-black">{formatGameResult(game, true)}</span>
-                    <span className="text-[10px] text-white/70">({formatTime(game.closeTime)})</span>
+                    <span className="text-[8px] font-medium text-white">{game.name}</span>
+                    <span className="text-[8px] font-bold text-black">{formatGameResult(game, true)}</span>
+                    <span className="text-[8px] text-white/70">({formatTime(game.closeTime)})</span>
                   </div>
                 ))}
               </div>
