@@ -33,7 +33,6 @@ function PaymentQRContent() {
     const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
-    const [transactionId, setTransactionId] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -81,16 +80,7 @@ function PaymentQRContent() {
         }
     }
 
-    const handleSubmitForVerification = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!transactionId) {
-            toast({
-                variant: 'destructive',
-                title: 'Transaction ID Required',
-                description: 'Please enter the transaction ID from your UPI app.',
-            });
-            return;
-        }
+    const handleSubmitForVerification = async () => {
         if (!user || !amount) return;
 
         setIsSubmitting(true);
@@ -101,7 +91,7 @@ function PaymentQRContent() {
                 mobile: user.email?.split('@')[0],
                 amount: parseInt(amount, 10),
                 paymentMethod: 'UPI',
-                transactionId: transactionId,
+                transactionId: 'User confirmed payment',
                 status: 'pending',
                 createdAt: serverTimestamp(),
             });
@@ -247,25 +237,12 @@ function PaymentQRContent() {
                         <div className="border-t pt-3 space-y-2">
                            <div className="flex items-center gap-2 font-semibold text-gray-800">
                                <FileText className="h-5 w-5 text-gray-500"/>
-                               <h3>After Payment, Submit Details</h3>
+                               <h3>After Payment, Submit for Verification</h3>
                            </div>
-                           <form onSubmit={handleSubmitForVerification} className="space-y-3">
-                               <div>
-                                   <label htmlFor="transactionId" className="text-sm font-medium text-gray-700">Transaction ID / UTR Number</label>
-                                   <Input 
-                                        id="transactionId"
-                                        value={transactionId}
-                                        onChange={(e) => setTransactionId(e.target.value)}
-                                        placeholder="Enter 12-digit UTR number"
-                                        className="mt-1 bg-white text-black"
-                                        required
-                                   />
-                               </div>
-                               <Button type="submit" className="w-full h-11 bg-green-600 hover:bg-green-700 font-bold" disabled={isSubmitting}>
-                                   {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
-                                   {isSubmitting ? 'Submitting...' : 'Submit for Verification'}
-                               </Button>
-                           </form>
+                           <Button onClick={handleSubmitForVerification} className="w-full h-11 bg-green-600 hover:bg-green-700 font-bold" disabled={isSubmitting}>
+                               {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
+                               {isSubmitting ? 'Submitting...' : 'I have paid, Submit for Verification'}
+                           </Button>
                         </div>
 
                         <div className="text-center text-sm text-gray-500 space-y-1 pt-2">
