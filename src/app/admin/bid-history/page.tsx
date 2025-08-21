@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -57,29 +57,22 @@ export default function AdminBidHistoryPage() {
     }
   }, [searchParams]);
 
-   const fetchBids = useCallback(() => {
+   const fetchBids = useCallback(async () => {
     setLoading(true);
-    const q = query(collection(db, "bids"));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    try {
+        const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
         const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
-        
-        // Sort client-side
-        bidsData.sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-
         setAllBids(bidsData);
-        setLoading(false);
-    }, (error) => {
+    } catch (error) {
         console.error("Error fetching bids: ", error);
+    } finally {
         setLoading(false);
-    });
-
-    return unsubscribe;
+    }
   }, []);
 
   useEffect(() => {
-    const unsubscribe = fetchBids();
-    return () => unsubscribe();
+    fetchBids();
   }, [fetchBids]);
   
   const filteredBids = useMemo(() => {

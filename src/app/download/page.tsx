@@ -71,7 +71,7 @@ export default function DownloadPage() {
                     height={800}
                     className="w-full h-auto"
                     data-ai-hint="woman orange sari cards"
-                    unoptimized
+                    
                 />
             )}
         </div>

@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Search, Calendar as CalendarIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { UpdateBalanceDialog } from '@/components/update-balance-dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -30,7 +29,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import dynamic from 'next/dynamic';
 
+const UpdateBalanceDialog = dynamic(() => import('@/components/update-balance-dialog').then(mod => mod.UpdateBalanceDialog), {
+  loading: () => <Loader />,
+});
 
 interface User extends DocumentData {
     id: string;
@@ -325,4 +328,3 @@ export default function ManageUsersPage() {
       </div>
   );
 }
-
