@@ -261,10 +261,10 @@ export default function AdminLayout({
           </SidebarMenuItem>
            <SidebarMenuItem>
             <Link href="/admin/pending-requests" passHref onClick={() => handleBadgeClick(setPendingRequestsCount)}>
-              <SidebarMenuButton isActive={isActive('/admin/pending-requests')} tooltip={{children: "Customer Pending Requests"}}>
+              <SidebarMenuButton isActive={isActive('/admin/pending-requests')} tooltip={{children: "Customer Requests"}}>
                 <div className="flex items-center gap-2">
                     <MailQuestion />
-                    <span>Customer Pending Requests</span>
+                    <span>Customer Requests</span>
                 </div>
                  {pendingRequestsCount > 0 && (
                     <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">

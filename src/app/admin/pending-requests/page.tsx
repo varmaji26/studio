@@ -338,7 +338,7 @@ export default function PendingRequestsPage() {
                 <CardHeader>
                     <div className="flex justify-between items-center">
                         <div>
-                            <CardTitle className="text-3xl font-bold">Customer Pending Requests</CardTitle>
+                            <CardTitle className="text-3xl font-bold">Customer Requests</CardTitle>
                             <CardDescription>Approve or reject user fund and withdrawal requests.</CardDescription>
                         </div>
                         <Button asChild variant="outline">
