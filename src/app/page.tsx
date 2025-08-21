@@ -608,7 +608,7 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-1">
                 {games.map((game) => (
                   <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-0.5 rounded-lg border border-black text-center">
-                    <span className="text-xs font-medium text-white">{game.name}</span>
+                    <span className="text-xs font-medium text-white [text-shadow:1px_1px_2px_#000]">{game.name}</span>
                     <span className="text-xs font-bold text-black">{formatGameResult(game, true)}</span>
                   </div>
                 ))}
