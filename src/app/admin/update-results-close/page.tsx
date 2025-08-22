@@ -131,44 +131,19 @@ export default function UpdateResultsClosePage() {
             }
         }
         
-        // Update Panel Chart
+        // Update Panel Chart by appending
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelData = panelChartSnap.data().data || '';
-            const today = new Date();
-            const todayFormatted = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+            const newDayData = `${openPana}${finalJodi}${closePana}`;
+
+            // Create a new line for the panel chart data.
+            // This is a simple append logic. You might need to adjust based on the exact format.
+            // Assuming each entry is on a new line.
+            const newData = panelData ? `${panelData}\n${newDayData}` : newDayData;
             
-            const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
-            let match;
-            let lastMatch: RegExpExecArray | null = null;
-            while ((match = dateRangeRegex.exec(panelData)) !== null) {
-                lastMatch = match;
-            }
-
-            if (lastMatch) {
-                const startDateStr = lastMatch[1];
-                const endDateStr = lastMatch[2];
-                const startDate = parseDateString(startDateStr);
-                const endDate = parseDateString(endDateStr);
-
-                if (startDate && endDate && today >= startDate && today <= endDate) {
-                    const todayDayIndex = (today.getDay() + 6) % 7; // Monday is 0
-                    const weeklyDataBlockIndex = lastMatch.index + lastMatch[0].length;
-                    const weeklyDataString = panelData.substring(weeklyDataBlockIndex).trim().split('\n')[0];
-                    
-                    let parts = weeklyDataString.trim().split(/\s+/).join('');
-                    const newDayData = `${openPana}${finalJodi}${newClosePana}`;
-
-                    const start = todayDayIndex * 8;
-                    const end = start + 8;
-                    
-                    let updatedParts = parts.substring(0, start) + newDayData + parts.substring(end);
-                    
-                    const newData = panelData.substring(0, weeklyDataBlockIndex) + '\n' + updatedParts;
-                    batch.update(panelChartRef, { data: newData });
-                }
-            }
+            batch.update(panelChartRef, { data: newData });
         }
 
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
@@ -182,7 +157,7 @@ export default function UpdateResultsClosePage() {
             let isWinner = false;
             let winningAmount = 0;
             const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
-            const amountPerNumber = bid.totalAmount / bidNumbers.length;
+            const amountPerNumber = bid.totalAmount / bid.numbers.length;
 
             if (bid.session === 'Close') {
                 if (bid.betType.includes('Pana') && bidNumbers.includes(newClosePana)) isWinner = true;
