@@ -48,6 +48,7 @@ const parseDateString = (dateStr: string): Date | null => {
     if (parts.length !== 3) return null;
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+    // Note: month is 0-indexed in JS Dates
     return new Date(year, month - 1, day);
 };
 
@@ -131,16 +132,68 @@ export default function UpdateResultsClosePage() {
             }
         }
         
-        // Update Panel Chart by appending
+        // Update Panel Chart
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
-            const panelData = panelChartSnap.data().data || '';
-            const newDayData = `${openPana}${finalJodi}${newClosePana}`;
+            const panelChartData = panelChartSnap.data().data || '';
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
+            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
+            const newDayData = `${openPana}${finalJodi}${closePana}`;
 
-            const newData = panelData ? `${panelData}\n${newDayData}` : newDayData;
+            const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
+            const sections = panelChartData.split(dateRangeRegex).filter(String);
+
+            let weekFound = false;
+            if (sections.length > 0) {
+                const lastStartDateStr = sections[sections.length - 3];
+                const lastEndDateStr = sections[sections.length - 2];
+                const lastStartDate = parseDateString(lastStartDateStr);
+                const lastEndDate = parseDateString(lastEndDateStr);
+                
+                if (lastStartDate && lastEndDate && today >= lastStartDate && today <= lastEndDate) {
+                    weekFound = true;
+                    let weeklyDataString = sections[sections.length - 1].trim().split(/\s+/).join('');
+                    const placeholder = '********'; // 8 chars for ***-**-***
+                    
+                    // Pad with placeholders if needed
+                    while (weeklyDataString.length < 7 * 8) {
+                        weeklyDataString += placeholder;
+                    }
+                    
+                    const startIndex = dayIndex * 8;
+                    const weeklyDataArray = weeklyDataString.split('');
+                    weeklyDataArray.splice(startIndex, 8, ...newDayData.split(''));
+                    
+                    sections[sections.length - 1] = ' ' + weeklyDataArray.join('').match(/.{1,8}/g).join(' ');
+                }
+            }
             
-            batch.update(panelChartRef, { data: newData });
+            let finalData;
+            if(weekFound) {
+                 finalData = sections.reduce((acc, part, i) => {
+                    if (i % 3 === 0) return `${acc}\n${part} to `;
+                    if (i % 3 === 1) return `${acc}${part}`;
+                    return `${acc}${part}`;
+                }, '').trim();
+            } else {
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - dayIndex);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                
+                const formatDate = (d: Date) => d.toLocaleDateString('en-GB');
+                const newDateRange = `\n${formatDate(startOfWeek)} to ${formatDate(endOfWeek)}`;
+                
+                const newWeekDataArr = Array(7).fill('********');
+                newWeekDataArr[dayIndex] = newDayData;
+                const newWeekData = ' ' + newWeekDataArr.join(' ');
+                
+                finalData = `${panelChartData}${newDateRange}${newWeekData}`;
+            }
+
+            batch.update(panelChartRef, { data: finalData.trim() });
         }
 
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
