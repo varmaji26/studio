@@ -140,7 +140,7 @@ export default function UpdateResultsClosePage() {
             const today = new Date();
             const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
-            const newDayData = `${openPana}${finalJodi}${closePana}`;
+            const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
             const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
             const sections = panelChartData.split(dateRangeRegex).filter(String);
@@ -339,3 +339,4 @@ export default function UpdateResultsClosePage() {
     </div>
   );
 }
+
