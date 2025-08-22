@@ -136,11 +136,8 @@ export default function UpdateResultsClosePage() {
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelData = panelChartSnap.data().data || '';
-            const newDayData = `${openPana}${finalJodi}${closePana}`;
+            const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
-            // Create a new line for the panel chart data.
-            // This is a simple append logic. You might need to adjust based on the exact format.
-            // Assuming each entry is on a new line.
             const newData = panelData ? `${panelData}\n${newDayData}` : newDayData;
             
             batch.update(panelChartRef, { data: newData });
