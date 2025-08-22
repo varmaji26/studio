@@ -48,7 +48,6 @@ const parseDateString = (dateStr: string): Date | null => {
     if (parts.length !== 3) return null;
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-    // Note: month is 0-indexed in JS Dates
     return new Date(year, month - 1, day);
 };
 
@@ -146,6 +145,8 @@ export default function UpdateResultsClosePage() {
             const sections = panelChartData.split(dateRangeRegex).filter(String);
 
             let weekFound = false;
+            let finalData = panelChartData;
+
             if (sections.length > 0) {
                 const lastStartDateStr = sections[sections.length - 3];
                 const lastEndDateStr = sections[sections.length - 2];
@@ -155,9 +156,8 @@ export default function UpdateResultsClosePage() {
                 if (lastStartDate && lastEndDate && today >= lastStartDate && today <= lastEndDate) {
                     weekFound = true;
                     let weeklyDataString = sections[sections.length - 1].trim().split(/\s+/).join('');
-                    const placeholder = '********'; // 8 chars for ***-**-***
+                    const placeholder = '********';
                     
-                    // Pad with placeholders if needed
                     while (weeklyDataString.length < 7 * 8) {
                         weeklyDataString += placeholder;
                     }
@@ -166,18 +166,17 @@ export default function UpdateResultsClosePage() {
                     const weeklyDataArray = weeklyDataString.split('');
                     weeklyDataArray.splice(startIndex, 8, ...newDayData.split(''));
                     
-                    sections[sections.length - 1] = ' ' + weeklyDataArray.join('').match(/.{1,8}/g).join(' ');
+                    sections[sections.length - 1] = ' ' + weeklyDataArray.join('').match(/.{1,8}/g)!.join(' ');
+                    
+                    finalData = sections.reduce((acc, part, i) => {
+                        if (i % 3 === 0) return `${acc}\n${part} to `;
+                        if (i % 3 === 1) return `${acc}${part}`;
+                        return `${acc}${part}`;
+                    }, '').trim();
                 }
             }
             
-            let finalData;
-            if(weekFound) {
-                 finalData = sections.reduce((acc, part, i) => {
-                    if (i % 3 === 0) return `${acc}\n${part} to `;
-                    if (i % 3 === 1) return `${acc}${part}`;
-                    return `${acc}${part}`;
-                }, '').trim();
-            } else {
+            if (!weekFound) {
                 const startOfWeek = new Date(today);
                 startOfWeek.setDate(today.getDate() - dayIndex);
                 const endOfWeek = new Date(startOfWeek);
