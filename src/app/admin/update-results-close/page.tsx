@@ -48,6 +48,7 @@ const parseDateString = (dateStr: string): Date | null => {
     if (parts.length !== 3) return null;
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+    // Assuming year is in YYYY format. The Date constructor uses month index 0-11.
     return new Date(year, month - 1, day);
 };
 
@@ -137,42 +138,38 @@ export default function UpdateResultsClosePage() {
         if (panelChartSnap.exists()) {
             const panelChartData = panelChartSnap.data().data || '';
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
             const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
-            const sections = panelChartData.split(dateRangeRegex).filter(String);
-
+            const rows = panelChartData.split('\n').filter((row: string) => row.trim() !== '');
             let weekFound = false;
-            let finalData = panelChartData;
+            let finalData = '';
 
-            if (sections.length > 0) {
-                const lastStartDateStr = sections[sections.length - 3];
-                const lastEndDateStr = sections[sections.length - 2];
-                const lastStartDate = parseDateString(lastStartDateStr);
-                const lastEndDate = parseDateString(lastEndDateStr);
-                
-                if (lastStartDate && lastEndDate && today >= lastStartDate && today <= lastEndDate) {
-                    weekFound = true;
-                    let weeklyDataString = sections[sections.length - 1].trim().split(/\s+/).join('');
-                    const placeholder = '********';
+            if (rows.length > 0) {
+                const lastRow = rows[rows.length - 1];
+                const match = lastRow.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
+                if (match) {
+                    const lastStartDate = parseDateString(match[1]);
+                    const lastEndDate = parseDateString(match[2]);
                     
-                    while (weeklyDataString.length < 7 * 8) {
-                        weeklyDataString += placeholder;
+                    if (lastStartDate && lastEndDate && today >= lastStartDate && today <= lastEndDate) {
+                        weekFound = true;
+                        const dataPart = lastRow.substring(match[0].length).trim();
+                        const dailyBlocks = dataPart.split(/\s+/).filter(String);
+                        
+                        while(dailyBlocks.length < 7) {
+                            dailyBlocks.push('********');
+                        }
+
+                        dailyBlocks[dayIndex] = newDayData;
+                        
+                        const updatedDataPart = dailyBlocks.join(' ');
+                        rows[rows.length - 1] = `${match[0]} ${updatedDataPart}`;
+                        finalData = rows.join('\n');
                     }
-                    
-                    const startIndex = dayIndex * 8;
-                    const weeklyDataArray = weeklyDataString.split('');
-                    weeklyDataArray.splice(startIndex, 8, ...newDayData.split(''));
-                    
-                    sections[sections.length - 1] = ' ' + weeklyDataArray.join('').match(/.{1,8}/g)!.join(' ');
-                    
-                    finalData = sections.reduce((acc, part, i) => {
-                        if (i % 3 === 0) return `${acc}\n${part} to `;
-                        if (i % 3 === 1) return `${acc}${part}`;
-                        return `${acc}${part}`;
-                    }, '').trim();
                 }
             }
             
@@ -182,14 +179,15 @@ export default function UpdateResultsClosePage() {
                 const endOfWeek = new Date(startOfWeek);
                 endOfWeek.setDate(startOfWeek.getDate() + 6);
                 
-                const formatDate = (d: Date) => d.toLocaleDateString('en-GB');
-                const newDateRange = `\n${formatDate(startOfWeek)} to ${formatDate(endOfWeek)}`;
+                const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const newDateRange = `${formatDate(startOfWeek)} to ${formatDate(endOfWeek)}`;
                 
                 const newWeekDataArr = Array(7).fill('********');
                 newWeekDataArr[dayIndex] = newDayData;
-                const newWeekData = ' ' + newWeekDataArr.join(' ');
+                const newWeekData = newWeekDataArr.join(' ');
                 
-                finalData = `${panelChartData}${newDateRange}${newWeekData}`;
+                const newRow = `${newDateRange} ${newWeekData}`;
+                finalData = panelChartData ? `${panelChartData}\n${newRow}` : newRow;
             }
 
             batch.update(panelChartRef, { data: finalData.trim() });
@@ -338,5 +336,3 @@ export default function UpdateResultsClosePage() {
     </div>
   );
 }
-
-
