@@ -119,13 +119,13 @@ function PaymentQRContent() {
         }
     };
     
-    const handlePayWithSpecificApp = (app: 'gpay' | 'paytm' | 'phonepe') => {
+    const getUpiUrl = (app: 'gpay' | 'paytm' | 'phonepe') => {
         if (!isMobile) {
             toast({
                 title: 'Use Mobile',
                 description: 'This payment option is only available on mobile devices.',
             });
-            return;
+            return '#'; // Return a safe href
         }
 
         if (settings?.upiId && amount) {
@@ -135,18 +135,20 @@ function PaymentQRContent() {
             const upiUrls = {
                 gpay: `gpay://upi/pay?${baseParams}`,
                 paytm: `paytmmp://upi/pay?${baseParams}`,
-                phonepe: `phonepe://pay?${baseParams}`
+                phonepe: `phonepe://upi/pay?${baseParams}`
             };
 
-            window.location.href = upiUrls[app];
+            return upiUrls[app];
         } else {
             toast({
                 variant: 'destructive',
                 title: 'Payment Error',
                 description: 'UPI ID is not configured. Please contact support.',
             });
+            return '#'; // Return a safe href
         }
     };
+
 
     const handleCopyToClipboard = () => {
         if (settings?.upiId) {
@@ -216,31 +218,31 @@ function PaymentQRContent() {
                         
                          <div className="flex justify-around items-center pt-2">
                              {settings?.paymentDetails?.GPay?.enabled && (
-                                <Button variant="ghost" className="h-20 w-1/3 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('gpay')}>
+                                <a href={getUpiUrl('gpay')} className="h-20 w-1/3 p-0 relative block">
                                     {settings?.paymentDetails?.GPay?.imageUrl ? (
                                         <Image src={settings.paymentDetails.GPay.imageUrl} alt="GPay" layout="fill" objectFit="contain" />
                                     ) : (
                                         <Image src="https://placehold.co/100x70.png" data-ai-hint="google pay logo" alt="GPay" layout="fill" objectFit="contain" />
                                     )}
-                                </Button>
+                                </a>
                              )}
                               {settings?.paymentDetails?.Paytm?.enabled && (
-                                <Button variant="ghost" className="h-20 w-1/3 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('paytm')}>
+                                <a href={getUpiUrl('paytm')} className="h-20 w-1/3 p-0 relative block">
                                     {settings?.paymentDetails?.Paytm?.imageUrl ? (
                                         <Image src={settings.paymentDetails.Paytm.imageUrl} alt="Paytm" layout="fill" objectFit="contain" />
                                     ) : (
                                         <Image src="https://placehold.co/100x70.png" data-ai-hint="paytm logo" alt="Paytm" layout="fill" objectFit="contain" />
                                     )}
-                                </Button>
+                                </a>
                               )}
                               {settings?.paymentDetails?.PhonePe?.enabled && (
-                                <Button variant="ghost" className="h-20 w-1/3 p-0 overflow-hidden relative hover:bg-transparent focus:bg-transparent" onClick={() => handlePayWithSpecificApp('phonepe')}>
+                                <a href={getUpiUrl('phonepe')} className="h-20 w-1/3 p-0 relative block">
                                     {settings?.paymentDetails?.PhonePe?.imageUrl ? (
                                         <Image src={settings.paymentDetails.PhonePe.imageUrl} alt="PhonePe" layout="fill" objectFit="contain" />
                                     ) : (
                                         <Image src="https://placehold.co/100x70.png" data-ai-hint="phonepe logo" alt="PhonePe" layout="fill" objectFit="contain" />
                                     )}
-                                </Button>
+                                </a>
                               )}
                          </div>
                         
