@@ -34,6 +34,13 @@ function PaymentQRContent() {
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const userAgent = typeof window.navigator === "undefined" ? "" : navigator.userAgent;
+        const mobile = Boolean(userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i));
+        setIsMobile(mobile);
+    }, []);
 
     useEffect(() => {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
@@ -113,6 +120,14 @@ function PaymentQRContent() {
     };
     
     const handlePayWithSpecificApp = (app: 'gpay' | 'paytm' | 'phonepe') => {
+        if (!isMobile) {
+            toast({
+                title: 'Use Mobile',
+                description: 'This payment option is only available on mobile devices.',
+            });
+            return;
+        }
+
         if (settings?.upiId && amount) {
             const payeeName = "Matka King";
             const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=Payment for Matka King`;
@@ -123,7 +138,7 @@ function PaymentQRContent() {
                 phonepe: `phonepe://pay?${baseParams}`
             };
 
-            window.open(upiUrls[app], '_blank');
+            window.location.href = upiUrls[app];
         } else {
             toast({
                 variant: 'destructive',
