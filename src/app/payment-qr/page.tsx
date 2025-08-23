@@ -120,14 +120,6 @@ function PaymentQRContent() {
     };
     
     const getUpiUrl = (app: 'gpay' | 'paytm' | 'phonepe') => {
-        if (!isMobile) {
-            toast({
-                title: 'Use Mobile',
-                description: 'This payment option is only available on mobile devices.',
-            });
-            return '#'; // Return a safe href
-        }
-
         if (settings?.upiId && amount) {
             const payeeName = "Matka King";
             const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=Payment for Matka King`;
@@ -139,16 +131,32 @@ function PaymentQRContent() {
             };
 
             return upiUrls[app];
-        } else {
+        }
+        return '#';
+    };
+
+    const handleUpiAppClick = (event: React.MouseEvent<HTMLAnchorElement>, app: 'gpay' | 'paytm' | 'phonepe') => {
+        if (!isMobile) {
+            event.preventDefault();
+            toast({
+                title: 'Use Mobile',
+                description: 'This payment option is only available on mobile devices.',
+            });
+            return;
+        }
+
+        if (!settings?.upiId || !amount) {
+            event.preventDefault();
             toast({
                 variant: 'destructive',
                 title: 'Payment Error',
                 description: 'UPI ID is not configured. Please contact support.',
             });
-            return '#'; // Return a safe href
+            return;
         }
-    };
 
+        // If everything is fine, the default anchor tag behavior will proceed.
+    };
 
     const handleCopyToClipboard = () => {
         if (settings?.upiId) {
@@ -218,7 +226,7 @@ function PaymentQRContent() {
                         
                          <div className="flex justify-around items-center pt-2">
                              {settings?.paymentDetails?.GPay?.enabled && (
-                                <a href={getUpiUrl('gpay')} className="h-20 w-1/3 p-0 relative block">
+                                <a href={getUpiUrl('gpay')} onClick={(e) => handleUpiAppClick(e, 'gpay')} className="h-20 w-1/3 p-0 relative block">
                                     {settings?.paymentDetails?.GPay?.imageUrl ? (
                                         <Image src={settings.paymentDetails.GPay.imageUrl} alt="GPay" layout="fill" objectFit="contain" />
                                     ) : (
@@ -227,7 +235,7 @@ function PaymentQRContent() {
                                 </a>
                              )}
                               {settings?.paymentDetails?.Paytm?.enabled && (
-                                <a href={getUpiUrl('paytm')} className="h-20 w-1/3 p-0 relative block">
+                                <a href={getUpiUrl('paytm')} onClick={(e) => handleUpiAppClick(e, 'paytm')} className="h-20 w-1/3 p-0 relative block">
                                     {settings?.paymentDetails?.Paytm?.imageUrl ? (
                                         <Image src={settings.paymentDetails.Paytm.imageUrl} alt="Paytm" layout="fill" objectFit="contain" />
                                     ) : (
@@ -236,7 +244,7 @@ function PaymentQRContent() {
                                 </a>
                               )}
                               {settings?.paymentDetails?.PhonePe?.enabled && (
-                                <a href={getUpiUrl('phonepe')} className="h-20 w-1/3 p-0 relative block">
+                                <a href={getUpiUrl('phonepe')} onClick={(e) => handleUpiAppClick(e, 'phonepe')} className="h-20 w-1/3 p-0 relative block">
                                     {settings?.paymentDetails?.PhonePe?.imageUrl ? (
                                         <Image src={settings.paymentDetails.PhonePe.imageUrl} alt="PhonePe" layout="fill" objectFit="contain" />
                                     ) : (
