@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, getDoc, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, getDoc, where, writeBatch, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,8 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Banknote, CircleDollarSign } from 'lucide-react';
+import { ArrowLeft, Banknote, CircleDollarSign, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 interface Request extends DocumentData {
     id: string;
@@ -46,6 +48,7 @@ export default function PendingRequestsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isRejectingAll, setIsRejectingAll] = useState(false);
   const { toast } = useToast();
   
   const fetchRequests = useCallback(async (collectionName: 'deposits' | 'withdrawals', setData: React.Dispatch<React.SetStateAction<Request[]>>) => {
@@ -170,6 +173,40 @@ export default function PendingRequestsPage() {
         toast({ title: 'Success!', description: `Withdrawal request has been ${status}.` });
     } catch(error: any) {
         toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to process withdrawal.' });
+    }
+  };
+  
+  const handleRejectAll = async (type: 'deposits' | 'withdrawals') => {
+    setIsRejectingAll(true);
+    const collectionName = type;
+    const requests = type === 'deposits' ? depositRequests : withdrawalRequests;
+
+    if (requests.length === 0) {
+        toast({ title: 'No pending requests to reject.' });
+        setIsRejectingAll(false);
+        return;
+    }
+
+    try {
+        const batch = writeBatch(db);
+        requests.forEach(request => {
+            const docRef = doc(db, collectionName, request.id);
+            batch.update(docRef, { status: 'rejected' });
+        });
+        await batch.commit();
+        toast({
+            title: 'Success!',
+            description: `All pending ${collectionName} have been rejected.`
+        });
+    } catch (error) {
+        console.error(`Error rejecting all ${collectionName}:`, error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: `Failed to reject all pending ${collectionName}.`
+        });
+    } finally {
+        setIsRejectingAll(false);
     }
   };
 
@@ -317,7 +354,7 @@ export default function PendingRequestsPage() {
      </div>
   );
   
-  const renderContent = () => {
+  const renderContent = (type: 'deposits' | 'withdrawals') => {
       if (loading) {
           return <div className="flex justify-center h-48 items-center"><Loader /></div>;
       }
@@ -325,7 +362,7 @@ export default function PendingRequestsPage() {
       return (
           <div className="space-y-4">
               {renderControls()}
-              {activeTab === 'deposits' ? renderDepositsTable() : renderWithdrawalsTable()}
+              {type === 'deposits' ? renderDepositsTable() : renderWithdrawalsTable()}
               {renderPagination()}
           </div>
       );
@@ -358,21 +395,65 @@ export default function PendingRequestsPage() {
                 </TabsList>
                 <TabsContent value="deposits" className="mt-4">
                     <Card className="bg-card/80 border-white/10 shadow-lg">
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="text-2xl">Pending Fund Requests</CardTitle>
+                             {depositRequests.length > 0 && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm" disabled={isRejectingAll}>
+                                            {isRejectingAll ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                            Reject All
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will reject all {depositRequests.length} pending fund requests. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleRejectAll('deposits')}>Confirm Reject</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )}
                         </CardHeader>
                         <CardContent>
-                        {renderContent()}
+                        {renderContent('deposits')}
                         </CardContent>
                     </Card>
                 </TabsContent>
                 <TabsContent value="withdrawals" className="mt-4">
                     <Card className="bg-card/80 border-white/10 shadow-lg">
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="text-2xl">Pending Withdrawal Requests</CardTitle>
+                            {withdrawalRequests.length > 0 && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm" disabled={isRejectingAll}>
+                                            {isRejectingAll ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                            Reject All
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                 This will reject all {withdrawalRequests.length} pending withdrawal requests. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleRejectAll('withdrawals')}>Confirm Reject</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )}
                         </CardHeader>
                         <CardContent>
-                        {renderContent()}
+                        {renderContent('withdrawals')}
                         </CardContent>
                     </Card>
                 </TabsContent>
