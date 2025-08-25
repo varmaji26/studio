@@ -320,7 +320,3 @@ export default function BidsHistoryPage() {
         </div>
     )
 }
-
-    
-
-    
