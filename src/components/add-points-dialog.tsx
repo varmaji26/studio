@@ -232,7 +232,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                                 </FormControl>
                                 <Label htmlFor={method} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-transparent p-1 h-14 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                         {isQR && detail.imageUrl ? (
-                                            <Image src={detail.imageUrl} alt="QR Code" width={24} height={24} unoptimized />
+                                            <Image src={detail.imageUrl} alt="QR Code" width={24} height={24} />
                                         ) : config?.logo}
                                         <span className="mt-1 font-semibold text-xs text-center">{config?.title || detail.title}</span>
                                 </Label>
@@ -256,7 +256,7 @@ export function AddPointsDialog({ user, children }: AddPointsDialogProps) {
                             )}
                              {selectedPaymentDetail.imageUrl && !selectedPaymentDetail.details && (
                                 <div className="flex justify-center">
-                                    <Image src={selectedPaymentDetail.imageUrl} alt="QR Code" width={150} height={150} unoptimized />
+                                    <Image src={selectedPaymentDetail.imageUrl} alt="QR Code" width={150} height={150} />
                                 </div>
                             )}
                         </CardContent>

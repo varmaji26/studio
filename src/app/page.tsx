@@ -341,7 +341,7 @@ export default function Home() {
     return (
         <div className="flex items-center mx-4" style={{ color: textColor }}>
             {logoUrl ? (
-                <Image src={logoUrl} alt="Marquee Logo" width={logoSize} height={logoSize} className="mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} unoptimized/>
+                <Image src={logoUrl} alt="Marquee Logo" width={logoSize} height={logoSize} className="mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} />
             ) : (
                 <Trophy className="text-yellow-400 mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} />
             )}
@@ -532,7 +532,7 @@ export default function Home() {
                             height={400} 
                             className="w-full h-auto"
                             data-ai-hint="casino bonus"
-                            unoptimized
+                            
                         />
                         <div className="p-4 bg-background">
                             <motion.div whileTap={{ scale: 0.95 }}>
