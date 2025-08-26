@@ -18,10 +18,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: '*.*',
       },
     ],
   },
 };
 
 export default nextConfig;
+
