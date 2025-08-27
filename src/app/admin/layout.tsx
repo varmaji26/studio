@@ -31,7 +31,7 @@ import {
   Moon,
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
-import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, Sidebar } from '@/components/ui/sidebar';
+import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, Sidebar, SidebarTrigger } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -431,6 +431,7 @@ export default function AdminLayout({
       <main className="flex-1">
         <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
             <div className="flex items-center gap-2">
+                <SidebarTrigger className="md:hidden" />
                 <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
             </div>
             <div className="flex items-center gap-4">
