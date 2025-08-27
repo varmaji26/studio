@@ -4,11 +4,14 @@
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Trophy, BookText, MessageSquare, IndianRupee } from 'lucide-react';
+import type { DocumentData } from 'firebase/firestore';
+
+interface AppSettings extends DocumentData {
+    telegramLink?: string;
+}
 
 interface BottomNavbarProps {
-    settings: {
-        telegramLink?: string;
-    };
+    settings: AppSettings;
 }
 
 export function BottomNavbar({ settings }: BottomNavbarProps) {
