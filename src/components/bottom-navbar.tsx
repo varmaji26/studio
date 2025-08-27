@@ -7,6 +7,8 @@ import { Trophy, BookText, MessageSquare, IndianRupee } from 'lucide-react';
 import type { DocumentData } from 'firebase/firestore';
 
 interface AppSettings extends DocumentData {
+    whatsappNumber?: string;
+    callSupportNumber?: string;
     telegramLink?: string;
 }
 
