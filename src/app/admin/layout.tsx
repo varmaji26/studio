@@ -209,13 +209,14 @@ export default function AdminLayout({
               <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
                  <SidebarMenuItem>
                     <Link href="/admin/view-open-load" passHref onClick={handleLinkClick}>
-                    <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-open-load')}>                        <span>View Open Load</span>
+                    <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-open-load')}>                        
+                        <span>View Open Load</span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <Link href="/admin/view-close-load" passHref onClick={handleLinkClick}>
-                    <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-open-load')}>                        <span>View Open Load</span>
+                    <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-close-load')}>                        
                         <span>View Close Load</span>
                       </SidebarMenuButton>
                     </Link>
