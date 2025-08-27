@@ -3,9 +3,6 @@
 
 import React from 'react';
 import {
-  Sidebar,
-  SidebarInset,
-  SidebarTrigger,
   SidebarProvider,
 } from '@/components/ui/sidebar';
 import { usePathname, useRouter } from 'next/navigation';
@@ -39,14 +36,10 @@ export function LayoutProvider({
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-background text-foreground flex">
-        {/* Desktop Sidebar */}
-        <Sidebar variant="sidebar" collapsible="icon" className="hidden md:block">
-          {sidebarContent}
-        </Sidebar>
-        
-        <SidebarInset>
+        {sidebarContent}
+        <main className="flex-1">
             {children}
-        </SidebarInset>
+        </main>
       </div>
     </SidebarProvider>
   );
