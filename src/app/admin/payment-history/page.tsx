@@ -60,14 +60,14 @@ export default function AdminPaymentHistoryPage() {
     let withdrawalsData: Transaction[] = [];
 
     const unsubscribeDeposits = onSnapshot(depositsQuery, (snapshot) => {
-        depositsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'deposit' as const }));
+        depositsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'deposit' as const } as Transaction));
         const combined = [...depositsData, ...withdrawalsData].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
         setAllTransactions(combined);
         setLoading(false);
     });
 
     const unsubscribeWithdrawals = onSnapshot(withdrawalsQuery, (snapshot) => {
-        withdrawalsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'withdrawal' as const }));
+        withdrawalsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'withdrawal' as const } as Transaction));
         const combined = [...depositsData, ...withdrawalsData].sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
         setAllTransactions(combined);
         setLoading(false);
