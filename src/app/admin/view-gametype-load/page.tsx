@@ -162,11 +162,11 @@ export default function ViewGameTypeLoadPage() {
             doc.autoTable({
                 head: [tableColumn],
                 body: tableRows,
-                startY: doc.autoTable.previous.finalY + 2,
+                startY: (doc.autoTable as any).previous.finalY + 2,
                 theme: 'grid'
             });
 
-            startY = doc.autoTable.previous.finalY + 10;
+            startY = (doc.autoTable as any).previous.finalY + 10;
         }
     });
 
