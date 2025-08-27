@@ -51,7 +51,6 @@ import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 
@@ -507,22 +506,7 @@ export default function Home() {
                     <DialogTitle className="sr-only">Bonus Offer</DialogTitle>
                 </DialogHeader>
                 <div className="relative">
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ 
-                            scale: 1, 
-                            opacity: 1,
-                            rotate: [0, -1, 1, -1, 1, 0],
-                        }}
-                        transition={{ 
-                            duration: 0.5, 
-                            type: 'spring',
-                            rotate: {
-                                repeat: Infinity,
-                                repeatDelay: 1,
-                                duration: 0.4
-                            }
-                        }}
+                    <div
                         className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden"
                     >
                         <Image 
@@ -535,13 +519,13 @@ export default function Home() {
                             
                         />
                         <div className="p-4 bg-background">
-                            <motion.div whileTap={{ scale: 0.95 }}>
+                            <div>
                                 <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handleClaimBonus}>
                                     Claim Bonus Now
                                 </Button>
-                            </motion.div>
+                            </div>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

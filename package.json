@@ -36,7 +36,6 @@
     "embla-carousel-autoplay": "^8.1.7",
     "embla-carousel-react": "^8.1.7",
     "firebase": "^10.12.4",
-    "framer-motion": "^11.3.17",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "lucide-react": "^0.416.0",
