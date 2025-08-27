@@ -233,8 +233,10 @@ export default function AdminLayout({
           <SidebarMenuItem>
              <Link href="/admin/manage-users?viewed=true" passHref onClick={() => handleBadgeClick(setNewUsersCount)}>
                 <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Registered Users"}}>
-                  <Users />
-                  <span>Registered Users</span>
+                  <div className="flex items-center gap-2">
+                    <Users />
+                    <span>Registered Users</span>
+                  </div>
                    {newUsersCount > 0 && (
                     <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
                         {newUsersCount}
@@ -317,8 +319,10 @@ export default function AdminLayout({
             <SidebarMenuItem>
               <Link href="/admin/bid-history?viewed=true" passHref onClick={() => handleBadgeClick(setTodaysBidsCount)}>
                 <SidebarMenuButton isActive={isActive('/admin/bid-history')} tooltip={{children: "Bid History"}}>
-                  <History />
-                  <span>Bid History</span>
+                  <div className="flex items-center gap-2">
+                    <History />
+                    <span>Bid History</span>
+                  </div>
                    {todaysBidsCount > 0 && (
                     <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
                         {todaysBidsCount}
@@ -330,8 +334,10 @@ export default function AdminLayout({
            <SidebarMenuItem>
               <Link href="/admin/win-history?viewed=true" passHref onClick={() => handleBadgeClick(setTodaysWinsCount)}>
                 <SidebarMenuButton isActive={isActive('/admin/win-history')} tooltip={{children: "Win History"}}>
-                 <Trophy />
-                 <span>Win History</span>
+                  <div className="flex items-center gap-2">
+                    <Trophy />
+                    <span>Win History</span>
+                  </div>
                   {todaysWinsCount > 0 && (
                     <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
                         {todaysWinsCount}
