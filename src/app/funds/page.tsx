@@ -16,6 +16,7 @@ import { BottomNavbar } from '@/components/bottom-navbar';
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
+    telegramLink?: string;
 }
 
 const FundsPage = () => {
