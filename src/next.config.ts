@@ -1,24 +1,2 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: 'standalone',
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: "https",
-        hostname: "firebasestorage.googleapis.com",
-      },
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
-  },
-};
-
-module.exports = nextConfig;
+// This file is intentionally left blank to resolve a build conflict.
+// The correct next.config.ts is located in the project root.
