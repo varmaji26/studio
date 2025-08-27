@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { SidebarProvider, Sidebar } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 export function LayoutProvider({
   children,
