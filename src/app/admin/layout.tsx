@@ -67,10 +67,24 @@ export default function AdminLayout({
 
   React.useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
-    const currentTheme = storedTheme ? JSON.parse(storedTheme) : 'light';
-    setTheme(currentTheme);
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(currentTheme);
+    // Check if storedTheme is not null and not an empty string before parsing
+    if (storedTheme) {
+        try {
+            const currentTheme = JSON.parse(storedTheme);
+            setTheme(currentTheme);
+            document.documentElement.classList.remove('light', 'dark');
+            document.documentElement.classList.add(currentTheme);
+        } catch (error) {
+            console.error("Failed to parse theme from localStorage", error);
+            // Fallback to default theme if parsing fails
+            setTheme('light');
+            document.documentElement.classList.add('light');
+        }
+    } else {
+        // Default theme if nothing is in localStorage
+        setTheme('light');
+        document.documentElement.classList.add('light');
+    }
   }, []);
   
   const toggleTheme = () => {
