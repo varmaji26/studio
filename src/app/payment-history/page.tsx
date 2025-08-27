@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
+    telegramLink?: string;
 }
 
 interface Transaction extends DocumentData {

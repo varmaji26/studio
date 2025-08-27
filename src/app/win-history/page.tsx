@@ -34,6 +34,7 @@ interface Win extends DocumentData {
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
+    telegramLink?: string;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -248,7 +249,3 @@ export default function WinHistoryPage() {
         </div>
     )
 }
-
-    
-
-    
