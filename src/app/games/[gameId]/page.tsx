@@ -215,10 +215,17 @@ export default function GamePage() {
                {betTypes.map((betType) => {
                   const isClickable = !!betType.href;
                   const Wrapper = isClickable ? Link : 'div';
-                  const props = isClickable ? { href: betType.href(game.id as string) } : {};
+                  const props = isClickable 
+                    ? { href: betType.href(game.id as string) } 
+                    : { onClick: () => {} };
+
+                  const commonProps = {
+                      key: betType.title,
+                      onClick: () => handleBetTypeClick(betType.title)
+                  };
 
                   return (
-                    <Wrapper key={betType.title} {...props} onClick={() => handleBetTypeClick(betType.title)}>
+                    <Wrapper {...props} {...commonProps}>
                       <div className={cn(
                         "rounded-lg p-2 text-white text-center flex flex-col items-center justify-between h-32",
                         "transition-all duration-300 transform hover:scale-105",
