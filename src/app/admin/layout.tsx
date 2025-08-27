@@ -215,14 +215,14 @@ export default function AdminLayout({
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <Link href="/admin/view-close-load" passHref onClick={handleLinkClick}>
-                      <SidebarMenuButton size="sm" variant="ghost" isActive={isActive('/admin/view-close-load')}>
+                    <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-open-load')}>                        <span>View Open Load</span>
                         <span>View Close Load</span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
                    <SidebarMenuItem>
                     <Link href="/admin/view-gametype-load" passHref onClick={handleLinkClick}>
-                      <SidebarMenuButton size="sm" variant="ghost" isActive={isActive('/admin/view-gametype-load')}>
+                      <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-gametype-load')}>
                         <span>View Game-Type wise Load</span>
                       </SidebarMenuButton>
                     </Link>
@@ -399,7 +399,7 @@ export default function AdminLayout({
                     <span className="text-sm font-semibold">{user?.displayName ?? 'Admin'}</span>
                     <span className="text-xs text-muted-foreground">Admin</span>
                 </div>
-                <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
+                <Button variant="default" size="icon" className="ml-auto" onClick={handleLogout}>
                     <LogOut />
                 </Button>
             </div>
@@ -418,7 +418,7 @@ export default function AdminLayout({
                 <h2 className="text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h2>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              <Button variant="default" size="icon" onClick={toggleTheme}>
                   {theme === 'dark' ? <Sun className="h-6 w-6 text-yellow-400" /> : <Moon className="h-6 w-6 text-blue-400" />}
               </Button>
               <Link href="/">
@@ -428,7 +428,7 @@ export default function AdminLayout({
                 </Button>
               </Link>
               <Link href="/admin/settings">
-                  <Button variant="ghost" size="icon">
+                  <Button variant="default" size="icon">
                     <Settings />
                   </Button>
               </Link>
