@@ -66,10 +66,11 @@ export default function AdminLayout({
   const router = useRouter();
 
   React.useEffect(() => {
-    const storedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(storedTheme);
+    const storedTheme = localStorage.getItem('theme');
+    const currentTheme = storedTheme ? JSON.parse(storedTheme) : 'light';
+    setTheme(currentTheme);
     document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(storedTheme);
+    document.documentElement.classList.add(currentTheme);
   }, []);
   
   const toggleTheme = () => {
@@ -77,7 +78,7 @@ export default function AdminLayout({
     setTheme(newTheme);
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(newTheme);
-    localStorage.setItem('theme', newTheme);
+    localStorage.setItem('theme', JSON.stringify(newTheme));
   };
 
   React.useEffect(() => {
