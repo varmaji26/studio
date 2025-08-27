@@ -45,20 +45,7 @@ export function LayoutProvider({
         </Sidebar>
         
         <SidebarInset>
-           <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
-                <div className="flex items-center gap-2">
-                    {/* Mobile Sidebar Trigger */}
-                    <div className="md:hidden">
-                        <SidebarTrigger className="h-7 w-7" />
-                    </div>
-                     {/* Desktop Sidebar Trigger */}
-                    <SidebarTrigger className="h-7 w-7 hidden md:flex" />
-
-                    
-                </div>
-                
-            </header>
-            <main>{children}</main>
+            {children}
         </SidebarInset>
       </div>
     </SidebarProvider>
