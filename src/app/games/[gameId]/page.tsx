@@ -180,6 +180,23 @@ export default function GamePage() {
       </div>
     );
   }
+  
+  const BetTypeItem = ({ betType }: { betType: (typeof betTypes)[0] }) => (
+    <div
+      onClick={() => handleBetTypeClick(betType.title)}
+      className={cn(
+        "rounded-lg p-2 text-white text-center flex flex-col items-center justify-between h-32",
+        "transition-all duration-300 transform hover:scale-105",
+        betType.gradient,
+        animatingBetType === betType.title && 'animate-pulse-once'
+      )}
+    >
+      <div className="flex-grow flex items-center justify-center">
+        {betType.icon}
+      </div>
+      <p className="font-bold text-base">{betType.title}</p>
+    </div>
+  );
 
   return (
     <div className="dark min-h-screen bg-background text-foreground p-2">
@@ -213,32 +230,18 @@ export default function GamePage() {
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2 p-2">
                {betTypes.map((betType) => {
-                  const isClickable = !!betType.href;
-                  const Wrapper = isClickable ? Link : 'div';
-                  const props = isClickable 
-                    ? { href: betType.href(game.id as string) } 
-                    : { onClick: () => {} };
-
-                  const commonProps = {
-                      key: betType.title,
-                      onClick: () => handleBetTypeClick(betType.title)
-                  };
-
+                  if (betType.href) {
+                    return (
+                      <Link key={betType.title} href={betType.href(game.id as string)}>
+                        <BetTypeItem betType={betType} />
+                      </Link>
+                    );
+                  }
                   return (
-                    <Wrapper {...props} {...commonProps}>
-                      <div className={cn(
-                        "rounded-lg p-2 text-white text-center flex flex-col items-center justify-between h-32",
-                        "transition-all duration-300 transform hover:scale-105",
-                        betType.gradient,
-                        animatingBetType === betType.title && 'animate-pulse-once'
-                        )}>
-                          <div className="flex-grow flex items-center justify-center">
-                            {betType.icon}
-                          </div>
-                          <p className="font-bold text-base">{betType.title}</p>
-                      </div>
-                    </Wrapper>
-                  )
+                    <div key={betType.title}>
+                      <BetTypeItem betType={betType} />
+                    </div>
+                  );
                })}
             </CardContent>
         </Card>
