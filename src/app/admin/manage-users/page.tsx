@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
 const UpdateBalanceDialog = dynamic(() => import('@/components/update-balance-dialog').then(mod => mod.UpdateBalanceDialog), {
+  ssr: false,
   loading: () => <Loader />,
 });
 
@@ -328,3 +329,5 @@ export default function ManageUsersPage() {
       </div>
   );
 }
+
+    
