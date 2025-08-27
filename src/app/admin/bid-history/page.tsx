@@ -3,13 +3,13 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { Search, Calendar as CalendarIcon, Download, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,6 +18,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface Bid extends DocumentData {
@@ -30,7 +32,7 @@ interface Bid extends DocumentData {
     session: string;
     numbers: string[];
     totalAmount: number;
-    status: 'running' | 'won' | 'lost';
+    status: 'running' | 'won' | 'lost' | 'cancelled';
     createdAt: Timestamp;
 }
 
@@ -50,6 +52,7 @@ export default function AdminBidHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -61,18 +64,29 @@ export default function AdminBidHistoryPage() {
     setLoading(true);
     try {
         const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-        const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
-        setAllBids(bidsData);
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
+            setAllBids(bidsData);
+            setLoading(false);
+        });
+        return unsubscribe;
     } catch (error) {
         console.error("Error fetching bids: ", error);
-    } finally {
         setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchBids();
+    let unsubscribe: (() => void) | undefined;
+    const fetchAndSubscribe = async () => {
+        unsubscribe = await fetchBids();
+    }
+    fetchAndSubscribe();
+    return () => {
+        if (unsubscribe) {
+            unsubscribe();
+        }
+    };
   }, [fetchBids]);
   
   const filteredBids = useMemo(() => {
@@ -152,11 +166,43 @@ export default function AdminBidHistoryPage() {
 
     doc.save(`bid-history-report-${selectedDate ? format(selectedDate, "yyyy-MM-dd") : 'all-time'}.pdf`);
   };
+  
+  const handleCancelBid = async (bid: Bid) => {
+    const bidDocRef = doc(db, 'bids', bid.id);
+    const userDocRef = doc(db, 'users', bid.userId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const bidDoc = await transaction.get(bidDocRef);
+            if (!bidDoc.exists() || bidDoc.data().status !== 'running') {
+                throw new Error("This bid is no longer running and cannot be cancelled.");
+            }
+
+            // Refund user's balance
+            transaction.update(userDocRef, { balance: increment(bid.totalAmount) });
+
+            // Update bid status to 'cancelled'
+            transaction.update(bidDocRef, { status: 'cancelled' });
+        });
+        toast({
+            title: 'Success!',
+            description: `Bid #${bid.id} has been cancelled and ₹${bid.totalAmount} refunded to ${bid.displayName}.`
+        });
+    } catch (error: any) {
+        console.error('Error cancelling bid:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error Cancelling Bid',
+            description: error.message || 'An unexpected error occurred.',
+        });
+    }
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
         case 'won': return 'secondary';
         case 'lost': return 'destructive';
+        case 'cancelled': return 'outline';
         case 'running':
         default:
             return 'default';
@@ -263,6 +309,7 @@ export default function AdminBidHistoryPage() {
                                 <TableHead>Bet Details</TableHead>
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -282,10 +329,37 @@ export default function AdminBidHistoryPage() {
                                     <TableCell>
                                         <Badge 
                                             variant={getStatusBadgeVariant(bid.status)}
-                                            className={bid.status === 'won' ? 'bg-green-500 text-white' : ''}
+                                            className={cn(
+                                                bid.status === 'won' && 'bg-green-500 text-white',
+                                                bid.status === 'cancelled' && 'border-yellow-500 text-yellow-500',
+                                            )}
                                         >
                                             {bid.status}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {bid.status === 'running' && (
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="destructive" size="sm">
+                                                        <XCircle className="h-4 w-4 mr-1" />
+                                                        Cancel
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure you want to cancel this bid?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will cancel the bid and refund ₹{bid.totalAmount} to {bid.displayName}'s wallet.
+                                                    </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                    <AlertDialogCancel>Close</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleCancelBid(bid)}>Confirm Cancel</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}
