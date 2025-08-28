@@ -123,13 +123,13 @@ export default function AddFundPage() {
     const totalBalance = (profile.balance || 0) + (profile.bonusBalance || 0);
 
     const handleCall = () => {
-        if (settings.callSupportNumber) {
+        if (settings.callSupportNumber && typeof window !== 'undefined') {
             window.location.href = `tel:${settings.callSupportNumber}`;
         }
     }
 
     const handleWhatsapp = () => {
-        if (settings.whatsappNumber) {
+        if (settings.whatsappNumber && typeof window !== 'undefined') {
             window.open(`https://wa.me/${settings.whatsappNumber}`);
         }
     }
@@ -221,5 +221,5 @@ export default function AddFundPage() {
             </footer>
         </div>
     );
-
+}
     
