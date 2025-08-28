@@ -115,7 +115,7 @@ export default function AddFundPage() {
             </header>
             
             <main className="flex-1 p-4">
-                <div className="bg-[#112a45] text-white rounded-lg p-4 mb-4">
+                <div className="bg-[#112a45] text-white rounded-lg p-4 mb-4 text-center">
                     <h2 className="text-lg font-bold">{user.displayName}</h2>
                     <p className="text-sm">{mobileNumber}</p>
                     <div className="bg-black/50 mt-2 p-2 rounded-md">
