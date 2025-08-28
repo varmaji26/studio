@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "gcp-build": "npm run build",
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p 8080",
