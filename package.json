@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "clean": "rimraf .next node_modules",
-    "deploy": "npm run clean && npm install && npm run build && firebase deploy"
+    "deploy": "npm install && npm run clean && npm run build && firebase deploy"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
