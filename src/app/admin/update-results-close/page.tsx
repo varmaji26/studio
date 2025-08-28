@@ -143,10 +143,9 @@ export default function UpdateResultsClosePage() {
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
-            const dateRangeRegex = /(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/g;
             const rows = panelChartData.split('\n').filter((row: string) => row.trim() !== '');
             let weekFound = false;
-            let finalData = '';
+            let finalDataArray = [...rows];
 
             if (rows.length > 0) {
                 const lastRow = rows[rows.length - 1];
@@ -167,8 +166,7 @@ export default function UpdateResultsClosePage() {
                         dailyBlocks[dayIndex] = newDayData;
                         
                         const updatedDataPart = dailyBlocks.join(' ');
-                        rows[rows.length - 1] = `${match[0]} ${updatedDataPart}`;
-                        finalData = rows.join('\n');
+                        finalDataArray[rows.length - 1] = `${match[0]} ${updatedDataPart}`;
                     }
                 }
             }
@@ -187,11 +185,12 @@ export default function UpdateResultsClosePage() {
                 const newWeekData = newWeekDataArr.join(' ');
                 
                 const newRow = `${newDateRange} ${newWeekData}`;
-                finalData = panelChartData ? `${panelChartData}\n${newRow}` : newRow;
+                finalDataArray.push(newRow);
             }
 
-            batch.update(panelChartRef, { data: finalData.trim() });
+            batch.update(panelChartRef, { data: finalDataArray.join('\n').trim() });
         }
+
 
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
         const bidsSnapshot = await getDocs(bidsQuery);
