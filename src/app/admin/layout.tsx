@@ -52,7 +52,8 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const [pendingRequestsCount, setPendingRequestsCount] = React.useState(0);
+  const [pendingDepositsCount, setPendingDepositsCount] = React.useState(0);
+  const [pendingWithdrawalsCount, setPendingWithdrawalsCount] = React.useState(0);
   const [newUsersCount, setNewUsersCount] = React.useState(0);
   const [todaysBidsCount, setTodaysBidsCount] = React.useState(0);
   const [todaysWinsCount, setTodaysWinsCount] = React.useState(0);
@@ -62,6 +63,10 @@ export default function AdminLayout({
 
   const isLoadMenuInitiallyOpen = isActive('/admin/view-open-load') || isActive('/admin/view-close-load') || isActive('/admin/view-gametype-load');
   const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(isLoadMenuInitiallyOpen);
+  
+  const isRequestsMenuInitiallyOpen = isActive('/admin/deposit-requests') || isActive('/admin/withdrawal-requests');
+  const [isRequestsMenuOpen, setRequestsMenuOpen] = React.useState(isRequestsMenuInitiallyOpen);
+
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -108,17 +113,12 @@ export default function AdminLayout({
     const depositsQuery = query(collection(db, "deposits"), where("status", "==", "pending"));
     const withdrawalsQuery = query(collection(db, "withdrawals"), where("status", "==", "pending"));
 
-    let depositsCount = 0;
-    let withdrawalsCount = 0;
-
     const unsubDeposits = onSnapshot(depositsQuery, (snapshot) => {
-        depositsCount = snapshot.size;
-        setPendingRequestsCount(depositsCount + withdrawalsCount);
+        setPendingDepositsCount(snapshot.size);
     });
 
     const unsubWithdrawals = onSnapshot(withdrawalsQuery, (snapshot) => {
-        withdrawalsCount = snapshot.size;
-        setPendingRequestsCount(depositsCount + withdrawalsCount);
+        setPendingWithdrawalsCount(snapshot.size);
     });
 
     // Listener for new users
@@ -277,21 +277,52 @@ export default function AdminLayout({
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-               <SidebarMenuItem>
-                <Link href="/admin/pending-requests" passHref onClick={() => handleBadgeClick(setPendingRequestsCount)}>
-                  <SidebarMenuButton isActive={isActive('/admin/pending-requests')} tooltip={{children: "Customer Requests"}}>
-                    <div className="flex items-center gap-2">
-                        <MailQuestion />
-                        <span>Customer Requests</span>
-                    </div>
-                     {pendingRequestsCount > 0 && (
-                        <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                            {pendingRequestsCount}
-                        </span>
-                     )}
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
+               <Collapsible open={isRequestsMenuOpen} onOpenChange={setRequestsMenuOpen}>
+                  <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                         <SidebarMenuButton 
+                            isActive={isRequestsMenuInitiallyOpen} 
+                            className="w-full justify-between"
+                         >
+                            <div className="flex items-center gap-2">
+                                <MailQuestion />
+                                <span>Customer Requests</span>
+                            </div>
+                            <ChevronDown className={cn("h-4 w-4 transition-transform", isRequestsMenuOpen && "rotate-180")} />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                  </SidebarMenuItem>
+                  <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
+                     <SidebarMenuItem>
+                        <Link href="/admin/deposit-requests" passHref onClick={() => handleBadgeClick(setPendingDepositsCount)}>
+                        <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/deposit-requests')}>                        
+                            <div className="flex items-center justify-between w-full">
+                                <span>Deposit Requests</span>
+                                {pendingDepositsCount > 0 && (
+                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                                        {pendingDepositsCount}
+                                    </span>
+                                )}
+                            </div>
+                          </SidebarMenuButton>
+                        </Link>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <Link href="/admin/withdrawal-requests" passHref onClick={() => handleBadgeClick(setPendingWithdrawalsCount)}>
+                        <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/withdrawal-requests')}>                        
+                             <div className="flex items-center justify-between w-full">
+                                <span>Withdrawal Requests</span>
+                                {pendingWithdrawalsCount > 0 && (
+                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                                        {pendingWithdrawalsCount}
+                                    </span>
+                                )}
+                            </div>
+                          </SidebarMenuButton>
+                        </Link>
+                      </SidebarMenuItem>
+                  </CollapsibleContent>
+               </Collapsible>
               <SidebarMenuItem>
                 <Link href="/admin/send-notification" passHref onClick={handleLinkClick}>
                   <SidebarMenuButton isActive={isActive('/admin/send-notification')} tooltip={{children: "Send Notification"}}>
