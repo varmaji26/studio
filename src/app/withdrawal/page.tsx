@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Landmark, Phone, Gift, Wallet, Info } from 'lucide-react';
 import Link from 'next/link';
-import { doc, onSnapshot, DocumentData, collection, addDoc, serverTimestamp, runTransaction, query, where } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData, collection, addDoc, serverTimestamp, runTransaction, query, where, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -118,6 +118,11 @@ export default function WithdrawalPage() {
                     throw new Error("User not found.");
                 }
                 
+                const currentRealBalance = userDoc.data().balance || 0;
+                if (currentRealBalance < parsedAmount) {
+                    throw new Error("Insufficient balance to proceed with withdrawal.");
+                }
+
                 const bonusToReset = userDoc.data().bonusBalance || 0;
 
                 const withdrawalsCollectionRef = collection(db, 'withdrawals');
@@ -134,6 +139,11 @@ export default function WithdrawalPage() {
                     createdAt: serverTimestamp(),
                 });
                 
+                // Deduct withdrawal amount from real balance immediately
+                const updates: { [key: string]: any } = {
+                    balance: increment(-parsedAmount)
+                };
+
                 if (bonusToReset > 0) {
                     const newBonusTransactionRef = doc(collection(db, 'bonusTransactions'));
                     transaction.set(newBonusTransactionRef, {
@@ -146,13 +156,15 @@ export default function WithdrawalPage() {
                         createdAt: serverTimestamp(),
                     });
                     // Reset bonus balance on withdrawal request
-                    transaction.update(userDocRef, { bonusBalance: 0 });
+                    updates.bonusBalance = 0;
                 }
+                
+                transaction.update(userDocRef, updates);
             });
 
             toast({
                 title: 'Request Sent!',
-                description: 'Your withdrawal request has been submitted and your bonus balance has been reset.',
+                description: 'Your withdrawal request has been submitted and the amount has been deducted from your balance.',
             });
             router.push('/funds');
 

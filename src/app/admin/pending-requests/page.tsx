@@ -155,18 +155,13 @@ export default function PendingRequestsPage() {
             const userDoc = await transaction.get(userDocRef);
             if (!userDoc.exists()) throw new Error(`User not found!`);
 
-            const currentBalance = userDoc.data().balance || 0;
-            const currentBonusBalance = userDoc.data().bonusBalance || 0;
-
             if (status === 'approved') {
-                if (currentBalance < request.amount) {
-                    transaction.update(requestDocRef, { status: 'rejected' });
-                    throw new Error("Insufficient balance. Request automatically rejected.");
-                }
-                transaction.update(userDocRef, { balance: increment(-request.amount) });
+                // The amount was already deducted, so we just update the stats and status.
                 transaction.update(statsDocRef, { totalBalance: increment(-request.amount) });
                 transaction.update(requestDocRef, { status: 'approved' });
             } else { // status is 'rejected'
+                // Refund the amount to the user's balance
+                transaction.update(userDocRef, { balance: increment(request.amount) });
                 transaction.update(requestDocRef, { status: 'rejected' });
             }
         });
@@ -189,10 +184,16 @@ export default function PendingRequestsPage() {
 
     try {
         const batch = writeBatch(db);
-        requests.forEach(request => {
+        for (const request of requests) {
             const docRef = doc(db, collectionName, request.id);
             batch.update(docRef, { status: 'rejected' });
-        });
+            
+            // If it's a withdrawal, refund the user
+            if (type === 'withdrawals') {
+                const userDocRef = doc(db, 'users', request.userId);
+                batch.update(userDocRef, { balance: increment(request.amount) });
+            }
+        }
         await batch.commit();
         toast({
             title: 'Success!',
