@@ -48,9 +48,9 @@ export default function DepositRequestsPage() {
       const q = query(collection(db, "deposits"), where("status", "==", "pending"));
       
       const unsubscribe = onSnapshot(q, async (snapshot) => {
-          const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as DocumentData)) as (Omit<Request, 'mobile'> & { id: string })[];
+          const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Request));
           const dataWithUsers = await Promise.all(
-              data.map(async (request): Promise<Request> => {
+              data.map(async (request) => {
                   if (!request.userId) return { ...request, mobile: 'N/A' };
                   const userDocRef = doc(db, 'users', request.userId);
                   const userDoc = await getDoc(userDocRef);
@@ -267,5 +267,7 @@ export default function DepositRequestsPage() {
     </div>
   );
 }
+
+    
 
     
