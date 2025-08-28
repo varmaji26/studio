@@ -8,7 +8,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "clean": "rimraf .next node_modules",
+    "deploy": "npm run clean && npm install && npm run build && firebase deploy"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -61,6 +63,9 @@
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.5",
     "typescript": "^5.5.4"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.7"
   },
   "engines": {
     "node": "20"
