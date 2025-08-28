@@ -7,7 +7,7 @@
     "gcp-build": "npm run build",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p 8080",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
