@@ -48,9 +48,9 @@ export default function DepositRequestsPage() {
       const q = query(collection(db, "deposits"), where("status", "==", "pending"));
       
       const unsubscribe = onSnapshot(q, async (snapshot) => {
-          const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as DocumentData)) as Omit<Request, 'mobile'>[];
+          const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as DocumentData)) as (Omit<Request, 'mobile'> & { id: string })[];
           const dataWithUsers = await Promise.all(
-              data.map(async (request) => {
+              data.map(async (request): Promise<Request> => {
                   if (!request.userId) return { ...request, mobile: 'N/A' };
                   const userDocRef = doc(db, 'users', request.userId);
                   const userDoc = await getDoc(userDocRef);
@@ -59,7 +59,7 @@ export default function DepositRequestsPage() {
               })
           );
           dataWithUsers.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-          setRequests(dataWithUsers as Request[]);
+          setRequests(dataWithUsers);
           setLoading(false);
       }, (error) => {
           console.error(`Error fetching pending deposits: `, error);
@@ -267,3 +267,5 @@ export default function DepositRequestsPage() {
     </div>
   );
 }
+
+    
