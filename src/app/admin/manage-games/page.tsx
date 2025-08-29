@@ -226,7 +226,7 @@ export default function ManageGamesPage() {
   
   const filteredGames = useMemo(() => {
     if (!selectedGameId) {
-        return [];
+        return games;
     }
     return games.filter(game => game.id === selectedGameId);
   }, [games, selectedGameId]);
@@ -388,6 +388,7 @@ export default function ManageGamesPage() {
                             <SelectValue placeholder="Filter by game..." />
                         </SelectTrigger>
                         <SelectContent>
+                             <SelectItem value="">All Games</SelectItem>
                             {games.map((game) => (
                                 <SelectItem key={game.id} value={game.id}>
                                     {game.name}
@@ -474,9 +475,6 @@ export default function ManageGamesPage() {
               )}
               {filteredGames.length === 0 && !loading && selectedGameId && (
                   <p className="text-center text-muted-foreground mt-4">No game found for the selection.</p>
-              )}
-               {filteredGames.length === 0 && !loading && !selectedGameId && (
-                  <p className="text-center text-muted-foreground mt-4">Please select a game to view details.</p>
               )}
             </CardContent>
           </Card>

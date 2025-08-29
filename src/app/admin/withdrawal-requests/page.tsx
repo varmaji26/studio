@@ -49,17 +49,9 @@ export default function WithdrawalRequestsPage() {
       
       const unsubscribe = onSnapshot(q, async (snapshot) => {
           const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Request));
-          const dataWithUsers = await Promise.all(
-              data.map(async (request) => {
-                  if (!request.userId) return { ...request, mobile: 'N/A' };
-                  const userDocRef = doc(db, 'users', request.userId);
-                  const userDoc = await getDoc(userDocRef);
-                  const userData = userDoc.exists() ? userDoc.data() : {};
-                  return { ...request, mobile: userData.mobile || 'N/A' };
-              })
-          );
-          dataWithUsers.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-          setRequests(dataWithUsers);
+
+          data.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+          setRequests(data);
           setLoading(false);
       }, (error) => {
           console.error(`Error fetching pending withdrawals: `, error);
@@ -263,7 +255,3 @@ export default function WithdrawalRequestsPage() {
     </div>
   );
 }
-
-    
-
-    
