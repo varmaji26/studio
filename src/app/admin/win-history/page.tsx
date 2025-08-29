@@ -60,15 +60,12 @@ export default function AdminWinHistoryPage() {
     setLoading(true);
     const q = query(
         collection(db, "bids"), 
-        where("status", "==", "won")
+        where("status", "==", "won"),
+        orderBy("createdAt", "desc")
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
-        
-        // Sort client-side
-        winsData.sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-
         setAllWins(winsData);
         setLoading(false);
     }, (error) => {

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch, getDocs, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch, getDocs, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -51,7 +51,7 @@ interface User extends DocumentData {
 const ITEMS_PER_PAGE = 10;
 
 export default function ManageUsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -77,7 +77,7 @@ export default function ManageUsersPage() {
                 usersData.push({ id: doc.id, ...doc.data() } as User);
             }
         });
-        setUsers(usersData);
+        setAllUsers(usersData);
         setUsersLoading(false);
     }, (error) => {
         console.error("Error fetching users: ", error);
@@ -93,7 +93,7 @@ export default function ManageUsersPage() {
    }, [toast]);
   
   const filteredUsers = useMemo(() => {
-    let source = users;
+    let source = allUsers;
     let filtered = source;
 
     if (selectedDate) {
@@ -120,7 +120,7 @@ export default function ManageUsersPage() {
     }
 
     return filtered;
-  }, [searchTerm, users, selectedDate]);
+  }, [searchTerm, allUsers, selectedDate]);
   
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
   const paginatedUsers = useMemo(() => {
@@ -329,5 +329,3 @@ export default function ManageUsersPage() {
       </div>
   );
 }
-
-    
