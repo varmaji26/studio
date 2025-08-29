@@ -87,14 +87,16 @@ export default function WithdrawalRequestsPage() {
             if (!userDoc.exists()) throw new Error(`User not found!`);
 
             if (status === 'approved') {
-                // The amount was already deducted, so we just update the stats and status.
+                const currentBalance = userDoc.data().balance || 0;
+                if (currentBalance < request.amount) {
+                    throw new Error("User has insufficient balance for this withdrawal.");
+                }
+                // Deduct amount on approval
+                transaction.update(userDocRef, { balance: increment(-request.amount) });
                 transaction.update(statsDocRef, { totalBalance: increment(-request.amount) });
-                transaction.update(requestDocRef, { status: 'approved' });
-            } else { // status is 'rejected'
-                // Refund the amount to the user's balance
-                transaction.update(userDocRef, { balance: increment(request.amount) });
-                transaction.update(requestDocRef, { status: 'rejected' });
             }
+            // For both approve and reject, update the request status
+            transaction.update(requestDocRef, { status: status });
         });
         toast({ title: 'Success!', description: `Withdrawal request has been ${status}.` });
     } catch(error: any) {
@@ -114,14 +116,13 @@ export default function WithdrawalRequestsPage() {
         const batch = writeBatch(db);
         for (const request of requests) {
             const docRef = doc(db, 'withdrawals', request.id);
+            // Just update the status to rejected, no need to refund as balance was not deducted.
             batch.update(docRef, { status: 'rejected' });
-            const userDocRef = doc(db, 'users', request.userId);
-            batch.update(userDocRef, { balance: increment(request.amount) });
         }
         await batch.commit();
         toast({
             title: 'Success!',
-            description: `All pending withdrawals have been rejected and refunded.`
+            description: `All pending withdrawals have been rejected.`
         });
     } catch (error) {
         console.error(`Error rejecting all withdrawals:`, error);
@@ -181,7 +182,7 @@ export default function WithdrawalRequestsPage() {
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This will reject all {requests.length} pending withdrawals and refund the amount to the users. This action cannot be undone.
+                                    This will reject all {requests.length} pending withdrawals. This action cannot be undone.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

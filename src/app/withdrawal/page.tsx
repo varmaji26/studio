@@ -124,11 +124,10 @@ export default function WithdrawalPage() {
                 }
 
                 const bonusToReset = userDoc.data().bonusBalance || 0;
-
                 const withdrawalsCollectionRef = collection(db, 'withdrawals');
-                const newWithdrawalRef = doc(withdrawalsCollectionRef);
-
-                transaction.set(newWithdrawalRef, {
+                
+                // Just create the withdrawal request, don't deduct balance.
+                transaction.set(doc(withdrawalsCollectionRef), {
                     userId: user.uid,
                     displayName: user.displayName,
                     mobile: user.email?.split('@')[0],
@@ -138,12 +137,8 @@ export default function WithdrawalPage() {
                     status: 'pending',
                     createdAt: serverTimestamp(),
                 });
-                
-                // Deduct withdrawal amount from real balance immediately
-                const updates: { [key: string]: any } = {
-                    balance: increment(-parsedAmount)
-                };
 
+                // Reset bonus balance if any
                 if (bonusToReset > 0) {
                     const newBonusTransactionRef = doc(collection(db, 'bonusTransactions'));
                     transaction.set(newBonusTransactionRef, {
@@ -155,16 +150,13 @@ export default function WithdrawalPage() {
                         description: 'Bonus reset on withdrawal request',
                         createdAt: serverTimestamp(),
                     });
-                    // Reset bonus balance on withdrawal request
-                    updates.bonusBalance = 0;
+                    transaction.update(userDocRef, { bonusBalance: 0 });
                 }
-                
-                transaction.update(userDocRef, updates);
             });
 
             toast({
                 title: 'Request Sent!',
-                description: 'Your withdrawal request has been submitted and the amount has been deducted from your balance.',
+                description: 'Your withdrawal request has been submitted for approval.',
             });
             router.push('/funds');
 
