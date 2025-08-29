@@ -215,3 +215,5 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
     </Dialog>
   );
 }
+
+export default UpdateBalanceDialog;

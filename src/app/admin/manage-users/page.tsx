@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch, getDocs, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch, getDocs, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,7 +11,7 @@ import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Search, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Search, Calendar as CalendarIcon, UserX, UserCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -31,7 +31,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
-const UpdateBalanceDialog = dynamic(() => import('@/components/update-balance-dialog').then(mod => mod.UpdateBalanceDialog), {
+const UpdateBalanceDialog = dynamic(() => import('@/components/update-balance-dialog'), {
   ssr: false,
   loading: () => <Loader />,
 });
@@ -46,6 +46,7 @@ interface User extends DocumentData {
         seconds: number;
         nanoseconds: number;
     } | null;
+    isBlocked?: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -170,6 +171,25 @@ export default function ManageUsersPage() {
         });
     }
   };
+
+  const handleToggleBlockUser = async (user: User) => {
+    const userDocRef = doc(db, "users", user.id);
+    const newStatus = !user.isBlocked;
+    try {
+        await updateDoc(userDocRef, { isBlocked: newStatus });
+        toast({
+            title: 'Success!',
+            description: `${user.displayName} has been ${newStatus ? 'blocked' : 'unblocked'}.`
+        });
+    } catch (error) {
+         console.error("Error updating user status: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: `Failed to ${newStatus ? 'block' : 'unblock'} user.`,
+        });
+    }
+  };
   
   const renderPagination = () => {
     if (totalPages <= 1) return null;
@@ -282,8 +302,8 @@ export default function ManageUsersPage() {
                                     <TableCell>₹{user.balance || 0}</TableCell>
                                     <TableCell>₹{user.bonusBalance || 0}</TableCell>
                                     <TableCell>
-                                        <Badge className="bg-green-500 text-white hover:bg-green-600">
-                                            ACTIVE
+                                        <Badge className={user.isBlocked ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}>
+                                            {user.isBlocked ? 'BLOCKED' : 'ACTIVE'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>{formatDate(user.createdAt)}</TableCell>
@@ -292,6 +312,25 @@ export default function ManageUsersPage() {
                                             <UpdateBalanceDialog user={user}>
                                                 <Button size="sm" variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400">Add/Remove Balance</Button>
                                             </UpdateBalanceDialog>
+                                             <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                   <Button size="sm" variant={user.isBlocked ? 'secondary' : 'destructive'}>
+                                                        {user.isBlocked ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will {user.isBlocked ? 'unblock' : 'block'} {user.displayName}. {user.isBlocked ? 'They will be able to log in again.' : 'They will no longer be able to log in.'}
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleToggleBlockUser(user)}>Confirm</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button size="sm" variant="destructive">Delete</Button>
@@ -329,3 +368,4 @@ export default function ManageUsersPage() {
       </div>
   );
 }
+
