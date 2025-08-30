@@ -62,22 +62,8 @@ export default function AdminBidHistoryPage() {
 
   useEffect(() => {
     setLoading(true);
-    let q;
-    if (selectedDate) {
-        const startOfDay = new Date(selectedDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(selectedDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        q = query(
-            collection(db, "bids"),
-            where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
-            where("createdAt", "<=", Timestamp.fromDate(endOfDay)),
-            orderBy("createdAt", "desc")
-        );
-    } else {
-         q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
-    }
-
+    const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+    
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
         setAllBids(bidsData);
@@ -88,21 +74,37 @@ export default function AdminBidHistoryPage() {
     });
 
     return () => unsubscribe();
-  }, [selectedDate]);
+  }, []);
   
   const filteredBids = useMemo(() => {
-    const lowercasedFilter = searchTerm.toLowerCase().trim();
-    if (!lowercasedFilter) {
-      return allBids;
+    let filtered = allBids;
+    
+    if (selectedDate) {
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      filtered = filtered.filter(bid => {
+        if (!bid.createdAt?.seconds) return false;
+        const bidDate = new Date(bid.createdAt.seconds * 1000);
+        return bidDate >= startOfDay && bidDate <= endOfDay;
+      });
     }
-    return allBids.filter((bid) => {
-      return (
-        bid.displayName?.toLowerCase().includes(lowercasedFilter) ||
-        bid.gameName?.toLowerCase().includes(lowercasedFilter) ||
-        bid.mobile?.includes(lowercasedFilter)
-      );
-    });
-  }, [searchTerm, allBids]);
+
+    const lowercasedFilter = searchTerm.toLowerCase().trim();
+    if (lowercasedFilter) {
+      filtered = filtered.filter((bid) => {
+        return (
+          bid.displayName?.toLowerCase().includes(lowercasedFilter) ||
+          bid.gameName?.toLowerCase().includes(lowercasedFilter) ||
+          bid.mobile?.includes(lowercasedFilter)
+        );
+      });
+    }
+    
+    return filtered;
+  }, [searchTerm, allBids, selectedDate]);
 
   const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
   const paginatedBids = useMemo(() => {
@@ -363,5 +365,3 @@ export default function AdminBidHistoryPage() {
       </div>
   );
 }
-
-    

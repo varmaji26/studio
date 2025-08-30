@@ -57,21 +57,7 @@ export default function AdminWinHistoryPage() {
 
   useEffect(() => {
     setLoading(true);
-    let q = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
-
-    if (selectedDate) {
-        const startOfDay = new Date(selectedDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(selectedDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        q = query(
-            collection(db, "bids"),
-            where("status", "==", "won"),
-            where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
-            where("createdAt", "<=", Timestamp.fromDate(endOfDay)),
-            orderBy("createdAt", "desc")
-        );
-    }
+    const q = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
@@ -83,21 +69,37 @@ export default function AdminWinHistoryPage() {
     });
 
     return () => unsubscribe();
-  }, [selectedDate]);
+  }, []);
   
   const filteredWins = useMemo(() => {
-    const lowercasedFilter = searchTerm.toLowerCase().trim();
-    if (!lowercasedFilter) {
-      return allWins;
+    let filtered = allWins;
+    
+    if (selectedDate) {
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      filtered = filtered.filter(win => {
+        if (!win.createdAt?.seconds) return false;
+        const winDate = new Date(win.createdAt.seconds * 1000);
+        return winDate >= startOfDay && winDate <= endOfDay;
+      });
     }
-    return allWins.filter((win) => {
-      return (
-        win.displayName?.toLowerCase().includes(lowercasedFilter) ||
-        win.gameName?.toLowerCase().includes(lowercasedFilter) ||
-        win.mobile?.toLowerCase().includes(lowercasedFilter)
-      );
-    });
-  }, [searchTerm, allWins]);
+
+    const lowercasedFilter = searchTerm.toLowerCase().trim();
+    if (lowercasedFilter) {
+      filtered = filtered.filter((win) => {
+        return (
+          win.displayName?.toLowerCase().includes(lowercasedFilter) ||
+          win.gameName?.toLowerCase().includes(lowercasedFilter) ||
+          win.mobile?.toLowerCase().includes(lowercasedFilter)
+        );
+      });
+    }
+    
+    return filtered;
+  }, [searchTerm, allWins, selectedDate]);
   
   const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
   const paginatedWins = useMemo(() => {
