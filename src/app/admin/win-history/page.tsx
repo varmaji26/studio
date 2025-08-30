@@ -104,7 +104,7 @@ export default function AdminWinHistoryPage() {
         return (
           win.displayName?.toLowerCase().includes(lowercasedFilter) ||
           win.gameName?.toLowerCase().includes(lowercasedFilter) ||
-          win.mobile?.includes(lowercasedFilter)
+          win.mobile?.toLowerCase().includes(lowercasedFilter)
         );
       });
     }
