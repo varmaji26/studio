@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, doc, runTransaction, increment, where } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, doc, runTransaction, increment, where, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -49,23 +49,55 @@ export default function AdminBidHistoryPage() {
   const [allBids, setAllBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [firstVisible, setFirstVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
         localStorage.setItem('lastViewedBidsTimestamp', Date.now().toString());
     }
   }, [searchParams]);
-
-  useEffect(() => {
+  
+  const fetchBids = useCallback((direction: 'next' | 'prev' | 'initial' = 'initial') => {
     setLoading(true);
-    const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+    let q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        q = query(q, where("createdAt", ">=", Timestamp.fromDate(startOfDay)), where("createdAt", "<=", Timestamp.fromDate(endOfDay)));
+    }
+
+    if (direction === 'next' && lastVisible) {
+        q = query(q, startAfter(lastVisible), limit(ITEMS_PER_PAGE));
+    } else if (direction === 'prev' && firstVisible) {
+        q = query(q, endBefore(firstVisible), limitToLast(ITEMS_PER_PAGE));
+    } else {
+        q = query(q, limit(ITEMS_PER_PAGE));
+    }
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
+        
+        if (!querySnapshot.empty) {
+            setFirstVisible(querySnapshot.docs[0]);
+            setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+        } else if (direction !== 'initial') {
+            // If we are navigating and get an empty result, don't change the page
+            if (direction === 'next') setCurrentPage(p => p - 1);
+            if (direction === 'prev') setCurrentPage(p => p + 1);
+        } else {
+            setLastVisible(null);
+            setFirstVisible(null);
+        }
+        
         setAllBids(bidsData);
         setLoading(false);
     }, (error) => {
@@ -73,63 +105,65 @@ export default function AdminBidHistoryPage() {
         setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, []);
-  
-  const filteredBids = useMemo(() => {
-    let filtered = allBids;
-    
-    if (selectedDate) {
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      
-      filtered = filtered.filter(bid => {
-        if (!bid.createdAt?.seconds) return false;
-        const bidDate = new Date(bid.createdAt.seconds * 1000);
-        return bidDate >= startOfDay && bidDate <= endOfDay;
-      });
-    }
+    return unsubscribe;
+  }, [selectedDate, lastVisible, firstVisible]);
 
+  useEffect(() => {
+    const unsubscribe = fetchBids('initial');
+    return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
+
+  const handleNextPage = () => {
+      setCurrentPage(p => p + 1);
+      fetchBids('next');
+  };
+
+  const handlePrevPage = () => {
+      setCurrentPage(p => p - 1);
+      fetchBids('prev');
+  };
+
+  const filteredBids = useMemo(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();
-    if (lowercasedFilter) {
-      filtered = filtered.filter((bid) => {
+    if (!lowercasedFilter) return allBids;
+
+    return allBids.filter((bid) => {
         return (
           bid.displayName?.toLowerCase().includes(lowercasedFilter) ||
           bid.gameName?.toLowerCase().includes(lowercasedFilter) ||
           bid.mobile?.includes(lowercasedFilter)
         );
       });
-    }
-    
-    return filtered;
-  }, [searchTerm, allBids, selectedDate]);
+  }, [searchTerm, allBids]);
 
-  const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
-  const paginatedBids = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredBids.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredBids, currentPage]);
-
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, selectedDate]);
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
     return new Date(timestamp.seconds * 1000).toLocaleString('en-GB');
   };
   
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const doc = new jsPDF();
     const reportDate = selectedDate ? format(selectedDate, "PPP") : 'All Time';
     doc.text(`Bid History Report - ${reportDate}`, 14, 16);
 
+    let allFilteredBids: Bid[] = [];
+    let q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        q = query(q, where("createdAt", ">=", Timestamp.fromDate(startOfDay)), where("createdAt", "<=", Timestamp.fromDate(endOfDay)));
+    }
+    const querySnapshot = await getDocs(q);
+    allFilteredBids = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Bid));
+
     const tableColumn = ["Date", "Username", "Mobile", "Game", "Bet Details", "Amount (₹)", "Status"];
     const tableRows: (string | number)[][] = [];
 
-    filteredBids.forEach(bid => {
+    allFilteredBids.forEach(bid => {
         const bidRow = [
             formatDate(bid.createdAt),
             bid.displayName,
@@ -163,11 +197,7 @@ export default function AdminBidHistoryPage() {
             if (!bidDoc.exists() || bidDoc.data().status !== 'running') {
                 throw new Error("This bid is no longer running and cannot be cancelled.");
             }
-
-            // Refund user's balance
             transaction.update(userDocRef, { balance: increment(bid.totalAmount) });
-
-            // Update bid status to 'cancelled'
             transaction.update(bidDocRef, { status: 'cancelled' });
         });
         toast({
@@ -196,27 +226,23 @@ export default function AdminBidHistoryPage() {
   };
 
   const renderPagination = () => {
-    if(totalPages <= 1) return null;
-
     return (
-        <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-             <div>
-                Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
-            </div>
+        <div className="flex justify-end items-center mt-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={handlePrevPage}
                     disabled={currentPage === 1}
                 >
                     Previous
                 </Button>
+                <span className="font-bold">{currentPage}</span>
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={handleNextPage}
+                    disabled={filteredBids.length < ITEMS_PER_PAGE}
                 >
                     Next
                 </Button>
@@ -234,7 +260,7 @@ export default function AdminBidHistoryPage() {
                 <CardTitle className="text-3xl font-bold">Bid History</CardTitle>
                 <CardDescription>View all bids placed by users across all games.</CardDescription>
               </div>
-              <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={filteredBids.length === 0}>
+              <Button onClick={handleDownloadPDF} variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
               </Button>
@@ -261,7 +287,12 @@ export default function AdminBidHistoryPage() {
                             <Calendar
                             mode="single"
                             selected={selectedDate}
-                            onSelect={setSelectedDate}
+                            onSelect={(date) => {
+                                setSelectedDate(date);
+                                setCurrentPage(1);
+                                setFirstVisible(null);
+                                setLastVisible(null);
+                            }}
                             initialFocus
                             />
                         </PopoverContent>
@@ -299,7 +330,8 @@ export default function AdminBidHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedBids.map((bid) => (
+                            {filteredBids.length > 0 ? (
+                                filteredBids.map((bid) => (
                                 <TableRow key={bid.id}>
                                     <TableCell>{formatDate(bid.createdAt)}</TableCell>
                                     <TableCell>{bid.displayName}</TableCell>
@@ -348,17 +380,19 @@ export default function AdminBidHistoryPage() {
                                         )}
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ))
+                           ) : (
+                                <TableRow>
+                                    <TableCell colSpan={8} className="h-24 text-center">
+                                      No bids found.
+                                    </TableCell>
+                                </TableRow>
+                           )}
                         </TableBody>
                     </Table>
                 </div>
                  {renderPagination()}
                 </>
-            )}
-            {paginatedBids.length === 0 && !loading && (
-                <p className="text-center text-muted-foreground mt-4">
-                  {searchTerm || selectedDate ? `No bids found for the selected criteria.` : "No bids found."}
-                </p>
             )}
           </CardContent>
         </Card>

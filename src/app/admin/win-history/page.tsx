@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, where, onSnapshot, getDocs, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -45,9 +45,12 @@ export default function AdminWinHistoryPage() {
   const [allWins, setAllWins] = useState<Win[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const searchParams = useSearchParams();
+  
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [firstVisible, setFirstVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -55,12 +58,40 @@ export default function AdminWinHistoryPage() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
+  const fetchWins = useCallback((direction: 'next' | 'prev' | 'initial' = 'initial') => {
     setLoading(true);
-    const q = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
+    let q = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
+
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        q = query(q, where("createdAt", ">=", Timestamp.fromDate(startOfDay)), where("createdAt", "<=", Timestamp.fromDate(endOfDay)));
+    }
+    
+    if (direction === 'next' && lastVisible) {
+        q = query(q, startAfter(lastVisible), limit(ITEMS_PER_PAGE));
+    } else if (direction === 'prev' && firstVisible) {
+        q = query(q, endBefore(firstVisible), limitToLast(ITEMS_PER_PAGE));
+    } else {
+        q = query(q, limit(ITEMS_PER_PAGE));
+    }
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
+        
+        if (!querySnapshot.empty) {
+            setFirstVisible(querySnapshot.docs[0]);
+            setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+        } else if (direction !== 'initial') {
+            if (direction === 'next') setCurrentPage(p => p - 1);
+            if (direction === 'prev') setCurrentPage(p => p + 1);
+        } else {
+             setLastVisible(null);
+             setFirstVisible(null);
+        }
+        
         setAllWins(winsData);
         setLoading(false);
     }, (error) => {
@@ -68,48 +99,37 @@ export default function AdminWinHistoryPage() {
         setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, []);
-  
-  const filteredWins = useMemo(() => {
-    let filtered = allWins;
-    
-    if (selectedDate) {
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      
-      filtered = filtered.filter(win => {
-        if (!win.createdAt?.seconds) return false;
-        const winDate = new Date(win.createdAt.seconds * 1000);
-        return winDate >= startOfDay && winDate <= endOfDay;
-      });
-    }
+    return unsubscribe;
+  }, [selectedDate, lastVisible, firstVisible]);
 
+  useEffect(() => {
+    const unsubscribe = fetchWins('initial');
+    return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
+
+  const handleNextPage = () => {
+      setCurrentPage(p => p + 1);
+      fetchWins('next');
+  };
+
+  const handlePrevPage = () => {
+      setCurrentPage(p => p - 1);
+      fetchWins('prev');
+  };
+
+  const filteredWins = useMemo(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();
-    if (lowercasedFilter) {
-      filtered = filtered.filter((win) => {
+    if (!lowercasedFilter) return allWins;
+
+    return allWins.filter((win) => {
         return (
           win.displayName?.toLowerCase().includes(lowercasedFilter) ||
           win.gameName?.toLowerCase().includes(lowercasedFilter) ||
           win.mobile?.toLowerCase().includes(lowercasedFilter)
         );
       });
-    }
-    
-    return filtered;
-  }, [searchTerm, allWins, selectedDate]);
-  
-  const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
-  const paginatedWins = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredWins.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredWins, currentPage]);
-
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, selectedDate]);
+  }, [searchTerm, allWins]);
 
 
   const formatDate = (timestamp: Timestamp) => {
@@ -117,15 +137,27 @@ export default function AdminWinHistoryPage() {
     return new Date(timestamp.seconds * 1000).toLocaleString('en-GB');
   };
   
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const doc = new jsPDF();
     const reportDate = selectedDate ? format(selectedDate, "PPP") : 'All Time';
     doc.text(`Win History Report - ${reportDate}`, 14, 16);
 
+    let allFilteredWins: Win[] = [];
+    let q = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        q = query(q, where("createdAt", ">=", Timestamp.fromDate(startOfDay)), where("createdAt", "<=", Timestamp.fromDate(endOfDay)));
+    }
+    const querySnapshot = await getDocs(q);
+    allFilteredWins = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Win));
+    
     const tableColumn = ["Date", "Username", "Mobile", "Game", "Bet Details", "Bet (₹)", "Win (₹)"];
     const tableRows: (string | number)[][] = [];
 
-    filteredWins.forEach(win => {
+    allFilteredWins.forEach(win => {
         const winRow = [
             formatDate(win.createdAt),
             win.displayName,
@@ -150,25 +182,23 @@ export default function AdminWinHistoryPage() {
   };
 
   const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
     return (
-        <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-            <div>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></div>
+        <div className="flex justify-end items-center mt-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={handlePrevPage}
                     disabled={currentPage === 1}
                 >
                     Previous
                 </Button>
+                <span className="font-bold">{currentPage}</span>
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={handleNextPage}
+                    disabled={filteredWins.length < ITEMS_PER_PAGE}
                 >
                     Next
                 </Button>
@@ -189,7 +219,7 @@ export default function AdminWinHistoryPage() {
                     </CardTitle>
                     <CardDescription>View all winning bids and payouts.</CardDescription>
                 </div>
-                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={filteredWins.length === 0}>
+                 <Button onClick={handleDownloadPDF} variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                 </Button>
@@ -216,7 +246,12 @@ export default function AdminWinHistoryPage() {
                             <Calendar
                             mode="single"
                             selected={selectedDate}
-                            onSelect={setSelectedDate}
+                            onSelect={(date) => {
+                                setSelectedDate(date);
+                                setCurrentPage(1);
+                                setFirstVisible(null);
+                                setLastVisible(null);
+                            }}
                             initialFocus
                             />
                         </PopoverContent>
@@ -253,8 +288,8 @@ export default function AdminWinHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedWins.length > 0 ? (
-                                paginatedWins.map((win) => (
+                            {filteredWins.length > 0 ? (
+                                filteredWins.map((win) => (
                                     <TableRow key={win.id}>
                                         <TableCell>{formatDate(win.createdAt)}</TableCell>
                                         <TableCell>{win.displayName}</TableCell>
@@ -275,7 +310,7 @@ export default function AdminWinHistoryPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={7} className="h-24 text-center">
-                                      {searchTerm || selectedDate ? `No wins found for the selected criteria.` : "No wins found."}
+                                      No wins found.
                                     </TableCell>
                                 </TableRow>
                             )}
