@@ -60,65 +60,48 @@ export default function AdminBidHistoryPage() {
     }
   }, [searchParams]);
 
-   const fetchBids = useCallback(async () => {
-    setLoading(true);
-    try {
-        const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
-            setAllBids(bidsData);
-            setLoading(false);
-        });
-        return unsubscribe;
-    } catch (error) {
-        console.error("Error fetching bids: ", error);
-        setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    const fetchAndSubscribe = async () => {
-        unsubscribe = await fetchBids();
-    }
-    fetchAndSubscribe();
-    return () => {
-        if (unsubscribe) {
-            unsubscribe();
-        }
-    };
-  }, [fetchBids]);
-  
-  const filteredBids = useMemo(() => {
-    let source = allBids;
-    let filtered = source;
-
+    setLoading(true);
+    let q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+    
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(selectedDate);
         endOfDay.setHours(23, 59, 59, 999);
-        
-        filtered = filtered.filter(bid => {
-            if (!bid.createdAt?.seconds) return false;
-            const bidDate = new Date(bid.createdAt.seconds * 1000);
-            return bidDate >= startOfDay && bidDate <= endOfDay;
-        });
+        q = query(
+            collection(db, "bids"),
+            where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
+            where("createdAt", "<=", Timestamp.fromDate(endOfDay)),
+            orderBy("createdAt", "desc")
+        );
     }
 
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
+        setAllBids(bidsData);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching bids: ", error);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [selectedDate]);
+  
+  const filteredBids = useMemo(() => {
     const lowercasedFilter = searchTerm.toLowerCase().trim();
-    if (lowercasedFilter) {
-      filtered = filtered.filter((bid) => {
-        return (
-          bid.displayName?.toLowerCase().includes(lowercasedFilter) ||
-          bid.gameName?.toLowerCase().includes(lowercasedFilter) ||
-          bid.mobile?.includes(lowercasedFilter)
-        );
-      });
+    if (!lowercasedFilter) {
+      return allBids;
     }
-    
-    return filtered;
-  }, [searchTerm, allBids, selectedDate]);
+    return allBids.filter((bid) => {
+      return (
+        bid.displayName?.toLowerCase().includes(lowercasedFilter) ||
+        bid.gameName?.toLowerCase().includes(lowercasedFilter) ||
+        bid.mobile?.includes(lowercasedFilter)
+      );
+    });
+  }, [searchTerm, allBids]);
 
   const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
   const paginatedBids = useMemo(() => {

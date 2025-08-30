@@ -55,14 +55,23 @@ export default function AdminWinHistoryPage() {
     }
   }, [searchParams]);
 
-
-   const fetchWins = useCallback(() => {
+  useEffect(() => {
     setLoading(true);
-    const q = query(
-        collection(db, "bids"), 
-        where("status", "==", "won"),
-        orderBy("createdAt", "desc")
-    );
+    let q = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
+
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        q = query(
+            collection(db, "bids"),
+            where("status", "==", "won"),
+            where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
+            where("createdAt", "<=", Timestamp.fromDate(endOfDay)),
+            orderBy("createdAt", "desc")
+        );
+    }
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
@@ -73,43 +82,22 @@ export default function AdminWinHistoryPage() {
         setLoading(false);
     });
 
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = fetchWins();
     return () => unsubscribe();
-  }, [fetchWins]);
+  }, [selectedDate]);
   
   const filteredWins = useMemo(() => {
-    let filtered = allWins;
-
-    if (selectedDate) {
-        const startOfDay = new Date(selectedDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(selectedDate);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        filtered = filtered.filter(win => {
-            if (!win.createdAt?.seconds) return false;
-            const winDate = new Date(win.createdAt.seconds * 1000);
-            return winDate >= startOfDay && winDate <= endOfDay;
-        });
-    }
-
     const lowercasedFilter = searchTerm.toLowerCase().trim();
-    if (lowercasedFilter) {
-      filtered = filtered.filter((win) => {
-        return (
-          win.displayName?.toLowerCase().includes(lowercasedFilter) ||
-          win.gameName?.toLowerCase().includes(lowercasedFilter) ||
-          win.mobile?.includes(lowercasedFilter)
-        );
-      });
+    if (!lowercasedFilter) {
+      return allWins;
     }
-
-    return filtered;
-  }, [searchTerm, allWins, selectedDate]);
+    return allWins.filter((win) => {
+      return (
+        win.displayName?.toLowerCase().includes(lowercasedFilter) ||
+        win.gameName?.toLowerCase().includes(lowercasedFilter) ||
+        win.mobile?.toLowerCase().includes(lowercasedFilter)
+      );
+    });
+  }, [searchTerm, allWins]);
   
   const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
   const paginatedWins = useMemo(() => {
@@ -297,4 +285,3 @@ export default function AdminWinHistoryPage() {
       </div>
   );
 }
-
