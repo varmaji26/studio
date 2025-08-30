@@ -82,15 +82,14 @@ export default function AdminWinHistoryPage() {
   }, [fetchWins]);
   
   const filteredWins = useMemo(() => {
-    let source = allWins;
-    let filtered = source;
+    let filtered = allWins;
 
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(selectedDate);
         endOfDay.setHours(23, 59, 59, 999);
-        
+
         filtered = filtered.filter(win => {
             if (!win.createdAt?.seconds) return false;
             const winDate = new Date(win.createdAt.seconds * 1000);
@@ -104,7 +103,7 @@ export default function AdminWinHistoryPage() {
         return (
           win.displayName?.toLowerCase().includes(lowercasedFilter) ||
           win.gameName?.toLowerCase().includes(lowercasedFilter) ||
-          win.mobile?.toLowerCase().includes(lowercasedFilter)
+          win.mobile?.includes(lowercasedFilter)
         );
       });
     }
@@ -298,3 +297,4 @@ export default function AdminWinHistoryPage() {
       </div>
   );
 }
+
