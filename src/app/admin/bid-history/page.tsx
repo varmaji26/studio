@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, doc, runTransaction, increment } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, doc, runTransaction, increment, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -62,8 +62,7 @@ export default function AdminBidHistoryPage() {
 
   useEffect(() => {
     setLoading(true);
-    let q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
-    
+    let q;
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
         startOfDay.setHours(0, 0, 0, 0);
@@ -75,6 +74,8 @@ export default function AdminBidHistoryPage() {
             where("createdAt", "<=", Timestamp.fromDate(endOfDay)),
             orderBy("createdAt", "desc")
         );
+    } else {
+         q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
     }
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -362,3 +363,5 @@ export default function AdminBidHistoryPage() {
       </div>
   );
 }
+
+    
