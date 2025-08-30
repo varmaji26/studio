@@ -253,34 +253,37 @@ export default function AdminWinHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedWins.map((win) => (
-                                <TableRow key={win.id}>
-                                    <TableCell>{formatDate(win.createdAt)}</TableCell>
-                                    <TableCell>{win.displayName}</TableCell>
-                                    <TableCell>{win.mobile}</TableCell>
-                                    <TableCell>{win.gameName} ({win.session})</TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span>{win.betType}</span>
-                                            <span className="text-xs text-muted-foreground">{win.numbers.join(', ')}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>₹{win.totalAmount}</TableCell>
-                                     <TableCell className="font-bold text-green-400">
-                                        ₹{win.winningAmount.toFixed(2)}
+                            {paginatedWins.length > 0 ? (
+                                paginatedWins.map((win) => (
+                                    <TableRow key={win.id}>
+                                        <TableCell>{formatDate(win.createdAt)}</TableCell>
+                                        <TableCell>{win.displayName}</TableCell>
+                                        <TableCell>{win.mobile}</TableCell>
+                                        <TableCell>{win.gameName} ({win.session})</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span>{win.betType}</span>
+                                                <span className="text-xs text-muted-foreground">{win.numbers.join(', ')}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>₹{win.totalAmount}</TableCell>
+                                         <TableCell className="font-bold text-green-400">
+                                            ₹{win.winningAmount.toFixed(2)}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="h-24 text-center">
+                                      {searchTerm || selectedDate ? `No wins found for the selected criteria.` : "No wins found."}
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )}
                         </TableBody>
                     </Table>
                 </div>
                  {renderPagination()}
                 </>
-            )}
-            {paginatedWins.length === 0 && !loading && (
-                <p className="text-center text-muted-foreground mt-4">
-                  {searchTerm || selectedDate ? `No wins found for the selected criteria.` : "No wins found."}
-                </p>
             )}
           </CardContent>
         </Card>
