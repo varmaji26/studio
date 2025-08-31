@@ -45,7 +45,7 @@ export default function AdminWinHistoryPage() {
   const [allWins, setAllWins] = useState<Win[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const searchParams = useSearchParams();
   
   const [currentPage, setCurrentPage] = useState(1);
