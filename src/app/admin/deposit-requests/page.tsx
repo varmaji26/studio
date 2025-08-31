@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, getDoc, where, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, getDoc, where, writeBatch, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2 } from 'lucide-react';
+import { Trash2, TrendingUp } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
@@ -42,6 +42,7 @@ export default function DepositRequestsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isRejectingAll, setIsRejectingAll] = useState(false);
+  const [todaysApprovedAmount, setTodaysApprovedAmount] = useState(0);
   const { toast } = useToast();
   
   const fetchRequests = useCallback(async () => {
@@ -63,8 +64,29 @@ export default function DepositRequestsPage() {
   useEffect(() => {
     setLoading(true);
     const unsub = fetchRequests();
+
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+    const approvedQuery = query(
+        collection(db, "deposits"),
+        where("status", "==", "approved"),
+        where("createdAt", ">=", Timestamp.fromDate(startOfToday)),
+        where("createdAt", "<=", Timestamp.fromDate(endOfToday))
+    );
+
+    const unsubscribeApproved = onSnapshot(approvedQuery, (snapshot) => {
+        let total = 0;
+        snapshot.forEach(doc => {
+            total += doc.data().amount || 0;
+        });
+        setTodaysApprovedAmount(total);
+    });
+    
     return () => {
       unsub.then(u => u());
+      unsubscribeApproved();
     };
   }, [fetchRequests]);
   
@@ -169,6 +191,19 @@ export default function DepositRequestsPage() {
 
   return (
      <div className="flex-1 space-y-6">
+        <Card className="bg-teal-500/10 border-teal-500/20 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                    Today's Total Approved Deposit
+                </CardTitle>
+                <TrendingUp className="h-5 w-5 text-teal-400" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-3xl font-bold text-teal-400">
+                    ₹{todaysApprovedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+            </CardContent>
+        </Card>
         <Card className="bg-card/80 border-white/10 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
@@ -259,3 +294,5 @@ export default function DepositRequestsPage() {
     </div>
   );
 }
+
+    
