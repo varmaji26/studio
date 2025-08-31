@@ -50,7 +50,7 @@ export default function AdminBidHistoryPage() {
   const [allBids, setAllBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
@@ -244,7 +244,7 @@ export default function AdminBidHistoryPage() {
                 <CardDescription>View all bids placed by users across all games.</CardDescription>
               </div>
               <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="mr-2 h-4 w-4" />
                   Download PDF
               </Button>
             </div>
