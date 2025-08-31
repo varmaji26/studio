@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -106,6 +106,10 @@ export default function AdminWinHistoryPage() {
     return filtered;
   }, [searchTerm, allWins, selectedDate]);
   
+  const totalWinningAmount = useMemo(() => {
+    return filteredWins.reduce((acc, win) => acc + (win.winningAmount || 0), 0);
+  }, [filteredWins]);
+  
   const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
   const paginatedWins = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -126,6 +130,7 @@ export default function AdminWinHistoryPage() {
     const doc = new jsPDF();
     const reportDate = selectedDate ? format(selectedDate, "PPP") : 'All Time';
     doc.text(`Win History Report - ${reportDate}`, 14, 16);
+    doc.text(`Total Winning Amount: ${totalWinningAmount.toFixed(2)}`, 14, 22);
 
     const winsForPdf = filteredWins;
     
@@ -148,7 +153,7 @@ export default function AdminWinHistoryPage() {
     doc.autoTable({
         head: [tableColumn],
         body: tableRows,
-        startY: 24,
+        startY: 30,
         styles: { fontSize: 8 },
         headStyles: { fillColor: [22, 163, 74] }
     });
@@ -239,6 +244,17 @@ export default function AdminWinHistoryPage() {
                     </div>
                 </div>
             </div>
+            
+            <Card className="bg-primary/10 border-primary/20 mb-4">
+                <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                        <p className="text-lg font-semibold">Total Winning Amount</p>
+                        <p className="text-2xl font-bold text-green-400">
+                            ₹{totalWinningAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
 
             {loading ? (
                 <div className="flex justify-center items-center h-48">
