@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, where } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,6 +20,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { runTransaction, doc, increment } from 'firebase/firestore';
 
 
 interface Bid extends DocumentData {
@@ -111,6 +112,10 @@ export default function AdminBidHistoryPage() {
     
     return filtered;
   }, [searchTerm, allBids, selectedDate]);
+  
+  const totalBiddingAmount = useMemo(() => {
+    return filteredBids.reduce((acc, bid) => acc + (bid.totalAmount || 0), 0);
+  }, [filteredBids]);
 
   const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
   const paginatedBids = useMemo(() => {
@@ -282,6 +287,17 @@ export default function AdminBidHistoryPage() {
                  </div>
             </div>
 
+            <Card className="bg-primary/10 border-primary/20 mb-4">
+                <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                        <p className="text-lg font-semibold">Total Bidding Amount</p>
+                        <p className="text-2xl font-bold text-primary">
+                            ₹{totalBiddingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+
             {loading ? (
                 <div className="flex justify-center items-center h-48">
                     <Loader className="h-8 w-8 text-primary" />
@@ -372,5 +388,3 @@ export default function AdminBidHistoryPage() {
       </div>
   );
 }
-
-    
