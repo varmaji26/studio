@@ -78,7 +78,7 @@ export default function AddFundPage() {
     
     const handleCall = () => {
         if (settings.callSupportNumber) {
-            window.location.href = `tel:+${settings.callSupportNumber.replace(/\+/g, '')}`;
+            window.location.href = `tel:${settings.callSupportNumber.replace(/\s/g, '')}`;
         }
     };
 

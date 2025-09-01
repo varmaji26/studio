@@ -46,7 +46,7 @@ export default function ContactPage() {
         if (!url) return;
         switch(type) {
             case 'tel':
-                window.location.href = `tel:+${url.replace(/\+/g, '')}`;
+                window.location.href = `tel:${url.replace(/\s/g, '')}`;
                 break;
             case 'whatsapp':
                 window.open(`https://wa.me/${url.replace(/\+/g, '')}`, '_blank');
@@ -87,7 +87,7 @@ export default function ContactPage() {
                                 className="w-full h-16 bg-red-500 text-white hover:bg-red-600 flex items-center justify-center gap-3 text-lg"
                                 onClick={() => handleAction(settings.callSupportNumber, 'tel')}
                             >
-                                <Phone /> Call Us: +{settings.callSupportNumber}
+                                <Phone /> Call Us: {settings.callSupportNumber}
                             </Button>
                         )}
                          {settings.whatsappNumber && (

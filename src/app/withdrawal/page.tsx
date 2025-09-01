@@ -174,7 +174,7 @@ export default function WithdrawalPage() {
 
     const handleCall = () => {
         if (settings.callSupportNumber) {
-            window.location.href = `tel:+${settings.callSupportNumber.replace(/\+/g, '')}`;
+            window.location.href = `tel:${settings.callSupportNumber.replace(/\s/g, '')}`;
         }
     };
 
