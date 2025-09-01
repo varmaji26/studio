@@ -78,7 +78,7 @@ export default function DownloadPage() {
 
         <div className="w-full max-w-md p-4 bg-background">
           <a
-            href="https://files.appsgeyser.com/Matka%20King_19002963.apk"
+            href="https://drive.usercontent.google.com/download?id=10kcuzCuNZkV7Mbv1IZVIanf-S1CZfYh-&export=download&authuser=0"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full"
