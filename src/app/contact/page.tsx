@@ -46,10 +46,10 @@ export default function ContactPage() {
         if (!url) return;
         switch(type) {
             case 'tel':
-                window.location.href = `tel:${url}`;
+                window.location.href = `tel:+${url.replace(/\+/g, '')}`;
                 break;
             case 'whatsapp':
-                window.open(`https://wa.me/${url}`, '_blank');
+                window.open(`https://wa.me/${url.replace(/\+/g, '')}`, '_blank');
                 break;
             case 'telegram':
                 window.open(url, '_blank');

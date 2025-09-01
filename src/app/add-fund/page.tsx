@@ -78,13 +78,13 @@ export default function AddFundPage() {
     
     const handleCall = () => {
         if (settings.callSupportNumber) {
-            window.location.href = `tel:+${settings.callSupportNumber}`; 
+            window.location.href = `tel:+${settings.callSupportNumber.replace(/\+/g, '')}`;
         }
     };
 
     const handleWhatsapp = () => {
         if (settings.whatsappNumber) {
-            window.open(`https://wa.me/${settings.whatsappNumber}`, "_blank");
+            window.open(`https://wa.me/${settings.whatsappNumber.replace(/\+/g, '')}`, "_blank");
         }
     };
 
@@ -98,6 +98,7 @@ export default function AddFundPage() {
     }
 
     const mobileNumber = user.email?.split('@')[0];
+    const totalBalance = (profile.balance || 0);
 
     return (
         <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
@@ -110,7 +111,7 @@ export default function AddFundPage() {
                 <h1 className="text-xl font-bold">Add Fund</h1>
                 <div className="ml-auto flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-full">
                     <Wallet className="h-5 w-5" />
-                    <span>₹{profile.balance?.toFixed(1) || '0.0'}</span>
+                    <span>₹{totalBalance.toFixed(1) || '0.0'}</span>
                 </div>
             </header>
             
@@ -120,7 +121,7 @@ export default function AddFundPage() {
                     <p className="text-sm">{mobileNumber}</p>
                     <div className="bg-black/50 mt-2 p-2 rounded-md">
                         <p className="text-sm">Available Balance</p>
-                        <p className="text-xl font-bold">₹ {profile.balance?.toFixed(1) || '0.0'}</p>
+                        <p className="text-xl font-bold">₹ {totalBalance.toFixed(1) || '0.0'}</p>
                     </div>
                 </div>
 
