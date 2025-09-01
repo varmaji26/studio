@@ -9,3 +9,6 @@ runConfig:
   maxInstances: 10
   memoryMiB: 512
   timeoutSeconds: 600
+
+# Allow public access to the web app
+ingress: all
