@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, DocumentData, query, where, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, DocumentData, query, where, Timestamp, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 interface Game extends DocumentData {
     id: string;
     name: string;
+    openTime: string;
 }
 
 interface Bid extends DocumentData {
@@ -55,7 +56,8 @@ export default function MarketLoadPage() {
 
       setLoading(true);
       try {
-        const gamesSnapshot = await getDocs(collection(db, 'games'));
+        const gamesQuery = query(collection(db, "games"), orderBy("openTime", "asc"));
+        const gamesSnapshot = await getDocs(gamesQuery);
         const games: Game[] = gamesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
 
         const startOfDay = new Date(selectedDate);
