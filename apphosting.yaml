@@ -9,6 +9,7 @@ runConfig:
   maxInstances: 10
   memoryMiB: 512
   timeoutSeconds: 600
+  port: 8080
 
 # Allow public access to the web app
 ingress: all
