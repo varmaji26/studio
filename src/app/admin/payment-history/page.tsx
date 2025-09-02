@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 
 interface Transaction extends DocumentData {
@@ -48,7 +49,8 @@ export default function AdminPaymentHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState('all');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
+  const [toDate, setToDate] = useState<Date | undefined>(new Date());
 
   const fetchTransactions = useCallback(() => {
     setLoading(true);
@@ -99,10 +101,10 @@ export default function AdminPaymentHistoryPage() {
 
     let filtered = sourceData;
 
-    if (selectedDate) {
-        const startOfDay = new Date(selectedDate);
+    if (fromDate && toDate) {
+        const startOfDay = new Date(fromDate);
         startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(selectedDate);
+        const endOfDay = new Date(toDate);
         endOfDay.setHours(23, 59, 59, 999);
         
         filtered = filtered.filter(t => {
@@ -120,7 +122,7 @@ export default function AdminPaymentHistoryPage() {
       );
     }
     return filtered;
-  }, [searchTerm, allTransactions, selectedDate, activeTab]);
+  }, [searchTerm, allTransactions, fromDate, toDate, activeTab]);
 
   const paginatedTransactions = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -130,7 +132,7 @@ export default function AdminPaymentHistoryPage() {
 
   useEffect(() => {
       setCurrentPage(1);
-  }, [searchTerm, activeTab, selectedDate]);
+  }, [searchTerm, activeTab, fromDate, toDate]);
 
 
   const formatDate = (timestamp: Timestamp) => {
@@ -278,28 +280,58 @@ export default function AdminPaymentHistoryPage() {
              <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <h3 className="text-xl font-semibold">All Transactions</h3>
                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full sm:w-[280px] justify-start text-left font-normal",
-                                !selectedDate && "text-muted-foreground"
-                            )}
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={setSelectedDate}
-                            initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
+                    <div className="flex items-center gap-2">
+                        <Label htmlFor="from-date" className="text-sm">From</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                id="from-date"
+                                variant={"outline"}
+                                className={cn(
+                                    "w-[180px] justify-start text-left font-normal",
+                                    !fromDate && "text-muted-foreground"
+                                )}
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {fromDate ? format(fromDate, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                mode="single"
+                                selected={fromDate}
+                                onSelect={setFromDate}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                    <div className="flex items-center gap-2">
+                         <Label htmlFor="to-date" className="text-sm">To</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                id="to-date"
+                                variant={"outline"}
+                                className={cn(
+                                    "w-[180px] justify-start text-left font-normal",
+                                    !toDate && "text-muted-foreground"
+                                )}
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {toDate ? format(toDate, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                mode="single"
+                                selected={toDate}
+                                onSelect={setToDate}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
                     <div className="relative w-full sm:w-auto sm:max-w-xs">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
