@@ -65,11 +65,11 @@ export default function AddFundPage() {
     
     const handlePayNow = () => {
         const parsedAmount = parseInt(amount, 10);
-        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        if (isNaN(parsedAmount) || parsedAmount < 100) {
             toast({
                 variant: 'destructive',
                 title: 'Invalid Amount',
-                description: 'Please enter a valid amount to add.',
+                description: 'Minimum amount to add is ₹100.',
             });
             return;
         }
