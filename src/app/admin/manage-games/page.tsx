@@ -225,7 +225,7 @@ export default function ManageGamesPage() {
   };
   
   const filteredGames = useMemo(() => {
-    if (!selectedGameId) {
+    if (!selectedGameId || selectedGameId === 'all') {
         return games;
     }
     return games.filter(game => game.id === selectedGameId);
@@ -389,7 +389,7 @@ export default function ManageGamesPage() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>All Games</SelectLabel>
+                                <SelectItem value="all">All Games</SelectItem>
                                 {games.map((game) => (
                                     <SelectItem key={game.id} value={game.id}>
                                         {game.name}
