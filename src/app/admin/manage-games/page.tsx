@@ -55,7 +55,7 @@ export default function ManageGamesPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDay, setCurrentDay] = useState('');
-  const [selectedGameId, setSelectedGameId] = useState<string>('');
+  const [selectedGameId, setSelectedGameId] = useState<string>('all');
   const [isResetting, setIsResetting] = useState(false);
 
 
@@ -388,14 +388,12 @@ export default function ManageGamesPage() {
                             <SelectValue placeholder="Filter by game..." />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectGroup>
-                                <SelectItem value="all">All Games</SelectItem>
-                                {games.map((game) => (
-                                    <SelectItem key={game.id} value={game.id}>
-                                        {game.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectGroup>
+                            <SelectItem value="all">All Games</SelectItem>
+                            {games.map((game) => (
+                                <SelectItem key={game.id} value={game.id}>
+                                    {game.name}
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>
@@ -475,7 +473,7 @@ export default function ManageGamesPage() {
                       </Table>
                   </div>
               )}
-              {filteredGames.length === 0 && !loading && selectedGameId && (
+              {filteredGames.length === 0 && !loading && (
                   <p className="text-center text-muted-foreground mt-4">No game found for the selection.</p>
               )}
             </CardContent>
