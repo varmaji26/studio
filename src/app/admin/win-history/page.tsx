@@ -344,5 +344,4 @@ export default function AdminWinHistoryPage() {
         </Card>
       </div>
   );
-
-    
+}
