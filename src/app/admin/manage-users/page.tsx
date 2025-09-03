@@ -244,7 +244,7 @@ export default function ManageUsersPage() {
                             <Button
                             variant={"outline"}
                             className={cn(
-                                "w-full sm:w-[280px] justify-start text-left font-normal",
+                                "w-full sm:w-[180px] justify-start text-left font-normal",
                                 !selectedDate && "text-muted-foreground"
                             )}
                             >
