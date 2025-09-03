@@ -20,7 +20,7 @@ import { EditGameDialog } from '@/components/edit-game-dialog';
 import { Switch } from '@/components/ui/switch';
 import { formatTime } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RotateCcw } from 'lucide-react';
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -388,12 +388,14 @@ export default function ManageGamesPage() {
                             <SelectValue placeholder="Filter by game..." />
                         </SelectTrigger>
                         <SelectContent>
-                             <SelectItem value="">All Games</SelectItem>
-                            {games.map((game) => (
-                                <SelectItem key={game.id} value={game.id}>
-                                    {game.name}
-                                </SelectItem>
-                            ))}
+                            <SelectGroup>
+                                <SelectLabel>All Games</SelectLabel>
+                                {games.map((game) => (
+                                    <SelectItem key={game.id} value={game.id}>
+                                        {game.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectGroup>
                         </SelectContent>
                     </Select>
                 </div>
