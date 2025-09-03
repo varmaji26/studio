@@ -20,7 +20,7 @@ import { EditGameDialog } from '@/components/edit-game-dialog';
 import { Switch } from '@/components/ui/switch';
 import { formatTime } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RotateCcw } from 'lucide-react';
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -55,7 +55,7 @@ export default function ManageGamesPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDay, setCurrentDay] = useState('');
-  const [selectedGameId, setSelectedGameId] = useState<string>('all');
+  const [selectedGameId, setSelectedGameId] = useState<string>('');
   const [isResetting, setIsResetting] = useState(false);
 
 
@@ -225,8 +225,8 @@ export default function ManageGamesPage() {
   };
   
   const filteredGames = useMemo(() => {
-    if (!selectedGameId || selectedGameId === 'all') {
-        return games;
+    if (!selectedGameId) {
+        return [];
     }
     return games.filter(game => game.id === selectedGameId);
   }, [games, selectedGameId]);
@@ -388,7 +388,6 @@ export default function ManageGamesPage() {
                             <SelectValue placeholder="Filter by game..." />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Games</SelectItem>
                             {games.map((game) => (
                                 <SelectItem key={game.id} value={game.id}>
                                     {game.name}
@@ -403,6 +402,7 @@ export default function ManageGamesPage() {
                   </div>
               ) : (
                   <div className="overflow-x-auto">
+                    {selectedGameId ? (
                       <Table>
                           <TableHeader>
                               <TableRow>
@@ -471,10 +471,12 @@ export default function ManageGamesPage() {
                               })}
                           </TableBody>
                       </Table>
+                      ) : (
+                        <div className="text-center text-muted-foreground p-8 border border-dashed rounded-md">
+                          Please select a game to view details.
+                        </div>
+                      )}
                   </div>
-              )}
-              {filteredGames.length === 0 && !loading && (
-                  <p className="text-center text-muted-foreground mt-4">No game found for the selection.</p>
               )}
             </CardContent>
           </Card>
@@ -482,3 +484,5 @@ export default function ManageGamesPage() {
     </div>
   );
 }
+
+    
