@@ -59,9 +59,21 @@ export default function AdminWinHistoryPage() {
   }, [searchParams]);
 
   const fetchWins = useCallback(async () => {
+    if (!fromDate || !toDate) return;
     setLoading(true);
     try {
-        const q = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
+        const startOfDay = new Date(fromDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const q = query(
+            collection(db, "bids"), 
+            where("status", "==", "won"), 
+            where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
+            where("createdAt", "<=", Timestamp.fromDate(endOfDay)),
+            orderBy("createdAt", "desc")
+        );
         const querySnapshot = await getDocs(q);
         const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
         setAllWins(winsData);
@@ -70,7 +82,7 @@ export default function AdminWinHistoryPage() {
     } finally {
         setLoading(false);
     }
-  }, []);
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     fetchWins();
@@ -78,19 +90,6 @@ export default function AdminWinHistoryPage() {
 
   const filteredWins = useMemo(() => {
     let filtered = allWins;
-
-    if (fromDate && toDate) {
-        const startOfDay = new Date(fromDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(toDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        
-        filtered = filtered.filter(win => {
-            if (!win.createdAt?.seconds) return false;
-            const winDate = new Date(win.createdAt.seconds * 1000);
-            return winDate >= startOfDay && winDate <= endOfDay;
-        });
-    }
 
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (lowercasedFilter) {
@@ -103,7 +102,7 @@ export default function AdminWinHistoryPage() {
       });
     }
     return filtered;
-  }, [searchTerm, allWins, fromDate, toDate]);
+  }, [searchTerm, allWins]);
   
   const totalWinningAmount = useMemo(() => {
     return filteredWins.reduce((acc, win) => acc + (win.winningAmount || 0), 0);
@@ -342,5 +341,3 @@ export default function AdminWinHistoryPage() {
       </div>
   );
 }
-
-    
