@@ -73,12 +73,6 @@ interface Banner extends DocumentData {
     imageUrl: string;
 }
 
-interface Notification extends DocumentData {
-    id: string;
-    title: string;
-    message: string;
-}
-
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
@@ -184,8 +178,6 @@ export default function Home() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
-  const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
-  const [showNotification, setShowNotification] = useState(false);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
@@ -262,35 +254,14 @@ export default function Home() {
         }
     });
 
-    // Fetch latest notification
-    const notificationsQuery = query(collection(db, "notifications"), orderBy("createdAt", "desc"), where("createdAt", "!=", null));
-    const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
-        if (!snapshot.empty) {
-            const latestNotif = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Notification;
-            const lastSeenNotifId = localStorage.getItem('lastSeenNotificationId');
-            if (latestNotif.id !== lastSeenNotifId) {
-                 setLatestNotification(latestNotif);
-                 setShowNotification(true);
-            }
-        }
-    });
-
     return () => {
         unsubscribeGames();
         unsubscribeBanners();
         unsubscribeSettings();
         unsubscribeUserProfile();
-        unsubscribeNotifications();
     };
   }, [user, currentDay]);
 
-  const handleDismissNotification = () => {
-    if (latestNotification) {
-        localStorage.setItem('lastSeenNotificationId', latestNotification.id);
-        setShowNotification(false);
-    }
-  };
-  
   const handleBonusPopupClose = () => {
     setShowBonusPopup(false);
   };
@@ -487,18 +458,6 @@ export default function Home() {
       )}
       
       <main className="flex flex-col gap-4 p-4 pb-28">
-         {showNotification && latestNotification && (
-            <Alert variant="default" className="bg-primary/10 border-primary/20 relative animate-shake">
-                 <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={handleDismissNotification}>
-                    <X className="h-4 w-4" />
-                 </Button>
-                <BellRing className="h-4 w-4" />
-                <AlertTitle className="font-bold">{latestNotification.title}</AlertTitle>
-                <AlertDescription>
-                    {latestNotification.message}
-                </AlertDescription>
-            </Alert>
-        )}
         
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
