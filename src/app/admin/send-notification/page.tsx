@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, addDoc, serverTimestamp, query, onSnapshot, orderBy, DocumentData, Timestamp, getDocs, writeBatch, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, Timestamp, getDocs, writeBatch, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,8 @@ import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { sendPushNotifications } from '@/actions/send-notification';
+
 
 const notificationSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -33,36 +35,6 @@ interface Notification extends DocumentData {
     title: string;
     message: string;
     createdAt: Timestamp;
-}
-
-// This is a simplified server-side action running on the client for demonstration.
-// In a production app, this should be a secure backend function.
-async function sendPushNotifications(title: string, message: string) {
-    const usersQuery = query(collection(db, 'users'));
-    const usersSnapshot = await getDocs(usersQuery);
-    const tokens: string[] = [];
-    
-    usersSnapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.fcmTokens && Array.isArray(data.fcmTokens)) {
-            tokens.push(...data.fcmTokens);
-        }
-    });
-
-    if (tokens.length === 0) {
-        console.log("No device tokens found to send notifications.");
-        return { success: true, message: "No device tokens found." };
-    }
-    
-    // In a real app, you would send these tokens to your backend
-    // to then use the Firebase Admin SDK to send messages.
-    // Since we can't use the Admin SDK on the client, we'll log the action.
-    console.log(`Simulating sending push notification to ${tokens.length} tokens.`);
-    console.log(`Title: ${title}, Message: ${message}`);
-    
-    // For now, we just add to the notifications collection, which the service worker will pick up.
-    // This is a workaround and not a true push to all devices immediately.
-    return { success: true, message: "Notification request sent." };
 }
 
 export default function SendNotificationPage() {
@@ -129,20 +101,21 @@ export default function SendNotificationPage() {
   const onSubmit = async (values: NotificationFormValues) => {
     setIsSubmitting(true);
     try {
-      // 1. Send push notifications via our pseudo-backend function
-      await sendPushNotifications(values.title, values.message);
-
-      // 2. Add notification to the collection for history and for the service worker
-      await addDoc(collection(db, 'notifications'), {
-        ...values,
-        createdAt: serverTimestamp(),
-      });
+      const result = await sendPushNotifications(values);
       
-      toast({
-        title: 'Success!',
-        description: 'Notification has been sent to all users.',
-      });
-      form.reset();
+      if (result.success) {
+        toast({
+          title: 'Success!',
+          description: result.message,
+        });
+        form.reset();
+      } else {
+         toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: result.message,
+        });
+      }
     } catch (error) {
       console.error('Error sending notification: ', error);
       toast({
@@ -203,7 +176,7 @@ export default function SendNotificationPage() {
               <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-2xl">Send Notification</CardTitle>
-                    <CardDescription>Send a message to all application users. This will appear as a popup and push notification in their app.</CardDescription>
+                    <CardDescription>Send a message to all application users. This will appear as a push notification in their app.</CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Switch
