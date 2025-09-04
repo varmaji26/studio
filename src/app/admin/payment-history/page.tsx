@@ -281,14 +281,14 @@ export default function AdminPaymentHistoryPage() {
                 <h3 className="text-xl font-semibold">All Transactions</h3>
                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                     <div className="flex items-center gap-2">
-                        <Label htmlFor="from-date" className="text-sm">From</Label>
+                        <Label htmlFor="from-date" className="text-sm shrink-0">From</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
                                 id="from-date"
                                 variant={"outline"}
                                 className={cn(
-                                    "w-[180px] justify-start text-left font-normal",
+                                    "w-full sm:w-[180px] justify-start text-left font-normal",
                                     !fromDate && "text-muted-foreground"
                                 )}
                                 >
@@ -307,14 +307,14 @@ export default function AdminPaymentHistoryPage() {
                         </Popover>
                     </div>
                     <div className="flex items-center gap-2">
-                         <Label htmlFor="to-date" className="text-sm">To</Label>
+                         <Label htmlFor="to-date" className="text-sm shrink-0">To</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
                                 id="to-date"
                                 variant={"outline"}
                                 className={cn(
-                                    "w-[180px] justify-start text-left font-normal",
+                                    "w-full sm:w-[180px] justify-start text-left font-normal",
                                     !toDate && "text-muted-foreground"
                                 )}
                                 >

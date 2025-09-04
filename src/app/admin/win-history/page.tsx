@@ -210,7 +210,7 @@ export default function AdminWinHistoryPage() {
                 <h3 className="text-xl font-semibold">All Wins</h3>
                 <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                     <div className="flex items-center gap-2">
-                        <Label htmlFor="from-date" className="text-sm">From</Label>
+                        <Label htmlFor="from-date" className="text-sm shrink-0">From</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -236,7 +236,7 @@ export default function AdminWinHistoryPage() {
                         </Popover>
                     </div>
                     <div className="flex items-center gap-2">
-                         <Label htmlFor="to-date" className="text-sm">To</Label>
+                         <Label htmlFor="to-date" className="text-sm shrink-0">To</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -341,5 +341,3 @@ export default function AdminWinHistoryPage() {
       </div>
   );
 }
-
-    
