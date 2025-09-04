@@ -2,9 +2,7 @@
 'use server';
 
 import { getMessaging } from "firebase-admin/messaging";
-import { app, dbAdmin } from "@/lib/firebase-admin"; // Use dbAdmin from firebase-admin
-import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase"; // Keep this for logging notifications client-side way
+import { app, dbAdmin } from "@/lib/firebase-admin";
 
 interface SendNotificationPayload {
     title: string;
@@ -13,7 +11,6 @@ interface SendNotificationPayload {
 
 export async function sendPushNotifications(payload: SendNotificationPayload) {
     try {
-        // Use dbAdmin to fetch users and their tokens on the server
         const usersSnapshot = await dbAdmin.collection('users').get();
         const tokens: string[] = [];
         
@@ -26,13 +23,14 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
 
         const uniqueTokens = [...new Set(tokens)];
 
+        // Log the notification to history regardless of whether tokens are present
+        await dbAdmin.collection('notifications').add({
+            ...payload,
+            createdAt: new Date(),
+        });
+
         if (uniqueTokens.length === 0) {
             console.log("No device tokens found to send notifications.");
-            // Still log it in the history using the client-compatible db
-            await addDoc(collection(db, 'notifications'), {
-                ...payload,
-                createdAt: serverTimestamp(),
-            });
             return { success: true, message: "Notification logged, but no devices to send to." };
         }
 
@@ -54,12 +52,6 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
         const response = await messaging.sendEachForMulticast(message);
         
         console.log(`${response.successCount} messages were sent successfully`);
-        
-        // Add notification to the collection for history
-        await addDoc(collection(db, 'notifications'), {
-            ...payload,
-            createdAt: serverTimestamp(),
-        });
 
         if (response.failureCount > 0) {
             const failedTokens: string[] = [];
