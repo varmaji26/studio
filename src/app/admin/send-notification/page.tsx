@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -169,7 +170,7 @@ export default function SendNotificationPage() {
               <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-2xl">Send Notification</CardTitle>
-                    <CardDescription>Send a message to all application users. This will appear as a popup in their app.</CardDescription>
+                    <CardDescription>Send a message to all application users. This will appear as a popup and push notification in their app.</CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Switch
