@@ -2,9 +2,9 @@
 'use server';
 
 import { getMessaging } from "firebase-admin/messaging";
-import { app } from "@/lib/firebase-admin";
-import { db } from "@/lib/firebase";
+import { app, dbAdmin } from "@/lib/firebase-admin"; // Use dbAdmin from firebase-admin
 import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase"; // Keep this for logging notifications client-side way
 
 interface SendNotificationPayload {
     title: string;
@@ -13,10 +13,11 @@ interface SendNotificationPayload {
 
 export async function sendPushNotifications(payload: SendNotificationPayload) {
     try {
-        const usersQuery = await getDocs(collection(db, 'users'));
+        // Use dbAdmin to fetch users and their tokens on the server
+        const usersSnapshot = await dbAdmin.collection('users').get();
         const tokens: string[] = [];
         
-        usersQuery.forEach(doc => {
+        usersSnapshot.forEach(doc => {
             const data = doc.data();
             if (data.fcmTokens && Array.isArray(data.fcmTokens)) {
                 tokens.push(...data.fcmTokens);
@@ -27,7 +28,7 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
 
         if (uniqueTokens.length === 0) {
             console.log("No device tokens found to send notifications.");
-            // Still log it in the history
+            // Still log it in the history using the client-compatible db
             await addDoc(collection(db, 'notifications'), {
                 ...payload,
                 createdAt: serverTimestamp(),
@@ -39,8 +40,14 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
             notification: {
                 title: payload.title,
                 body: payload.message,
+                icon: '/icon-192x192.png',
             },
             tokens: uniqueTokens,
+            webpush: {
+                notification: {
+                    icon: '/icon-192x192.png',
+                },
+            },
         };
 
         const messaging = getMessaging(app);
