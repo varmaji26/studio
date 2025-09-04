@@ -1,10 +1,13 @@
+// This service worker can be customized!
+// See https://developers.google.com/web/tools/workbox/modules/workbox-sw
 
-// This file must be in the public folder.
+// This service worker is a separate file that runs in the background.
+// It can't share code with the rest of your app, but it can
+// import other files and libraries.
 
-importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-messaging-compat.js");
+import { initializeApp } from "firebase/app";
+import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
 
-// Initialize the Firebase app in the service worker by passing in the messagingSenderId.
 const firebaseConfig = {
   apiKey: "AIzaSyCTncE_u2wUR8W3ptwlRuDG4wmCjI6bF-w",
   authDomain: "matka-king-66ec3.firebaseapp.com",
@@ -16,21 +19,16 @@ const firebaseConfig = {
   measurementId: "G-GFZW681BYB"
 };
 
-firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
-// Retrieve an instance of Firebase Messaging so that it can handle background messages.
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage((payload) => {
-  console.log(
-    "[firebase-messaging-sw.js] Received background message ",
-    payload
-  );
+onBackgroundMessage(messaging, (payload) => {
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
   
-  const notificationTitle = payload.notification.title;
+  const notificationTitle = payload.notification?.title || 'New Notification';
   const notificationOptions = {
-    body: payload.notification.body,
-    icon: "/icon.png", // Make sure you have an icon in your public folder
+    body: payload.notification?.body || 'You have a new message.',
+    icon: '/icon-192x192.png' // Path to your icon in the public folder
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
