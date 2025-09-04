@@ -279,7 +279,7 @@ export default function AdminPaymentHistoryPage() {
           <CardContent>
              <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <h3 className="text-xl font-semibold">All Transactions</h3>
-                 <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                 <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
                     <div className="flex items-center gap-2">
                         <Label htmlFor="from-date" className="text-sm shrink-0">From</Label>
                         <Popover>

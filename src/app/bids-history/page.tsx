@@ -237,9 +237,9 @@ export default function BidsHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
-                             <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <Label htmlFor="from-date" className="text-sm">From</Label>
+                        <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
+                             <div className="flex items-center gap-2">
+                                <Label htmlFor="from-date" className="text-sm shrink-0">From</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                       <Button
@@ -264,8 +264,8 @@ export default function BidsHistoryPage() {
                                     </PopoverContent>
                                   </Popover>
                             </div>
-                            <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <Label htmlFor="to-date" className="text-sm">To</Label>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="to-date" className="text-sm shrink-0">To</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                       <Button
