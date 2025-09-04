@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -58,25 +58,22 @@ export default function AdminWinHistoryPage() {
     }
   }, [searchParams]);
 
-  const fetchWins = useCallback(() => {
+  const fetchWins = useCallback(async () => {
     setLoading(true);
-    const q = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    try {
+        const q = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
         const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
         setAllWins(winsData);
-        setLoading(false);
-    }, (error) => {
+    } catch (error) {
         console.error("Error fetching wins: ", error);
+    } finally {
         setLoading(false);
-    });
-
-    return unsubscribe;
+    }
   }, []);
 
   useEffect(() => {
-    const unsubscribe = fetchWins();
-    return () => unsubscribe();
+    fetchWins();
   }, [fetchWins]);
 
   const filteredWins = useMemo(() => {
@@ -221,7 +218,7 @@ export default function AdminWinHistoryPage() {
                                 id="from-date"
                                 variant={"outline"}
                                 className={cn(
-                                    "w-[180px] justify-start text-left font-normal",
+                                    "w-full sm:w-[180px] justify-start text-left font-normal",
                                     !fromDate && "text-muted-foreground"
                                 )}
                                 >
@@ -247,7 +244,7 @@ export default function AdminWinHistoryPage() {
                                 id="to-date"
                                 variant={"outline"}
                                 className={cn(
-                                    "w-[180px] justify-start text-left font-normal",
+                                    "w-full sm:w-[180px] justify-start text-left font-normal",
                                     !toDate && "text-muted-foreground"
                                 )}
                                 >
@@ -345,3 +342,5 @@ export default function AdminWinHistoryPage() {
       </div>
   );
 }
+
+    
