@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as z from 'zod';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { RotateCcw } from 'lucide-react';
 
 const formSchema = z.object({
   newOpenPana: z.string().length(3, 'Pana must be 3 digits.'),
@@ -46,6 +48,7 @@ export default function UpdateResultsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
   const [games, setGames] = useState<Game[]>([]);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
 
@@ -153,6 +156,61 @@ export default function UpdateResultsPage() {
     }
   };
 
+  const handleRevertResult = async () => {
+    if (!selectedGameId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please select a game first.' });
+        return;
+    }
+    const game = games.find(g => g.id === selectedGameId);
+    if (!game || !game.openResult || game.openResult === '***') {
+        toast({ variant: 'destructive', title: 'Error', description: 'No open result to revert for this game.' });
+        return;
+    }
+
+    setIsReverting(true);
+    try {
+        const batch = writeBatch(db);
+        const gameDocRef = doc(db, 'games', game.id);
+
+        const affectedBidsQuery = query(
+            collection(db, 'bids'),
+            where('gameId', '==', game.id),
+            where('session', '==', 'Open')
+        );
+
+        const bidsSnapshot = await getDocs(affectedBidsQuery);
+
+        bidsSnapshot.forEach(bidDoc => {
+            const bid = bidDoc.data();
+            if (bid.status === 'won') {
+                const userDocRef = doc(db, 'users', bid.userId);
+                batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                batch.update(bidDoc.ref, { status: 'running', winningAmount: null });
+            } else if (bid.status === 'lost') {
+                batch.update(bidDoc.ref, { status: 'running' });
+            }
+        });
+
+        batch.update(gameDocRef, {
+            openResult: '***',
+            result: `***-**-${game.closeResult || '**'}`
+        });
+
+        await batch.commit();
+        toast({
+            title: 'Result Reverted!',
+            description: `Open result for ${game.name} has been reverted. Incorrect winnings have been clawed back.`
+        });
+
+    } catch (error) {
+        console.error('Error reverting result: ', error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to revert result.' });
+    } finally {
+        setIsReverting(false);
+    }
+  };
+
+
   const selectedGame = games.find(g => g.id === selectedGameId);
   const newOpenPana = form.watch('newOpenPana');
   const autoJodi = calculateJodiDigit(newOpenPana);
@@ -221,14 +279,41 @@ export default function UpdateResultsPage() {
                             className="bg-input border-none font-bold text-center text-lg w-1/2"
                         />
                     </div>
-                     <Button 
-                        type="submit"
-                        className="w-full"
-                        disabled={isSubmitting}
-                    >
-                      {isSubmitting ? <Loader className="h-4 w-4 mr-2" /> : null}
-                      {isSubmitting ? 'Updating...' : 'Update & Process Winners'}
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                         <Button 
+                            type="submit"
+                            className="w-full"
+                            disabled={isSubmitting || isReverting}
+                        >
+                          {isSubmitting ? <Loader className="h-4 w-4 mr-2" /> : null}
+                          {isSubmitting ? 'Updating...' : 'Update & Process Winners'}
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    className="w-full"
+                                    disabled={isSubmitting || isReverting || !selectedGame.openResult || selectedGame.openResult === '***'}
+                                >
+                                    {isReverting ? <Loader className="h-4 w-4 mr-2" /> : <RotateCcw className="h-4 w-4 mr-2" />}
+                                    Revert Last Result
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure you want to revert the open result?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action will find all winning bets for this game's open session, deduct the winnings from users' wallets, and reset the bet status to 'running'. This cannot be undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleRevertResult}>Confirm Revert</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
                     </>
                 )}
               </form>
