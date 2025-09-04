@@ -1,9 +1,10 @@
-// This service worker file is intentionally left almost empty.
-// Firebase will add its own logic here when initialized in the client.
-importScripts("https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js");
-importScripts("https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js");
 
-// Your web app's Firebase configuration
+// This file must be in the public folder.
+
+importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.4/firebase-messaging-compat.js");
+
+// Initialize the Firebase app in the service worker by passing in the messagingSenderId.
 const firebaseConfig = {
   apiKey: "AIzaSyCTncE_u2wUR8W3ptwlRuDG4wmCjI6bF-w",
   authDomain: "matka-king-66ec3.firebaseapp.com",
@@ -15,9 +16,9 @@ const firebaseConfig = {
   measurementId: "G-GFZW681BYB"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
+// Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
@@ -25,10 +26,11 @@ messaging.onBackgroundMessage((payload) => {
     "[firebase-messaging-sw.js] Received background message ",
     payload
   );
+  
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: "/favicon.ico", // You can change this to your app's icon
+    icon: "/icon.png", // Make sure you have an icon in your public folder
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

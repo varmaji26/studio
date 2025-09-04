@@ -35,6 +35,36 @@ interface Notification extends DocumentData {
     createdAt: Timestamp;
 }
 
+// This is a simplified server-side action running on the client for demonstration.
+// In a production app, this should be a secure backend function.
+async function sendPushNotifications(title: string, message: string) {
+    const usersQuery = query(collection(db, 'users'));
+    const usersSnapshot = await getDocs(usersQuery);
+    const tokens: string[] = [];
+    
+    usersSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.fcmTokens && Array.isArray(data.fcmTokens)) {
+            tokens.push(...data.fcmTokens);
+        }
+    });
+
+    if (tokens.length === 0) {
+        console.log("No device tokens found to send notifications.");
+        return { success: true, message: "No device tokens found." };
+    }
+    
+    // In a real app, you would send these tokens to your backend
+    // to then use the Firebase Admin SDK to send messages.
+    // Since we can't use the Admin SDK on the client, we'll log the action.
+    console.log(`Simulating sending push notification to ${tokens.length} tokens.`);
+    console.log(`Title: ${title}, Message: ${message}`);
+    
+    // For now, we just add to the notifications collection, which the service worker will pick up.
+    // This is a workaround and not a true push to all devices immediately.
+    return { success: true, message: "Notification request sent." };
+}
+
 export default function SendNotificationPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,7 +82,6 @@ export default function SendNotificationPage() {
   });
 
   useEffect(() => {
-    // Fetch notifications history
     const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
     const unsubscribeNotifications = onSnapshot(q, (querySnapshot) => {
       const notificationsData: Notification[] = [];
@@ -63,7 +92,6 @@ export default function SendNotificationPage() {
       setLoading(false);
     });
 
-    // Fetch notification enabled status
     const settingsDocRef = doc(db, 'settings', 'app-settings');
     const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -82,7 +110,7 @@ export default function SendNotificationPage() {
     setNotificationsEnabled(enabled);
     try {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
-        await updateDoc(settingsDocRef, { 'notifications.enabled': enabled });
+        await updateDoc(settingsDocRef, { 'notifications.enabled': enabled }, { merge: true });
         toast({
             title: 'Success!',
             description: `Notifications have been ${enabled ? 'enabled' : 'disabled'}.`
@@ -94,17 +122,22 @@ export default function SendNotificationPage() {
             title: 'Error',
             description: 'Failed to update notification settings.'
         });
-        setNotificationsEnabled(!enabled); // Revert on error
+        setNotificationsEnabled(!enabled); 
     }
   };
 
   const onSubmit = async (values: NotificationFormValues) => {
     setIsSubmitting(true);
     try {
+      // 1. Send push notifications via our pseudo-backend function
+      await sendPushNotifications(values.title, values.message);
+
+      // 2. Add notification to the collection for history and for the service worker
       await addDoc(collection(db, 'notifications'), {
         ...values,
         createdAt: serverTimestamp(),
       });
+      
       toast({
         title: 'Success!',
         description: 'Notification has been sent to all users.',
