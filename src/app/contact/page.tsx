@@ -44,17 +44,27 @@ export default function ContactPage() {
     
     const handleAction = (url: string | undefined, type: 'tel' | 'whatsapp' | 'telegram') => {
         if (!url) return;
+        
+        let finalUrl = '';
         switch(type) {
             case 'tel':
-                window.location.href = `tel:${url.replace(/\s/g, '')}`;
+                finalUrl = `tel:${url.replace(/\s/g, '')}`;
                 break;
             case 'whatsapp':
-                window.open(`https://wa.me/${url.replace(/\+/g, '')}`, '_blank');
+                finalUrl = `https://wa.me/${url.replace(/\+/g, '')}`;
                 break;
             case 'telegram':
-                window.open(url, '_blank');
+                finalUrl = url;
                 break;
         }
+
+        const a = document.createElement('a');
+        a.href = finalUrl;
+        if (type !== 'tel') {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+        }
+        a.click();
     };
 
     if (authLoading || loading) {

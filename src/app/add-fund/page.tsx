@@ -78,13 +78,21 @@ export default function AddFundPage() {
     
     const handleCall = () => {
         if (settings.callSupportNumber) {
-            window.location.href = `tel:${settings.callSupportNumber.replace(/\s/g, '')}`;
+            const phoneNumber = settings.callSupportNumber.replace(/\s/g, '');
+            const a = document.createElement('a');
+            a.href = `tel:${phoneNumber}`;
+            a.click();
         }
     };
 
     const handleWhatsapp = () => {
         if (settings.whatsappNumber) {
-            window.open(`https://wa.me/${settings.whatsappNumber.replace(/\+/g, '')}`, "_blank");
+            const whatsappNumber = settings.whatsappNumber.replace(/\+/g, '');
+            const a = document.createElement('a');
+            a.href = `https://wa.me/${whatsappNumber}`;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.click();
         }
     };
 
