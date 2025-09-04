@@ -222,7 +222,7 @@ export default function AdminWinHistoryPage() {
                                 )}
                                 >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {fromDate ? format(fromDate, "PPP") : <span>Pick a date</span>}
+                                {fromDate ? format(fromDate, "dd MMM, yyyy") : <span>Pick a date</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -248,7 +248,7 @@ export default function AdminWinHistoryPage() {
                                 )}
                                 >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {toDate ? format(toDate, "PPP") : <span>Pick a date</span>}
+                                {toDate ? format(toDate, "dd MMM, yyyy") : <span>Pick a date</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">

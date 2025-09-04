@@ -263,7 +263,7 @@ export default function AdminBidHistoryPage() {
                             )}
                             >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                            {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
