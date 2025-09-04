@@ -58,8 +58,7 @@ export default function AdminWinHistoryPage() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    const fetchWins = async () => {
+  const fetchWins = useCallback(async () => {
       if (!fromDate || !toDate) return;
       setLoading(true);
       try {
@@ -83,10 +82,11 @@ export default function AdminWinHistoryPage() {
       } finally {
           setLoading(false);
       }
-    };
-    
-    fetchWins();
   }, [fromDate, toDate]);
+    
+  useEffect(() => {
+    fetchWins();
+  }, [fetchWins]);
 
   const filteredWins = useMemo(() => {
     let filtered = allWins;
