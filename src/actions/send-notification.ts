@@ -1,8 +1,8 @@
 
 'use server';
 
-import { getMessaging } from "firebase-admin/messaging";
-import { app, dbAdmin } from "@/lib/firebase-admin";
+import { dbAdmin, messagingAdmin } from "@/lib/firebase-admin";
+import { FieldValue } from 'firebase-admin/firestore';
 
 interface SendNotificationPayload {
     title: string;
@@ -23,10 +23,9 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
 
         const uniqueTokens = [...new Set(tokens)];
 
-        // Log the notification to history regardless of whether tokens are present
         await dbAdmin.collection('notifications').add({
             ...payload,
-            createdAt: new Date(),
+            createdAt: FieldValue.serverTimestamp(),
         });
 
         if (uniqueTokens.length === 0) {
@@ -38,18 +37,16 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
             notification: {
                 title: payload.title,
                 body: payload.message,
-                icon: '/icon-192x192.png',
             },
-            tokens: uniqueTokens,
             webpush: {
                 notification: {
                     icon: '/icon-192x192.png',
                 },
             },
+            tokens: uniqueTokens,
         };
 
-        const messaging = getMessaging(app);
-        const response = await messaging.sendEachForMulticast(message);
+        const response = await messagingAdmin.sendEachForMulticast(message);
         
         console.log(`${response.successCount} messages were sent successfully`);
 
