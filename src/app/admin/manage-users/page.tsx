@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch, getDocs, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch, getDocs, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -175,14 +175,44 @@ export default function ManageUsersPage() {
   const handleToggleBlockUser = async (user: User) => {
     const userDocRef = doc(db, "users", user.id);
     const newStatus = !user.isBlocked;
+
     try {
-        await updateDoc(userDocRef, { isBlocked: newStatus });
-        toast({
-            title: 'Success!',
-            description: `${user.displayName} has been ${newStatus ? 'blocked' : 'unblocked'}.`
-        });
+        if (newStatus) { // If blocking user
+            await runTransaction(db, async (transaction) => {
+                const winningBidsQuery = query(collection(db, 'bids'), where('userId', '==', user.id), where('status', '==', 'won'));
+                const winningBidsSnapshot = await getDocs(winningBidsQuery);
+
+                let totalWinningsToRevert = 0;
+                winningBidsSnapshot.forEach(bidDoc => {
+                    const winningAmount = bidDoc.data().winningAmount || 0;
+                    totalWinningsToRevert += winningAmount;
+                    transaction.update(bidDoc.ref, { status: 'cancelled', winningAmount: 0 });
+                });
+                
+                if (totalWinningsToRevert > 0) {
+                    transaction.update(userDocRef, { 
+                        balance: increment(-totalWinningsToRevert),
+                        isBlocked: true 
+                    });
+                } else {
+                    transaction.update(userDocRef, { isBlocked: true });
+                }
+            });
+
+            toast({
+                title: 'User Blocked!',
+                description: `${user.displayName} has been blocked and their winnings have been reverted.`
+            });
+
+        } else { // If unblocking user
+            await updateDoc(userDocRef, { isBlocked: false });
+            toast({
+                title: 'User Unblocked!',
+                description: `${user.displayName} can now log in and use the app again.`
+            });
+        }
     } catch (error) {
-         console.error("Error updating user status: ", error);
+        console.error("Error updating user status:", error);
         toast({
             variant: 'destructive',
             title: 'Error',
@@ -315,14 +345,17 @@ export default function ManageUsersPage() {
                                              <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                    <Button size="sm" variant={user.isBlocked ? 'secondary' : 'destructive'}>
-                                                        {user.isBlocked ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
+                                                        {user.isBlocked ? <UserCheck className="h-4 w-4 mr-1" /> : <UserX className="h-4 w-4 mr-1" />}
+                                                        {user.isBlocked ? 'Unblock' : 'Block'}
                                                     </Button>
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This will {user.isBlocked ? 'unblock' : 'block'} {user.displayName}. {user.isBlocked ? 'They will be able to log in again.' : 'They will no longer be able to log in.'}
+                                                     <AlertDialogDescription>
+                                                        {user.isBlocked
+                                                            ? `This will unblock ${user.displayName}, allowing them to log in again.`
+                                                            : `This will block ${user.displayName}, preventing them from logging in. It will also revert all their winning bets and deduct the amount from their balance.`}
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
@@ -368,4 +401,3 @@ export default function ManageUsersPage() {
       </div>
   );
 }
-

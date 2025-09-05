@@ -104,6 +104,11 @@ export function AuthForm({ mode }: AuthFormProps) {
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
 
+        if (userDoc.exists() && userDoc.data().isBlocked) {
+            await auth.signOut();
+            throw new Error("Your account has been blocked. Please contact support.");
+        }
+
         if (!userDoc.exists()) {
           const displayName = user.displayName || values.mobile;
           await setDoc(userDocRef, {
