@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -82,7 +81,7 @@ export default function SendNotificationPage() {
     setNotificationsEnabled(enabled);
     try {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
-        await updateDoc(settingsDocRef, { 'notifications.enabled': enabled }, { merge: true });
+        await updateDoc(settingsDocRef, { 'notifications.enabled': enabled });
         toast({
             title: 'Success!',
             description: `Notifications have been ${enabled ? 'enabled' : 'disabled'}.`
