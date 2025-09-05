@@ -174,11 +174,18 @@ export default function ManageUsersPage() {
 
   const handleToggleBlockUser = async (user: User) => {
     const userDocRef = doc(db, "users", user.id);
+    const statsDocRef = doc(db, 'app-stats', 'dashboard');
     const newStatus = !user.isBlocked;
 
     try {
         if (newStatus) { // If blocking user
             await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userDocRef);
+                if (!userDoc.exists()) {
+                    throw new Error("User not found.");
+                }
+                const currentBalance = userDoc.data().balance || 0;
+
                 const winningBidsQuery = query(collection(db, 'bids'), where('userId', '==', user.id), where('status', '==', 'won'));
                 const winningBidsSnapshot = await getDocs(winningBidsQuery);
 
@@ -189,19 +196,18 @@ export default function ManageUsersPage() {
                     transaction.update(bidDoc.ref, { status: 'cancelled', winningAmount: 0 });
                 });
                 
-                if (totalWinningsToRevert > 0) {
-                    transaction.update(userDocRef, { 
-                        balance: increment(-totalWinningsToRevert),
-                        isBlocked: true 
-                    });
-                } else {
-                    transaction.update(userDocRef, { isBlocked: true });
-                }
+                // Set balance and bonus balance to 0 and update total balance stats
+                transaction.update(userDocRef, { 
+                    balance: 0,
+                    bonusBalance: 0,
+                    isBlocked: true 
+                });
+                transaction.update(statsDocRef, { totalBalance: increment(-currentBalance) });
             });
 
             toast({
                 title: 'User Blocked!',
-                description: `${user.displayName} has been blocked and their winnings have been reverted.`
+                description: `${user.displayName} has been blocked, winnings reverted, and balance set to zero.`
             });
 
         } else { // If unblocking user
@@ -355,7 +361,7 @@ export default function ManageUsersPage() {
                                                      <AlertDialogDescription>
                                                         {user.isBlocked
                                                             ? `This will unblock ${user.displayName}, allowing them to log in again.`
-                                                            : `This will block ${user.displayName}, preventing them from logging in. It will also revert all their winning bets and deduct the amount from their balance.`}
+                                                            : `This will block ${user.displayName}, preventing them from logging in. It will also revert all their winning bets and set their entire balance (real and bonus) to zero.`}
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
@@ -401,3 +407,5 @@ export default function ManageUsersPage() {
       </div>
   );
 }
+
+    
