@@ -1,0 +1,371 @@
+
+'use client';
+
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { collection, query, onSnapshot, DocumentData, orderBy, doc, runTransaction, increment, writeBatch, getDocs, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Loader } from '@/components/loader';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowLeft, Search, Calendar as CalendarIcon, UserX, UserCheck } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+
+const UpdateBalanceDialog = dynamic(() => import('@/components/update-balance-dialog'), {
+  ssr: false,
+  loading: () => <Loader />,
+});
+
+interface User extends DocumentData {
+    id: string;
+    displayName: string;
+    mobile: string;
+    balance: number;
+    bonusBalance?: number;
+    createdAt: {
+        seconds: number;
+        nanoseconds: number;
+    } | null;
+    isBlocked?: boolean;
+}
+
+const ITEMS_PER_PAGE = 10;
+
+export default function ManageUsersPage() {
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [currentPage, setCurrentPage] = useState(1);
+  const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('viewed') === 'true') {
+        localStorage.setItem('lastViewedUsersTimestamp', Date.now().toString());
+        window.dispatchEvent(new Event('storage'));
+    }
+  }, [searchParams]);
+
+   useEffect(() => {
+    setUsersLoading(true);
+    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const usersData: User[] = [];
+        querySnapshot.forEach((doc) => {
+            if (doc.data().displayName && doc.data().mobile) {
+                usersData.push({ id: doc.id, ...doc.data() } as User);
+            }
+        });
+        setAllUsers(usersData);
+        setUsersLoading(false);
+    }, (error) => {
+        console.error("Error fetching users: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error fetching users',
+            description: 'Could not fetch user data.'
+        });
+        setUsersLoading(false);
+    });
+
+    return () => unsubscribe();
+   }, [toast]);
+  
+  const filteredUsers = useMemo(() => {
+    let source = allUsers;
+    let filtered = source;
+
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        filtered = filtered.filter(user => {
+            if (!user.createdAt?.seconds) return false;
+            const userDate = new Date(user.createdAt.seconds * 1000);
+            return userDate >= startOfDay && userDate <= endOfDay;
+        });
+    }
+
+    const lowercasedFilter = searchTerm.toLowerCase().trim();
+    if (lowercasedFilter) {
+      filtered = filtered.filter((user) => {
+        return (
+          user.displayName?.toLowerCase().includes(lowercasedFilter) ||
+          user.mobile?.toLowerCase().includes(lowercasedFilter)
+        );
+      });
+    }
+
+    return filtered;
+  }, [searchTerm, allUsers, selectedDate]);
+  
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
+
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [searchTerm, selectedDate]);
+
+  const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
+    if (!timestamp || typeof timestamp.seconds !== 'number') return 'N/A';
+    try {
+      const date = new Date(timestamp.seconds * 1000);
+      return date.toLocaleDateString('en-GB');
+    } catch (e) {
+      console.error("Error formatting date: ", e);
+      return 'Invalid Date';
+    }
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    try {
+        const batch = writeBatch(db);
+        const userDocRef = doc(db, "users", user.id);
+        batch.delete(userDocRef);
+
+        const statsDocRef = doc(db, 'app-stats', 'dashboard');
+        batch.update(statsDocRef, { 
+            totalUsers: increment(-1),
+            totalBalance: increment(-(user.balance || 0))
+        });
+        
+        await batch.commit();
+
+        toast({
+            title: 'Success!',
+            description: 'User has been deleted.'
+        });
+    } catch (error) {
+        console.error("Error deleting user: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to delete user. Please try again.',
+        });
+    }
+  };
+
+  const handleToggleBlockUser = async (user: User) => {
+    const userDocRef = doc(db, "users", user.id);
+    const newStatus = !user.isBlocked;
+    try {
+        await updateDoc(userDocRef, { isBlocked: newStatus });
+        toast({
+            title: 'Success!',
+            description: `${user.displayName} has been ${newStatus ? 'blocked' : 'unblocked'}.`
+        });
+    } catch (error) {
+         console.error("Error updating user status: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: `Failed to ${newStatus ? 'block' : 'unblock'} user.`,
+        });
+    }
+  };
+  
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    return (
+        <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
+            <div>
+                Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+            </div>
+            <div className="flex items-center gap-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                >
+                    Previous
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                >
+                    Next
+                </Button>
+            </div>
+        </div>
+    )
+  }
+
+
+  return (
+     <div className="flex-1 space-y-6">
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold">Manage Users</CardTitle>
+            <CardDescription>View and manage all registered users</CardDescription>
+            <div className="pt-4">
+                <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Back to Dashboard</span>
+                </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                <h3 className="text-xl font-semibold">All Users</h3>
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full sm:w-[180px] justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={setSelectedDate}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <div className="relative w-full sm:w-auto sm:max-w-xs">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by name or mobile..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-input h-10 rounded-lg pl-10"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {usersLoading ? (
+                <div className="flex justify-center items-center h-48">
+                    <Loader className="h-8 w-8 text-primary" />
+                </div>
+            ) : (
+                <>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>#</TableHead>
+                                <TableHead>Username</TableHead>
+                                <TableHead>Mobile</TableHead>
+                                <TableHead>Balance</TableHead>
+                                <TableHead>Bonus</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Joined</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {paginatedUsers.map((user, index) => (
+                                <TableRow key={user.id}>
+                                    <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
+                                    <TableCell>{user.displayName}</TableCell>
+                                    <TableCell>{user.mobile}</TableCell>
+                                    <TableCell>₹{user.balance || 0}</TableCell>
+                                    <TableCell>₹{user.bonusBalance || 0}</TableCell>
+                                    <TableCell>
+                                        <Badge className={user.isBlocked ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}>
+                                            {user.isBlocked ? 'BLOCKED' : 'ACTIVE'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>{formatDate(user.createdAt)}</TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex gap-2 justify-end">
+                                            <UpdateBalanceDialog user={user}>
+                                                <Button size="sm" variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400">Add/Remove Balance</Button>
+                                            </UpdateBalanceDialog>
+                                             <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                   <Button size="sm" variant={user.isBlocked ? 'secondary' : 'destructive'}>
+                                                        {user.isBlocked ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will {user.isBlocked ? 'unblock' : 'block'} {user.displayName}. {user.isBlocked ? 'They will be able to log in again.' : 'They will no longer be able to log in.'}
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleToggleBlockUser(user)}>Confirm</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button size="sm" variant="destructive">Delete</Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete the user account.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteUser(user)}>Continue</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+                {renderPagination()}
+                </>
+            )}
+            {paginatedUsers.length === 0 && !usersLoading && (
+                <p className="text-center text-muted-foreground mt-4">
+                  {searchTerm || selectedDate ? `No users found matching the criteria.` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
+                </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+  );
+}
+
