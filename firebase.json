@@ -2,7 +2,10 @@
 {
   "apphosting": [
     {
-      "backendId": "studio"
+      "backendId": "studio",
+      "env": {
+        "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyCTncE_u2wUR8W3ptwlRuDG4wmCjI6bF-w"
+      }
     }
   ]
 }

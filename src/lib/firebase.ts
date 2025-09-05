@@ -6,7 +6,7 @@ import { getStorage } from 'firebase/storage';
 import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig: FirebaseOptions = {
-  apiKey: "AIzaSyCTncE_u2wUR8W3ptwlRuDG4wmCjI6bF-w",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: "matka-king-66ec3.firebaseapp.com",
   databaseURL: "https://matka-king-66ec3-default-rtdb.firebaseio.com",
   projectId: "matka-king-66ec3",
