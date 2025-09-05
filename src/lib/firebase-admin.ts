@@ -9,11 +9,9 @@ function initializeFirebaseAdmin() {
   }
 
   try {
-    // A more robust way to initialize, especially for environments that might alter JSON formatting.
     const serviceAccountCredentials = {
       projectId: serviceAccount.project_id,
       clientEmail: serviceAccount.client_email,
-      // The private key must have newline characters correctly formatted.
       privateKey: serviceAccount.private_key.replace(/\\n/g, '\n'),
     } as admin.ServiceAccount;
 
@@ -24,7 +22,6 @@ function initializeFirebaseAdmin() {
     return app;
   } catch (error: any) {
     console.error("Error initializing Firebase Admin SDK:", error);
-    // Re-throw a more informative error to be caught by the caller
     throw new Error(`Could not initialize Firebase Admin SDK: ${error.message}`);
   }
 }

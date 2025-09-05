@@ -29,6 +29,7 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
 
         const uniqueTokens = [...new Set(tokens)];
 
+        // Log the notification to Firestore first
         await dbAdmin.collection('notifications').add({
             ...payload,
             createdAt: FieldValue.serverTimestamp(),
@@ -46,7 +47,7 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
             },
             webpush: {
                 notification: {
-                    icon: '/icon-192x192.png',
+                    icon: '/icon-192x192.png', // Optional: You can customize this
                 },
             },
             tokens: uniqueTokens,
