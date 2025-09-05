@@ -3,39 +3,30 @@ import * as admin from 'firebase-admin';
 
 // This function ensures that Firebase Admin is initialized only once.
 function initializeFirebaseAdmin() {
+  // If the app is already initialized, return the existing instance.
   if (admin.apps.length > 0) {
     return admin.apps[0]!;
   }
 
-  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
-
-  if (serviceAccountString) {
-    try {
-      console.log("Initializing Firebase Admin SDK with service account from environment variable...");
-      const serviceAccount = JSON.parse(serviceAccountString);
-      return admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-      });
-    } catch (e: any) {
-      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it's a valid JSON string.", e.message);
-      throw new Error("Could not initialize Firebase Admin SDK with service account from environment variable.");
-    }
-  }
-
-  // When deployed to a Google Cloud environment, the SDK can automatically
-  // discover the service account credentials.
+  // When deployed to a Google Cloud environment (like Firebase App Hosting),
+  // the SDK automatically discovers the service account credentials.
+  // This is the recommended and most secure way to initialize.
   try {
     console.log("Initializing Firebase Admin SDK with Application Default Credentials...");
     return admin.initializeApp({
       credential: admin.credential.applicationDefault()
     });
   } catch (error: any) {
-    console.error("Application Default Credentials failed. Ensure you are in a Google Cloud environment or have GOOGLE_APPLICATION_CREDENTIALS set.", error.message);
-    throw new Error(`Could not initialize Firebase Admin SDK.`);
+    console.error("Firebase Admin SDK initialization failed:", error);
+    // This will cause server-side Firebase operations to fail,
+    // which is expected if the environment is not configured correctly.
+    // Do not throw an error here to allow the app to build, but log it critically.
+    return null;
   }
 }
 
 // Export a single function to get the initialized app instance.
+// It might return null if initialization fails.
 export function getFirebaseAdmin() {
     return initializeFirebaseAdmin();
 }
