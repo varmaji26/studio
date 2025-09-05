@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -170,9 +169,7 @@ export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
   const [games, setGames] = useState<Game[]>([]);
-  const [gamesLoading, setGamesLoading] = useState(true);
   const [banners, setBanners] = useState<Banner[]>([]);
-  const [bannersLoading, setBannersLoading] = useState(true);
   const [settings, setSettings] = useState<AppSettings>({});
   const [userProfile, setUserProfile] = useState<UserProfile>({ balance: 0, bonusBalance: 0 });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -228,7 +225,6 @@ export default function Home() {
       });
 
       setGames(filteredGames);
-      setGamesLoading(false);
     });
 
     const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"));
@@ -238,7 +234,6 @@ export default function Home() {
             bannersData.push({ id: doc.id, ...doc.data() } as Banner);
         });
         setBanners(bannersData);
-        setBannersLoading(false);
     });
     
     const settingsDocRef = doc(db, 'settings', 'app-settings');
@@ -507,11 +502,7 @@ export default function Home() {
             </Card>
         )}
         
-        {bannersLoading ? (
-            <Card className="bg-card/80 border-white/10 shadow-lg flex items-center justify-center h-[200px]">
-                <Loader />
-            </Card>
-        ) : banners.length > 0 && (
+        {banners.length > 0 && (
             <Carousel 
                 plugins={[autoplayPlugin.current]}
                 className="w-full"
@@ -544,11 +535,7 @@ export default function Home() {
             <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
           </CardHeader>
           <CardContent>
-            {gamesLoading ? (
-              <div className="flex justify-center items-center h-24">
-                <Loader className="h-8 w-8 text-primary" />
-              </div>
-            ) : games.length > 0 ? (
+            {games.length > 0 ? (
               <div className="grid grid-cols-2 gap-1">
                 {games.map((game) => (
                   <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-0.5 rounded-lg border border-black text-center">
@@ -582,11 +569,7 @@ export default function Home() {
             <CardTitle className="text-xl text-center">Matka Games</CardTitle>
           </CardHeader>
           <CardContent>
-            {gamesLoading ? (
-              <div className="flex justify-center items-center h-24">
-                <Loader className="h-8 w-8 text-primary" />
-              </div>
-            ) : games.length > 0 ? (
+            {games.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
                     {games.map((game) => (
                         <GameCard 
