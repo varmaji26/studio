@@ -1,6 +1,5 @@
 
 {
-  "apphosting": {
-    "backend": "studio"
-  }
+  "project": "auth-canvas",
+  "apphosting": {}
 }
