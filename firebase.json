@@ -1,6 +1,8 @@
 
 {
-  "apphosting": {
-    "backendId": "studio"
-  }
+  "apphosting": [
+    {
+      "backendId": "studio"
+    }
+  ]
 }
