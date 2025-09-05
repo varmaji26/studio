@@ -7,13 +7,11 @@ import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: "matka-king-66ec3.firebaseapp.com",
-  databaseURL: "https://matka-king-66ec3-default-rtdb.firebaseio.com",
-  projectId: "matka-king-66ec3",
-  storageBucket: "matka-king-66ec3.appspot.com",
-  messagingSenderId: "358988541311",
-  appId: "1:358988541311:web:03491fbc1031220e16be4a",
-  measurementId: "G-GFZW681BYB"
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
