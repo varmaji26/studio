@@ -1,8 +1,10 @@
 
 'use server';
 
-import { dbAdmin, messagingAdmin } from "@/lib/firebase-admin";
+import { getFirebaseAdmin } from "@/lib/firebase-admin";
 import { FieldValue } from 'firebase-admin/firestore';
+import { getFirestore } from "firebase-admin/firestore";
+import { getMessaging } from "firebase-admin/messaging";
 
 interface SendNotificationPayload {
     title: string;
@@ -11,6 +13,10 @@ interface SendNotificationPayload {
 
 export async function sendPushNotifications(payload: SendNotificationPayload) {
     try {
+        const adminApp = getFirebaseAdmin();
+        const dbAdmin = getFirestore(adminApp);
+        const messagingAdmin = getMessaging(adminApp);
+
         const usersSnapshot = await dbAdmin.collection('users').get();
         const tokens: string[] = [];
         
@@ -65,6 +71,8 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
 
     } catch (error) {
         console.error('Error sending push notifications:', error);
-        return { success: false, message: 'An internal error occurred.' };
+        // Provide a more user-friendly error message
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, message: `An internal error occurred: ${errorMessage}` };
     }
 }
