@@ -36,12 +36,5 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# studio
-.firebase/
-firebase.json
-apphosting.yaml
-components.json
-
 # Sensitive files
-/src/lib/firebase-service-account.json
-firebase-service-account.json
+src/lib/firebase-service-account.json
