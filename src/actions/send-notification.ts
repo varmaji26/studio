@@ -1,10 +1,26 @@
 
 'use server';
 
-import { getFirebaseAdmin } from "@/lib/firebase-admin";
+import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { getFirestore } from "firebase-admin/firestore";
-import { getMessaging } from "firebase-admin/messaging";
+
+// Helper function to initialize Firebase Admin SDK safely.
+function initializeFirebaseAdmin() {
+  if (admin.apps.length > 0) {
+    return admin.apps[0]!;
+  }
+  try {
+    // This will automatically use the service account credentials available in the App Hosting environment.
+    return admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
+  } catch (error) {
+    console.error('Firebase Admin SDK initialization failed:', error);
+    // Return null or handle the error as appropriate for your application.
+    // In a server action, this will likely cause the function to fail, which is expected.
+    return null;
+  }
+}
 
 interface SendNotificationPayload {
     title: string;
@@ -13,9 +29,13 @@ interface SendNotificationPayload {
 
 export async function sendPushNotifications(payload: SendNotificationPayload) {
     try {
-        const adminApp = getFirebaseAdmin();
-        const dbAdmin = getFirestore(adminApp);
-        const messagingAdmin = getMessaging(adminApp);
+        const adminApp = initializeFirebaseAdmin();
+        if (!adminApp) {
+            throw new Error("Firebase Admin initialization failed. Check server logs.");
+        }
+        
+        const dbAdmin = admin.firestore(adminApp);
+        const messagingAdmin = admin.messaging(adminApp);
 
         const usersSnapshot = await dbAdmin.collection('users').get();
         const tokens: string[] = [];
