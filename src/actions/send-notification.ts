@@ -70,10 +70,10 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
 
         return { success: true, message: `Notification sent to ${response.successCount} devices.` };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error sending push notifications:', error);
-        // Provide a more user-friendly error message
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        // Provide a more user-friendly and detailed error message
+        const errorMessage = error.errorInfo ? `${error.errorInfo.code}: ${error.errorInfo.message}` : error.message || 'An unknown error occurred.';
         return { success: false, message: `An internal error occurred: ${errorMessage}` };
     }
 }

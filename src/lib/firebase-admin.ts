@@ -9,7 +9,14 @@ function initializeFirebaseAdmin() {
   }
 
   try {
-    const serviceAccountCredentials = serviceAccount as admin.ServiceAccount;
+    // A more robust way to initialize, especially for environments that might alter JSON formatting.
+    const serviceAccountCredentials = {
+      projectId: serviceAccount.project_id,
+      clientEmail: serviceAccount.client_email,
+      // The private key must have newline characters correctly formatted.
+      privateKey: serviceAccount.private_key.replace(/\\n/g, '\n'),
+    } as admin.ServiceAccount;
+
     const app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccountCredentials),
     });
@@ -23,7 +30,6 @@ function initializeFirebaseAdmin() {
 }
 
 // Export a single function to get the initialized app instance.
-// This is a safer pattern for serverless environments.
 export function getFirebaseAdmin() {
     return initializeFirebaseAdmin();
 }
