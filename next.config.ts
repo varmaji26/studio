@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  pageExtensions: ['tsx', 'ts', 'js'], // This line is added to fix the build error
   images: {
     remotePatterns: [
       {
