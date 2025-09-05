@@ -29,7 +29,6 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
 
         const uniqueTokens = [...new Set(tokens)];
 
-        // Log the notification to Firestore first
         await dbAdmin.collection('notifications').add({
             ...payload,
             createdAt: FieldValue.serverTimestamp(),
@@ -47,7 +46,7 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
             },
             webpush: {
                 notification: {
-                    icon: '/icon-192x192.png', // Optional: You can customize this
+                    icon: '/icon-192x192.png',
                 },
             },
             tokens: uniqueTokens,
@@ -72,9 +71,21 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
         return { success: true, message: `Notification sent to ${response.successCount} devices.` };
 
     } catch (error: any) {
-        console.error('Error sending push notifications:', error);
-        // Provide a more user-friendly and detailed error message
-        const errorMessage = error.errorInfo ? `${error.errorInfo.code}: ${error.errorInfo.message}` : error.message || 'An unknown error occurred.';
-        return { success: false, message: `An internal error occurred: ${errorMessage}` };
+        // Enhanced Error Logging
+        console.error('CRITICAL ERROR in sendPushNotifications:', error);
+        console.error('Error Code:', error.code);
+        console.error('Error Message:', error.message);
+        console.error('Full Error Object:', JSON.stringify(error, null, 2));
+
+        let detailedMessage = 'An internal error occurred.';
+        if (error.errorInfo) {
+            detailedMessage = `Firebase Error: ${error.errorInfo.code} - ${error.errorInfo.message}`;
+        } else if (error.code) {
+             detailedMessage = `Error Code: ${error.code}. Please check server logs for the full error details.`;
+        } else if (error.message) {
+            detailedMessage = error.message;
+        }
+
+        return { success: false, message: detailedMessage };
     }
 }
