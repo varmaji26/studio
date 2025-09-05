@@ -1,20 +1,4 @@
 
 {
-  "hosting": {
-    "source": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "run": {
-          "serviceId": "ssrauthcanvas",
-          "region": "us-central1"
-        }
-      }
-    ]
-  }
+
 }
