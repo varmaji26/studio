@@ -15,10 +15,10 @@ function initializeFirebaseAdmin() {
     });
     console.log("Firebase Admin SDK initialized successfully.");
     return app;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error initializing Firebase Admin SDK:", error);
-    // Re-throw the error to be caught by the caller
-    throw new Error("Could not initialize Firebase Admin SDK. Please check server logs.");
+    // Re-throw a more informative error to be caught by the caller
+    throw new Error(`Could not initialize Firebase Admin SDK: ${error.message}`);
   }
 }
 

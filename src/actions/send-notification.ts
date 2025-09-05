@@ -61,10 +61,11 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
             response.responses.forEach((resp, idx) => {
                 if (!resp.success) {
                     failedTokens.push(uniqueTokens[idx]);
+                    console.error(`Failed to send to token: ${uniqueTokens[idx]}`, resp.error);
                 }
             });
             console.log('List of tokens that caused failures: ' + failedTokens);
-             return { success: false, message: `Sent to ${response.successCount} devices, but failed for ${response.failureCount}.` };
+             return { success: false, message: `Sent to ${response.successCount} devices, but failed for ${response.failureCount}. Check server logs for details.` };
         }
 
         return { success: true, message: `Notification sent to ${response.successCount} devices.` };
