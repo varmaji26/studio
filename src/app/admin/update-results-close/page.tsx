@@ -29,6 +29,7 @@ interface Game extends DocumentData {
     openResult: string;
     closeResult: string;
     result: string;
+    openTime: string;
 }
 
 const WIN_RATES = {
@@ -120,16 +121,22 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
+        // Determine the correct date for the game result
+        const now = new Date();
+        const [openHours, openMinutes] = game.openTime.split(':').map(Number);
+        const gameDate = (now.getHours() < openHours || (now.getHours() === openHours && now.getMinutes() < openMinutes))
+            ? new Date(now.setDate(now.getDate() - 1))
+            : new Date();
+
         // Update Jodi Chart
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
         const jodiChartSnap = await getDoc(jodiChartRef);
         if (jodiChartSnap.exists()) {
             const jodiData = jodiChartSnap.data();
-            const today = new Date();
-            const todayDay = today.toLocaleDateString('en-US', { weekday: 'long' });
+            const gameDay = gameDate.toLocaleDateString('en-US', { weekday: 'long' });
             const activeDays = jodiData.activeDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             
-            if (activeDays.includes(todayDay)) {
+            if (activeDays.includes(gameDay)) {
                 let newData = jodiData.data ? `${jodiData.data} ${finalJodi}` : finalJodi;
                 batch.update(jodiChartRef, { data: newData });
             }
@@ -140,9 +147,8 @@ export default function UpdateResultsClosePage() {
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelChartData = panelChartSnap.data().data || '';
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
+            gameDate.setHours(0, 0, 0, 0);
+            const dayOfWeek = gameDate.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
@@ -157,7 +163,7 @@ export default function UpdateResultsClosePage() {
                     const lastStartDate = parseDateString(match[1]);
                     const lastEndDate = parseDateString(match[2]);
                     
-                    if (lastStartDate && lastEndDate && today >= lastStartDate && today <= lastEndDate) {
+                    if (lastStartDate && lastEndDate && gameDate >= lastStartDate && gameDate <= lastEndDate) {
                         weekFound = true;
                         const dataPart = lastRow.substring(match[0].length).trim();
                         const dailyBlocks = dataPart.split(/\s+/).filter(String);
@@ -175,13 +181,13 @@ export default function UpdateResultsClosePage() {
             }
             
             if (!weekFound) {
-                const startOfWeek = new Date(today);
-                startOfWeek.setDate(today.getDate() - dayIndex);
+                const startOfWeek = new Date(gameDate);
+                startOfWeek.setDate(gameDate.getDate() - dayIndex);
                 const endOfWeek = new Date(startOfWeek);
                 endOfWeek.setDate(startOfWeek.getDate() + 6);
                 
-                const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const newDateRange = `${formatDate(startOfWeek)} to ${formatDate(endOfWeek)}`;
+                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
                 
                 const newWeekDataArr = Array(7).fill('********');
                 newWeekDataArr[dayIndex] = newDayData;
