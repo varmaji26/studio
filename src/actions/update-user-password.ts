@@ -1,6 +1,7 @@
 
 'use server';
 
+import * as admin from 'firebase-admin';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 interface UpdatePasswordPayload {
