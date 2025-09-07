@@ -15,7 +15,7 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
     try {
         const adminApp = getFirebaseAdmin();
         if (!adminApp) {
-            throw new Error("Firebase Admin initialization failed. Check server logs.");
+            throw new Error("Firebase Admin initialization failed. Check server logs for details.");
         }
         
         const dbAdmin = admin.firestore(adminApp);
