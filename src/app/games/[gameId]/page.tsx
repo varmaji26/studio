@@ -129,13 +129,16 @@ const betTypes = [
 export default function GamePage() {
   const router = useRouter();
   const params = useParams();
-  const gameId = Array.isArray(params.gameId) ? params.gameId[0] : params.gameId;
+  const gameId = params.gameId as string;
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [animatingBetType, setAnimatingBetType] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof gameId !== 'string') return;
+    if (typeof gameId !== 'string') {
+        setLoading(false);
+        return;
+    };
 
     const fetchGame = async () => {
       try {
@@ -146,7 +149,6 @@ export default function GamePage() {
           setGame({ id: gameDoc.id, ...gameDoc.data() } as Game);
         } else {
           console.error('No such document!');
-          router.push('/404');
         }
       } catch (error) {
         console.error('Error fetching game data:', error);
@@ -156,7 +158,7 @@ export default function GamePage() {
     };
 
     fetchGame();
-  }, [gameId, router]);
+  }, [gameId]);
 
   const handleBetTypeClick = (betTypeTitle: string) => {
     setAnimatingBetType(betTypeTitle);
