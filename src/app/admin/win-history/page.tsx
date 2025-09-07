@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -58,35 +58,34 @@ export default function AdminWinHistoryPage() {
     }
   }, [searchParams]);
 
-  const fetchWins = useCallback(async () => {
+  useEffect(() => {
       if (!fromDate || !toDate) return;
       setLoading(true);
-      try {
-          const startOfDay = new Date(fromDate);
-          startOfDay.setHours(0, 0, 0, 0);
-          const endOfDay = new Date(toDate);
-          endOfDay.setHours(23, 59, 59, 999);
+      
+      const startOfDay = new Date(fromDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(toDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-          const q = query(
-              collection(db, "bids"), 
-              where("status", "==", "won"), 
-              where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
-              where("createdAt", "<=", Timestamp.fromDate(endOfDay)),
-              orderBy("createdAt", "desc")
-          );
-          const querySnapshot = await getDocs(q);
+      const q = query(
+          collection(db, "bids"), 
+          where("status", "==", "won"), 
+          where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
+          where("createdAt", "<=", Timestamp.fromDate(endOfDay)),
+          orderBy("createdAt", "desc")
+      );
+      
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
           const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
           setAllWins(winsData);
-      } catch (error) {
-          console.error("Error fetching wins: ", error);
-      } finally {
           setLoading(false);
-      }
+      }, (error) => {
+          console.error("Error fetching wins: ", error);
+          setLoading(false);
+      });
+      
+      return () => unsubscribe();
   }, [fromDate, toDate]);
-    
-  useEffect(() => {
-    fetchWins();
-  }, [fetchWins]);
 
   const filteredWins = useMemo(() => {
     let filtered = allWins;
