@@ -39,7 +39,7 @@ const editChartSchema = z.object({
   data: z.string().min(1, 'Chart data is required'),
   activeDays: z.array(z.string()).refine((value) => value.some((day) => day), {
     message: "You have to select at least one day.",
-  }).optional(), // Optional for panel chart
+  }).optional(),
 });
 
 type EditChartFormValues = z.infer<typeof editChartSchema>;
@@ -60,7 +60,7 @@ export function EditChartDialog({ chart, collectionName, children }: EditChartDi
     defaultValues: {
       title: chart.title,
       data: chart.data,
-      activeDays: chart.activeDays || (collectionName === 'jodiCharts' ? daysOfWeek : undefined),
+      activeDays: chart.activeDays || daysOfWeek,
     },
   });
 
@@ -72,10 +72,9 @@ export function EditChartDialog({ chart, collectionName, children }: EditChartDi
       const dataToUpdate: any = {
         title: values.title,
         data: values.data,
+        activeDays: values.activeDays,
       };
-      if (collectionName === 'jodiCharts') {
-        dataToUpdate.activeDays = values.activeDays;
-      }
+      
       await updateDoc(chartDocRef, dataToUpdate);
 
       toast({
@@ -120,55 +119,53 @@ export function EditChartDialog({ chart, collectionName, children }: EditChartDi
                 </FormItem>
               )}
             />
-            {collectionName === 'jodiCharts' && (
-              <FormField
-                control={form.control}
-                name="activeDays"
-                render={() => (
-                    <FormItem>
-                    <div className="mb-4">
-                        <FormLabel className="text-base">Chart Active Days</FormLabel>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        {daysOfWeek.map((day) => (
-                        <FormField
-                            key={day}
-                            control={form.control}
-                            name="activeDays"
-                            render={({ field }) => {
-                            return (
-                                <FormItem
-                                key={day}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                                >
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value?.includes(day)}
-                                    onCheckedChange={(checked) => {
-                                        return checked
-                                        ? field.onChange([...(field.value || []), day])
-                                        : field.onChange(
-                                            (field.value || [])?.filter(
-                                                (value) => value !== day
-                                            )
-                                            )
-                                    }}
-                                    />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                    {day}
-                                </FormLabel>
-                                </FormItem>
-                            )
-                            }}
-                        />
-                        ))}
-                    </div>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            )}
+            <FormField
+              control={form.control}
+              name="activeDays"
+              render={() => (
+                  <FormItem>
+                  <div className="mb-4">
+                      <FormLabel className="text-base">Chart Active Days</FormLabel>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {daysOfWeek.map((day) => (
+                      <FormField
+                          key={day}
+                          control={form.control}
+                          name="activeDays"
+                          render={({ field }) => {
+                          return (
+                              <FormItem
+                              key={day}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                              <FormControl>
+                                  <Checkbox
+                                  checked={field.value?.includes(day)}
+                                  onCheckedChange={(checked) => {
+                                      return checked
+                                      ? field.onChange([...(field.value || []), day])
+                                      : field.onChange(
+                                          (field.value || [])?.filter(
+                                              (value) => value !== day
+                                          )
+                                          )
+                                  }}
+                                  />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                  {day}
+                              </FormLabel>
+                              </FormItem>
+                          )
+                          }}
+                      />
+                      ))}
+                  </div>
+                  <FormMessage />
+                  </FormItem>
+              )}
+              />
             <FormField
               control={form.control}
               name="data"

@@ -20,12 +20,14 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EditChartDialog } from '@/components/edit-chart-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface PanelChart extends DocumentData {
     id: string;
     gameName: string;
     title: string;
     data: string;
+    activeDays?: string[];
 }
 
 interface Game extends DocumentData {
@@ -34,10 +36,15 @@ interface Game extends DocumentData {
     openTime: string;
 }
 
+const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
 const chartSchema = z.object({
   gameId: z.string().min(1, 'Please select a game'),
   title: z.string().min(1, 'Chart title is required'),
   data: z.string().min(1, 'Chart data is required'),
+  activeDays: z.array(z.string()).refine((value) => value.some((day) => day), {
+    message: "You have to select at least one day.",
+  }),
 });
 
 type ChartFormValues = z.infer<typeof chartSchema>;
@@ -55,7 +62,8 @@ export default function PanelChartPage() {
     defaultValues: {
         gameId: '',
         title: '',
-        data: ''
+        data: '',
+        activeDays: daysOfWeek,
     }
   });
 
@@ -71,10 +79,8 @@ export default function PanelChartPage() {
         const unsubscribeCharts = onSnapshot(chartsQuery, (chartsSnapshot) => {
             const chartsData: PanelChart[] = chartsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PanelChart));
             
-            // Create a map of gameId to its openTime for quick lookup
             const gameTimeMap = new Map(gamesData.map(game => [game.id, game.openTime]));
 
-            // Sort charts based on the game's openTime
             chartsData.sort((a, b) => {
                 const timeA = gameTimeMap.get(a.id) || '23:59';
                 const timeB = gameTimeMap.get(b.id) || '23:59';
@@ -111,6 +117,7 @@ export default function PanelChartPage() {
           gameName: selectedGame.name,
           title: values.title,
           data: values.data,
+          activeDays: values.activeDays,
       });
       toast({ title: 'Success', description: 'Panel chart saved successfully.' });
       setIsDialogOpen(false);
@@ -196,6 +203,53 @@ export default function PanelChartPage() {
                                 </FormItem>
                             )}
                         />
+                         <FormField
+                            control={form.control}
+                            name="activeDays"
+                            render={() => (
+                                <FormItem>
+                                <div className="mb-4">
+                                    <FormLabel className="text-base">Chart Active Days</FormLabel>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                    {daysOfWeek.map((day) => (
+                                    <FormField
+                                        key={day}
+                                        control={form.control}
+                                        name="activeDays"
+                                        render={({ field }) => {
+                                        return (
+                                            <FormItem
+                                            key={day}
+                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                            >
+                                            <FormControl>
+                                                <Checkbox
+                                                checked={field.value?.includes(day)}
+                                                onCheckedChange={(checked) => {
+                                                    return checked
+                                                    ? field.onChange([...(field.value || []), day])
+                                                    : field.onChange(
+                                                        (field.value || [])?.filter(
+                                                            (value) => value !== day
+                                                        )
+                                                        )
+                                                }}
+                                                />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">
+                                                {day}
+                                            </FormLabel>
+                                            </FormItem>
+                                        )
+                                        }}
+                                    />
+                                    ))}
+                                </div>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name="data"
@@ -249,6 +303,7 @@ export default function PanelChartPage() {
                 <TableRow>
                   <TableHead>Game Name</TableHead>
                   <TableHead>Chart Title</TableHead>
+                  <TableHead>Active Days</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -257,6 +312,7 @@ export default function PanelChartPage() {
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.gameName}</TableCell>
                     <TableCell>{item.title}</TableCell>
+                    <TableCell className="text-xs">{(item.activeDays || []).join(', ')}</TableCell>
                     <TableCell className="text-right">
                        <div className="flex gap-2 justify-end">
                           <EditChartDialog chart={item} collectionName="panelCharts">
