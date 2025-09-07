@@ -3,13 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "gcp-build": "npm run build",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -H 0.0.0.0 -p ${PORT:-8080}",
-    "lint": "next lint",
-    "clean": "rimraf .next node_modules",
-    "deploy": "npm run clean && npm install && npm run build && firebase deploy"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
