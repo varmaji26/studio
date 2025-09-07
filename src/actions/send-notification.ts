@@ -56,7 +56,7 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
             tokens: uniqueTokens,
         };
 
-        const response = await messagingAdmin.sendEachForMulticast(message);
+        const response = await messagingAdmin.sendMulticast(message);
         
         console.log(`${response.successCount} messages were sent successfully`);
 
