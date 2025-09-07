@@ -181,11 +181,10 @@ export default function AdminDashboardPage() {
                 <StatCard title="Total Users" value={stats.totalUsers.toString()} icon={Users} color="#8b5cf6" />
                 <StatCard title="Total Games" value={stats.totalGames.toString()} icon={Gamepad2} color="#ec4899" />
                 <StatCard 
-                    title="Monthly Profit (Deposit - Withdrawal)" 
-                    value={`₹${monthlyNetDeposit.toLocaleString()}`} 
+                    title="Total Money in Users' Wallet" 
+                    value={`₹${stats.totalBalance.toLocaleString()}`} 
                     icon={Wallet} 
-                    color={monthlyNetDeposit >= 0 ? "#22c55e" : "#ef4444"}
-                    textColor={monthlyNetDeposit >= 0 ? "#22c55e" : "#ef4444"}
+                    color="#22c55e"
                 />
             </div>
         </div>
