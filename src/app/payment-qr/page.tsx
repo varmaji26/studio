@@ -266,7 +266,7 @@ function PaymentQRContent() {
                            </div>
                            <Button onClick={handleSubmitForVerification} className="w-full h-11 bg-green-600 hover:bg-green-700 font-bold" disabled={isSubmitting}>
                                {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
-                               {isSubmitting ? 'Submitting...' : 'Deposit Request'}
+                               {isSubmitting ? 'Submitting...' : 'Send Deposit Request'}
                            </Button>
                         </div>
 
