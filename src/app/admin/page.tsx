@@ -181,10 +181,11 @@ export default function AdminDashboardPage() {
                 <StatCard title="Total Users" value={stats.totalUsers.toString()} icon={Users} color="#8b5cf6" />
                 <StatCard title="Total Games" value={stats.totalGames.toString()} icon={Gamepad2} color="#ec4899" />
                 <StatCard 
-                    title="Total Money in Users' Wallet" 
-                    value={`₹${stats.totalBalance.toLocaleString()}`} 
-                    icon={Wallet} 
-                    color="#22c55e"
+                    title="Monthly Net Balance" 
+                    value={`₹${monthlyNetDeposit.toLocaleString()}`} 
+                    icon={Landmark} 
+                    color={monthlyNetDeposit >= 0 ? "#22c55e" : "#ef4444"}
+                    textColor={monthlyNetDeposit >= 0 ? "#22c55e" : "#ef4444"}
                 />
             </div>
         </div>
@@ -224,13 +225,6 @@ export default function AdminDashboardPage() {
                 />
                 <StatCard title="Total Deposit This Month" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={Banknote} color="#3b82f6" />
                 <StatCard title="Total Withdrawls This Month" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
-                <StatCard 
-                    title="Monthly Net Balance" 
-                    value={`₹${monthlyNetDeposit.toLocaleString()}`} 
-                    icon={Landmark} 
-                    color={monthlyNetDeposit >= 0 ? "#22c55e" : "#ef4444"}
-                    textColor={monthlyNetDeposit >= 0 ? "#22c55e" : "#ef4444"}
-                />
             </div>
         </div>
       </div>
