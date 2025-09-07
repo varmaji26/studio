@@ -2,7 +2,11 @@
 'use server';
 
 import * as admin from 'firebase-admin';
-import serviceAccount from '@/../serviceAccountKey.json';
+import serviceAccountJson from '@/../serviceAccountKey.json';
+
+// Type assertion for the service account key
+const serviceAccount = serviceAccountJson as admin.ServiceAccount;
+
 
 // Helper function to initialize Firebase Admin SDK safely.
 function initializeFirebaseAdmin() {
@@ -15,7 +19,8 @@ function initializeFirebaseAdmin() {
     });
   } catch (error) {
     console.error('Firebase Admin SDK initialization failed:', error);
-    return null;
+     // Propagate a more specific error to the client
+    throw new Error('Server configuration error. Could not initialize Firebase Admin.');
   }
 }
 
@@ -34,7 +39,8 @@ export async function updateUserPassword(payload: UpdatePasswordPayload) {
     try {
         const adminApp = initializeFirebaseAdmin();
         if (!adminApp) {
-            throw new Error("Firebase Admin initialization failed. Check server logs.");
+             // This case should now be handled by the error thrown in initializeFirebaseAdmin
+            throw new Error("Firebase Admin initialization failed.");
         }
         
         const authAdmin = admin.auth(adminApp);

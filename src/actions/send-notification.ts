@@ -3,7 +3,10 @@
 
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import serviceAccount from '@/../serviceAccountKey.json';
+import serviceAccountJson from '@/../serviceAccountKey.json';
+
+// Type assertion for the service account key
+const serviceAccount = serviceAccountJson as admin.ServiceAccount;
 
 // Helper function to initialize Firebase Admin SDK safely.
 function initializeFirebaseAdmin() {
@@ -16,7 +19,8 @@ function initializeFirebaseAdmin() {
     });
   } catch (error) {
     console.error('Firebase Admin SDK initialization failed:', error);
-    return null;
+    // Propagate a more specific error to the client
+    throw new Error('Server configuration error. Could not initialize Firebase Admin.');
   }
 }
 
@@ -29,7 +33,8 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
     try {
         const adminApp = initializeFirebaseAdmin();
         if (!adminApp) {
-            throw new Error("Firebase Admin initialization failed. Check server logs.");
+            // This case should now be handled by the error thrown in initializeFirebaseAdmin
+            throw new Error("Firebase Admin initialization failed.");
         }
         
         const dbAdmin = admin.firestore(adminApp);
@@ -91,15 +96,10 @@ export async function sendPushNotifications(payload: SendNotificationPayload) {
     } catch (error: any) {
         // Enhanced Error Logging
         console.error('CRITICAL ERROR in sendPushNotifications:', error);
-        console.error('Error Code:', error.code);
-        console.error('Error Message:', error.message);
-        console.error('Full Error Object:', JSON.stringify(error, null, 2));
-
-        let detailedMessage = 'An internal error occurred.';
+        
+        let detailedMessage = 'An internal server error occurred.';
         if (error.errorInfo) {
             detailedMessage = `Firebase Error: ${error.errorInfo.code} - ${error.errorInfo.message}`;
-        } else if (error.code) {
-             detailedMessage = `Error Code: ${error.code}. Please check server logs for the full error details.`;
         } else if (error.message) {
             detailedMessage = error.message;
         }
