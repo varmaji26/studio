@@ -7,13 +7,18 @@ import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
-import { Search } from 'lucide-react';
+import { Search, KeyRound } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { updateUserPassword } from '@/actions/update-user-password';
 
 interface User extends DocumentData {
     id: string;
     displayName: string;
     mobile: string;
+    uid: string;
 }
 
 export default function FindPasswordPage() {
@@ -21,6 +26,10 @@ export default function FindPasswordPage() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
@@ -30,7 +39,7 @@ export default function FindPasswordPage() {
       const usersData: User[] = [];
       querySnapshot.forEach((doc) => {
         if (doc.data().displayName && doc.data().mobile) {
-            usersData.push({ id: doc.id, ...doc.data() } as User);
+            usersData.push({ id: doc.id, ...doc.data(), uid: doc.id } as User);
         }
       });
       setUsers(usersData);
@@ -63,14 +72,37 @@ export default function FindPasswordPage() {
     });
     setFilteredUsers(filteredData);
   }, [searchTerm, users]);
+  
+  const handlePasswordChange = async () => {
+    if (!selectedUser || !newPassword) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please select a user and enter a new password.' });
+        return;
+    }
+    if (newPassword.length < 6) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Password must be at least 6 characters long.' });
+        return;
+    }
+
+    setIsUpdating(true);
+    const result = await updateUserPassword({ uid: selectedUser.uid, newPassword: newPassword });
+
+    if (result.success) {
+        toast({ title: 'Success!', description: `Password for ${selectedUser.displayName} has been updated.` });
+        setNewPassword('');
+        setSelectedUser(null);
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.message });
+    }
+    setIsUpdating(false);
+  }
 
   return (
      <div className="flex-1 space-y-6">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-3xl font-bold">Find User Details</CardTitle>
+            <CardTitle className="text-3xl font-bold">Find User Details & Reset Password</CardTitle>
             <CardDescription>
-                View registered user details here. For security reasons, passwords cannot be displayed directly.
+                Search for users and reset their password if needed.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -99,7 +131,7 @@ export default function FindPasswordPage() {
                                 <TableHead>#</TableHead>
                                 <TableHead>Username</TableHead>
                                 <TableHead>Mobile Number</TableHead>
-                                <TableHead>Password</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -108,7 +140,39 @@ export default function FindPasswordPage() {
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>{user.displayName}</TableCell>
                                     <TableCell>{user.mobile}</TableCell>
-                                    <TableCell className="text-muted-foreground italic">Hidden for security</TableCell>
+                                    <TableCell className="text-right">
+                                       <AlertDialog onOpenChange={(open) => { if (!open) { setSelectedUser(null); setNewPassword(''); } }}>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="outline" size="sm" onClick={() => setSelectedUser(user)}>
+                                                    <KeyRound className="h-4 w-4 mr-1" />
+                                                    Change Password
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Change password for {selectedUser?.displayName}</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Enter a new password. The user will be able to log in with this new password immediately.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <div className="py-4">
+                                                    <Input 
+                                                        type="text"
+                                                        placeholder="Enter new password (min 6 characters)"
+                                                        value={newPassword}
+                                                        onChange={(e) => setNewPassword(e.target.value)}
+                                                    />
+                                                </div>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handlePasswordChange} disabled={isUpdating || newPassword.length < 6}>
+                                                    {isUpdating ? <Loader className="mr-2 h-4 w-4" /> : null}
+                                                    Confirm
+                                                </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
