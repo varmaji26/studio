@@ -262,9 +262,9 @@ function PaymentQRContent() {
                         <div className="border-t pt-3 space-y-2">
                            <div className="flex items-center gap-2 font-semibold text-gray-800">
                                <FileText className="h-5 w-5 text-gray-500"/>
-                               <h3>After Payment, Submit for Verification</h3>
+                               <h3>भुगतान के बाद, सत्यापन के लिए सबमिट करें</h3>
                            </div>
-                           <Button onClick={handleSubmitForVerification} className="w-full h-11 bg-green-600 hover:bg-green-700 font-bold animate-breathe" disabled={isSubmitting}>
+                           <Button onClick={handleSubmitForVerification} className="w-full h-11 bg-green-600 hover:bg-green-700 font-bold animate-shake" disabled={isSubmitting}>
                                {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
                                {isSubmitting ? 'Submitting...' : 'Send Deposit Request'}
                            </Button>
