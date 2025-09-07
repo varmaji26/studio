@@ -31,7 +31,8 @@ export async function updateUserPassword(payload: UpdatePasswordPayload) {
         console.log(`Successfully updated password for user: ${uid}`);
         return { success: true, message: 'Password updated successfully.' };
 
-    } catch (error: any) {
+    } catch (error: any)
+     {
         console.error(`CRITICAL ERROR updating password for UID ${uid}:`, error);
         
         let detailedMessage = 'An internal error occurred while updating the password.';
