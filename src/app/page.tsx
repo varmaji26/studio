@@ -529,7 +529,6 @@ export default function Home() {
             </Carousel>
         )}
         
-
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
@@ -550,7 +549,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#3D1C27] border-white/10 shadow-lg">
+        <Card className="bg-card/80 border-white/10 shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl text-white">Notice</CardTitle>
             </CardHeader>
