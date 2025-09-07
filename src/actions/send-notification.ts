@@ -3,6 +3,7 @@
 
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import serviceAccount from '@/../serviceAccountKey.json';
 
 // Helper function to initialize Firebase Admin SDK safely.
 function initializeFirebaseAdmin() {
@@ -10,14 +11,11 @@ function initializeFirebaseAdmin() {
     return admin.apps[0]!;
   }
   try {
-    // This will automatically use the service account credentials available in the App Hosting environment.
     return admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
+      credential: admin.credential.cert(serviceAccount),
     });
   } catch (error) {
     console.error('Firebase Admin SDK initialization failed:', error);
-    // Return null or handle the error as appropriate for your application.
-    // In a server action, this will likely cause the function to fail, which is expected.
     return null;
   }
 }
