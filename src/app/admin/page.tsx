@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { doc, onSnapshot, DocumentData, collection, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Gamepad2, Wallet, ArrowUpCircle, ArrowDownCircle, TrendingUp, TrendingDown, Scale, BarChart, Banknote } from 'lucide-react';
+import { Users, Gamepad2, Wallet, ArrowUpCircle, ArrowDownCircle, TrendingUp, TrendingDown, Scale, BarChart, Banknote, Landmark } from 'lucide-react';
 import { Loader } from '@/components/loader';
 import { useAuth } from '@/hooks/use-auth';
 import { setInitialStats } from '@/lib/stats-helper';
@@ -224,6 +224,13 @@ export default function AdminDashboardPage() {
                 />
                 <StatCard title="Total Deposit This Month" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={Banknote} color="#3b82f6" />
                 <StatCard title="Total Withdrawls This Month" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
+                <StatCard 
+                    title="Monthly Net Balance" 
+                    value={`₹${monthlyNetDeposit.toLocaleString()}`} 
+                    icon={Landmark} 
+                    color={monthlyNetDeposit >= 0 ? "#22c55e" : "#ef4444"}
+                    textColor={monthlyNetDeposit >= 0 ? "#22c55e" : "#ef4444"}
+                />
             </div>
         </div>
       </div>
