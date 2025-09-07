@@ -26,8 +26,8 @@ yarn-error.log*
 pnpm-debug.log*
 
 # local env files
-.env.local
 .env*.local
+.env
 
 # vercel
 .vercel
@@ -37,4 +37,5 @@ pnpm-debug.log*
 next-env.d.ts
 
 # sensitive files
-src/lib/firebase-service-account.json
+serviceAccountKey.json
+*.serviceAccountKey.json

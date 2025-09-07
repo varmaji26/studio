@@ -3,26 +3,8 @@
 
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import serviceAccountJson from '@/../serviceAccountKey.json';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
-// Type assertion for the service account key
-const serviceAccount = serviceAccountJson as admin.ServiceAccount;
-
-// Helper function to initialize Firebase Admin SDK safely.
-function initializeFirebaseAdmin() {
-  if (admin.apps.length > 0) {
-    return admin.apps[0]!;
-  }
-  try {
-    return admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  } catch (error) {
-    console.error('Firebase Admin SDK initialization failed:', error);
-    // Propagate a more specific error to the client
-    throw new Error('Server configuration error. Could not initialize Firebase Admin.');
-  }
-}
 
 interface SendNotificationPayload {
     title: string;
@@ -31,10 +13,9 @@ interface SendNotificationPayload {
 
 export async function sendPushNotifications(payload: SendNotificationPayload) {
     try {
-        const adminApp = initializeFirebaseAdmin();
+        const adminApp = getFirebaseAdmin();
         if (!adminApp) {
-            // This case should now be handled by the error thrown in initializeFirebaseAdmin
-            throw new Error("Firebase Admin initialization failed.");
+            throw new Error("Firebase Admin initialization failed. Check server logs.");
         }
         
         const dbAdmin = admin.firestore(adminApp);
