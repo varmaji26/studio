@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -54,26 +54,30 @@ export default function WinHistoryPage() {
             router.replace('/login');
             return;
         }
-        setLoading(true);
 
-        const winsQuery = query(
-            collection(db, 'bids'),
-            where('userId', '==', user.uid),
-            where('status', '==', 'won'),
-            orderBy('createdAt', 'desc')
-        );
-
-        const unsubscribeWins = onSnapshot(winsQuery, (querySnapshot) => {
-            const winsData: Win[] = [];
-            querySnapshot.forEach((doc) => {
-                winsData.push({ id: doc.id, ...doc.data() } as Win);
-            });
-            setWins(winsData);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching wins history: ", error);
-            setLoading(false);
-        });
+        const fetchWins = async () => {
+            setLoading(true);
+            try {
+                const winsQuery = query(
+                    collection(db, 'bids'),
+                    where('userId', '==', user.uid),
+                    where('status', '==', 'won'),
+                    orderBy('createdAt', 'desc')
+                );
+                const querySnapshot = await getDocs(winsQuery);
+                const winsData: Win[] = [];
+                querySnapshot.forEach((doc) => {
+                    winsData.push({ id: doc.id, ...doc.data() } as Win);
+                });
+                setWins(winsData);
+            } catch (error) {
+                console.error("Error fetching wins history: ", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchWins();
         
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
@@ -83,7 +87,6 @@ export default function WinHistoryPage() {
         });
         
         return () => {
-            unsubscribeWins();
             unsubscribeSettings();
         };
     }, [user, authLoading, router]);

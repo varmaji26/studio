@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, DocumentData, Timestamp, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { ArrowLeft } from 'lucide-react';
@@ -110,25 +110,29 @@ export default function BidsHistoryPage() {
             router.replace('/login');
             return;
         }
-        setLoading(true);
+        
+        const fetchBids = async () => {
+            setLoading(true);
+            try {
+                const bidsQuery = query(
+                    collection(db, 'bids'),
+                    where('userId', '==', user.uid),
+                    orderBy('createdAt', 'desc')
+                );
+                const querySnapshot = await getDocs(bidsQuery);
+                const bidsData: Bid[] = [];
+                querySnapshot.forEach((doc) => {
+                    bidsData.push({ id: doc.id, ...doc.data() } as Bid);
+                });
+                setBids(bidsData);
+            } catch (error) {
+                console.error("Error fetching bids history: ", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        const bidsQuery = query(
-            collection(db, 'bids'),
-            where('userId', '==', user.uid),
-            orderBy('createdAt', 'desc')
-        );
-
-        const unsubscribeBids = onSnapshot(bidsQuery, (querySnapshot) => {
-            const bidsData: Bid[] = [];
-            querySnapshot.forEach((doc) => {
-                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
-            });
-            setBids(bidsData);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching bids history: ", error);
-            setLoading(false);
-        });
+        fetchBids();
         
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
@@ -138,7 +142,6 @@ export default function BidsHistoryPage() {
         });
 
         return () => {
-            unsubscribeBids();
             unsubscribeSettings();
         };
     }, [user, authLoading, router]);
