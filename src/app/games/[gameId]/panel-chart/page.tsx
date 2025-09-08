@@ -123,7 +123,7 @@ export default function PanelChartPage() {
             
             const weeklyData = dataBlock.trim().split(/\s+/).join('');
 
-            const daysData = [];
+            const daysData: { openPana: string; jodi: string; closePana: string; }[] = [];
             for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
                  let currentIndex = dayIndex * 8;
                  if (weeklyData.length >= currentIndex + 8) {
