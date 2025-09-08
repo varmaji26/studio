@@ -85,6 +85,7 @@ const BidCard = ({ bid }: { bid: Bid }) => {
                  <Badge 
                     variant={getStatusBadgeVariant(bid.status)}
                     className={cn(
+                        'capitalize',
                         bid.status === 'won' && 'bg-green-500 text-white',
                         bid.status === 'lost' && 'bg-red-500 text-white',
                         bid.status === 'running' && 'bg-orange-500 text-white',
