@@ -66,6 +66,10 @@ export default function AdminLayout({
   
   const isRequestsMenuInitiallyOpen = isActive('/admin/deposit-requests') || isActive('/admin/withdrawal-requests');
   const [isRequestsMenuOpen, setRequestsMenuOpen] = React.useState(isRequestsMenuInitiallyOpen);
+  
+  const isPaymentHistoryMenuInitiallyOpen = isActive('/admin/deposit-history') || isActive('/admin/withdrawal-history');
+  const [isPaymentHistoryMenuOpen, setPaymentHistoryMenuOpen] = React.useState(isPaymentHistoryMenuInitiallyOpen);
+
 
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -409,22 +413,40 @@ export default function AdminLayout({
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <Link href="/admin/deposit-history" passHref onClick={handleLinkClick}>
-                        <SidebarMenuButton isActive={isActive('/admin/deposit-history')} tooltip={{children: "Deposit History"}}>
-                            <ArrowUpCircle />
-                            <span>Deposit History</span>
-                        </SidebarMenuButton>
-                    </Link>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <Link href="/admin/withdrawal-history" passHref onClick={handleLinkClick}>
-                        <SidebarMenuButton isActive={isActive('/admin/withdrawal-history')} tooltip={{children: "Withdrawal History"}}>
-                            <ArrowDownCircle />
-                            <span>Withdrawal History</span>
-                        </SidebarMenuButton>
-                    </Link>
-                </SidebarMenuItem>
+                <Collapsible open={isPaymentHistoryMenuOpen} onOpenChange={setPaymentHistoryMenuOpen}>
+                    <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                            <SidebarMenuButton
+                                isActive={isPaymentHistoryMenuInitiallyOpen}
+                                className="w-full justify-between"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <CreditCard />
+                                    <span>Payment History</span>
+                                </div>
+                                <ChevronDown className={cn("h-4 w-4 transition-transform", isPaymentHistoryMenuOpen && "rotate-180")} />
+                            </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                    </SidebarMenuItem>
+                    <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
+                        <SidebarMenuItem>
+                            <Link href="/admin/deposit-history" passHref onClick={handleLinkClick}>
+                                <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/deposit-history')}>
+                                    <ArrowUpCircle className="h-4 w-4" />
+                                    <span>Deposit History</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <Link href="/admin/withdrawal-history" passHref onClick={handleLinkClick}>
+                                <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/withdrawal-history')}>
+                                    <ArrowDownCircle className="h-4 w-4" />
+                                    <span>Withdrawal History</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    </CollapsibleContent>
+                </Collapsible>
                <SidebarMenuItem>
                 <Link href="/admin/jodi-panel" passHref onClick={handleLinkClick}>
                     <SidebarMenuButton isActive={isActive('/admin/jodi-panel')} tooltip={{children: "Manage Jodi Chart"}}>
