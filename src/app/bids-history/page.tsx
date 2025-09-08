@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
@@ -31,11 +31,9 @@ interface AppSettings extends DocumentData {
     telegramLink?: string;
 }
 
-const ITEMS_PER_PAGE = 10;
-
 const BidCard = ({ bid }: { bid: Bid }) => {
-    const formatDate = (timestamp: Timestamp) => {
-        if (!timestamp) return 'N/A';
+    const formatDate = (timestamp: Timestamp | null | undefined) => {
+        if (!timestamp || !timestamp.seconds) return 'N/A';
         return new Date(timestamp.seconds * 1000).toLocaleString('en-GB', {
             day: '2-digit',
             month: '2-digit',
@@ -105,7 +103,6 @@ export default function BidsHistoryPage() {
     const [bids, setBids] = useState<Bid[]>([]);
     const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState<AppSettings>({});
-    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         if (authLoading) return;
@@ -146,41 +143,6 @@ export default function BidsHistoryPage() {
         };
     }, [user, authLoading, router]);
 
-    const totalPages = Math.ceil(bids.length / ITEMS_PER_PAGE);
-    
-    const paginatedBids = bids.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-    );
-    
-    const renderPagination = () => {
-        if (totalPages <= 1) return null;
-
-        return (
-            <div className="flex justify-center items-center mt-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                    >
-                        PREV
-                    </Button>
-                    <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                    >
-                        NEXT
-                    </Button>
-                </div>
-            </div>
-        )
-    }
-
 
     if (authLoading || loading) {
         return (
@@ -203,16 +165,15 @@ export default function BidsHistoryPage() {
                 </div>
             </header>
             <main className="max-w-4xl mx-auto p-4 sm:p-6 pb-28">
-                {paginatedBids.length > 0 ? (
+                {bids.length > 0 ? (
                     <div className="space-y-4">
-                        {paginatedBids.map(bid => <BidCard key={bid.id} bid={bid} />)}
+                        {bids.map(bid => <BidCard key={bid.id} bid={bid} />)}
                     </div>
                 ) : (
                     <div className="text-center py-10">
                          <p className="mt-4 text-muted-foreground">You haven't placed any bids yet.</p>
                     </div>
                 )}
-                 {renderPagination()}
             </main>
              <BottomNavbar settings={settings} />
         </div>
