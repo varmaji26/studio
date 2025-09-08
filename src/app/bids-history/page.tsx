@@ -147,10 +147,11 @@ export default function BidsHistoryPage() {
     }, [user, authLoading, router]);
 
     const totalPages = Math.ceil(bids.length / ITEMS_PER_PAGE);
-    const paginatedBids = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        return bids.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    }, [bids, currentPage]);
+    
+    const paginatedBids = bids.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
     
     const renderPagination = () => {
         if (totalPages <= 1) return null;
