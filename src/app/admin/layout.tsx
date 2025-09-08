@@ -409,14 +409,22 @@ export default function AdminLayout({
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link href="/admin/payment-history" passHref onClick={handleLinkClick}>
-                  <SidebarMenuButton isActive={isActive('/admin/payment-history')} tooltip={{children: "Payment History"}}>
-                    <CreditCard />
-                    <span>Payment History</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <Link href="/admin/deposit-history" passHref onClick={handleLinkClick}>
+                        <SidebarMenuButton isActive={isActive('/admin/deposit-history')} tooltip={{children: "Deposit History"}}>
+                            <ArrowUpCircle />
+                            <span>Deposit History</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <Link href="/admin/withdrawal-history" passHref onClick={handleLinkClick}>
+                        <SidebarMenuButton isActive={isActive('/admin/withdrawal-history')} tooltip={{children: "Withdrawal History"}}>
+                            <ArrowDownCircle />
+                            <span>Withdrawal History</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
                <SidebarMenuItem>
                 <Link href="/admin/jodi-panel" passHref onClick={handleLinkClick}>
                     <SidebarMenuButton isActive={isActive('/admin/jodi-panel')} tooltip={{children: "Manage Jodi Chart"}}>
