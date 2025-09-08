@@ -18,6 +18,7 @@ interface PanelChartData extends DocumentData {
   gameName: string;
   title: string;
   data: string;
+  activeDays?: string[];
 }
 
 const isRedNumber = (num: string) => {
@@ -55,6 +56,16 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     );
 };
 
+const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const dayAbbreviations: { [key: string]: string } = {
+    Monday: 'Mo',
+    Tuesday: 'Tue',
+    Wednesday: 'Wed',
+    Thursday: 'Thu',
+    Friday: 'Fri',
+    Saturday: 'Sat',
+    Sunday: 'Sun',
+};
 
 export default function PanelChartPage() {
     const params = useParams();
@@ -86,8 +97,11 @@ export default function PanelChartPage() {
 
         fetchChartData();
     }, [gameId]);
-    
-     const parsedRows = React.useMemo(() => {
+
+    const activeDays = chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
+    const dayIndices = activeDays.map(day => allDays.indexOf(day));
+
+    const parsedRows = React.useMemo(() => {
         if (!chartData?.data) return [];
         
         const dataString = chartData.data.replace(/\r/g, '');
@@ -100,9 +114,8 @@ export default function PanelChartPage() {
             const startDate = sections[i];
             const endDate = sections[i + 1];
 
-            // Add a check to prevent crash if sections are incomplete
             if (typeof startDate === 'undefined' || typeof endDate === 'undefined') {
-                continue; // Skip this iteration if data is malformed
+                continue;
             }
             
             const dataBlock = sections[i + 2] || '';
@@ -122,10 +135,11 @@ export default function PanelChartPage() {
                     daysData.push({ openPana: '***', jodi: '**', closePana: '***' });
                 }
             }
-            rows.push({ dateRange, daysData });
+            const filteredDaysData = dayIndices.map(index => daysData[index]);
+            rows.push({ dateRange, daysData: filteredDaysData });
         }
         return rows;
-    }, [chartData]);
+    }, [chartData, dayIndices]);
 
 
     if (!isClient || loading) {
@@ -157,14 +171,14 @@ export default function PanelChartPage() {
                                 </Link>
                             </Button>
                         </div>
-                        {chartData ? (
+                        {chartData && parsedRows.length > 0 ? (
                             <div className="overflow-x-auto border-2 border-yellow-600 bg-orange-100 p-1">
                                 <table className="w-full border-collapse">
                                     <thead className="text-[9px] sm:text-[10px]">
                                         <tr className="bg-blue-800 text-white font-bold">
                                             <th className="p-0.5 border border-yellow-600">Date</th>
-                                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                                                <th key={day} className="p-0.5 border border-yellow-600">{day}</th>
+                                            {activeDays.map(day => (
+                                                <th key={day} className="p-0.5 border border-yellow-600">{dayAbbreviations[day]}</th>
                                             ))}
                                         </tr>
                                     </thead>
