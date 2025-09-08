@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, ArrowDown, ArrowUp, Download, Calendar as CalendarIcon } from 'lucide-react';
+import { Search, ArrowDown, ArrowUp, Download, Calendar as CalendarIcon, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -128,6 +128,22 @@ export default function AdminPaymentHistoryPage() {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredTransactions, currentPage]);
+
+  const { totalDeposits, totalWithdrawals } = useMemo(() => {
+    return filteredTransactions.reduce(
+      (totals, transaction) => {
+        if (transaction.status === 'approved') {
+          if (transaction.type === 'deposit') {
+            totals.totalDeposits += transaction.amount;
+          } else if (transaction.type === 'withdrawal') {
+            totals.totalWithdrawals += transaction.amount;
+          }
+        }
+        return totals;
+      },
+      { totalDeposits: 0, totalWithdrawals: 0 }
+    );
+  }, [filteredTransactions]);
 
 
   useEffect(() => {
@@ -277,6 +293,28 @@ export default function AdminPaymentHistoryPage() {
             </div>
           </CardHeader>
           <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Deposits</CardTitle>
+                        <ArrowUpCircle className="h-4 w-4 text-green-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-500">₹{totalDeposits.toLocaleString('en-IN')}</div>
+                        <p className="text-xs text-muted-foreground">Based on selected filters (approved only)</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
+                        <ArrowDownCircle className="h-4 w-4 text-red-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-red-500">₹{totalWithdrawals.toLocaleString('en-IN')}</div>
+                         <p className="text-xs text-muted-foreground">Based on selected filters (approved only)</p>
+                    </CardContent>
+                </Card>
+            </div>
              <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <h3 className="text-xl font-semibold">All Transactions</h3>
                  <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
@@ -372,3 +410,4 @@ export default function AdminPaymentHistoryPage() {
       </div>
   );
 }
+
