@@ -109,7 +109,10 @@ export default function BidsHistoryPage() {
     const [currentPage, setCurrentPage] = useState(1);
     
     useEffect(() => {
-        if (authLoading) return;
+        if (authLoading) {
+            setLoading(true);
+            return;
+        }
         if (!user) {
             router.replace('/login');
             return;
@@ -123,10 +126,7 @@ export default function BidsHistoryPage() {
         );
 
         const unsubscribeBids = onSnapshot(bidsQuery, (querySnapshot) => {
-            const bidsData: Bid[] = [];
-            querySnapshot.forEach((doc) => {
-                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
-            });
+            const bidsData: Bid[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Bid));
             setBids(bidsData);
             setLoading(false);
         }, (error) => {
@@ -202,7 +202,7 @@ export default function BidsHistoryPage() {
                     </CardContent>
                 </Card>
 
-                {paginatedBids.length > 0 ? (
+                {bids.length > 0 ? (
                     <>
                         <div className="space-y-4">
                             {paginatedBids.map(bid => <BidCard key={bid.id} bid={bid} />)}
