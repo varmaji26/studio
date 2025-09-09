@@ -1,18 +1,19 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface Bid extends DocumentData {
     id: string;
@@ -30,6 +31,8 @@ interface AppSettings extends DocumentData {
     callSupportNumber?: string;
     telegramLink?: string;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 const BidCard = ({ bid }: { bid: Bid }) => {
     const formatDate = (timestamp: Timestamp | null | undefined) => {
@@ -103,6 +106,7 @@ export default function BidsHistoryPage() {
     const [bids, setBids] = useState<Bid[]>([]);
     const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState<AppSettings>({});
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         if (authLoading) return;
@@ -142,7 +146,29 @@ export default function BidsHistoryPage() {
             unsubscribeSettings();
         };
     }, [user, authLoading, router]);
+    
+    const totalBiddingAmount = useMemo(() => {
+        return bids.reduce((acc, bid) => acc + (bid.totalAmount || 0), 0);
+    }, [bids]);
 
+    const totalPages = Math.ceil(bids.length / ITEMS_PER_PAGE);
+    const paginatedBids = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return bids.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [bids, currentPage]);
+
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+        return (
+            <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
+                <div>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</Button>
+                </div>
+            </div>
+        );
+    };
 
     if (authLoading || loading) {
         return (
@@ -165,10 +191,24 @@ export default function BidsHistoryPage() {
                 </div>
             </header>
             <main className="max-w-4xl mx-auto p-4 sm:p-6 pb-28">
+                <Card className="mb-6 bg-card/80 border-white/10 shadow-lg">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Bidding Amount</CardTitle>
+                        <Wallet className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">₹{totalBiddingAmount.toLocaleString('en-IN')}</div>
+                        <p className="text-xs text-muted-foreground">The sum of all your bids</p>
+                    </CardContent>
+                </Card>
+
                 {bids.length > 0 ? (
-                    <div className="space-y-4">
-                        {bids.map(bid => <BidCard key={bid.id} bid={bid} />)}
-                    </div>
+                    <>
+                        <div className="space-y-4">
+                            {paginatedBids.map(bid => <BidCard key={bid.id} bid={bid} />)}
+                        </div>
+                        {renderPagination()}
+                    </>
                 ) : (
                     <div className="text-center py-10">
                          <p className="mt-4 text-muted-foreground">You haven't placed any bids yet.</p>
