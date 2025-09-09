@@ -35,11 +35,11 @@ import { Separator } from './ui/separator';
 const balanceSchema = z.object({
   balanceAmount: z.preprocess(
     (a) => (a === '' ? 0 : parseInt(z.string().parse(a), 10)),
-    z.number().int('Amount must be an integer.').optional()
+    z.number().int('Amount must be an integer.')
   ),
   bonusAmount: z.preprocess(
     (a) => (a === '' ? 0 : parseInt(z.string().parse(a), 10)),
-    z.number().int('Amount must be an integer.').optional()
+    z.number().int('Amount must be an integer.')
   ),
 });
 
@@ -105,21 +105,25 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
                 }
                 
                 transaction.update(userDocRef, {
-                    bonusBalance: increment(bonusAmount),
-                    totalBonusGiven: increment(bonusAmount > 0 ? bonusAmount : 0),
-                    totalBonusUsed: increment(bonusAmount < 0 ? Math.abs(bonusAmount) : 0),
+                    bonusBalance: increment(bonusAmount)
                 });
                 
-                const newBonusTransactionRef = doc(bonusTransactionsCollectionRef);
-                transaction.set(newBonusTransactionRef, {
-                    userId: user.id,
-                    displayName: user.displayName,
-                    mobile: user.mobile,
-                    amount: Math.abs(bonusAmount),
-                    type: bonusAmount > 0 ? 'Given' : 'Used',
-                    description: `Admin ${bonusAmount > 0 ? 'added' : 'removed'} bonus.`,
-                    createdAt: serverTimestamp(),
-                });
+                // Only create a transaction record if the bonus is being GIVEN by admin
+                if (bonusAmount > 0) {
+                    const newBonusTransactionRef = doc(bonusTransactionsCollectionRef);
+                    transaction.set(newBonusTransactionRef, {
+                        userId: user.id,
+                        displayName: user.displayName,
+                        mobile: user.mobile,
+                        amount: Math.abs(bonusAmount),
+                        type: 'Given',
+                        description: 'Admin added bonus.',
+                        createdAt: serverTimestamp(),
+                    });
+                     transaction.update(userDocRef, {
+                        totalBonusGiven: increment(bonusAmount)
+                    });
+                }
             }
         });
 
