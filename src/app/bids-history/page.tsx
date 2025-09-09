@@ -11,8 +11,6 @@ import { ArrowLeft, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { BottomNavbar } from '@/components/bottom-navbar';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Bid extends DocumentData {
@@ -44,57 +42,46 @@ const BidCard = ({ bid }: { bid: Bid }) => {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true,
-        });
+        }).replace(/,/g, '');
     };
     
-    const getStatusBadgeVariant = (status: string) => {
+    const getStatusMessage = (status: string) => {
         switch (status) {
-            case 'won': return 'secondary';
-            case 'lost': return 'destructive';
-            case 'cancelled': return 'outline';
+            case 'won': return '🎉 You Won! 🎉';
+            case 'lost': return 'Better luck next time';
+            case 'cancelled': return 'Bid Cancelled';
             case 'running':
             default:
-                return 'default';
+                return 'Best of luck ⏳';
         }
     };
 
     return (
-        <div className="bg-card/90 rounded-lg shadow-md overflow-hidden border border-white/10">
-            <div className="bg-teal-800 text-white text-center py-2">
-                <h3 className="font-bold">{bid.gameName} ({bid.session})</h3>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 text-black">
+            <div className="bg-[#004D40] text-white text-center py-2">
+                <h3 className="font-bold">{bid.gameName.toUpperCase()} ({bid.session.toUpperCase()})</h3>
             </div>
             <div className="p-4">
                 <div className="grid grid-cols-3 text-center text-sm">
                     <div>
-                        <p className="text-muted-foreground">Game Type</p>
-                        <p className="font-semibold text-foreground">{bid.betType}</p>
+                        <p className="text-gray-500">Game Type</p>
+                        <p className="font-semibold">{bid.betType}</p>
                     </div>
                     <div>
-                        <p className="text-muted-foreground">Digit</p>
-                        <p className="font-semibold text-foreground">{bid.numbers.join(', ')}</p>
+                        <p className="text-gray-500">Digit</p>
+                        <p className="font-semibold">{bid.numbers.join(', ')}</p>
                     </div>
                     <div>
-                        <p className="text-muted-foreground">Points</p>
-                        <p className="font-semibold text-foreground">{bid.totalAmount}</p>
+                        <p className="text-gray-500">Points</p>
+                        <p className="font-semibold">{bid.totalAmount}</p>
                     </div>
                 </div>
             </div>
-            <div className="border-t border-white/10 px-4 py-2 text-center text-xs text-muted-foreground">
+            <div className="border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-500">
                 Transaction: {formatDate(bid.createdAt)}
             </div>
-            <div className="border-t border-white/10 px-4 py-2 text-center">
-                 <Badge 
-                    variant={getStatusBadgeVariant(bid.status)}
-                    className={cn(
-                        'capitalize',
-                        bid.status === 'won' && 'bg-green-500 text-white',
-                        bid.status === 'lost' && 'bg-red-500 text-white',
-                        bid.status === 'running' && 'bg-orange-500 text-white',
-                        bid.status === 'cancelled' && 'border-yellow-500 text-yellow-500',
-                    )}
-                >
-                    {bid.status}
-                </Badge>
+            <div className="border-t border-gray-200 px-4 py-2 text-center font-semibold text-orange-500">
+                 {getStatusMessage(bid.status)}
             </div>
         </div>
     );
