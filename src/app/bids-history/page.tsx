@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, getDocs, orderBy, DocumentData, Timestamp, doc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, DocumentData, Timestamp, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { ArrowLeft, Wallet } from 'lucide-react';
@@ -107,42 +107,45 @@ export default function BidsHistoryPage() {
     const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState<AppSettings>({});
     const [currentPage, setCurrentPage] = useState(1);
-
-    const fetchBidsAndSettings = useCallback(async (uid: string) => {
-        setLoading(true);
-        try {
-            const bidsQuery = query(
-                collection(db, 'bids'),
-                where('userId', '==', uid),
-                orderBy('createdAt', 'desc')
-            );
-            const querySnapshot = await getDocs(bidsQuery);
-            const bidsData: Bid[] = [];
-            querySnapshot.forEach((doc) => {
-                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
-            });
-            setBids(bidsData);
-            
-            const settingsDocRef = doc(db, 'settings', 'app-settings');
-            const settingsDoc = await getDoc(settingsDocRef);
-            if (settingsDoc.exists()) {
-                setSettings(settingsDoc.data() as AppSettings);
-            }
-        } catch (error) {
-            console.error("Error fetching data: ", error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
+    
     useEffect(() => {
         if (authLoading) return;
         if (!user) {
             router.replace('/login');
             return;
         }
-        fetchBidsAndSettings(user.uid);
-    }, [user, authLoading, router, fetchBidsAndSettings]);
+
+        setLoading(true);
+        const bidsQuery = query(
+            collection(db, 'bids'),
+            where('userId', '==', user.uid),
+            orderBy('createdAt', 'desc')
+        );
+
+        const unsubscribeBids = onSnapshot(bidsQuery, (querySnapshot) => {
+            const bidsData: Bid[] = [];
+            querySnapshot.forEach((doc) => {
+                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
+            });
+            setBids(bidsData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching bids: ", error);
+            setLoading(false);
+        });
+
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setSettings(docSnap.data() as AppSettings);
+            }
+        });
+
+        return () => {
+            unsubscribeBids();
+            unsubscribeSettings();
+        };
+    }, [user, authLoading, router]);
     
     const totalBiddingAmount = useMemo(() => {
         return bids.reduce((acc, bid) => acc + (bid.totalAmount || 0), 0);
