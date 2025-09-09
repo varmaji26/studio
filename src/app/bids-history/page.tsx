@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, orderBy, DocumentData, Timestamp, doc, onSnapshot } from 'firebase/firestore';
@@ -114,16 +114,12 @@ export default function BidsHistoryPage() {
         }
     }, [user, authLoading, router]);
 
-    useEffect(() => {
-        if (!user) {
-            setLoadingData(true);
-            return;
-        };
-
+    const fetchBidsAndSettings = useCallback((userId: string) => {
         setLoadingData(true);
+        
         const bidsQuery = query(
             collection(db, 'bids'),
-            where('userId', '==', user.uid),
+            where('userId', '==', userId),
             orderBy('createdAt', 'desc')
         );
 
@@ -147,7 +143,15 @@ export default function BidsHistoryPage() {
             unsubscribeBids();
             unsubscribeSettings();
         };
-    }, [user]);
+    }, []);
+
+    useEffect(() => {
+        if (user?.uid) {
+            return fetchBidsAndSettings(user.uid);
+        } else if (!authLoading) {
+            setLoadingData(false); // No user, so not loading
+        }
+    }, [user?.uid, authLoading, fetchBidsAndSettings]);
     
     const totalBiddingAmount = useMemo(() => {
         return bids.reduce((acc, bid) => acc + (bid.totalAmount || 0), 0);
@@ -204,7 +208,7 @@ export default function BidsHistoryPage() {
                     </CardContent>
                 </Card>
 
-                {paginatedBids.length > 0 ? (
+                {bids.length > 0 ? (
                     <>
                         <div className="space-y-4">
                             {paginatedBids.map(bid => <BidCard key={bid.id} bid={bid} />)}
