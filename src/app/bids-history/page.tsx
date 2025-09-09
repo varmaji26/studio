@@ -104,21 +104,23 @@ export default function BidsHistoryPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [bids, setBids] = useState<Bid[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingData, setLoadingData] = useState(true);
     const [settings, setSettings] = useState<AppSettings>({});
     const [currentPage, setCurrentPage] = useState(1);
     
     useEffect(() => {
-        if (authLoading) {
-            setLoading(true);
-            return;
-        }
-        if (!user) {
+        if (!authLoading && !user) {
             router.replace('/login');
-            return;
         }
+    }, [user, authLoading, router]);
 
-        setLoading(true);
+    useEffect(() => {
+        if (!user) {
+            setLoadingData(true);
+            return;
+        };
+
+        setLoadingData(true);
         const bidsQuery = query(
             collection(db, 'bids'),
             where('userId', '==', user.uid),
@@ -128,10 +130,10 @@ export default function BidsHistoryPage() {
         const unsubscribeBids = onSnapshot(bidsQuery, (querySnapshot) => {
             const bidsData: Bid[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Bid));
             setBids(bidsData);
-            setLoading(false);
+            setLoadingData(false);
         }, (error) => {
             console.error("Error fetching bids: ", error);
-            setLoading(false);
+            setLoadingData(false);
         });
 
         const settingsDocRef = doc(db, 'settings', 'app-settings');
@@ -145,7 +147,7 @@ export default function BidsHistoryPage() {
             unsubscribeBids();
             unsubscribeSettings();
         };
-    }, [user, authLoading, router]);
+    }, [user]);
     
     const totalBiddingAmount = useMemo(() => {
         return bids.reduce((acc, bid) => acc + (bid.totalAmount || 0), 0);
@@ -170,7 +172,7 @@ export default function BidsHistoryPage() {
         );
     };
 
-    if (authLoading || loading) {
+    if (authLoading || loadingData) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
