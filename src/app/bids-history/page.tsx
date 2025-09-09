@@ -202,7 +202,7 @@ export default function BidsHistoryPage() {
                     </CardContent>
                 </Card>
 
-                {bids.length > 0 ? (
+                {paginatedBids.length > 0 ? (
                     <>
                         <div className="space-y-4">
                             {paginatedBids.map(bid => <BidCard key={bid.id} bid={bid} />)}
