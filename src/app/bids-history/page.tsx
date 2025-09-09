@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, DocumentData, Timestamp, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { ArrowLeft, Wallet } from 'lucide-react';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Bid extends DocumentData {
     id: string;
@@ -59,30 +59,30 @@ const BidCard = ({ bid }: { bid: Bid }) => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-            <div className="bg-[#004D40] text-white text-center py-2">
+        <div className="bg-card/90 rounded-lg shadow-md overflow-hidden border border-white/10">
+            <div className="bg-teal-800 text-white text-center py-2">
                 <h3 className="font-bold">{bid.gameName} ({bid.session})</h3>
             </div>
             <div className="p-4">
                 <div className="grid grid-cols-3 text-center text-sm">
                     <div>
-                        <p className="text-gray-500">Game Type</p>
-                        <p className="font-semibold text-black">{bid.betType}</p>
+                        <p className="text-muted-foreground">Game Type</p>
+                        <p className="font-semibold text-foreground">{bid.betType}</p>
                     </div>
                     <div>
-                        <p className="text-gray-500">Digit</p>
-                        <p className="font-semibold text-black">{bid.numbers.join(', ')}</p>
+                        <p className="text-muted-foreground">Digit</p>
+                        <p className="font-semibold text-foreground">{bid.numbers.join(', ')}</p>
                     </div>
                     <div>
-                        <p className="text-gray-500">Points</p>
-                        <p className="font-semibold text-black">{bid.totalAmount}</p>
+                        <p className="text-muted-foreground">Points</p>
+                        <p className="font-semibold text-foreground">{bid.totalAmount}</p>
                     </div>
                 </div>
             </div>
-            <div className="border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-600">
+            <div className="border-t border-white/10 px-4 py-2 text-center text-xs text-muted-foreground">
                 Transaction: {formatDate(bid.createdAt)}
             </div>
-            <div className="border-t border-gray-200 px-4 py-2 text-center">
+            <div className="border-t border-white/10 px-4 py-2 text-center">
                  <Badge 
                     variant={getStatusBadgeVariant(bid.status)}
                     className={cn(
@@ -108,44 +108,41 @@ export default function BidsHistoryPage() {
     const [settings, setSettings] = useState<AppSettings>({});
     const [currentPage, setCurrentPage] = useState(1);
 
+    const fetchBidsAndSettings = useCallback(async (uid: string) => {
+        setLoading(true);
+        try {
+            const bidsQuery = query(
+                collection(db, 'bids'),
+                where('userId', '==', uid),
+                orderBy('createdAt', 'desc')
+            );
+            const querySnapshot = await getDocs(bidsQuery);
+            const bidsData: Bid[] = [];
+            querySnapshot.forEach((doc) => {
+                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
+            });
+            setBids(bidsData);
+            
+            const settingsDocRef = doc(db, 'settings', 'app-settings');
+            const settingsDoc = await getDoc(settingsDocRef);
+            if (settingsDoc.exists()) {
+                setSettings(settingsDoc.data() as AppSettings);
+            }
+        } catch (error) {
+            console.error("Error fetching data: ", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (authLoading) return;
         if (!user) {
             router.replace('/login');
             return;
         }
-        
-        setLoading(true);
-        const bidsQuery = query(
-            collection(db, 'bids'),
-            where('userId', '==', user.uid),
-            orderBy('createdAt', 'desc')
-        );
-
-        const unsubscribeBids = onSnapshot(bidsQuery, (querySnapshot) => {
-            const bidsData: Bid[] = [];
-            querySnapshot.forEach((doc) => {
-                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
-            });
-            setBids(bidsData);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching bids history: ", error);
-            setLoading(false);
-        });
-        
-        const settingsDocRef = doc(db, 'settings', 'app-settings');
-        const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                setSettings(docSnap.data() as AppSettings);
-            }
-        });
-
-        return () => {
-            unsubscribeBids();
-            unsubscribeSettings();
-        };
-    }, [user, authLoading, router]);
+        fetchBidsAndSettings(user.uid);
+    }, [user, authLoading, router, fetchBidsAndSettings]);
     
     const totalBiddingAmount = useMemo(() => {
         return bids.reduce((acc, bid) => acc + (bid.totalAmount || 0), 0);
