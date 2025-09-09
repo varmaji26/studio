@@ -134,7 +134,8 @@ export default function BidsHistoryPage() {
 
     useEffect(() => {
         if (user?.uid) {
-            return fetchBidsAndSettings(user.uid);
+            const cleanup = fetchBidsAndSettings(user.uid);
+            return () => cleanup();
         } else if (!authLoading) {
             setLoadingData(false); // No user, so not loading
         }
@@ -195,7 +196,7 @@ export default function BidsHistoryPage() {
                     </CardContent>
                 </Card>
 
-                {bids.length > 0 ? (
+                {paginatedBids.length > 0 ? (
                     <>
                         <div className="space-y-4">
                             {paginatedBids.map(bid => <BidCard key={bid.id} bid={bid} />)}
