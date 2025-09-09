@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { DocumentData } from 'firebase/firestore';
 import { Separator } from './ui/separator';
+import { RotateCcw } from 'lucide-react';
 
 const balanceSchema = z.object({
   balanceAmount: z.preprocess(
@@ -53,7 +54,7 @@ interface UpdateBalanceDialogProps {
 export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [submittingType, setSubmittingType] = useState<'real' | 'bonus' | null>(null);
+  const [submittingType, setSubmittingType] = useState<'real' | 'bonus' | 'zero' | null>(null);
 
   const form = useForm<BalanceFormValues>({
     resolver: zodResolver(balanceSchema),
@@ -63,9 +64,9 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
     },
   });
 
-  const handleUpdate = async (type: 'real' | 'bonus') => {
+  const handleUpdate = async (type: 'real' | 'bonus', amount?: number) => {
     const values = form.getValues();
-    const balanceAmount = values.balanceAmount || 0;
+    const balanceAmount = amount ?? (values.balanceAmount || 0);
     const bonusAmount = values.bonusAmount || 0;
 
     if (type === 'real' && balanceAmount === 0) {
@@ -108,7 +109,6 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
                     bonusBalance: increment(bonusAmount)
                 });
                 
-                // Only create a transaction record if the bonus is being GIVEN by admin
                 if (bonusAmount > 0) {
                     const newBonusTransactionRef = doc(bonusTransactionsCollectionRef);
                     transaction.set(newBonusTransactionRef, {
@@ -150,6 +150,17 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
         setSubmittingType(null);
     }
   };
+  
+  const handleSetToZero = async () => {
+    const currentBalance = user.balance || 0;
+    if (currentBalance === 0) {
+      toast({ title: 'No change', description: 'Balance is already zero.' });
+      return;
+    }
+    const amountToAdjust = -currentBalance;
+    setSubmittingType('zero');
+    await handleUpdate('real', amountToAdjust);
+  };
 
 
   return (
@@ -179,10 +190,16 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
                     </FormItem>
                   )}
                 />
-                 <Button onClick={() => handleUpdate('real')} disabled={!!submittingType} className="w-full">
-                    {submittingType === 'real' ? <Loader className="mr-2" /> : null}
-                    Update Real Balance
-                </Button>
+                 <div className="flex flex-col sm:flex-row gap-2">
+                    <Button type="button" onClick={() => handleUpdate('real')} disabled={!!submittingType} className="w-full">
+                        {submittingType === 'real' ? <Loader className="mr-2" /> : null}
+                        Update Real Balance
+                    </Button>
+                    <Button type="button" variant="destructive" onClick={handleSetToZero} disabled={!!submittingType} className="w-full sm:w-auto">
+                        {submittingType === 'zero' ? <Loader className="mr-2" /> : <RotateCcw />}
+                        Set to Zero
+                    </Button>
+                </div>
             </div>
             <Separator />
             <div className="rounded-md border p-4 space-y-4">
@@ -200,7 +217,7 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
                     </FormItem>
                   )}
                 />
-                 <Button onClick={() => handleUpdate('bonus')} disabled={!!submittingType} className="w-full">
+                 <Button type="button" onClick={() => handleUpdate('bonus')} disabled={!!submittingType} className="w-full">
                     {submittingType === 'bonus' ? <Loader className="mr-2" /> : null}
                     Update Bonus Balance
                 </Button>
