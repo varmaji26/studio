@@ -269,13 +269,13 @@ export default function UpdateResultsClosePage() {
 
         bidsSnapshot.forEach(bidDoc => {
             const bid = bidDoc.data();
-            if (bid.status === 'won' && (bid.session === 'Close' || bid.betType === 'Jodi Digit')) {
-                const userDocRef = doc(db, 'users', bid.userId);
-                batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
-                batch.update(bidDoc.ref, { status: 'running', winningAmount: null });
-            } else if (bid.status === 'lost') {
-                // We also need to revert 'lost' bids that were not for the 'Open' session
-                if(bid.session !== 'Open') {
+            // Revert bids that were decided by the close result
+            if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
+                 if (bid.status === 'won') {
+                    const userDocRef = doc(db, 'users', bid.userId);
+                    batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                    batch.update(bidDoc.ref, { status: 'running', winningAmount: null });
+                } else if (bid.status === 'lost') {
                     batch.update(bidDoc.ref, { status: 'running' });
                 }
             }
