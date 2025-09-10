@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, signInWithCustomToken } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, runTransaction, increment } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,6 @@ import { Loader } from './loader';
 import { User, Phone, KeyRound, Eye, EyeOff } from 'lucide-react';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { signInWithEmailAndPassword as clientSignIn } from 'firebase/auth';
 
 const formSchema = z.object({
   username: z.string().optional(),
@@ -65,7 +64,6 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     try {
       if (mode === 'signup') {
-        // Use Firebase Auth REST API for signup to bypass referer checks
         const signupResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${WEB_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -73,15 +71,15 @@ export function AuthForm({ mode }: AuthFormProps) {
         });
         const signupData = await signupResponse.json();
 
-        if (!signupResponse.ok) {
+        if (!signupResponse.ok || signupData.error) {
             throw new Error(signupData.error.message || 'Signup failed.');
         }
 
         const user = { uid: signupData.localId };
         const displayName = values.username!;
         
-        // Now sign in the user on the client to get the session
-        await clientSignIn(auth, email, password);
+        // After successful signup via REST, sign in using the token
+        await signInWithCustomToken(auth, signupData.idToken);
 
         const userDocRef = doc(db, 'users', user.uid);
         const statsDocRef = doc(db, 'app-stats', 'dashboard');
@@ -106,9 +104,19 @@ export function AuthForm({ mode }: AuthFormProps) {
         toast({ title: 'Account Created!', description: 'You have been successfully signed up.' });
         router.push('/');
 
-      } else {
-        // For login, we can try the client-side SDK directly.
-        await clientSignIn(auth, email, password);
+      } else { // Login mode
+        const loginResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${WEB_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, returnSecureToken: true }),
+        });
+        const loginData = await loginResponse.json();
+
+        if (!loginResponse.ok || loginData.error) {
+            throw new Error(loginData.error.message || 'Login failed.');
+        }
+
+        await signInWithCustomToken(auth, loginData.idToken);
         toast({ title: 'Login Successful!', description: 'Welcome back!' });
         router.push('/');
       }
@@ -121,8 +129,6 @@ export function AuthForm({ mode }: AuthFormProps) {
           errorMessage = 'This mobile number is already registered.';
       } else if (errorCode.includes('INVALID_LOGIN_CREDENTIALS')) {
           errorMessage = 'Invalid mobile number or password.';
-      } else if (errorCode.includes('auth/invalid-credential')) {
-           errorMessage = 'Invalid mobile number or password.';
       }
 
       toast({
