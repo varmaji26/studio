@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -36,8 +36,7 @@ export default function ForgotPasswordPage() {
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
 
-  // Setup reCAPTCHA
-  useEffect(() => {
+  const setupRecaptcha = () => {
     const auth = getAuth(app);
     // Ensure the container is empty before initializing
     const recaptchaContainer = document.getElementById('recaptcha-container');
@@ -45,18 +44,18 @@ export default function ForgotPasswordPage() {
         recaptchaContainer.innerHTML = '';
     }
     
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'invisible',
-      'callback': (response: any) => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
-        console.log("reCAPTCHA solved");
-      }
-    });
-
-    return () => {
-      window.recaptchaVerifier?.clear();
-    };
-  }, []);
+    // Check if verifier already exists to avoid re-creation
+    if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            'size': 'invisible',
+            'callback': (response: any) => {
+                // reCAPTCHA solved, allow signInWithPhoneNumber.
+                console.log("reCAPTCHA solved, automatically submitting form");
+            }
+        });
+    }
+    return window.recaptchaVerifier;
+  };
 
   // Step 1: Send OTP
   const onMobileSubmit = async (values: z.infer<typeof mobileSchema>) => {
@@ -78,7 +77,7 @@ export default function ForgotPasswordPage() {
 
       const auth = getAuth(app);
       const phoneNumber = `+91${values.mobile}`;
-      const appVerifier = window.recaptchaVerifier;
+      const appVerifier = setupRecaptcha();
 
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       setConfirmationResult(confirmation);
