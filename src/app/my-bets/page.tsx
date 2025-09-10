@@ -245,8 +245,8 @@ export default function BidsHistoryPage() {
                         <CardTitle className="text-2xl sm:text-3xl">Bids History</CardTitle>
                         <CardDescription>View all your past and current bids here.</CardDescription>
                          <div className="pt-4">
-                            <Button asChild variant="ghost" className="pl-0">
-                                <Link href="/" className="inline-flex items-center gap-2 text-sm text-green-500 hover:underline">
+                            <Button asChild className="w-full bg-green-500 text-white hover:bg-green-600">
+                                <Link href="/" className="inline-flex items-center gap-2">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
                                 </Link>
