@@ -13,7 +13,6 @@ import {
   LineChart,
   History,
   Trophy,
-  KeyRound,
   ArrowUpCircle,
   ArrowDownCircle,
   ClipboardList,
