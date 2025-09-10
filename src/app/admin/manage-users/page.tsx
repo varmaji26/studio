@@ -30,6 +30,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { ChangePasswordDialog } from '@/components/change-password-dialog';
 
 const UpdateBalanceDialog = dynamic(() => import('@/components/update-balance-dialog'), {
   ssr: false,
@@ -344,10 +345,13 @@ export default function ManageUsersPage() {
                                     </TableCell>
                                     <TableCell>{formatDate(user.createdAt)}</TableCell>
                                     <TableCell className="text-right">
-                                        <div className="flex gap-2 justify-end">
+                                        <div className="flex flex-wrap gap-2 justify-end">
                                             <UpdateBalanceDialog user={user}>
-                                                <Button size="sm" variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400">Add/Remove Balance</Button>
+                                                <Button size="sm" variant="outline">Balance</Button>
                                             </UpdateBalanceDialog>
+                                            <ChangePasswordDialog user={user}>
+                                                <Button size="sm" variant="outline">Password</Button>
+                                            </ChangePasswordDialog>
                                              <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                    <Button size="sm" variant={user.isBlocked ? 'secondary' : 'destructive'}>

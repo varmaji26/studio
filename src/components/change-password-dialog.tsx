@@ -5,8 +5,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -28,58 +26,45 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
+import { updateUserPassword } from '@/actions/update-user-password';
+import type { DocumentData } from 'firebase/firestore';
 
 const passwordSchema = z.object({
-    currentPassword: z.string().min(1, 'Current password is required.'),
-    newPassword: z.string().min(6, 'Password must be at least 6 characters.'),
-    confirmPassword: z.string(),
-}).refine(data => data.newPassword === data.confirmPassword, {
-    message: "New passwords don't match",
-    path: ["confirmPassword"],
+    newPassword: z.string().min(6, 'Password must be at least 6 characters long.'),
 });
 
+type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 interface ChangePasswordDialogProps {
   children: React.ReactNode;
-  mobileNumber: string;
+  user: DocumentData;
 }
 
-export function ChangePasswordDialog({ children, mobileNumber }: ChangePasswordDialogProps) {
+export function ChangePasswordDialog({ children, user }: ChangePasswordDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<z.infer<typeof passwordSchema>>({
+  const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
-    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
+    defaultValues: { newPassword: '' },
   });
 
-  const onSubmit = async (values: z.infer<typeof passwordSchema>) => {
-    const user = auth.currentUser;
-    if (!user || !user.email) {
-        toast({ variant: 'destructive', title: 'Error', description: 'User not found. Please log in again.' });
-        return;
-    }
+  const onSubmit = async (values: PasswordFormValues) => {
     setIsSubmitting(true);
     try {
-      // Re-authenticate the user first for security
-      const credential = EmailAuthProvider.credential(user.email, values.currentPassword);
-      await reauthenticateWithCredential(user, credential);
+      const result = await updateUserPassword({ uid: user.id, newPassword: values.newPassword });
       
-      // If re-authentication is successful, update the password
-      await updatePassword(user, values.newPassword);
-      
-      toast({ title: 'Success!', description: 'Your password has been changed successfully.' });
-      setOpen(false);
-      form.reset();
-
+      if (result.success) {
+        toast({ title: 'Success!', description: `Password for ${user.displayName} has been changed successfully.` });
+        setOpen(false);
+        form.reset();
+      } else {
+        throw new Error(result.message);
+      }
     } catch (error: any) {
       console.error('Error updating password:', error);
-      let errorMessage = 'Failed to update password. Please try again.';
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMessage = 'The current password you entered is incorrect.';
-      }
-      toast({ variant: 'destructive', title: 'Error', description: errorMessage });
+      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to update password.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -90,58 +75,31 @@ export function ChangePasswordDialog({ children, mobileNumber }: ChangePasswordD
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Change Password</DialogTitle>
-           <DialogDescription>
-            Enter your current password and a new password below.
+          <DialogTitle>Change Password for {user.displayName}</DialogTitle>
+          <DialogDescription>
+            Enter a new password for this user below.
           </DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
-                control={form.control}
-                name="currentPassword"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Current Password</FormLabel>
-                    <FormControl>
-                        <Input type="password" placeholder="Enter your current password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="newPassword"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>New Password</FormLabel>
-                    <FormControl>
-                        <Input type="password" placeholder="Enter new password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                    <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Confirm New Password</FormLabel>
-                    <FormControl>
-                        <Input type="password" placeholder="Confirm new password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+                    control={form.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                            <Input type="password" placeholder="Enter new password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
                 />
                 <DialogFooter>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? <Loader className="mr-2" /> : null}
-                    Update Password
-                </Button>
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader className="mr-2" /> : null}
+                        Update Password
+                    </Button>
                 </DialogFooter>
             </form>
         </Form>
