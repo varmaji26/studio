@@ -96,7 +96,7 @@ const BidCard = ({ bid }: { bid: Bid }) => {
                         bid.status === 'cancelled' && 'border-yellow-500 text-yellow-500',
                     )}
                 >
-                    {bid.status === 'lost' ? 'Best of luck' : bid.status}
+                    {bid.status}
                 </Badge>
             </div>
         </div>
