@@ -1,21 +1,23 @@
-
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { auth, signInWithCustomToken } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment } from 'firebase/firestore';
+
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
-import { User, Phone, KeyRound, Eye, EyeOff } from 'lucide-react';
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { signIn, signUp } from '@/actions/auth-actions';
+import { Eye, EyeOff, User, Phone, KeyRound } from 'lucide-react';
+import React from 'react';
 
 const formSchema = z.object({
   username: z.string().optional(),
@@ -30,8 +32,7 @@ type AuthFormProps = {
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(
@@ -55,45 +56,79 @@ export function AuthForm({ mode }: AuthFormProps) {
     },
   });
 
+  const {
+    formState: { isSubmitting },
+  } = form;
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true);
-    const { mobile, password, username } = values;
-
     try {
-      let response;
+      const email = `${values.mobile.replace(/\s/g, '')}@authcanvas.dev`;
+
       if (mode === 'signup') {
-        if (!username) throw new Error("Username is required for signup.");
-        response = await signUp({ mobile, password, username });
-      } else {
-        response = await signIn({ mobile, password });
-      }
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      if (response.token) {
-        await signInWithCustomToken(auth, response.token);
-        toast({ title: `${mode === 'login' ? 'Login' : 'Signup'} Successful!`, description: 'Welcome!' });
-        router.push('/');
-      } else {
-        throw new Error("Authentication failed: No token received.");
-      }
-
-    } catch (error: any) {
-        console.error(`Error during ${mode}:`, error);
-        toast({
-            variant: 'destructive',
-            title: `${mode === 'login' ? 'Login' : 'Signup'} Failed`,
-            description: error.message || 'An unexpected error occurred. Please try again.',
+        if (!values.username) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Failed',
+                description: 'Please enter a username.',
+            });
+            return;
+        }
+        const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
+        await updateProfile(userCredential.user, {
+            displayName: values.username
         });
-    } finally {
-      setIsSubmitting(false);
+        
+        const userDocRef = doc(db, "users", userCredential.user.uid);
+        
+        // Save user data
+        await setDoc(userDocRef, {
+            uid: userCredential.user.uid,
+            displayName: values.username,
+            mobile: values.mobile,
+            email: email,
+            balance: 0,
+            bonusBalance: 0,
+            totalBonusGiven: 0,
+            isAdmin: false,
+            isBlocked: false,
+            createdAt: serverTimestamp(),
+        });
+
+      } else {
+        const userCredential = await signInWithEmailAndPassword(auth, email, values.password);
+        const user = userCredential.user;
+        
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists() && userDoc.data().isBlocked) {
+            await auth.signOut();
+            throw new Error("Your account has been blocked. Please contact support.");
+        }
+      }
+      router.push('/');
+    } catch (error: any) {
+      console.error(error);
+      let errorMessage = error.message || 'An unexpected error occurred.';
+      if (error.code === 'auth/invalid-email') {
+          errorMessage = 'Please enter a valid mobile number.';
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+          errorMessage = 'Invalid mobile number or password.';
+      } else if (error.code === 'auth/email-already-in-use') {
+          errorMessage = 'An account with this mobile number already exists.';
+      }
+      
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Failed',
+        description: errorMessage,
+      });
     }
   };
 
   const title = mode === 'login' ? 'Welcome Back' : 'Create an Account';
   const description = mode === 'login' ? 'Sign in using your mobile number and password' : 'Enter your details to get started.';
+  const buttonText = mode === 'login' ? 'Sign In' : 'Create Account';
   const switchLinkText = mode === 'login' ? "Don't have an account?" : 'Already have an account?';
   const switchLinkHref = mode === 'login' ? '/signup' : '/login';
 
@@ -103,87 +138,82 @@ export function AuthForm({ mode }: AuthFormProps) {
         <CardTitle className="text-3xl font-bold text-white">{title}</CardTitle>
         <CardDescription className="text-gray-400">{description}</CardDescription>
       </CardHeader>
-      
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6">
-                {mode === 'signup' && (
-                    <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="text-white">Username</FormLabel>
-                        <FormControl>
-                            <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                            <Input placeholder="Enter your username" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
-                            </div>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-6">
+            {mode === 'signup' && (
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-white">Username</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input placeholder="Enter your username" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                <FormField
-                    control={form.control}
-                    name="mobile"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="text-white">Mobile Number</FormLabel>
-                        <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                            <FormControl>
-                                <Input type="tel" placeholder="Enter your mobile number" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" maxLength={10} />
-                            </FormControl>
-                        </div>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="text-white">Password</FormLabel>
-                            <div className="relative">
-                                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                <FormControl>
-                                    <Input 
-                                        type={showPassword ? 'text' : 'password'}
-                                        placeholder="Enter your password" 
-                                        {...field} 
-                                        className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10 pr-10" 
-                                    />
-                                </FormControl>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
-                                >
-                                    {showPassword ? <EyeOff /> : <Eye />}
-                                </button>
-                            </div>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </CardContent>
-            <CardFooter className="flex flex-col pt-2 px-6 pb-6">
-              <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-orange-400 text-black hover:bg-orange-500" disabled={isSubmitting}>
-                {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
-                {mode === 'login' ? 'Sign In' : 'Create Account'}
-              </Button>
-              <p className="mt-6 text-center text-sm text-gray-400">
-                {switchLinkText}{' '}
-                <Link href={switchLinkHref} className="font-semibold text-orange-400 hover:underline">
-                  {mode === 'login' ? 'Create Account' : 'Sign In'}
-                </Link>
-              </p>
-            </CardFooter>
-          </form>
-        </Form>
+              />
+            )}
+            <FormField
+              control={form.control}
+              name="mobile"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white">Mobile Number</FormLabel>
+                  <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <FormControl>
+                          <Input type="tel" placeholder="Enter your mobile number" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" maxLength={10} />
+                      </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white">Password</FormLabel>
+                   <div className="relative">
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <FormControl>
+                      <Input type={showPassword ? "text" : "password"} placeholder="Enter your password" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10 pr-10" />
+                    </FormControl>
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+          <CardFooter className="flex flex-col pt-2 px-6 pb-6">
+            <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-orange-400 text-black hover:bg-orange-500" disabled={isSubmitting}>
+              {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
+              {buttonText}
+            </Button>
+            <p className="mt-6 text-center text-sm text-gray-400">
+              {switchLinkText}{' '}
+              <Link href={switchLinkHref} className="font-semibold text-orange-400 hover:underline">
+                {mode === 'login' ? 'Create Account' : 'Sign In'}
+              </Link>
+            </p>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 }
