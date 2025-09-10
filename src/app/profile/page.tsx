@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,7 +19,6 @@ import { ArrowLeft, Wallet, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { UpdateProfileDialog } from '@/components/update-profile-dialog';
-import { ChangePasswordDialog } from '@/components/change-password-dialog';
 
 interface UserProfile extends DocumentData {
   balance?: number;
@@ -68,7 +66,7 @@ export default function ProfilePage() {
     setUser(updatedUser);
   };
 
-  const mobileNumber = user.email?.split('@')[0] || 'N/A';
+  const mobileNumber = user.phoneNumber || user.email?.split('@')[0] || 'N/A';
   const creationDate = user.metadata.creationTime
     ? new Date(user.metadata.creationTime).toLocaleDateString()
     : 'N/A';
@@ -105,7 +103,7 @@ export default function ProfilePage() {
                         <label className="text-sm font-medium text-muted-foreground">
                         Mobile Number
                         </label>
-                        <p className="text-lg font-semibold">+91 {mobileNumber}</p>
+                        <p className="text-lg font-semibold">{mobileNumber}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-muted-foreground">
@@ -155,11 +153,6 @@ export default function ProfilePage() {
                             Edit Profile
                         </Button>
                     </UpdateProfileDialog>
-                    <ChangePasswordDialog mobileNumber={mobileNumber}>
-                         <Button variant="outline" className="w-full h-12 text-base">
-                            Change Password
-                        </Button>
-                    </ChangePasswordDialog>
                 </div>
             </div>
           </CardContent>
