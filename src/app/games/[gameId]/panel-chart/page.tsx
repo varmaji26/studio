@@ -185,7 +185,7 @@ export default function PanelChartPage() {
                                     <tbody className="text-center">
                                        {parsedRows.map((row, rowIndex) => (
                                             <tr key={rowIndex}>
-                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[7px]">
+                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[7px] text-center">
                                                     <span>{row.dateRange.start}</span><br/>
                                                     <span>To</span><br/>
                                                     <span>{row.dateRange.end}</span>
