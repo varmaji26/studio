@@ -51,9 +51,12 @@ export default function MyBetsPage() {
     }, [user, authLoading, router]);
 
     useEffect(() => {
+        if (authLoading) {
+            return;
+        }
         if (!user?.uid) {
-             if (!authLoading) setLoadingData(false);
-             return;
+            setLoadingData(false);
+            return;
         }
 
         setLoadingData(true);
@@ -73,7 +76,8 @@ export default function MyBetsPage() {
         });
 
         return () => unsubscribeBids();
-    }, [user?.uid, authLoading]);
+    }, [user, authLoading]);
+
 
     const filteredBids = useMemo(() => {
         let filtered = bids;
@@ -254,5 +258,3 @@ export default function MyBetsPage() {
         </div>
     );
 }
-
-    
