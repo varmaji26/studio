@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -35,30 +35,29 @@ export default function ForgotPasswordPage() {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  const auth = getAuth(app);
 
   useEffect(() => {
-    const auth = getAuth(app);
-    // Ensure this runs only on the client
-    if (typeof window !== 'undefined') {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    // This effect ensures the reCAPTCHA container is ready and sets up the verifier instance.
+    if (!recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
             'size': 'invisible',
             'callback': (response: any) => {
-                console.log("reCAPTCHA solved");
+                console.log("reCAPTCHA solved, ready to send OTP.");
             },
             'expired-callback': () => {
-                console.log("reCAPTCHA expired");
+                console.log("reCAPTCHA expired, please try again.");
+                recaptchaVerifierRef.current?.clear();
             }
         });
     }
 
-    // Cleanup function
+    // Cleanup on component unmount
     return () => {
-        if (window.recaptchaVerifier) {
-            window.recaptchaVerifier.clear();
-        }
+        recaptchaVerifierRef.current?.clear();
     };
-  }, []);
-
+  }, [auth]);
 
   // Step 1: Send OTP
   const onMobileSubmit = async (values: z.infer<typeof mobileSchema>) => {
@@ -78,10 +77,12 @@ export default function ForgotPasswordPage() {
       const userDoc = querySnapshot.docs[0];
       setUserUid(userDoc.id);
 
-      const auth = getAuth(app);
+      const appVerifier = recaptchaVerifierRef.current;
+      if (!appVerifier) {
+          throw new Error("reCAPTCHA verifier not initialized.");
+      }
+      
       const phoneNumber = `+91${values.mobile}`;
-      const appVerifier = window.recaptchaVerifier;
-
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       setConfirmationResult(confirmation);
       setStep('otp');
@@ -112,25 +113,27 @@ export default function ForgotPasswordPage() {
     try {
       await confirmationResult.confirm(values.otp);
       
-      // OTP is verified, now call server action to update password
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
       if(result.success) {
         toast({ title: 'Password Updated!', description: 'You can now log in with your new password.' });
-        // After successful password reset, you might want to sign the user out from the OTP session
-        const auth = getAuth(app);
         auth.signOut();
-        // Redirect to login
-        window.location.href = '/login';
+        router.replace('/login');
       } else {
          throw new Error(result.message);
       }
     } catch (error: any) {
       console.error("Error verifying OTP or updating password:", error);
+      let errorMessage = 'An unexpected error occurred.';
+        if (error.code === 'auth/invalid-verification-code') {
+            errorMessage = 'The OTP you entered is incorrect. Please try again.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
       toast({
         variant: 'destructive',
         title: 'Failed',
-        description: error.message || 'Invalid OTP or failed to update password.',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
