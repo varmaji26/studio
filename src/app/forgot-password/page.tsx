@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -17,6 +16,7 @@ import { Loader } from '@/components/loader';
 import { Phone, KeyRound } from 'lucide-react';
 import Link from 'next/link';
 import { updateUserPassword } from '@/actions/update-user-password';
+import { useRouter } from 'next/navigation';
 
 const mobileSchema = z.object({
   mobile: z.string().length(10, { message: 'Mobile number must be exactly 10 digits.' }).regex(/^\d+$/, 'Invalid mobile number.'),
@@ -30,30 +30,31 @@ const otpSchema = z.object({
 // Main component
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const auth = getAuth(app);
 
   useEffect(() => {
-    // This effect ensures the reCAPTCHA container is ready and sets up the verifier instance.
-    if (!recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    if (recaptchaContainerRef.current && !recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
             'size': 'invisible',
             'callback': (response: any) => {
                 console.log("reCAPTCHA solved, ready to send OTP.");
             },
             'expired-callback': () => {
-                console.log("reCAPTCHA expired, please try again.");
+                console.log("reCAPTCHA expired, clearing.");
                 recaptchaVerifierRef.current?.clear();
             }
         });
+        recaptchaVerifierRef.current.render();
     }
 
-    // Cleanup on component unmount
     return () => {
         recaptchaVerifierRef.current?.clear();
     };
@@ -65,7 +66,6 @@ export default function ForgotPasswordPage() {
     setMobileNumber(values.mobile);
     
     try {
-      // Check if user exists
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("mobile", "==", values.mobile));
       const querySnapshot = await getDocs(q);
@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4 perspective">
-       <div id="recaptcha-container"></div>
+       <div ref={recaptchaContainerRef}></div>
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-2 border-orange-400 rounded-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/20 animate-in fade-in-0 slide-in-from-bottom-10 backface-hidden">
         <CardHeader className="text-center pt-8">
           <CardTitle className="text-3xl font-bold text-white">Reset Password</CardTitle>
