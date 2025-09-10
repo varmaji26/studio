@@ -76,23 +76,27 @@ export default function MyBetsPage() {
     }, [user?.uid, authLoading]);
 
     const filteredBids = useMemo(() => {
-        let dateFiltered = bids;
+        let filtered = bids;
+
         if (fromDate) {
             const startOfDay = new Date(fromDate);
             startOfDay.setHours(0, 0, 0, 0);
+            
             const endOfDay = toDate ? new Date(toDate) : new Date(fromDate);
             endOfDay.setHours(23, 59, 59, 999);
             
-            dateFiltered = bids.filter(bid => {
+            filtered = filtered.filter(bid => {
                 if (!bid.createdAt?.seconds) return false;
                 const bidDate = new Date(bid.createdAt.seconds * 1000);
                 return bidDate >= startOfDay && bidDate <= endOfDay;
             });
         }
-        if (statusFilter === 'all') {
-            return dateFiltered;
+        
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(bid => bid.status === statusFilter);
         }
-        return dateFiltered.filter(bid => bid.status === statusFilter);
+
+        return filtered;
     }, [bids, fromDate, toDate, statusFilter]);
     
     useEffect(() => {
@@ -250,3 +254,5 @@ export default function MyBetsPage() {
         </div>
     );
 }
+
+    
