@@ -5,7 +5,7 @@ import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 export async function deleteAuthUser(uid: string) {
     try {
-        const adminApp = getFirebaseAdmin();
+        const adminApp = await getFirebaseAdmin();
         if (!adminApp) {
             throw new Error("Firebase Admin initialization failed.");
         }
@@ -25,7 +25,7 @@ export async function deleteAuthUser(uid: string) {
                     detailedMessage = 'User not found in Firebase Authentication. They may have already been deleted.';
                     break;
                 default:
-                    detailedMessage = `Firebase Error: ${error.code}`;
+                    detailedMessage = `Firebase Error: ${error.code} - ${error.message}`;
             }
         } else if (error.message) {
             detailedMessage = error.message;

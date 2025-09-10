@@ -10,7 +10,7 @@ interface UpdatePasswordPayload {
 
 export async function updateUserPassword(payload: UpdatePasswordPayload) {
     try {
-        const adminApp = getFirebaseAdmin();
+        const adminApp = await getFirebaseAdmin();
         if (!adminApp) {
             throw new Error("Firebase Admin initialization failed.");
         }
