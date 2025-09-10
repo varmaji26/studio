@@ -20,7 +20,6 @@ import { ArrowLeft, Wallet, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { UpdateProfileDialog } from '@/components/update-profile-dialog';
-import { AddPointsDialog } from '@/components/add-points-dialog';
 import { ChangePasswordDialog } from '@/components/change-password-dialog';
 
 interface UserProfile extends DocumentData {
@@ -144,13 +143,12 @@ export default function ProfilePage() {
             </div>
     
             <div className="space-y-4">
-                <div id="recaptcha-container" className="my-4"></div>
-                <AddPointsDialog user={user}>
+                 <Link href="/add-fund">
                     <Button className="w-full h-16 bg-green-500 hover:bg-green-600 text-white font-bold text-lg flex items-center gap-3">
                         <Wallet className="h-7 w-7" />
                         Add Points (Fund Wallet)
                     </Button>
-                </AddPointsDialog>
+                </Link>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <UpdateProfileDialog user={user} onUserUpdate={handleUserUpdate}>
                         <Button variant="outline" className="w-full h-12 text-base">

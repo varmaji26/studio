@@ -19,7 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
-import { User, KeyRound } from 'lucide-react';
+import { User, KeyRound, Phone, Eye, EyeOff } from 'lucide-react';
 import React, { useState } from 'react';
 
 const formSchema = z.object({
@@ -36,6 +36,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(
@@ -65,10 +66,9 @@ export function AuthForm({ mode }: AuthFormProps) {
     
     try {
         if (mode === 'signup') {
-            // Signup logic
+            const displayName = values.username || values.mobile;
             const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
             const user = userCredential.user;
-            const displayName = values.username || values.mobile;
             await updateProfile(user, { displayName });
 
             const userDocRef = doc(db, 'users', user.uid);
@@ -136,17 +136,16 @@ export function AuthForm({ mode }: AuthFormProps) {
     }
   };
 
-  const title = mode === 'login' ? 'Sign In' : 'Create an Account';
+  const title = mode === 'login' ? 'Welcome Back' : 'Create an Account';
   const description = mode === 'login' ? 'Sign in to your account' : 'Enter your details to get started.';
   const switchLinkText = mode === 'login' ? "Don't have an account?" : 'Already have an account?';
   const switchLinkHref = mode === 'login' ? '/signup' : '/login';
 
   return (
-    <Card className="w-full max-w-sm bg-card/80 backdrop-blur-sm border-white/10 rounded-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/20 animate-in fade-in-0 slide-in-from-bottom-10 rotate-x-[-20deg] hover:rotate-x-0 backface-hidden">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-primary shadow-[0_0_20px_hsl(var(--primary))] rounded-t-2xl"></div>
+    <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-2 border-orange-400 rounded-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/20 animate-in fade-in-0 slide-in-from-bottom-10 backface-hidden">
       <CardHeader className="text-center pt-8">
-        <CardTitle className="text-3xl font-bold text-foreground">{title}</CardTitle>
-        <CardDescription className="text-muted-foreground">{description}</CardDescription>
+        <CardTitle className="text-3xl font-bold text-white">{title}</CardTitle>
+        <CardDescription className="text-gray-400">{description}</CardDescription>
       </CardHeader>
       
         <Form {...form}>
@@ -158,11 +157,11 @@ export function AuthForm({ mode }: AuthFormProps) {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username</FormLabel>
+                      <FormLabel className="text-white">Username</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input placeholder="Enter your username" {...field} className="bg-input h-12 rounded-lg pl-10" />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                          <Input placeholder="Enter your username" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -175,11 +174,11 @@ export function AuthForm({ mode }: AuthFormProps) {
                 name="mobile"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Mobile Number</FormLabel>
-                     <div className="flex items-center">
-                        <span className="inline-flex items-center px-3 h-12 rounded-l-md border border-r-0 border-input bg-input text-muted-foreground text-sm">+91</span>
+                    <FormLabel className="text-white">Mobile Number</FormLabel>
+                     <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <FormControl>
-                            <Input type="tel" placeholder="Enter your mobile number" {...field} className="rounded-l-none bg-input h-12" maxLength={10} />
+                            <Input type="tel" placeholder="Enter your mobile number" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" maxLength={10} />
                         </FormControl>
                     </div>
                     <FormMessage />
@@ -191,11 +190,14 @@ export function AuthForm({ mode }: AuthFormProps) {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel className="text-white">Password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input type="password" placeholder="Enter your password" {...field} className="bg-input h-12 rounded-lg pl-10" />
+                          <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                          <Input type={showPassword ? 'text' : 'password'} placeholder="Enter your password" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10 pr-10" />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          </button>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -203,14 +205,14 @@ export function AuthForm({ mode }: AuthFormProps) {
                   )}
                 />
             </CardContent>
-            <CardFooter className="flex flex-col pt-2">
-              <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting}>
+            <CardFooter className="flex flex-col pt-2 px-6 pb-6">
+              <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-orange-400 text-black hover:bg-orange-500" disabled={isSubmitting}>
                 {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                 {mode === 'login' ? 'Sign In' : 'Sign Up'}
               </Button>
-              <p className="mt-6 text-center text-sm text-muted-foreground">
+              <p className="mt-6 text-center text-sm text-gray-400">
                 {switchLinkText}{' '}
-                <Link href={switchLinkHref} className="font-semibold text-primary hover:underline">
+                <Link href={switchLinkHref} className="font-semibold text-orange-400 hover:underline">
                   {mode === 'login' ? 'Create Account' : 'Sign In'}
                 </Link>
               </p>
