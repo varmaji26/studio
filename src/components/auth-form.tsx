@@ -5,7 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { auth, signInWithCustomToken } from '@/lib/firebase';
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  updateProfile 
+} from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -31,7 +38,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const WEB_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCTncE_u2wUR8W3ptwlRuDG4wmCjI6bF-w";
+  const auth = getAuth();
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -60,43 +67,41 @@ export function AuthForm({ mode }: AuthFormProps) {
     setIsSubmitting(true);
     const email = `${values.mobile}@authcanvas.dev`;
     const password = values.password;
+    const username = values.username;
 
     try {
-      let url;
-      let body: any;
-
       if (mode === 'signup') {
-        url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${WEB_API_KEY}`;
-        body = {
+        if (!username) {
+            throw new Error("Username is required for signup.");
+        }
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await updateProfile(user, { displayName: username });
+        
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, {
+            uid: user.uid,
+            displayName: username,
+            mobile: values.mobile,
             email: email,
-            password: password,
-            displayName: values.username,
-            returnSecureToken: true
-        };
+            balance: 0,
+            bonusBalance: 0,
+            totalBonusGiven: 0,
+            isAdmin: false,
+            isBlocked: false,
+            createdAt: serverTimestamp(),
+        });
+        
       } else {
-        url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${WEB_API_KEY}`;
-        body = {
-            email: email,
-            password: password,
-            returnSecureToken: true
-        };
+        await signInWithEmailAndPassword(auth, email, password);
+        const userDocRef = doc(db, 'users', auth.currentUser!.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists() && userDoc.data().isBlocked) {
+            await auth.signOut();
+            throw new Error("ACCOUNT_BLOCKED");
+        }
       }
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || data.error) {
-        throw new Error(data.error.message);
-      }
-      
-      await signInWithCustomToken(auth, data.idToken);
       
       toast({
         title: `${mode === 'login' ? 'Login' : 'Signup'} Successful!`,
@@ -107,12 +112,14 @@ export function AuthForm({ mode }: AuthFormProps) {
     } catch (error: any) {
         console.error(`Error during ${mode}:`, error);
         let errorMessage = 'An unexpected error occurred. Please try again.';
-        const errorCode = error.message || error.code;
+        const errorCode = error.code || error.message;
         
-        if (errorCode.includes('EMAIL_EXISTS') || (errorCode.includes('400') && mode === 'signup')) {
+        if (errorCode === 'auth/email-already-in-use' || errorCode === 'EMAIL_EXISTS') {
             errorMessage = 'This mobile number is already registered.';
-        } else if (errorCode.includes('INVALID_LOGIN_CREDENTIALS') || (errorCode.includes('400') && mode === 'login')) {
+        } else if (errorCode === 'auth/invalid-credential' || errorCode === 'INVALID_LOGIN_CREDENTIALS') {
             errorMessage = 'Invalid mobile number or password.';
+        } else if (errorCode === 'ACCOUNT_BLOCKED') {
+            errorMessage = 'Your account has been blocked. Please contact support.';
         }
 
         toast({
