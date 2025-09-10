@@ -64,7 +64,7 @@ const BidCard = ({ bid }: { bid: Bid }) => {
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-            <div className="bg-emerald-600 text-white text-center py-2">
+            <div className="bg-[#004D40] text-white text-center py-2">
                 <h3 className="font-bold">{bid.gameName} ({bid.session})</h3>
             </div>
             <div className="p-4">
@@ -96,7 +96,7 @@ const BidCard = ({ bid }: { bid: Bid }) => {
                         bid.status === 'cancelled' && 'border-yellow-500 text-yellow-500',
                     )}
                 >
-                    {bid.status}
+                    {bid.status === 'lost' ? 'Best of luck' : bid.status}
                 </Badge>
             </div>
         </div>
