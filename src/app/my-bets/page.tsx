@@ -1,24 +1,18 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, orderBy, DocumentData, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { ArrowLeft, Wallet, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { BottomNavbar } from '@/components/bottom-navbar';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 interface Bid extends DocumentData {
     id: string;
@@ -27,39 +21,99 @@ interface Bid extends DocumentData {
     session: string;
     numbers: string[];
     totalAmount: number;
-    winningAmount?: number;
     status: 'running' | 'won' | 'lost' | 'cancelled';
     createdAt: Timestamp;
 }
 
+interface AppSettings extends DocumentData {
+    whatsappNumber?: string;
+    callSupportNumber?: string;
+    telegramLink?: string;
+}
+
 const ITEMS_PER_PAGE = 10;
+
+const BidCard = ({ bid }: { bid: Bid }) => {
+    const formatDate = (timestamp: Timestamp) => {
+        if (!timestamp) return 'N/A';
+        return new Date(timestamp.seconds * 1000).toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+        });
+    };
+    
+    const getStatusBadgeVariant = (status: string) => {
+        switch (status) {
+            case 'won': return 'secondary';
+            case 'lost': return 'destructive';
+            case 'cancelled': return 'outline';
+            case 'running':
+            default:
+                return 'default';
+        }
+    };
+
+    return (
+        <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+            <div className="bg-[#004D40] text-white text-center py-2">
+                <h3 className="font-bold">{bid.gameName} ({bid.session})</h3>
+            </div>
+            <div className="p-4">
+                <div className="grid grid-cols-3 text-center text-sm">
+                    <div>
+                        <p className="text-gray-500">Game Type</p>
+                        <p className="font-semibold text-black">{bid.betType}</p>
+                    </div>
+                    <div>
+                        <p className="text-gray-500">Digit</p>
+                        <p className="font-semibold text-black">{bid.numbers.join(', ')}</p>
+                    </div>
+                    <div>
+                        <p className="text-gray-500">Points</p>
+                        <p className="font-semibold text-black">{bid.totalAmount}</p>
+                    </div>
+                </div>
+            </div>
+            <div className="border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-600">
+                Transaction: {formatDate(bid.createdAt)}
+            </div>
+            <div className="border-t border-gray-200 px-4 py-2 text-center">
+                 <Badge 
+                    variant={getStatusBadgeVariant(bid.status)}
+                    className={cn(
+                        bid.status === 'won' && 'bg-green-500 text-white',
+                        bid.status === 'lost' && 'bg-red-500 text-white',
+                        bid.status === 'running' && 'bg-orange-500 text-white',
+                        bid.status === 'cancelled' && 'border-yellow-500 text-yellow-500',
+                    )}
+                >
+                    {bid.status}
+                </Badge>
+            </div>
+        </div>
+    );
+};
 
 export default function MyBetsPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [bids, setBids] = useState<Bid[]>([]);
-    const [loadingData, setLoadingData] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [settings, setSettings] = useState<AppSettings>({});
     const [currentPage, setCurrentPage] = useState(1);
-    const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
-    const [toDate, setToDate] = useState<Date | undefined>(new Date());
-    const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'won' | 'lost' | 'cancelled'>('all');
 
     useEffect(() => {
-        if (!authLoading && !user) {
+        if (authLoading) return;
+        if (!user) {
             router.replace('/login');
-        }
-    }, [user, authLoading, router]);
-
-    useEffect(() => {
-        if (authLoading) {
             return;
         }
-        if (!user?.uid) {
-            setLoadingData(false);
-            return;
-        }
+        setLoading(true);
 
-        setLoadingData(true);
         const bidsQuery = query(
             collection(db, 'bids'),
             where('userId', '==', user.uid),
@@ -67,80 +121,66 @@ export default function MyBetsPage() {
         );
 
         const unsubscribeBids = onSnapshot(bidsQuery, (querySnapshot) => {
-            const bidsData: Bid[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Bid));
+            const bidsData: Bid[] = [];
+            querySnapshot.forEach((doc) => {
+                bidsData.push({ id: doc.id, ...doc.data() } as Bid);
+            });
             setBids(bidsData);
-            setLoadingData(false);
+            setLoading(false);
         }, (error) => {
-            console.error("Error fetching bids: ", error);
-            setLoadingData(false);
+            console.error("Error fetching bids history: ", error);
+            setLoading(false);
+        });
+        
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setSettings(docSnap.data() as AppSettings);
+            }
         });
 
-        return () => unsubscribeBids();
-    }, [user, authLoading]);
+        return () => {
+            unsubscribeBids();
+            unsubscribeSettings();
+        };
+    }, [user, authLoading, router]);
 
-
-    const filteredBids = useMemo(() => {
-        let filtered = bids;
-
-        if (fromDate) {
-            const startOfDay = new Date(fromDate);
-            startOfDay.setHours(0, 0, 0, 0);
-            
-            const endOfDay = toDate ? new Date(toDate) : new Date(fromDate);
-            endOfDay.setHours(23, 59, 59, 999);
-            
-            filtered = filtered.filter(bid => {
-                if (!bid.createdAt?.seconds) return false;
-                const bidDate = new Date(bid.createdAt.seconds * 1000);
-                return bidDate >= startOfDay && bidDate <= endOfDay;
-            });
-        }
-        
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter(bid => bid.status === statusFilter);
-        }
-
-        return filtered;
-    }, [bids, fromDate, toDate, statusFilter]);
-    
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [fromDate, toDate, statusFilter]);
-    
-    const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(bids.length / ITEMS_PER_PAGE);
     const paginatedBids = useMemo(() => {
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredBids.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    }, [filteredBids, currentPage]);
-
-    const formatDate = (timestamp: Timestamp) => {
-        if (!timestamp) return 'N/A';
-        return new Date(timestamp.seconds * 1000).toLocaleString('en-GB');
-    };
-
-    const getStatusBadgeVariant = (status: string) => {
-        switch (status) {
-            case 'won': return 'secondary';
-            case 'lost': return 'destructive';
-            case 'cancelled': return 'outline';
-            case 'running': default: return 'default';
-        }
-    };
-
+        return bids.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [bids, currentPage]);
+    
     const renderPagination = () => {
         if (totalPages <= 1) return null;
+
         return (
-            <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-                <div>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></div>
+            <div className="flex justify-center items-center mt-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</Button>
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                    >
+                        PREV
+                    </Button>
+                    <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                    >
+                        NEXT
+                    </Button>
                 </div>
             </div>
-        );
-    };
+        )
+    }
 
-    if (authLoading || loadingData) {
+
+    if (authLoading || loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
@@ -161,100 +201,18 @@ export default function MyBetsPage() {
                 </div>
             </header>
             <main className="max-w-4xl mx-auto p-4 sm:p-6 pb-28">
-                <Card className="bg-card/80 border-white/10 shadow-lg">
-                    <CardHeader>
-                        <CardTitle>Bids History</CardTitle>
-                        <CardDescription>View all your past and current bids here.</CardDescription>
-                        <div className="pt-4">
-                            <Link href="/" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
-                                <ArrowLeft className="h-4 w-4" />
-                                <span>Back to Home</span>
-                            </Link>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                            <div className="flex items-center gap-2">
-                                <Label htmlFor="from-date" className="text-sm shrink-0">From</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button id="from-date" variant={"outline"} className={cn("w-full sm:w-auto justify-start text-left font-normal", !fromDate && "text-muted-foreground")}>
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {fromDate ? format(fromDate, "dd/MM/yy") : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={fromDate} onSelect={setFromDate} initialFocus /></PopoverContent>
-                                </Popover>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Label htmlFor="to-date" className="text-sm shrink-0">To</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button id="to-date" variant={"outline"} className={cn("w-full sm:w-auto justify-start text-left font-normal", !toDate && "text-muted-foreground")}>
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {toDate ? format(toDate, "dd/MM/yy") : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={toDate} onSelect={setToDate} initialFocus /></PopoverContent>
-                                </Popover>
-                            </div>
-                        </div>
-
-                        <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
-                            <TabsList className="grid w-full grid-cols-5">
-                                <TabsTrigger value="all">All</TabsTrigger>
-                                <TabsTrigger value="running">Running</TabsTrigger>
-                                <TabsTrigger value="won">Won</TabsTrigger>
-                                <TabsTrigger value="lost">Lost</TabsTrigger>
-                                <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-
-                        <div className="overflow-x-auto mt-4">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Game</TableHead>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead>Numbers</TableHead>
-                                        <TableHead>Amount</TableHead>
-                                        <TableHead>Status</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {paginatedBids.length > 0 ? (
-                                        paginatedBids.map((bid) => (
-                                            <TableRow key={bid.id}>
-                                                <TableCell className="text-xs">{formatDate(bid.createdAt)}</TableCell>
-                                                <TableCell>{bid.gameName} ({bid.session})</TableCell>
-                                                <TableCell>{bid.betType}</TableCell>
-                                                <TableCell>{bid.numbers.join(', ')}</TableCell>
-                                                <TableCell>₹{bid.totalAmount}</TableCell>
-                                                <TableCell>
-                                                    <Badge 
-                                                        variant={getStatusBadgeVariant(bid.status)}
-                                                        className={cn(bid.status === 'won' && 'bg-green-500 text-white', bid.status === 'cancelled' && 'border-yellow-500 text-yellow-500')}
-                                                    >
-                                                        {bid.status}
-                                                    </Badge>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center">
-                                                You haven't placed any bids yet.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                        {renderPagination()}
-                    </CardContent>
-                </Card>
+                {paginatedBids.length > 0 ? (
+                    <div className="space-y-4">
+                        {paginatedBids.map(bid => <BidCard key={bid.id} bid={bid} />)}
+                    </div>
+                ) : (
+                    <div className="text-center py-10">
+                         <p className="mt-4 text-muted-foreground">You haven't placed any bids yet.</p>
+                    </div>
+                )}
+                 {renderPagination()}
             </main>
+             <BottomNavbar settings={settings} />
         </div>
-    );
+    )
 }
