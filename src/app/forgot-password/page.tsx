@@ -18,6 +18,14 @@ import Link from 'next/link';
 import { updateUserPassword } from '@/actions/update-user-password';
 import { useRouter } from 'next/navigation';
 
+// Add a declaration for the window object
+declare global {
+    interface Window {
+        recaptchaVerifier?: RecaptchaVerifier;
+        confirmationResult?: ConfirmationResult;
+    }
+}
+
 const mobileSchema = z.object({
   mobile: z.string().length(10, { message: 'Mobile number must be exactly 10 digits.' }).regex(/^\d+$/, 'Invalid mobile number.'),
 });
@@ -33,31 +41,25 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
-  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const auth = getAuth(app);
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (recaptchaContainerRef.current && !recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+    if (!window.recaptchaVerifier && recaptchaContainerRef.current) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
             'size': 'invisible',
             'callback': (response: any) => {
                 console.log("reCAPTCHA solved, ready to send OTP.");
             },
             'expired-callback': () => {
                 console.log("reCAPTCHA expired, clearing.");
-                recaptchaVerifierRef.current?.clear();
+                window.recaptchaVerifier?.clear();
             }
         });
-        recaptchaVerifierRef.current.render();
+        window.recaptchaVerifier.render();
     }
-
-    return () => {
-        recaptchaVerifierRef.current?.clear();
-    };
   }, [auth]);
 
   // Step 1: Send OTP
@@ -77,14 +79,14 @@ export default function ForgotPasswordPage() {
       const userDoc = querySnapshot.docs[0];
       setUserUid(userDoc.id);
 
-      const appVerifier = recaptchaVerifierRef.current;
+      const appVerifier = window.recaptchaVerifier;
       if (!appVerifier) {
           throw new Error("reCAPTCHA verifier not initialized.");
       }
       
       const phoneNumber = `+91${values.mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-      setConfirmationResult(confirmation);
+      window.confirmationResult = confirmation;
       setStep('otp');
       toast({
         title: 'OTP Sent',
@@ -104,14 +106,14 @@ export default function ForgotPasswordPage() {
 
   // Step 2: Verify OTP and update password
   const onOtpSubmit = async (values: z.infer<typeof otpSchema>) => {
-    if (!confirmationResult || !userUid) {
+    if (!window.confirmationResult || !userUid) {
       toast({ variant: 'destructive', title: 'Error', description: 'Verification session expired. Please try again.' });
       setStep('mobile');
       return;
     }
     setIsSubmitting(true);
     try {
-      await confirmationResult.confirm(values.otp);
+      await window.confirmationResult.confirm(values.otp);
       
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
@@ -125,7 +127,7 @@ export default function ForgotPasswordPage() {
     } catch (error: any) {
       console.error("Error verifying OTP or updating password:", error);
       let errorMessage = 'An unexpected error occurred.';
-        if (error.code === 'auth/invalid-verification-code') {
+        if (error.code === 'auth/invalid-verification-code' || error.code === 'auth/invalid-credential') {
             errorMessage = 'The OTP you entered is incorrect. Please try again.';
         } else if (error.message) {
             errorMessage = error.message;
@@ -142,7 +144,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4 perspective">
-       <div ref={recaptchaContainerRef}></div>
+       <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-2 border-orange-400 rounded-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/20 animate-in fade-in-0 slide-in-from-bottom-10 backface-hidden">
         <CardHeader className="text-center pt-8">
           <CardTitle className="text-3xl font-bold text-white">Reset Password</CardTitle>
