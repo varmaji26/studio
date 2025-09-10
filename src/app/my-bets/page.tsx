@@ -254,7 +254,7 @@ export default function BidsHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-col sm:flex-row items-center justify-end gap-4 mb-4">
+                        <div className="flex items-center justify-end gap-4 mb-4">
                              <div className="flex items-center gap-2">
                                 <Label htmlFor="from-date" className="text-sm shrink-0">From</Label>
                                 <Popover>
@@ -263,7 +263,7 @@ export default function BidsHistoryPage() {
                                         id="from-date"
                                         variant={"outline"}
                                         className={cn(
-                                          "w-full sm:w-auto justify-start text-left font-normal",
+                                          "w-[140px] justify-start text-left font-normal",
                                           !fromDate && "text-muted-foreground"
                                         )}
                                       >
@@ -289,7 +289,7 @@ export default function BidsHistoryPage() {
                                         id="to-date"
                                         variant={"outline"}
                                         className={cn(
-                                          "w-full sm:w-auto justify-start text-left font-normal",
+                                          "w-[140px] justify-start text-left font-normal",
                                           !toDate && "text-muted-foreground"
                                         )}
                                       >
