@@ -61,7 +61,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
-    const email = `${values.mobile}@matkaking.com`;
+    const email = `${values.mobile}@matka.com`;
     
     try {
         if (mode === 'signup') {
