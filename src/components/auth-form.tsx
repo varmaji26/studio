@@ -25,7 +25,7 @@ import Link from 'next/link';
 const formSchema = z.object({
   username: z.string().optional(),
   mobile: z.string().length(10, { message: 'Mobile number must be exactly 10 digits.' }).regex(/^\d+$/, 'Invalid mobile number.'),
-  password: z.string().min(6, 'Password must be at least 6 characters.'),
+  password: z.string().length(6, { message: 'Password must be exactly 6 digits.' }),
 });
 
 type AuthFormProps = {
