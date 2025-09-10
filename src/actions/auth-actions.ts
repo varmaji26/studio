@@ -72,7 +72,7 @@ export async function signUp({ mobile, password, username }: { mobile: string, p
 }
 
 
-export async function signIn({ mobile }: { mobile: string }): Promise<AuthResult> {
+export async function signIn({ mobile, password }: { mobile: string, password: string }): Promise<AuthResult> {
      try {
         const adminApp = getFirebaseAdmin();
         if (!adminApp) {
@@ -83,16 +83,20 @@ export async function signIn({ mobile }: { mobile: string }): Promise<AuthResult
         
         const email = `${mobile}@authcanvas.dev`;
         
-        // We cannot verify password with Admin SDK directly.
-        // We must use a client SDK or a different approach like REST API.
-        // For now, let's get the user to check if they are blocked.
+        // Step 1: Verify password using client SDK temporarily on the server.
+        // This is a common pattern when Admin SDK can't verify passwords.
+        // The user logs in, we get the ID token, then we can proceed.
+        const clientAuth = getAuth(app);
+        // This call will fail if password is wrong, and throw an error.
+        await signInWithEmailAndPassword(clientAuth, email, password);
+
+        // If password is correct, proceed to get user record with Admin SDK
         const userRecord = await authAdmin.getUserByEmail(email);
 
         const userDocRef = dbAdmin.collection('users').doc(userRecord.uid);
         const userDoc = await userDocRef.get();
 
         if (userDoc.exists() && userDoc.data()?.isBlocked) {
-            // Instead of throwing a generic error, return a specific error code.
             return { error: mapAuthErrorToMessage('ACCOUNT_BLOCKED') };
         }
 
