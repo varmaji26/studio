@@ -165,15 +165,6 @@ export function AuthForm({ mode }: AuthFormProps) {
                                     {showPassword ? <EyeOff /> : <Eye />}
                                 </button>
                             </div>
-                             {mode === 'login' && (
-                                <div className="text-right">
-                                    <Link href="/forgot-password" passHref>
-                                        <span className="text-xs text-orange-400 hover:underline cursor-pointer">
-                                            Forgot Password?
-                                        </span>
-                                    </Link>
-                                </div>
-                            )}
                             <FormMessage />
                         </FormItem>
                     )}
