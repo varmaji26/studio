@@ -367,9 +367,6 @@ export default function ManageUsersPage() {
                                             <UpdateBalanceDialog user={user}>
                                                 <Button size="sm" variant="outline">Balance</Button>
                                             </UpdateBalanceDialog>
-                                            <ChangePasswordDialog user={user}>
-                                                <Button size="sm" variant="outline">Password</Button>
-                                            </ChangePasswordDialog>
                                              <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                    <Button size="sm" variant={user.isBlocked ? 'secondary' : 'destructive'}>
@@ -389,23 +386,6 @@ export default function ManageUsersPage() {
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                     <AlertDialogAction onClick={() => handleToggleBlockUser(user)}>Confirm</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button size="sm" variant="destructive">Reset</Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure you want to reset this user?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                    This will permanently delete the user's account from both the database and authentication. They will be able to re-register with the same mobile number. This action cannot be undone.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteUser(user)}>Confirm Reset</AlertDialogAction>
                                                 </AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>
