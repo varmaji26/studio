@@ -176,4 +176,8 @@ body {
       transform: scale(1.02);
     }
   }
+  
+  .animate-won-glow {
+      animation: won-glow 2s ease-in-out infinite;
+  }
 }

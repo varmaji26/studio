@@ -94,11 +94,22 @@ export default {
           '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-2px)' },
           '20%, 40%, 60%, 80%': { transform: 'translateX(2px)' },
         },
+        'won-glow': {
+          '0%, 100%': {
+            borderColor: 'hsl(var(--primary) / 0.5)',
+            boxShadow: '0 0 5px hsl(var(--primary) / 0.5)',
+          },
+          '50%': {
+            borderColor: 'hsl(var(--primary) / 1)',
+            boxShadow: '0 0 20px hsl(var(--primary) / 1)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'shake': 'shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite',
+        'won-glow': 'won-glow 2s ease-in-out infinite',
       },
     },
   },
