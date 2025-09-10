@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { auth, db, signInWithCustomToken } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, runTransaction, increment } from 'firebase/firestore';
+import { auth, signInWithCustomToken } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -63,79 +62,64 @@ export function AuthForm({ mode }: AuthFormProps) {
     const password = values.password;
 
     try {
+      let url;
+      let body: any;
+
       if (mode === 'signup') {
-        const signupResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${WEB_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, returnSecureToken: true }),
-        });
-        const signupData = await signupResponse.json();
-
-        if (!signupResponse.ok || signupData.error) {
-            throw new Error(signupData.error.message || 'Signup failed.');
-        }
-
-        const user = { uid: signupData.localId };
-        const displayName = values.username!;
-        
-        // After successful signup via REST, sign in using the token
-        await signInWithCustomToken(auth, signupData.idToken);
-
-        const userDocRef = doc(db, 'users', user.uid);
-        const statsDocRef = doc(db, 'app-stats', 'dashboard');
-
-        await runTransaction(db, async (transaction) => {
-            transaction.set(userDocRef, {
-                uid: user.uid,
-                displayName,
-                mobile: values.mobile,
-                email: email,
-                balance: 0,
-                bonusBalance: 0,
-                totalBonusGiven: 0,
-                totalBonusUsed: 0,
-                createdAt: serverTimestamp(),
-                isAdmin: false,
-                isBlocked: false,
-            });
-            transaction.set(statsDocRef, { totalUsers: increment(1) }, { merge: true });
-        });
-
-        toast({ title: 'Account Created!', description: 'You have been successfully signed up.' });
-        router.push('/');
-
-      } else { // Login mode
-        const loginResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${WEB_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, returnSecureToken: true }),
-        });
-        const loginData = await loginResponse.json();
-
-        if (!loginResponse.ok || loginData.error) {
-            throw new Error(loginData.error.message || 'Login failed.');
-        }
-
-        await signInWithCustomToken(auth, loginData.idToken);
-        toast({ title: 'Login Successful!', description: 'Welcome back!' });
-        router.push('/');
-      }
-    } catch (error: any) {
-      console.error(`Error during ${mode}:`, error);
-      let errorMessage = 'An unexpected error occurred.';
-      const errorCode = error.message || error.code;
-      
-      if (errorCode.includes('EMAIL_EXISTS')) {
-          errorMessage = 'This mobile number is already registered.';
-      } else if (errorCode.includes('INVALID_LOGIN_CREDENTIALS')) {
-          errorMessage = 'Invalid mobile number or password.';
+        url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${WEB_API_KEY}`;
+        body = {
+            email: email,
+            password: password,
+            displayName: values.username,
+            returnSecureToken: true
+        };
+      } else {
+        url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${WEB_API_KEY}`;
+        body = {
+            email: email,
+            password: password,
+            returnSecureToken: true
+        };
       }
 
-      toast({
-        variant: 'destructive',
-        title: `${mode === 'login' ? 'Login' : 'Signup'} Failed`,
-        description: errorMessage,
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
       });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error.message);
+      }
+      
+      await signInWithCustomToken(auth, data.idToken);
+      
+      toast({
+        title: `${mode === 'login' ? 'Login' : 'Signup'} Successful!`,
+        description: `Welcome ${mode === 'login' ? 'back' : ''}!`,
+      });
+      router.push('/');
+
+    } catch (error: any) {
+        console.error(`Error during ${mode}:`, error);
+        let errorMessage = 'An unexpected error occurred. Please try again.';
+        const errorCode = error.message || error.code;
+        
+        if (errorCode.includes('EMAIL_EXISTS') || (errorCode.includes('400') && mode === 'signup')) {
+            errorMessage = 'This mobile number is already registered.';
+        } else if (errorCode.includes('INVALID_LOGIN_CREDENTIALS') || (errorCode.includes('400') && mode === 'login')) {
+            errorMessage = 'Invalid mobile number or password.';
+        }
+
+        toast({
+            variant: 'destructive',
+            title: `${mode === 'login' ? 'Login' : 'Signup'} Failed`,
+            description: errorMessage,
+        });
     } finally {
       setIsSubmitting(false);
     }
