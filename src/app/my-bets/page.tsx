@@ -245,7 +245,7 @@ export default function BidsHistoryPage() {
                         <CardTitle className="text-2xl sm:text-3xl">Bids History</CardTitle>
                         <CardDescription>View all your past and current bids here.</CardDescription>
                          <div className="pt-4">
-                            <Button asChild className="w-full bg-green-500 text-white hover:bg-green-600">
+                            <Button asChild className="w-full bg-green-500 hover:bg-green-600 text-white">
                                 <Link href="/" className="inline-flex items-center gap-2">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
@@ -254,7 +254,7 @@ export default function BidsHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center justify-end gap-2 mb-4">
+                        <div className="flex justify-end items-center gap-2 mb-4">
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -266,7 +266,7 @@ export default function BidsHistoryPage() {
                                     )}
                                     >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {fromDate ? format(fromDate, "dd/MM/yy") : <span>Pick a date</span>}
+                                    {fromDate ? format(fromDate, "dd/MM/yy") : <span>From</span>}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
@@ -289,7 +289,7 @@ export default function BidsHistoryPage() {
                                     )}
                                     >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {toDate ? format(toDate, "dd/MM/yy") : <span>Pick a date</span>}
+                                    {toDate ? format(toDate, "dd/MM/yy") : <span>To</span>}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="end">
@@ -304,11 +304,11 @@ export default function BidsHistoryPage() {
                         </div>
 
                         <Tabs defaultValue="all" onValueChange={setActiveTab}>
-                            <TabsList className="grid w-full grid-cols-4">
-                                <TabsTrigger value="all">All</TabsTrigger>
-                                <TabsTrigger value="running">Running</TabsTrigger>
-                                <TabsTrigger value="won">Won</TabsTrigger>
-                                <TabsTrigger value="lost">Lost</TabsTrigger>
+                            <TabsList className="grid w-full grid-cols-4 bg-slate-700">
+                                <TabsTrigger value="all" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">All</TabsTrigger>
+                                <TabsTrigger value="running" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">Running</TabsTrigger>
+                                <TabsTrigger value="won" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">Won</TabsTrigger>
+                                <TabsTrigger value="lost" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">Lost</TabsTrigger>
                             </TabsList>
                             <TabsContent value="all">
                                 {renderBidCards(paginatedBids)}
