@@ -99,7 +99,7 @@ const BidCard = ({ bid }: { bid: Bid }) => {
                         bid.status === 'cancelled' && 'border-yellow-500 text-yellow-500',
                     )}
                 >
-                    {bid.status === 'lost' ? 'lost' : bid.status}
+                    {bid.status === 'lost' ? 'Best of luck' : bid.status}
                 </Badge>
             </div>
         </div>
@@ -254,59 +254,53 @@ export default function BidsHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center justify-end gap-4 mb-4">
-                             <div className="flex items-center gap-2">
-                                <Label htmlFor="from-date" className="text-sm shrink-0">From</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        id="from-date"
-                                        variant={"outline"}
-                                        className={cn(
-                                          "w-[140px] justify-start text-left font-normal",
-                                          !fromDate && "text-muted-foreground"
-                                        )}
-                                      >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {fromDate ? format(fromDate, "dd/MM/yy") : <span>Pick a date</span>}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                        mode="single"
-                                        selected={fromDate}
-                                        onSelect={setFromDate}
-                                        initialFocus
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Label htmlFor="to-date" className="text-sm shrink-0">To</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        id="to-date"
-                                        variant={"outline"}
-                                        className={cn(
-                                          "w-[140px] justify-start text-left font-normal",
-                                          !toDate && "text-muted-foreground"
-                                        )}
-                                      >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {toDate ? format(toDate, "dd/MM/yy") : <span>Pick a date</span>}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="end">
-                                      <Calendar
-                                        mode="single"
-                                        selected={toDate}
-                                        onSelect={setToDate}
-                                        initialFocus
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                            </div>
+                        <div className="flex items-center justify-end gap-2 mb-4">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    id="from-date"
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[140px] justify-start text-left font-normal",
+                                        !fromDate && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {fromDate ? format(fromDate, "dd/MM/yy") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                    mode="single"
+                                    selected={fromDate}
+                                    onSelect={setFromDate}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                                </Popover>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    id="to-date"
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[140px] justify-start text-left font-normal",
+                                        !toDate && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {toDate ? format(toDate, "dd/MM/yy") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="end">
+                                    <Calendar
+                                    mode="single"
+                                    selected={toDate}
+                                    onSelect={setToDate}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                                </Popover>
                         </div>
 
                         <Tabs defaultValue="all" onValueChange={setActiveTab}>
