@@ -21,7 +21,6 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { UpdateProfileDialog } from '@/components/update-profile-dialog';
 import { AddPointsDialog } from '@/components/add-points-dialog';
-import { ChangePasswordDialog } from '@/components/change-password-dialog';
 
 interface UserProfile extends DocumentData {
   balance?: number;
@@ -157,11 +156,6 @@ export default function ProfilePage() {
                             Edit Profile
                         </Button>
                     </UpdateProfileDialog>
-                    <ChangePasswordDialog mobileNumber={mobileNumber ?? ''}>
-                         <Button variant="outline" className="w-full h-12 text-base">
-                            Change Password
-                        </Button>
-                    </ChangePasswordDialog>
                 </div>
             </div>
           </CardContent>

@@ -405,14 +405,6 @@ export default function AdminLayout({
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link href="/admin/find-password" passHref onClick={handleLinkClick}>
-                    <SidebarMenuButton isActive={isActive('/admin/find-password')} tooltip={{children: "Find Password"}}>
-                      <KeyRound />
-                      <span>Find Password</span>
-                    </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
                 <Collapsible open={isPaymentHistoryMenuOpen} onOpenChange={setPaymentHistoryMenuOpen}>
                     <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
