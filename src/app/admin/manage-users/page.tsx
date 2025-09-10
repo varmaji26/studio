@@ -394,18 +394,18 @@ export default function ManageUsersPage() {
                                             </AlertDialog>
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
-                                                    <Button size="sm" variant="destructive">Delete</Button>
+                                                    <Button size="sm" variant="destructive">Reset</Button>
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
                                                 <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogTitle>Are you sure you want to reset this user?</AlertDialogTitle>
                                                     <AlertDialogDescription>
                                                     This will permanently delete the user's account from both the database and authentication. They will be able to re-register with the same mobile number. This action cannot be undone.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteUser(user)}>Continue</AlertDialogAction>
+                                                    <AlertDialogAction onClick={() => handleDeleteUser(user)}>Confirm Reset</AlertDialogAction>
                                                 </AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>
