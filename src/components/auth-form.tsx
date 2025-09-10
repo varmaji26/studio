@@ -5,14 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  updateProfile 
-} from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, signInWithCustomToken } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -22,6 +15,7 @@ import { Loader } from './loader';
 import { User, Phone, KeyRound, Eye, EyeOff } from 'lucide-react';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { signIn, signUp } from '@/actions/auth-actions';
 
 const formSchema = z.object({
   username: z.string().optional(),
@@ -38,8 +32,6 @@ export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const auth = getAuth();
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(
@@ -65,67 +57,38 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
-    const email = `${values.mobile}@authcanvas.dev`;
-    const password = values.password;
-    const username = values.username;
+    const { mobile, password, username } = values;
 
     try {
+      let response;
       if (mode === 'signup') {
-        if (!username) {
-            throw new Error("Username is required for signup.");
-        }
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        await updateProfile(user, { displayName: username });
-        
-        const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, {
-            uid: user.uid,
-            displayName: username,
-            mobile: values.mobile,
-            email: email,
-            balance: 0,
-            bonusBalance: 0,
-            totalBonusGiven: 0,
-            isAdmin: false,
-            isBlocked: false,
-            createdAt: serverTimestamp(),
-        });
-        
+        if (!username) throw new Error("Username is required for signup.");
+        response = await signUp({ mobile, password, username });
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        const userDocRef = doc(db, 'users', auth.currentUser!.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists() && userDoc.data().isBlocked) {
-            await auth.signOut();
-            throw new Error("ACCOUNT_BLOCKED");
-        }
+        response = await signIn({ mobile, password });
+      }
+
+      if (response.error) {
+        throw new Error(response.error);
       }
       
-      toast({
-        title: `${mode === 'login' ? 'Login' : 'Signup'} Successful!`,
-        description: `Welcome ${mode === 'login' ? 'back' : ''}!`,
-      });
-      router.push('/');
+      if (response.token) {
+        await signInWithCustomToken(auth, response.token);
+        toast({
+          title: `${mode === 'login' ? 'Login' : 'Signup'} Successful!`,
+          description: `Welcome ${mode === 'login' ? 'back' : ''}!`,
+        });
+        router.push('/');
+      } else {
+         throw new Error("Authentication failed: No token received.");
+      }
 
     } catch (error: any) {
         console.error(`Error during ${mode}:`, error);
-        let errorMessage = 'An unexpected error occurred. Please try again.';
-        const errorCode = error.code || error.message;
-        
-        if (errorCode === 'auth/email-already-in-use' || errorCode === 'EMAIL_EXISTS') {
-            errorMessage = 'This mobile number is already registered.';
-        } else if (errorCode === 'auth/invalid-credential' || errorCode === 'INVALID_LOGIN_CREDENTIALS') {
-            errorMessage = 'Invalid mobile number or password.';
-        } else if (errorCode === 'ACCOUNT_BLOCKED') {
-            errorMessage = 'Your account has been blocked. Please contact support.';
-        }
-
         toast({
             variant: 'destructive',
             title: `${mode === 'login' ? 'Login' : 'Signup'} Failed`,
-            description: errorMessage,
+            description: error.message || 'An unexpected error occurred.',
         });
     } finally {
       setIsSubmitting(false);
