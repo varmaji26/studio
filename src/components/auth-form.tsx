@@ -204,6 +204,15 @@ export function AuthForm({ mode }: AuthFormProps) {
                     </FormItem>
                   )}
                 />
+                {mode === 'login' && (
+                    <div className="text-right">
+                        <Link href="/forgot-password" passHref>
+                            <span className="text-sm text-orange-400 hover:underline cursor-pointer">
+                                Forgot Password?
+                            </span>
+                        </Link>
+                    </div>
+                )}
             </CardContent>
             <CardFooter className="flex flex-col pt-2 px-6 pb-6">
               <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-orange-400 text-black hover:bg-orange-500" disabled={isSubmitting}>
