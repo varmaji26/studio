@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -72,37 +73,39 @@ export function ChangePasswordDialog({ children, user }: ChangePasswordDialogPro
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Change Password for {user.displayName}</DialogTitle>
-          <DialogDescription>
-            Enter a new password for this user below.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="newPassword"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                            <Input type="password" placeholder="Enter new password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <DialogFooter>
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader className="mr-2" /> : null}
-                        Update Password
-                    </Button>
-                </DialogFooter>
-            </form>
-        </Form>
-      </DialogContent>
+      {user && (
+        <DialogContent>
+            <DialogHeader>
+            <DialogTitle>Change Password for {user.displayName}</DialogTitle>
+            <DialogDescription>
+                Enter a new password for this user below.
+            </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>New Password</FormLabel>
+                            <FormControl>
+                                <Input type="password" placeholder="Enter new password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <DialogFooter>
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader className="mr-2" /> : null}
+                            Update Password
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </DialogContent>
+      )}
     </Dialog>
   );
 }
