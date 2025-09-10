@@ -31,6 +31,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/components/change-password-dialog';
+import { deleteAuthUser } from '@/actions/delete-user';
 
 const UpdateBalanceDialog = dynamic(() => import('@/components/update-balance-dialog'), {
   ssr: false,
@@ -147,6 +148,23 @@ export default function ManageUsersPage() {
 
   const handleDeleteUser = async (user: User) => {
     try {
+        // First, delete the user from Firebase Authentication
+        const authResult = await deleteAuthUser(user.id);
+
+        if (!authResult.success && authResult.message.includes('User not found')) {
+            // If user is not in Auth, they might be a leftover. 
+            // We can still proceed to delete from Firestore.
+            toast({
+                variant: 'default',
+                title: 'Partial Reset',
+                description: 'User not found in Authentication, but proceeding to delete from database.',
+            });
+        } else if (!authResult.success) {
+            // For other auth errors, stop the process.
+            throw new Error(authResult.message);
+        }
+
+        // Then, delete from Firestore and update stats
         const batch = writeBatch(db);
         const userDocRef = doc(db, "users", user.id);
         batch.delete(userDocRef);
@@ -160,15 +178,15 @@ export default function ManageUsersPage() {
         await batch.commit();
 
         toast({
-            title: 'Success!',
-            description: 'User has been deleted.'
+            title: 'User Reset Successfully!',
+            description: `${user.displayName} has been deleted. They can now re-register with the same mobile number.`
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error deleting user: ", error);
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'Failed to delete user. Please try again.',
+            description: error.message || 'Failed to delete user. Please try again.',
         });
     }
   };
@@ -382,7 +400,7 @@ export default function ManageUsersPage() {
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete the user account.
+                                                    This will permanently delete the user's account from both the database and authentication. They will be able to re-register with the same mobile number. This action cannot be undone.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
