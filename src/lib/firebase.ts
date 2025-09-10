@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getMessaging, isSupported } from 'firebase/messaging';
@@ -31,4 +31,4 @@ const messaging = (async () => {
 })();
 
 
-export { app, auth, db, storage, messaging };
+export { app, auth, db, storage, messaging, signInWithCustomToken };

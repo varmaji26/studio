@@ -5,11 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-} from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, runTransaction, increment } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -21,6 +16,7 @@ import { Loader } from './loader';
 import { User, Phone, KeyRound, Eye, EyeOff } from 'lucide-react';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { signInWithEmailAndPassword as clientSignIn } from 'firebase/auth';
 
 const formSchema = z.object({
   username: z.string().optional(),
@@ -37,6 +33,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const WEB_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCTncE_u2wUR8W3ptwlRuDG4wmCjI6bF-w";
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(
@@ -67,12 +65,24 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     try {
       if (mode === 'signup') {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+        // Use Firebase Auth REST API for signup to bypass referer checks
+        const signupResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${WEB_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, returnSecureToken: true }),
+        });
+        const signupData = await signupResponse.json();
+
+        if (!signupResponse.ok) {
+            throw new Error(signupData.error.message || 'Signup failed.');
+        }
+
+        const user = { uid: signupData.localId };
         const displayName = values.username!;
         
-        await updateProfile(user, { displayName });
-        
+        // Now sign in the user on the client to get the session
+        await clientSignIn(auth, email, password);
+
         const userDocRef = doc(db, 'users', user.uid);
         const statsDocRef = doc(db, 'app-stats', 'dashboard');
 
@@ -81,7 +91,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 uid: user.uid,
                 displayName,
                 mobile: values.mobile,
-                email: email, // Storing the synthetic email
+                email: email,
                 balance: 0,
                 bonusBalance: 0,
                 totalBonusGiven: 0,
@@ -92,36 +102,29 @@ export function AuthForm({ mode }: AuthFormProps) {
             });
             transaction.set(statsDocRef, { totalUsers: increment(1) }, { merge: true });
         });
-        
+
         toast({ title: 'Account Created!', description: 'You have been successfully signed up.' });
         router.push('/');
 
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        // For login, we can try the client-side SDK directly.
+        await clientSignIn(auth, email, password);
         toast({ title: 'Login Successful!', description: 'Welcome back!' });
         router.push('/');
       }
     } catch (error: any) {
       console.error(`Error during ${mode}:`, error);
       let errorMessage = 'An unexpected error occurred.';
-      switch (error.code) {
-        case 'auth/email-already-in-use':
+      const errorCode = error.message || error.code;
+      
+      if (errorCode.includes('EMAIL_EXISTS')) {
           errorMessage = 'This mobile number is already registered.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Invalid mobile number format.';
-          break;
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential':
+      } else if (errorCode.includes('INVALID_LOGIN_CREDENTIALS')) {
           errorMessage = 'Invalid mobile number or password.';
-          break;
-        case 'auth/user-not-found':
-            errorMessage = 'No account found with this mobile number.';
-            break;
-        default:
-          errorMessage = error.message;
-          break;
+      } else if (errorCode.includes('auth/invalid-credential')) {
+           errorMessage = 'Invalid mobile number or password.';
       }
+
       toast({
         variant: 'destructive',
         title: `${mode === 'login' ? 'Login' : 'Signup'} Failed`,
