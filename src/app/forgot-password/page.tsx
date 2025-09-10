@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -45,7 +45,25 @@ export default function ForgotPasswordPage() {
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
   const auth = getAuth(app);
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // This effect ensures the RecaptchaVerifier is created once and cleaned up properly.
+    const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      'size': 'invisible',
+      'callback': () => {
+        // reCAPTCHA solved
+      },
+      'expired-callback': () => {
+        // Response expired. Ask user to solve reCAPTCHA again.
+      }
+    });
+    window.recaptchaVerifier = recaptchaVerifier;
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      window.recaptchaVerifier?.clear();
+    };
+  }, [auth]);
 
   // Step 1: Send OTP
   const onMobileSubmit = async (values: z.infer<typeof mobileSchema>) => {
@@ -64,14 +82,7 @@ export default function ForgotPasswordPage() {
       const userDoc = querySnapshot.docs[0];
       setUserUid(userDoc.id);
 
-      // Create RecaptchaVerifier on demand
-      const appVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current!, {
-          'size': 'invisible',
-          'callback': () => { console.log("reCAPTCHA solved") },
-          'expired-callback': () => { console.log("reCAPTCHA expired") }
-      });
-      window.recaptchaVerifier = appVerifier;
-      
+      const appVerifier = window.recaptchaVerifier!;
       const phoneNumber = `+91${values.mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       window.confirmationResult = confirmation;
@@ -84,8 +95,6 @@ export default function ForgotPasswordPage() {
 
     } catch (error: any) {
       console.error("Error sending OTP:", error);
-      // Reset recaptcha if it exists
-      window.recaptchaVerifier?.clear();
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -136,7 +145,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4 perspective">
-       <div id="recaptcha-container-wrapper" ref={recaptchaContainerRef}></div>
+      <div id="recaptcha-container"></div>
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-2 border-orange-400 rounded-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/20 animate-in fade-in-0 slide-in-from-bottom-10 backface-hidden">
         <CardHeader className="text-center pt-8">
           <CardTitle className="text-3xl font-bold text-white">Reset Password</CardTitle>
