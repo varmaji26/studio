@@ -48,7 +48,10 @@ export default function ForgotPasswordPage() {
 
   useEffect(() => {
     // This effect ensures the RecaptchaVerifier is created once and cleaned up properly.
-    const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+    }
+    const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container-forgot-password', {
       'size': 'invisible',
       'callback': () => {
         // reCAPTCHA solved
@@ -145,7 +148,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4 perspective">
-      <div id="recaptcha-container"></div>
+      <div id="recaptcha-container-forgot-password"></div>
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-2 border-orange-400 rounded-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/20 animate-in fade-in-0 slide-in-from-bottom-10 backface-hidden">
         <CardHeader className="text-center pt-8">
           <CardTitle className="text-3xl font-bold text-white">Reset Password</CardTitle>

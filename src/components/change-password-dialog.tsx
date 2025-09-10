@@ -57,21 +57,41 @@ export function ChangePasswordDialog({ children, user, mobileNumber }: ChangePas
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
   const auth = getAuth(app);
+  const recaptchaContainerId = 'recaptcha-container-in-dialog';
+
 
   useEffect(() => {
     if (open && !window.recaptchaVerifier) {
-      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': () => {},
-      });
-      window.recaptchaVerifier = recaptchaVerifier;
+      // Delay initialization until the dialog content is mounted
+      setTimeout(() => {
+        const container = document.getElementById(recaptchaContainerId);
+        if (container) {
+          const recaptchaVerifier = new RecaptchaVerifier(auth, container, {
+            'size': 'invisible',
+            'callback': () => {},
+          });
+          window.recaptchaVerifier = recaptchaVerifier;
+        } else {
+            console.error('reCAPTCHA container not found');
+        }
+      }, 100);
     }
+    
+    return () => {
+        if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+            window.recaptchaVerifier = undefined;
+        }
+    };
   }, [open, auth]);
   
   const handleSendOtp = async () => {
     setIsSubmitting(true);
     try {
-        const appVerifier = window.recaptchaVerifier!;
+        if (!window.recaptchaVerifier) {
+            throw new Error("reCAPTCHA verifier not initialized.");
+        }
+        const appVerifier = window.recaptchaVerifier;
         const phoneNumber = `+91${mobileNumber}`;
         const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
         window.confirmationResult = confirmation;
@@ -127,7 +147,7 @@ export function ChangePasswordDialog({ children, user, mobileNumber }: ChangePas
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
-        <div id="recaptcha-container"></div>
+        <div id={recaptchaContainerId}></div>
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
           <DialogDescription>
