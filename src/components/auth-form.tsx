@@ -62,11 +62,12 @@ export function AuthForm({ mode }: AuthFormProps) {
   
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
+    // Consistent email format for both login and signup
     const email = `${values.mobile}@matka.com`;
     
     try {
         if (mode === 'signup') {
-            const displayName = values.username || values.mobile;
+            const displayName = values.username!;
             const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
             const user = userCredential.user;
             await updateProfile(user, { displayName });
@@ -79,7 +80,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     uid: user.uid,
                     displayName,
                     mobile: values.mobile,
-                    email: email,
+                    email: email, // Use the mobile-based email
                     balance: 0,
                     bonusBalance: 0,
                     totalBonusGiven: 0,
