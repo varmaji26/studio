@@ -16,6 +16,7 @@ import { User, Phone, KeyRound, Eye, EyeOff } from 'lucide-react';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { signIn, signUp } from '@/actions/auth-actions';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const formSchema = z.object({
   username: z.string().optional(),
@@ -60,35 +61,49 @@ export function AuthForm({ mode }: AuthFormProps) {
     const { mobile, password, username } = values;
 
     try {
-      let response;
       if (mode === 'signup') {
         if (!username) throw new Error("Username is required for signup.");
-        response = await signUp({ mobile, password, username });
+        const response = await signUp({ mobile, password, username });
+        if (response.error) throw new Error(response.error);
+        if (response.token) {
+          await signInWithCustomToken(auth, response.token);
+          toast({ title: 'Signup Successful!', description: 'Welcome!' });
+          router.push('/');
+        } else {
+          throw new Error("Authentication failed: No token received.");
+        }
       } else {
-        response = await signIn({ mobile, password });
-      }
+        // Login Flow
+        const serverResponse = await signIn({ mobile });
+        if (serverResponse.error) throw new Error(serverResponse.error);
+        if (!serverResponse.token) throw new Error("Authentication failed: No token received from server.");
+        
+        // At this point, the user is not blocked. We have a custom token.
+        // Sign in with the custom token first.
+        await signInWithCustomToken(auth, serverResponse.token);
+        
+        // Now, verify the password on the client-side.
+        const email = `${mobile}@authcanvas.dev`;
+        await signInWithEmailAndPassword(auth, email, password);
 
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      
-      if (response.token) {
-        await signInWithCustomToken(auth, response.token);
-        toast({
-          title: `${mode === 'login' ? 'Login' : 'Signup'} Successful!`,
-          description: `Welcome ${mode === 'login' ? 'back' : ''}!`,
-        });
+        toast({ title: 'Login Successful!', description: 'Welcome back!' });
         router.push('/');
-      } else {
-         throw new Error("Authentication failed: No token received.");
       }
 
     } catch (error: any) {
         console.error(`Error during ${mode}:`, error);
+        
+        let errorMessage = 'An unexpected error occurred. Please try again.';
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            errorMessage = 'Invalid mobile number or password.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
         toast({
             variant: 'destructive',
             title: `${mode === 'login' ? 'Login' : 'Signup'} Failed`,
-            description: error.message || 'An unexpected error occurred.',
+            description: errorMessage,
         });
     } finally {
       setIsSubmitting(false);
