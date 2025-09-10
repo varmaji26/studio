@@ -549,7 +549,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/80 border-white/10 shadow-lg">
+        <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
             <CardHeader>
                 <CardTitle className="text-xl text-white">Notice</CardTitle>
             </CardHeader>
