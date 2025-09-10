@@ -155,7 +155,7 @@ export default function ProfilePage() {
                             Edit Profile
                         </Button>
                     </UpdateProfileDialog>
-                    <ChangePasswordDialog mobileNumber={mobileNumber} user={authUser}>
+                    <ChangePasswordDialog>
                         <Button variant="outline" className="w-full h-12 text-base">
                             Change Password
                         </Button>

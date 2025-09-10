@@ -1,13 +1,16 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
-import { app, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import {
+  getAuth,
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+} from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,115 +32,70 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
-import { updateUserPassword } from '@/actions/update-user-password';
-import { Phone, KeyRound } from 'lucide-react';
-import type { User as FirebaseAuthUser } from 'firebase/auth';
 
-declare global {
-    interface Window {
-        confirmationResult?: ConfirmationResult;
-        recaptchaVerifier?: RecaptchaVerifier;
-    }
-}
-
-const otpSchema = z.object({
-  otp: z.string().length(6, { message: 'OTP must be 6 digits.' }),
-  newPassword: z.string().min(6, 'Password must be at least 6 characters.'),
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required.'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters.'),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
 });
 
 interface ChangePasswordDialogProps {
   children: React.ReactNode;
-  user: FirebaseAuthUser | null;
-  mobileNumber: string;
 }
 
-export function ChangePasswordDialog({ children, user, mobileNumber }: ChangePasswordDialogProps) {
+export function ChangePasswordDialog({ children }: ChangePasswordDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState<'initial' | 'otp'>('initial');
-  const auth = getAuth(app);
-  const recaptchaContainerId = 'recaptcha-container-in-dialog';
+  const auth = getAuth();
 
-
-  useEffect(() => {
-    if (open && !window.recaptchaVerifier) {
-      // Delay initialization until the dialog content is mounted
-      setTimeout(() => {
-        const container = document.getElementById(recaptchaContainerId);
-        if (container) {
-          const recaptchaVerifier = new RecaptchaVerifier(auth, container, {
-            'size': 'invisible',
-            'callback': () => {},
-          });
-          window.recaptchaVerifier = recaptchaVerifier;
-        } else {
-            console.error('reCAPTCHA container not found');
-        }
-      }, 100);
-    }
-    
-    return () => {
-        if (window.recaptchaVerifier) {
-            window.recaptchaVerifier.clear();
-            window.recaptchaVerifier = undefined;
-        }
-    };
-  }, [open, auth]);
-  
-  const handleSendOtp = async () => {
-    setIsSubmitting(true);
-    try {
-        if (!window.recaptchaVerifier) {
-            throw new Error("reCAPTCHA verifier not initialized.");
-        }
-        const appVerifier = window.recaptchaVerifier;
-        const phoneNumber = `+91${mobileNumber}`;
-        const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-        window.confirmationResult = confirmation;
-        setStep('otp');
-        toast({ title: 'OTP Sent', description: 'An OTP has been sent to your mobile number.' });
-    } catch (error: any) {
-        console.error("Error sending OTP:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to send OTP. Please try again later.' });
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
-
-  const form = useForm<z.infer<typeof otpSchema>>({
-    resolver: zodResolver(otpSchema),
-    defaultValues: { otp: '', newPassword: '' },
+  const form = useForm<z.infer<typeof passwordSchema>>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
   });
 
-  const onOtpSubmit = async (values: z.infer<typeof otpSchema>) => {
-    if (!window.confirmationResult || !user) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Verification session expired. Please try again.' });
-      setStep('initial');
+  const onSubmit = async (values: z.infer<typeof passwordSchema>) => {
+    const user = auth.currentUser;
+    if (!user || !user.email) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to change your password.',
+      });
       return;
     }
     setIsSubmitting(true);
     try {
-      await window.confirmationResult.confirm(values.otp);
+      const credential = EmailAuthProvider.credential(user.email, values.currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, values.newPassword);
       
-      const result = await updateUserPassword({ uid: user.uid, newPassword: values.newPassword });
-      
-      if(result.success) {
-        toast({ title: 'Password Updated!', description: 'Your password has been changed successfully.' });
-        setOpen(false);
-        setStep('initial');
-        form.reset();
-      } else {
-         throw new Error(result.message);
-      }
+      toast({
+        title: 'Success!',
+        description: 'Your password has been changed successfully.',
+      });
+      setOpen(false);
+      form.reset();
     } catch (error: any) {
+      console.error('Password change error:', error);
       let errorMessage = 'An unexpected error occurred.';
-        if (error.code === 'auth/invalid-verification-code' || error.code === 'auth/invalid-credential') {
-            errorMessage = 'The OTP you entered is incorrect. Please try again.';
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-      toast({ variant: 'destructive', title: 'Failed', description: errorMessage });
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = 'The current password you entered is incorrect.';
+      } else if (error.code === 'auth/requires-recent-login') {
+        errorMessage = 'For security, please sign out and sign in again before changing your password.';
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: errorMessage,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -147,64 +105,61 @@ export function ChangePasswordDialog({ children, user, mobileNumber }: ChangePas
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
-        <div id={recaptchaContainerId}></div>
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
           <DialogDescription>
-            {step === 'initial'
-              ? 'A confirmation OTP will be sent to your registered mobile number.'
-              : `Enter the OTP sent to ${mobileNumber} and your new password.`}
+            Enter your current password and a new password below.
           </DialogDescription>
         </DialogHeader>
-        {step === 'initial' ? (
-          <div className="py-4">
-            <p>Click the button below to send an OTP to your mobile number <strong>{mobileNumber}</strong>.</p>
-          </div>
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onOtpSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="otp"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>OTP</FormLabel>
-                    <FormControl>
-                      <Input type="tel" placeholder="Enter 6-digit OTP" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="newPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>New Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Enter new password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </form>
-          </Form>
-        )}
-        <DialogFooter>
-          {step === 'initial' ? (
-            <Button onClick={handleSendOtp} disabled={isSubmitting}>
-              {isSubmitting ? <Loader className="mr-2" /> : null}
-              Send OTP
-            </Button>
-          ) : (
-            <Button onClick={form.handleSubmit(onOtpSubmit)} disabled={isSubmitting}>
-              {isSubmitting ? <Loader className="mr-2" /> : null}
-              Update Password
-            </Button>
-          )}
-        </DialogFooter>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="currentPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Enter your current password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Enter your new password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm New Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Confirm your new password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <DialogFooter>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader className="mr-2" /> : null}
+                    Update Password
+                </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
