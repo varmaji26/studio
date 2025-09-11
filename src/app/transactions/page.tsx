@@ -114,15 +114,7 @@ export default function TransactionDetailsPage() {
                                 ...data
                             });
                         }
-                        fetchedTransactions.push({
-                            id: doc.id,
-                            amount: data.totalAmount,
-                            createdAt: data.createdAt,
-                            type,
-                            title,
-                            description: description(data),
-                            ...data
-                        });
+                        // Omit the 'bet' type transaction
                     } else {
                          fetchedTransactions.push({
                             id: doc.id,
