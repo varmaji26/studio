@@ -93,7 +93,7 @@ export default function TransactionDetailsPage() {
 
         setLoading(true);
 
-        const collectionsToQuery = [
+        const collectionsToQuery: { name: string; type: 'deposit' | 'withdrawal' | 'bet'; title: string; description: (doc: any) => string; }[] = [
             { name: 'deposits', type: 'deposit', title: 'Deposit', description: (doc: any) => `via ${doc.paymentMethod}` },
             { name: 'withdrawals', type: 'withdrawal', title: 'Withdraw', description: (doc: any) => `status: ${doc.status}` },
             { name: 'bids', type: 'bet', title: 'Bet Market', description: (doc: any) => `For bet ${doc.betType} ${doc.session}` },
@@ -122,8 +122,8 @@ export default function TransactionDetailsPage() {
                             id: doc.id,
                             amount: data.amount,
                             createdAt: data.createdAt,
-                            type,
-                            title,
+                            type: type,
+                            title: title,
                             description: description(data),
                             ...data
                         });
@@ -131,7 +131,7 @@ export default function TransactionDetailsPage() {
                 });
 
                 setTransactions(prev => {
-                    const otherTransactions = prev.filter(t => t.type !== type && t.type !== 'win');
+                    const otherTransactions = prev.filter(t => t.type !== type && (type !== 'bet' || t.type !== 'win'));
                     return [...otherTransactions, ...fetchedTransactions];
                 });
             });
@@ -154,7 +154,8 @@ export default function TransactionDetailsPage() {
     }, [user, authLoading, router]);
 
     const sortedTransactions = useMemo(() => {
-        return transactions.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        const filtered = transactions.filter(t => t.type !== 'bet');
+        return filtered.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
     }, [transactions]);
     
     if (authLoading || loading) {
