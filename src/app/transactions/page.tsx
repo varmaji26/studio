@@ -57,7 +57,10 @@ const TransactionItem = ({ transaction }: { transaction: Transaction }) => {
     const amountColor = isCredit ? 'text-green-400' : 'text-red-400';
 
     return (
-        <div className="bg-card/80 p-3 rounded-lg shadow-sm flex items-center justify-between border border-white/10">
+        <div className={cn(
+            "bg-card/80 p-3 rounded-lg shadow-sm flex items-center justify-between border border-white/10",
+            transaction.type === 'win' && 'animate-won-glow'
+        )}>
             <div className="flex items-center gap-3">
                 <TransactionIcon type={transaction.type} />
                 <div>
