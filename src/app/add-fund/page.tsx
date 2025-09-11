@@ -7,11 +7,12 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Landmark, Phone, Wallet } from 'lucide-react';
+import { ArrowLeft, Landmark, Phone, Wallet, Info } from 'lucide-react';
 import Link from 'next/link';
-import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface UserProfile extends DocumentData {
   balance?: number;
@@ -29,6 +30,7 @@ export default function AddFundPage() {
     const [profile, setProfile] = useState<UserProfile>({});
     const [settings, setSettings] = useState<AppSettings>({});
     const [amount, setAmount] = useState('');
+    const [hasPendingDeposit, setHasPendingDeposit] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -53,9 +55,19 @@ export default function AddFundPage() {
             }
         });
 
+        const pendingDepositsQuery = query(
+            collection(db, 'deposits'),
+            where('userId', '==', user.uid),
+            where('status', '==', 'pending')
+        );
+        const unsubscribePendingDeposits = onSnapshot(pendingDepositsQuery, (snapshot) => {
+            setHasPendingDeposit(!snapshot.empty);
+        });
+
         return () => {
             unsubscribeUser();
             unsubscribeSettings();
+            unsubscribePendingDeposits();
         };
     }, [user]);
 
@@ -146,6 +158,15 @@ export default function AddFundPage() {
                     </div>
                 </div>
 
+                {hasPendingDeposit ? (
+                     <Alert variant="destructive" className="my-4 bg-yellow-100 border-yellow-200 text-yellow-800">
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Pending Request</AlertTitle>
+                        <AlertDescription>
+                            You already have a pending deposit request. Please wait for it to be processed before making a new one.
+                        </AlertDescription>
+                    </Alert>
+                ) : (
                 <div className="my-4">
                     <p className="text-center text-gray-600 mb-2">Enter Amount</p>
                     <div className="relative">
@@ -165,11 +186,16 @@ export default function AddFundPage() {
                         <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('1500')}>1500</Button>
                     </div>
                 </div>
+                )}
             </main>
 
             <footer className="p-4 bg-white sticky bottom-0">
-                <Button className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full" onClick={handlePayNow}>
-                    Pay Now
+                <Button 
+                    className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full" 
+                    onClick={handlePayNow}
+                    disabled={hasPendingDeposit}
+                >
+                    {hasPendingDeposit ? 'Pending Request' : 'Pay Now'}
                 </Button>
             </footer>
         </div>

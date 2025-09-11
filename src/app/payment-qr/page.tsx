@@ -5,14 +5,15 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, FileText, HelpCircle, Loader, Scan, ShieldCheck, Copy } from 'lucide-react';
+import { ArrowLeft, Clock, FileText, HelpCircle, Loader, Scan, ShieldCheck, Copy, Info } from 'lucide-react';
 import QRCode from 'qrcode';
-import { doc, onSnapshot, DocumentData, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData, addDoc, collection, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface AppSettings extends DocumentData {
     upiId?: string;
@@ -35,6 +36,7 @@ function PaymentQRContent() {
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [hasPendingDeposit, setHasPendingDeposit] = useState(false);
 
     useEffect(() => {
         const userAgent = typeof window.navigator === "undefined" ? "" : navigator.userAgent;
@@ -53,8 +55,24 @@ function PaymentQRContent() {
                 setSettings({});
             }
         });
+
+        if (user) {
+            const pendingDepositsQuery = query(
+                collection(db, 'deposits'),
+                where('userId', '==', user.uid),
+                where('status', '==', 'pending')
+            );
+            const unsubscribePending = onSnapshot(pendingDepositsQuery, (snapshot) => {
+                setHasPendingDeposit(!snapshot.empty);
+            });
+            return () => {
+                unsubscribe();
+                unsubscribePending();
+            };
+        }
+        
         return () => unsubscribe();
-    }, []);
+    }, [user]);
     
     useEffect(() => {
         if (settings && settings.upiId && amount && user) {
@@ -259,16 +277,26 @@ function PaymentQRContent() {
                             <span>This session is valid for: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
                         </div>
                         
-                        <div className="border-t pt-3 space-y-2">
-                           <div className="flex items-center gap-2 font-semibold text-gray-800">
-                               <FileText className="h-5 w-5 text-gray-500"/>
-                               <h3>भुगतान के बाद, सत्यापन के लिए सबमिट करें</h3>
-                           </div>
-                           <Button onClick={handleSubmitForVerification} className="w-full h-11 bg-green-600 hover:bg-green-700 font-bold animate-shake" disabled={isSubmitting}>
-                               {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
-                               {isSubmitting ? 'Submitting...' : 'Send Deposit Request'}
-                           </Button>
-                        </div>
+                        {hasPendingDeposit ? (
+                            <Alert variant="destructive" className="bg-yellow-100 border-yellow-200 text-yellow-800">
+                                <Info className="h-4 w-4" />
+                                <AlertTitle>Pending Request</AlertTitle>
+                                <AlertDescription>
+                                    Your previous deposit request is still pending. Please wait for it to be processed.
+                                </AlertDescription>
+                            </Alert>
+                        ) : (
+                            <div className="border-t pt-3 space-y-2">
+                               <div className="flex items-center gap-2 font-semibold text-gray-800">
+                                   <FileText className="h-5 w-5 text-gray-500"/>
+                                   <h3>भुगतान के बाद, सत्यापन के लिए सबमिट करें</h3>
+                               </div>
+                               <Button onClick={handleSubmitForVerification} className="w-full h-11 bg-green-600 hover:bg-green-700 font-bold animate-shake" disabled={isSubmitting}>
+                                   {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
+                                   {isSubmitting ? 'Submitting...' : 'Send Deposit Request'}
+                               </Button>
+                            </div>
+                        )}
 
                         <div className="text-center text-sm text-gray-500 space-y-1 pt-2">
                            <p className="flex items-center justify-center gap-1"><ShieldCheck className="h-4 w-4 text-green-500"/> 100% Secure Payment</p>
