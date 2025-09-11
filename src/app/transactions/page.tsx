@@ -117,7 +117,6 @@ export default function TransactionDetailsPage() {
                                 ...data
                             });
                         }
-                        // Omit the 'bet' type transaction
                     } else {
                          fetchedTransactions.push({
                             id: doc.id,
@@ -180,13 +179,13 @@ export default function TransactionDetailsPage() {
             </header>
             <main className="flex-1 flex flex-col">
                  <div className="bg-card/80 p-4">
-                    <div className="bg-background rounded-t-2xl p-6 text-center shadow-lg border-x border-t border-white/10">
-                        <p className="text-muted-foreground">Total Balance</p>
+                    <div className="bg-teal-900/50 rounded-t-2xl p-6 text-center shadow-lg border-x border-t border-teal-500/30">
+                        <p className="text-teal-200">Total Balance</p>
                         <p className="text-4xl font-bold text-primary mt-2">₹{profile.balance?.toFixed(2) || '0.00'}</p>
                     </div>
                 </div>
                  <div className="bg-background flex-1 p-4 -mt-2">
-                    <h2 className="text-lg font-bold text-foreground mb-4">Transactions</h2>
+                    <h2 className="text-lg font-bold text-foreground mb-4 bg-teal-900/50 p-2 rounded-md text-center text-teal-200">Transactions</h2>
                      <div className="space-y-3">
                         {sortedTransactions.length > 0 ? (
                             sortedTransactions.map(t => <TransactionItem key={t.id} transaction={t} />)
