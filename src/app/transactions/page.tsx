@@ -188,20 +188,6 @@ export default function TransactionDetailsPage() {
                     <div className="bg-white rounded-t-2xl p-6 text-center shadow-lg">
                         <p className="text-gray-600">Total Balance</p>
                         <p className="text-4xl font-bold text-gray-900 mt-2">₹{profile.balance?.toFixed(2) || '0.00'}</p>
-                        <div className="grid grid-cols-3 gap-4 mt-6">
-                            <Link href="/withdrawal" className="flex flex-col items-center gap-2 text-gray-700">
-                                <div className="h-12 w-12 bg-red-500 rounded-lg flex items-center justify-center text-white"><ArrowDown/></div>
-                                <span className="text-xs font-semibold">Withdraw</span>
-                            </Link>
-                             <Link href="/add-fund" className="flex flex-col items-center gap-2 text-gray-700">
-                                <div className="h-12 w-12 bg-yellow-500 rounded-lg flex items-center justify-center text-white"><ArrowUp/></div>
-                                <span className="text-xs font-semibold">Add Funds</span>
-                            </Link>
-                             <Link href="/contact" className="flex flex-col items-center gap-2 text-gray-700">
-                                <div className="h-12 w-12 bg-green-500 rounded-lg flex items-center justify-center text-white"><MessageCircle/></div>
-                                <span className="text-xs font-semibold">Contact Us</span>
-                            </Link>
-                        </div>
                     </div>
                 </div>
                  <div className="bg-gray-100 flex-1 p-4 -mt-2">
