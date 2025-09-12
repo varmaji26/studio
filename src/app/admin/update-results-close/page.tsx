@@ -260,20 +260,22 @@ export default function UpdateResultsClosePage() {
         const batch = writeBatch(db);
         const gameDocRef = doc(db, 'games', game.id);
 
+        // Query for bets that were decided by this close result (Close session and Jodi Digit)
         const affectedBidsQuery = query(
             collection(db, 'bids'),
-            where('gameId', '==', game.id)
+            where('gameId', '==', game.id),
+            where('status', 'in', ['won', 'lost'])
         );
 
         const bidsSnapshot = await getDocs(affectedBidsQuery);
 
         bidsSnapshot.forEach(bidDoc => {
             const bid = bidDoc.data();
-            // Revert bids that were decided by the close result
+            // Revert ONLY bids that were decided by the close result
             if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
                  if (bid.status === 'won') {
                     const userDocRef = doc(db, 'users', bid.userId);
-                    batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                    transaction.update(userDocRef, { balance: increment(-bid.winningAmount) });
                     batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
                 } else if (bid.status === 'lost') {
                     batch.update(bidDoc.ref, { status: 'running' });
@@ -292,12 +294,12 @@ export default function UpdateResultsClosePage() {
         await batch.commit();
         toast({
             title: 'Result Reverted!',
-            description: `Close result for ${game.name} has been reverted. Incorrect winnings have been clawed back.`
+            description: `Close result for ${game.name} has been reverted. Affected bets are running again.`
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error reverting result: ', error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to revert result.' });
+        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to revert result.' });
     } finally {
         setIsReverting(false);
     }

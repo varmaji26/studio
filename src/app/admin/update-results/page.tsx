@@ -172,10 +172,12 @@ export default function UpdateResultsPage() {
         const batch = writeBatch(db);
         const gameDocRef = doc(db, 'games', game.id);
 
+        // Query for bets that were decided by this open result
         const affectedBidsQuery = query(
             collection(db, 'bids'),
             where('gameId', '==', game.id),
-            where('session', '==', 'Open')
+            where('session', '==', 'Open'),
+            where('status', 'in', ['won', 'lost'])
         );
 
         const bidsSnapshot = await getDocs(affectedBidsQuery);
@@ -184,9 +186,12 @@ export default function UpdateResultsPage() {
             const bid = bidDoc.data();
             if (bid.status === 'won') {
                 const userDocRef = doc(db, 'users', bid.userId);
-                batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                // Decrement the user's balance by the winning amount
+                transaction.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                // Reset the bid status and winning amount
                 batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
             } else if (bid.status === 'lost') {
+                // Just reset the status for lost bets
                 batch.update(bidDoc.ref, { status: 'running' });
             }
         });
@@ -194,6 +199,7 @@ export default function UpdateResultsPage() {
         const gameDoc = await getDoc(gameDocRef);
         const closeResult = gameDoc.data()?.closeResult || '**';
 
+        // Reset the open result fields in the game document
         batch.update(gameDocRef, {
             openResult: '***',
             result: `***-**-${closeResult}`
@@ -202,12 +208,12 @@ export default function UpdateResultsPage() {
         await batch.commit();
         toast({
             title: 'Result Reverted!',
-            description: `Open result for ${game.name} has been reverted. Incorrect winnings have been clawed back.`
+            description: `Open result for ${game.name} has been reverted. Affected bets are running again.`
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error reverting result: ', error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to revert result.' });
+        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to revert result.' });
     } finally {
         setIsReverting(false);
     }
