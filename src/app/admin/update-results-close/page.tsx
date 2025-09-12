@@ -274,7 +274,7 @@ export default function UpdateResultsClosePage() {
                  if (bid.status === 'won') {
                     const userDocRef = doc(db, 'users', bid.userId);
                     batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
-                    batch.update(bidDoc.ref, { status: 'running', winningAmount: null });
+                    batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
                 } else if (bid.status === 'lost') {
                     batch.update(bidDoc.ref, { status: 'running' });
                 }

@@ -174,28 +174,29 @@ export default function UpdateResultsPage() {
 
         const affectedBidsQuery = query(
             collection(db, 'bids'),
-            where('gameId', '==', game.id)
+            where('gameId', '==', game.id),
+            where('session', '==', 'Open')
         );
 
         const bidsSnapshot = await getDocs(affectedBidsQuery);
 
         bidsSnapshot.forEach(bidDoc => {
             const bid = bidDoc.data();
-            // Revert only for 'Open' session bets, not 'Close' or 'Jodi'
-            if (bid.session === 'Open') {
-                if (bid.status === 'won') {
-                    const userDocRef = doc(db, 'users', bid.userId);
-                    batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
-                    batch.update(bidDoc.ref, { status: 'running', winningAmount: null });
-                } else if (bid.status === 'lost') {
-                    batch.update(bidDoc.ref, { status: 'running' });
-                }
+            if (bid.status === 'won') {
+                const userDocRef = doc(db, 'users', bid.userId);
+                batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
+            } else if (bid.status === 'lost') {
+                batch.update(bidDoc.ref, { status: 'running' });
             }
         });
+        
+        const gameDoc = await getDoc(gameDocRef);
+        const closeResult = gameDoc.data()?.closeResult || '**';
 
         batch.update(gameDocRef, {
             openResult: '***',
-            result: `***-**-${game.closeResult || '**'}`
+            result: `***-**-${closeResult}`
         });
 
         await batch.commit();
