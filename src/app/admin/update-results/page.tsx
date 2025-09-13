@@ -187,7 +187,7 @@ export default function UpdateResultsPage() {
             if (bid.status === 'won') {
                 const userDocRef = doc(db, 'users', bid.userId);
                 // Decrement the user's balance by the winning amount
-                transaction.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
                 // Reset the bid status and winning amount
                 batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
             } else if (bid.status === 'lost') {
