@@ -125,8 +125,9 @@ export default function UpdateResultsClosePage() {
         const now = new Date();
         const [openHours, openMinutes] = game.openTime.split(':').map(Number);
         const gameDate = (now.getHours() < openHours || (now.getHours() === openHours && now.getMinutes() < openMinutes))
-            ? new Date(now.setDate(now.getDate() - 1))
+            ? new Date(new Date().setDate(now.getDate() - 1))
             : new Date();
+        gameDate.setHours(0,0,0,0);
 
         // Update Jodi Chart
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
@@ -147,7 +148,6 @@ export default function UpdateResultsClosePage() {
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelChartData = panelChartSnap.data().data || '';
-            gameDate.setHours(0, 0, 0, 0);
             const dayOfWeek = gameDate.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
@@ -161,21 +161,26 @@ export default function UpdateResultsClosePage() {
                 const match = lastRow.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
                 if (match) {
                     const lastStartDate = parseDateString(match[1]);
-                    const lastEndDate = parseDateString(match[2]);
                     
-                    if (lastStartDate && lastEndDate && gameDate >= lastStartDate && gameDate <= lastEndDate) {
-                        weekFound = true;
-                        const dataPart = lastRow.substring(match[0].length).trim();
-                        const dailyBlocks = dataPart.split(/\s+/).filter(String);
+                    if (lastStartDate) {
+                        lastStartDate.setHours(0,0,0,0);
+                        const lastEndDate = new Date(lastStartDate);
+                        lastEndDate.setDate(lastStartDate.getDate() + 6);
                         
-                        while(dailyBlocks.length < 7) {
-                            dailyBlocks.push('********');
-                        }
+                        if (gameDate >= lastStartDate && gameDate <= lastEndDate) {
+                            weekFound = true;
+                            const dataPart = lastRow.substring(match[0].length).trim();
+                            const dailyBlocks = dataPart.split(/\s+/).filter(String);
+                            
+                            while(dailyBlocks.length < 7) {
+                                dailyBlocks.push('********');
+                            }
 
-                        dailyBlocks[dayIndex] = newDayData;
-                        
-                        const updatedDataPart = dailyBlocks.join(' ');
-                        finalDataArray[rows.length - 1] = `${match[0]} ${updatedDataPart}`;
+                            dailyBlocks[dayIndex] = newDayData;
+                            
+                            const updatedDataPart = dailyBlocks.join(' ');
+                            finalDataArray[rows.length - 1] = `${match[0]} ${updatedDataPart}`;
+                        }
                     }
                 }
             }
@@ -275,7 +280,7 @@ export default function UpdateResultsClosePage() {
             if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
                  if (bid.status === 'won') {
                     const userDocRef = doc(db, 'users', bid.userId);
-                    transaction.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                    batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
                     batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
                 } else if (bid.status === 'lost') {
                     batch.update(bidDoc.ref, { status: 'running' });
