@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -116,6 +117,8 @@ export function AuthForm({ mode }: AuthFormProps) {
           errorMessage = 'Invalid mobile number or password.';
       } else if (error.code === 'auth/email-already-in-use') {
           errorMessage = 'An account with this mobile number already exists.';
+      } else if (error.code === 'auth/user-disabled') {
+          errorMessage = 'Your account has been disabled. Please contact support.';
       }
       
       toast({
