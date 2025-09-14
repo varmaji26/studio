@@ -5,10 +5,6 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Trophy, BookText, MessageSquare, IndianRupee } from "lucide-react";
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from "@/hooks/use-auth";
-import { doc, onSnapshot, DocumentData } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-
 
 export function BottomNavbar() {
   const router = useRouter();
@@ -30,7 +26,7 @@ export function BottomNavbar() {
       // Default to home or a non-active state if no path matches
       setActive(""); 
     }
-  }, [pathname]);
+  }, [pathname, items]);
 
 
   const handleNavigation = (path: string, id: string) => {
@@ -49,7 +45,7 @@ export function BottomNavbar() {
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 animate-[shimmer_5s_linear_infinite] opacity-20" />
-        <div className="relative flex items-center justify-around px-4 py-3 bg-gradient-to-br from-zinc-900 via-black to-zinc-950 rounded-3xl">
+        <div className="relative flex items-center justify-around px-4 py-3 bg-[#112a45] rounded-3xl">
           {items.map((it) => {
             const activeNow = active === it.id;
             return (
