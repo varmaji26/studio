@@ -61,7 +61,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                 aria-label={it.label}
                  className={`group relative flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-all duration-300 focus:outline-none ${
                   activeNow
-                    ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,1)]"
+                    ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
                     : "text-gray-300 hover:text-white"
                 }`}
               >
@@ -81,7 +81,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                   {activeNow && (
                     <motion.span
                       layoutId="glow"
-                      className="absolute inset-0 rounded-full bg-white/40 blur-md"
+                      className="absolute inset-0 rounded-full bg-white/30 blur-lg"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1, scale: [0.9, 1.3, 1] }}
                       transition={{ duration: 0.6 }}
