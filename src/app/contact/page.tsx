@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft, Phone, Send } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { BottomNavbar } from '@/components/bottom-navbar';
 
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
@@ -76,7 +77,7 @@ export default function ContactPage() {
     }
     
     return (
-        <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
+        <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6 pb-28">
             <div className="max-w-4xl mx-auto">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader>
@@ -125,6 +126,7 @@ export default function ContactPage() {
                     </CardContent>
                 </Card>
             </div>
+            <BottomNavbar />
         </div>
     )
 }

@@ -5,6 +5,10 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Trophy, BookText, MessageSquare, IndianRupee } from "lucide-react";
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from "@/hooks/use-auth";
+import { doc, onSnapshot, DocumentData } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 
 export function BottomNavbar() {
   const router = useRouter();
