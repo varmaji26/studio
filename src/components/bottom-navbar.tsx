@@ -1,48 +1,117 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Trophy, BookText, MessageSquare, IndianRupee } from 'lucide-react';
-import type { DocumentData } from 'firebase/firestore';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Trophy, BookText, MessageSquare, IndianRupee } from "lucide-react";
+import { useRouter, usePathname } from 'next/navigation';
 
-interface AppSettings extends DocumentData {
-    whatsappNumber?: string;
-    callSupportNumber?: string;
-    telegramLink?: string;
-}
+export function BottomNavbar() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [active, setActive] = useState("home");
 
-interface BottomNavbarProps {
-    settings: AppSettings;
-}
+  const items = [
+    { id: "my-bets", label: "My Bets", Icon: Trophy, gradient: "from-pink-500 via-red-500 to-yellow-500", path: "/my-bets" },
+    { id: "transactions", label: "Passbook", Icon: BookText, gradient: "from-green-400 via-emerald-500 to-teal-500", path: "/transactions" },
+    { id: "contact", label: "Support", Icon: MessageSquare, gradient: "from-sky-400 via-blue-500 to-indigo-500", path: "/contact" },
+    { id: "funds", label: "Funds", Icon: IndianRupee, gradient: "from-purple-500 via-fuchsia-500 to-pink-500", path: "/funds" },
+  ];
+  
+  useEffect(() => {
+    const currentItem = items.find(item => pathname.startsWith(item.path));
+    if (currentItem) {
+      setActive(currentItem.id);
+    } else {
+      setActive("home"); 
+    }
+  }, [pathname, items]);
 
-export function BottomNavbar({ settings }: BottomNavbarProps) {
-    const router = useRouter();
-    
-    const navItems = [
-        { label: 'My Bets', action: () => router.push('/my-bets'), color: 'bg-yellow-500', icon: <Trophy className="h-5 w-5" style={{ filter: 'drop-shadow(1px 1px 2px #000)' }} /> },
-        { label: 'Passbook', action: () => router.push('/transactions'), color: 'bg-green-500', icon: <BookText className="h-5 w-5" style={{ filter: 'drop-shadow(1px 1px 2px #000)' }} /> },
-        { label: 'Support', action: () => router.push('/contact'), color: 'bg-sky-500', icon: <MessageSquare className="h-5 w-5" style={{ filter: 'drop-shadow(1px 1px 2px #000)' }} /> },
-        { label: 'Funds', action: () => router.push('/funds'), color: 'bg-red-500', icon: <IndianRupee className="h-5 w-5" style={{ filter: 'drop-shadow(1px 1px 2px #000)' }} /> },
-    ];
-    
-    return (
-         <div className="fixed bottom-0 left-0 w-full bg-[#0A2342] border-t border-white/10 z-50">
-            <div className="grid grid-cols-4 gap-1 p-2">
-                {navItems.map(({ label, action, color, icon }) => (
-                     <button
-                        key={label}
-                        onClick={action}
-                        className={cn(
-                            "flex flex-col items-center justify-center p-2 rounded-lg text-white shadow-md transform hover:scale-105 transition-transform duration-200",
-                            color
-                        )}
-                    >
-                        {icon}
-                        <span className="mt-1 text-xs font-bold" style={{ textShadow: '1px 1px 2px #000' }}>{label}</span>
-                    </button>
-                ))}
-            </div>
+
+  const handleNavigation = (path: string, id: string) => {
+    setActive(id);
+    router.push(path);
+  };
+
+  return (
+    <div className="fixed inset-x-4 bottom-6 z-50">
+      <motion.nav
+        role="navigation"
+        aria-label="Primary"
+        className="relative mx-auto max-w-lg overflow-hidden rounded-3xl backdrop-blur-xl ring-2 ring-white/20 shadow-[0_0_35px_rgba(255,255,255,0.2)]"
+        initial={{ y: 80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 animate-[shimmer_5s_linear_infinite] opacity-20" />
+        <div className="relative flex items-center justify-around px-4 py-3 bg-gradient-to-br from-zinc-900 via-black to-zinc-950 rounded-3xl">
+          {items.map((it) => {
+            const activeNow = active === it.id;
+            return (
+              <button
+                key={it.id}
+                onClick={() => handleNavigation(it.path, it.id)}
+                aria-current={activeNow ? "page" : undefined}
+                aria-label={it.label}
+                className={`group relative flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-all duration-300 focus:outline-none ${
+                  activeNow
+                    ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,1)]"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <motion.div
+                  className={`relative flex items-center justify-center rounded-full p-2 bg-gradient-to-r ${it.gradient}`}
+                  animate={{
+                    scale: activeNow ? [1, 1.25, 1] : [1, 1.05, 1],
+                    rotate:
+                      it.id === "contact"
+                        ? [0, -10, 10, 0]
+                        : it.id === "funds"
+                        ? [0, 15, -15, 0]
+                        : 0,
+                  }}
+                  transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                >
+                  {activeNow && (
+                    <motion.span
+                      layoutId="glow"
+                      className="absolute inset-0 rounded-full bg-white/40 blur-md"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1, scale: [0.9, 1.3, 1] }}
+                      transition={{ duration: 0.6 }}
+                    />
+                  )}
+                  <it.Icon className="h-6 w-6 text-white relative z-10" />
+                </motion.div>
+
+                <span className="text-[11px] font-semibold leading-none tracking-wide">
+                  {it.label}
+                </span>
+
+                {activeNow && (
+                  <motion.span
+                    layoutId="dot"
+                    className="absolute -top-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white shadow"
+                    animate={{ scale: [0.8, 1.4, 1] }}
+                    transition={{ duration: 0.4 }}
+                  />
+                )}
+
+                {it.id === "funds" && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: [1, 1.25, 1], rotate: [0, 12, -12, 0] }}
+                    transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                    className="pointer-events-none absolute -top-2 right-2 flex h-5 min-w-[22px] items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-400 to-pink-500 px-1.5 text-[11px] font-semibold text-white shadow-lg"
+                  >
+                    ₹
+                  </motion.span>
+                )}
+              </button>
+            );
+          })}
         </div>
-    );
+      </motion.nav>
+    </div>
+  );
 }
