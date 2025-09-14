@@ -51,8 +51,11 @@ const parseDateString = (dateStr: string): Date | null => {
     if (parts.length !== 3) return null;
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-    // Assuming year is in YYYY format. The Date constructor uses month index 0-11.
-    return new Date(year, month - 1, day);
+    // Date constructor uses month index 0-11, and we need to handle local time zone.
+    const date = new Date(year, month - 1, day);
+    // Adjust for timezone offset to prevent date shifting
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    return date;
 };
 
 export default function UpdateResultsClosePage() {
@@ -162,11 +165,10 @@ export default function UpdateResultsClosePage() {
                 const match = lastRow.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
                 if (match) {
                     const lastStartDate = parseDateString(match[1]);
+                    const lastEndDate = parseDateString(match[2]);
                     
-                    if (lastStartDate) {
-                        lastStartDate.setHours(0,0,0,0);
-                        const lastEndDate = new Date(lastStartDate);
-                        lastEndDate.setDate(lastStartDate.getDate() + 6);
+                    if (lastStartDate && lastEndDate) {
+                        lastEndDate.setHours(23, 59, 59, 999);
                         
                         if (gameDate >= lastStartDate && gameDate <= lastEndDate) {
                             weekFound = true;
