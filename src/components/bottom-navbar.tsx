@@ -44,13 +44,13 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
       <motion.nav
         role="navigation"
         aria-label="Primary"
-        className="relative mx-auto max-w-lg overflow-hidden rounded-3xl backdrop-blur-xl ring-2 ring-white/20 shadow-[0_0_35px_rgba(255,255,255,0.2)]"
+        className="relative mx-auto max-w-lg overflow-hidden rounded-3xl backdrop-blur-xl ring-2 ring-white/20 shadow-[0_0_25px_rgba(255,255,255,0.1)]"
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 animate-[shimmer_5s_linear_infinite] opacity-20" />
-        <div className="relative flex items-center justify-around px-4 py-3 bg-[#112a45] rounded-3xl">
+        <div className="relative flex items-center justify-around px-2 py-2 bg-[#112a45] rounded-3xl">
           {items.map((it) => {
             const activeNow = active === it.id;
             return (
@@ -59,14 +59,14 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                 onClick={() => handleNavigation(it.path, it.id)}
                 aria-current={activeNow ? "page" : undefined}
                 aria-label={it.label}
-                 className={`group relative flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-all duration-300 focus:outline-none ${
+                 className={`group relative flex flex-col items-center gap-0.5 rounded-xl px-2 py-1 transition-all duration-300 focus:outline-none ${
                   activeNow
                     ? "text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.7)]"
                     : "text-gray-300 hover:text-white"
                 }`}
               >
                 <motion.div
-                  className={`relative flex items-center justify-center rounded-full p-2 bg-gradient-to-r ${it.gradient}`}
+                  className={`relative flex items-center justify-center rounded-full p-1.5 bg-gradient-to-r ${it.gradient}`}
                   animate={{
                     scale: activeNow ? [1, 1.25, 1] : [1, 1.05, 1],
                     rotate:
@@ -87,17 +87,17 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                       transition={{ duration: 0.6 }}
                     />
                   )}
-                  <it.Icon className="h-6 w-6 text-white relative z-10" />
+                  <it.Icon className="h-5 w-5 text-white relative z-10" />
                 </motion.div>
 
-                <span className="text-[11px] font-semibold leading-none tracking-wide">
+                <span className="text-[10px] font-semibold leading-none tracking-wide">
                   {it.label}
                 </span>
 
                 {activeNow && (
                   <motion.span
                     layoutId="dot"
-                    className="absolute -top-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white shadow"
+                    className="absolute -top-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white shadow"
                     animate={{ scale: [0.8, 1.4, 1] }}
                     transition={{ duration: 0.4 }}
                   />
@@ -108,7 +108,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                     initial={{ scale: 0 }}
                     animate={{ scale: [1, 1.25, 1], rotate: [0, 12, -12, 0] }}
                     transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                    className="pointer-events-none absolute -top-2 right-2 flex h-5 min-w-[22px] items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-400 to-pink-500 px-1.5 text-[11px] font-semibold text-white shadow-lg"
+                    className="pointer-events-none absolute -top-1.5 right-1.5 flex h-4 min-w-[18px] items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-400 to-pink-500 px-1 text-[10px] font-semibold text-white shadow-lg"
                   >
                     ₹
                   </motion.span>
