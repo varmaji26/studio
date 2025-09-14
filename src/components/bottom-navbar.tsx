@@ -34,7 +34,7 @@ export function BottomNavbar() {
   };
 
   return (
-    <div className="fixed inset-x-4 bottom-6 z-50">
+    <div className="fixed inset-x-4 bottom-4 z-50">
       <motion.nav
         role="navigation"
         aria-label="Primary"
