@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from "react";
@@ -49,7 +48,6 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 animate-[shimmer_5s_linear_infinite] opacity-20" />
         <div className="relative flex items-center justify-around px-2 py-2 bg-[#112a45] rounded-3xl">
           {items.map((it) => {
             const activeNow = active === it.id;
@@ -76,7 +74,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                         ? [0, 15, -15, 0]
                         : 0,
                   }}
-                  transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                  transition={{ repeat: activeNow ? Infinity : 0, duration: 2.5, ease: "easeInOut" }}
                 >
                   {activeNow && (
                     <motion.span
