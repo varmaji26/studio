@@ -40,7 +40,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
   };
 
   return (
-    <div className="fixed inset-x-2 bottom-2 z-50">
+    <div className="fixed inset-x-6 bottom-4 z-50">
       <motion.nav
         role="navigation"
         aria-label="Primary"
@@ -61,7 +61,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                 aria-label={it.label}
                  className={`group relative flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-all duration-300 focus:outline-none ${
                   activeNow
-                    ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                    ? "text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.7)]"
                     : "text-gray-300 hover:text-white"
                 }`}
               >
@@ -81,7 +81,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                   {activeNow && (
                     <motion.span
                       layoutId="glow"
-                      className="absolute inset-0 rounded-full bg-white/30 blur-lg"
+                      className="absolute inset-0 rounded-full bg-white/20 blur-md"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1, scale: [0.9, 1.3, 1] }}
                       transition={{ duration: 0.6 }}
