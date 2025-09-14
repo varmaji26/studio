@@ -50,7 +50,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
         transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 animate-[shimmer_5s_linear_infinite] opacity-20" />
-        <div className="relative flex items-center justify-around px-2 py-1 bg-[#112a45] rounded-3xl">
+        <div className="relative flex items-center justify-around px-2 py-2 bg-[#112a45] rounded-3xl">
           {items.map((it) => {
             const activeNow = active === it.id;
             return (
@@ -61,23 +61,30 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                 aria-label={it.label}
                  className={`group relative flex flex-col items-center gap-0.5 rounded-xl px-2 py-1 transition-all duration-300 focus:outline-none ${
                   activeNow
-                    ? "text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]"
+                    ? "text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.7)]"
                     : "text-gray-300 hover:text-white"
                 }`}
               >
                 <motion.div
                   className={`relative flex items-center justify-center rounded-full p-1.5 bg-gradient-to-r ${it.gradient}`}
-                  animate={activeNow ? { scale: 1.25 } : { scale: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  animate={{
+                    scale: activeNow ? [1, 1.25, 1] : [1, 1.05, 1],
+                    rotate:
+                      it.id === "contact"
+                        ? [0, -10, 10, 0]
+                        : it.id === "funds"
+                        ? [0, 15, -15, 0]
+                        : 0,
+                  }}
+                  transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
                 >
                   {activeNow && (
                     <motion.span
                       layoutId="glow"
                       className="absolute inset-0 rounded-full bg-white/20 blur-md"
                       initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
+                      animate={{ opacity: 1, scale: [0.9, 1.3, 1] }}
+                      transition={{ duration: 0.6 }}
                     />
                   )}
                   <it.Icon className="h-5 w-5 text-white relative z-10" />
@@ -91,10 +98,20 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                   <motion.span
                     layoutId="dot"
                     className="absolute -top-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white shadow"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    animate={{ scale: [0.8, 1.4, 1] }}
+                    transition={{ duration: 0.4 }}
                   />
+                )}
+
+                {it.id === "funds" && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: [1, 1.25, 1], rotate: [0, 12, -12, 0] }}
+                    transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                    className="pointer-events-none absolute -top-1.5 right-1.5 flex h-4 min-w-[18px] items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-400 to-pink-500 px-1 text-[10px] font-semibold text-white shadow-lg"
+                  >
+                    ₹
+                  </motion.span>
                 )}
               </button>
             );
