@@ -39,16 +39,16 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
   };
 
   return (
-    <div className="fixed inset-x-6 bottom-4 z-50">
+    <div className="fixed bottom-0 left-0 right-0 z-50">
       <motion.nav
         role="navigation"
         aria-label="Primary"
-        className="relative mx-auto max-w-lg overflow-hidden rounded-3xl backdrop-blur-xl ring-2 ring-white/20 shadow-[0_0_25px_rgba(255,255,255,0.1)]"
+        className="relative overflow-hidden backdrop-blur-xl ring-2 ring-white/20 shadow-[0_0_25px_rgba(255,255,255,0.1)]"
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       >
-        <div className="relative flex items-center justify-around px-2 py-2 bg-[#112a45] rounded-3xl">
+        <div className="relative flex items-center justify-around px-2 py-2 bg-[#112a45]">
           {items.map((it) => {
             const activeNow = active === it.id;
             return (
@@ -74,7 +74,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                         ? [0, 15, -15, 0]
                         : 0,
                   }}
-                  transition={{ repeat: activeNow ? Infinity : 0, duration: 2.5, ease: "easeInOut" }}
+                  transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
                 >
                   {activeNow && (
                     <motion.span
