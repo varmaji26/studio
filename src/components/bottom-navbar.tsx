@@ -59,23 +59,32 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                 onClick={() => handleNavigation(it.path, it.id)}
                 aria-current={activeNow ? "page" : undefined}
                 aria-label={it.label}
-                className={cn(
-                    "group relative flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors duration-300 focus:outline-none",
-                     activeNow ? "text-white" : "text-gray-300 hover:text-white"
-                )}
+                 className={`group relative flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-all duration-300 focus:outline-none ${
+                  activeNow
+                    ? "text-white drop-shadow-[0_0_10px_rgba(255,255,255,1)]"
+                    : "text-gray-300 hover:text-white"
+                }`}
               >
                 <motion.div
                   className={`relative flex items-center justify-center rounded-full p-2 bg-gradient-to-r ${it.gradient}`}
-                   animate={{ scale: activeNow ? 1.1 : 1 }}
-                   transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  animate={{
+                    scale: activeNow ? [1, 1.25, 1] : [1, 1.05, 1],
+                    rotate:
+                      it.id === "contact"
+                        ? [0, -10, 10, 0]
+                        : it.id === "funds"
+                        ? [0, 15, -15, 0]
+                        : 0,
+                  }}
+                  transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
                 >
                   {activeNow && (
                     <motion.span
                       layoutId="glow"
                       className="absolute inset-0 rounded-full bg-white/40 blur-md"
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1, scale: [0.9, 1.3, 1] }}
+                      transition={{ duration: 0.6 }}
                     />
                   )}
                   <it.Icon className="h-6 w-6 text-white relative z-10" />
@@ -88,10 +97,9 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                 {activeNow && (
                   <motion.span
                     layoutId="dot"
-                    className="absolute -top-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white shadow"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                    className="absolute -top-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white shadow"
+                    animate={{ scale: [0.8, 1.4, 1] }}
+                    transition={{ duration: 0.4 }}
                   />
                 )}
 
