@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -51,11 +50,8 @@ const parseDateString = (dateStr: string): Date | null => {
     if (parts.length !== 3) return null;
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-    // Date constructor uses month index 0-11, and we need to handle local time zone.
-    const date = new Date(year, month - 1, day);
-    // Adjust for timezone offset to prevent date shifting
-    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-    return date;
+    // Create date in UTC to avoid timezone issues during comparison
+    return new Date(Date.UTC(year, month - 1, day));
 };
 
 export default function UpdateResultsClosePage() {
@@ -127,17 +123,16 @@ export default function UpdateResultsClosePage() {
         // Determine the correct date for the game result
         const now = new Date();
         const [openHours, openMinutes] = game.openTime.split(':').map(Number);
-        const gameDate = (now.getHours() < openHours || (now.getHours() === openHours && now.getMinutes() < openMinutes))
-            ? new Date(new Date().setDate(now.getDate() - 1))
-            : new Date();
-        gameDate.setHours(0,0,0,0);
-
+        const gameDate = (now.getUTCHours() < openHours || (now.getUTCHours() === openHours && now.getUTCMinutes() < openMinutes))
+            ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1))
+            : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        
         // Update Jodi Chart
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
         const jodiChartSnap = await getDoc(jodiChartRef);
         if (jodiChartSnap.exists()) {
             const jodiData = jodiChartSnap.data();
-            const gameDay = gameDate.toLocaleDateString('en-US', { weekday: 'long' });
+            const gameDay = gameDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
             const activeDays = jodiData.activeDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             
             if (activeDays.includes(gameDay)) {
@@ -151,7 +146,7 @@ export default function UpdateResultsClosePage() {
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelChartDataString = panelChartSnap.data().data || '';
-            const dayOfWeek = gameDate.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
+            const dayOfWeek = gameDate.getUTCDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
@@ -159,42 +154,38 @@ export default function UpdateResultsClosePage() {
             let weekFound = false;
             let finalDataArray = [...rows];
 
-            if (rows.length > 0) {
-                const lastRowIndex = rows.length - 1;
-                const lastRow = rows[lastRowIndex];
-                const match = lastRow.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const match = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
                 if (match) {
-                    const lastStartDate = parseDateString(match[1]);
-                    const lastEndDate = parseDateString(match[2]);
+                    const startDate = parseDateString(match[1]);
+                    const endDate = parseDateString(match[2]);
                     
-                    if (lastStartDate && lastEndDate) {
-                        lastEndDate.setHours(23, 59, 59, 999);
+                    if (startDate && endDate && gameDate >= startDate && gameDate <= endDate) {
+                        weekFound = true;
+                        const dataPart = row.substring(match[0].length).trim();
+                        const dailyBlocks = dataPart.split(/\s+/).filter(String);
                         
-                        if (gameDate >= lastStartDate && gameDate <= lastEndDate) {
-                            weekFound = true;
-                            const dataPart = lastRow.substring(match[0].length).trim();
-                            const dailyBlocks = dataPart.split(/\s+/).filter(String);
-                            
-                            while(dailyBlocks.length < 7) {
-                                dailyBlocks.push('********');
-                            }
-
-                            dailyBlocks[dayIndex] = newDayData;
-                            
-                            const updatedDataPart = dailyBlocks.join(' ');
-                            finalDataArray[lastRowIndex] = `${match[0]} ${updatedDataPart}`;
+                        while(dailyBlocks.length < 7) {
+                            dailyBlocks.push('********');
                         }
+
+                        dailyBlocks[dayIndex] = newDayData;
+                        
+                        const updatedDataPart = dailyBlocks.join(' ');
+                        finalDataArray[i] = `${match[0]} ${updatedDataPart}`;
+                        break; 
                     }
                 }
             }
             
             if (!weekFound) {
                 const startOfWeek = new Date(gameDate);
-                startOfWeek.setDate(gameDate.getDate() - dayIndex);
+                startOfWeek.setUTCDate(gameDate.getUTCDate() - dayIndex);
                 const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
                 
-                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
                 const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
                 
                 const newWeekDataArr = Array(7).fill('********');
