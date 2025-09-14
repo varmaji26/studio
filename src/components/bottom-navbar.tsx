@@ -23,9 +23,10 @@ export function BottomNavbar() {
     if (currentItem) {
       setActive(currentItem.id);
     } else {
-      setActive("home"); 
+      // Default to home or a non-active state if no path matches
+      setActive(""); 
     }
-  }, [pathname, items]);
+  }, [pathname]);
 
 
   const handleNavigation = (path: string, id: string) => {
