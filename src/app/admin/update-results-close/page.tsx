@@ -48,9 +48,16 @@ const parseDateString = (dateStr: string): Date | null => {
     if (!dateStr) return null;
     const parts = dateStr.trim().split('/');
     if (parts.length !== 3) return null;
+    // Parts are [DD, MM, YYYY]
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-    return new Date(year, month - 1, day);
+    // JavaScript's Date month is 0-indexed (0 for January)
+    const date = new Date(year, month - 1, day);
+    // Verify that the created date is valid and components match
+    if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+        return date;
+    }
+    return null;
 };
 
 export default function UpdateResultsClosePage() {
@@ -119,7 +126,8 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
-        // Determine the correct date for the game result
+        // --- Start of Corrected Date and Chart Logic ---
+
         const now = new Date();
         const [openHours, openMinutes] = game.openTime.split(':').map(Number);
         
@@ -127,10 +135,11 @@ export default function UpdateResultsClosePage() {
         gameOpenTimeToday.setHours(openHours, openMinutes, 0, 0);
 
         const resultDate = new Date();
+        // If current time is before the game's open time, the result belongs to the previous day
         if (now < gameOpenTimeToday) {
             resultDate.setDate(resultDate.getDate() - 1);
         }
-        resultDate.setHours(0, 0, 0, 0);
+        resultDate.setHours(0, 0, 0, 0); // Normalize to the start of the day
         
         // Update Jodi Chart
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
@@ -152,7 +161,7 @@ export default function UpdateResultsClosePage() {
         if (panelChartSnap.exists()) {
             const panelChartDataString = panelChartSnap.data().data || '';
             const dayOfWeek = resultDate.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
-            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
+            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Correct index: Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
             const rows = panelChartDataString.split('\n').filter((row: string) => row.trim() !== '');
@@ -204,6 +213,7 @@ export default function UpdateResultsClosePage() {
             batch.update(panelChartRef, { data: finalDataArray.join('\n') });
         }
 
+        // --- End of Corrected Date and Chart Logic ---
 
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
         const bidsSnapshot = await getDocs(bidsQuery);
