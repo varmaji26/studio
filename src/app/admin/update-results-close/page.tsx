@@ -51,7 +51,7 @@ const parseDateString = (dateStr: string): Date | null => {
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
     // Create date in UTC to avoid timezone issues during comparison
-    return new Date(Date.UTC(year, month - 1, day));
+    return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
 };
 
 export default function UpdateResultsClosePage() {
@@ -123,9 +123,14 @@ export default function UpdateResultsClosePage() {
         // Determine the correct date for the game result
         const now = new Date();
         const [openHours, openMinutes] = game.openTime.split(':').map(Number);
-        const gameDate = (now.getUTCHours() < openHours || (now.getUTCHours() === openHours && now.getUTCMinutes() < openMinutes))
-            ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1))
-            : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        
+        // Create a date for today with the game's open time
+        const gameOpenTimeToday = new Date();
+        gameOpenTimeToday.setHours(openHours, openMinutes, 0, 0);
+
+        // If the current time is before the game's open time, it means the result is for yesterday.
+        const gameDate = now < gameOpenTimeToday ? new Date(now.setDate(now.getDate() - 1)) : new Date();
+        gameDate.setUTCHours(0, 0, 0, 0);
         
         // Update Jodi Chart
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
