@@ -80,21 +80,26 @@ export function AuthForm({ mode }: AuthFormProps) {
         });
         
         const userDocRef = doc(db, "users", userCredential.user.uid);
-        
-        // Save user data
-        await setDoc(userDocRef, {
-            uid: userCredential.user.uid,
-            displayName: values.username,
-            mobile: values.mobile,
-            email: email,
-            balance: 0,
-            bonusBalance: 0,
-            totalBonusGiven: 0,
-            isAdmin: false,
-            isBlocked: false,
-            createdAt: serverTimestamp(),
-        });
+        const statsDocRef = doc(db, 'app-stats', 'dashboard');
 
+        await runTransaction(db, async (transaction) => {
+            // Save user data
+            transaction.set(userDocRef, {
+                uid: userCredential.user.uid,
+                displayName: values.username,
+                mobile: values.mobile,
+                email: email,
+                balance: 0,
+                bonusBalance: 0,
+                totalBonusGiven: 0,
+                isAdmin: false,
+                isBlocked: false,
+                createdAt: serverTimestamp(),
+            });
+
+            // Update stats
+            transaction.set(statsDocRef, { totalUsers: increment(1) }, { merge: true });
+        });
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, values.password);
         const user = userCredential.user;
