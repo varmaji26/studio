@@ -83,6 +83,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         const statsDocRef = doc(db, 'app-stats', 'dashboard');
         
         await runTransaction(db, async (transaction) => {
+            // First, create the user document
             transaction.set(userDocRef, {
                 uid: userCredential.user.uid,
                 displayName: values.username,
@@ -96,6 +97,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 createdAt: serverTimestamp(),
             });
 
+            // Then, read the stats doc and update it
             const statsDoc = await transaction.get(statsDocRef);
             if (statsDoc.exists()) {
                 transaction.update(statsDocRef, { totalUsers: increment(1) });
