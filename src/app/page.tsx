@@ -327,7 +327,7 @@ export default function Home() {
     </div>
   );
   
-  const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
+  const totalBalance = Number(userProfile?.balance || 0) + Number(userProfile?.bonusBalance || 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
