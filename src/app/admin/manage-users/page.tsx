@@ -29,14 +29,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/components/change-password-dialog';
 import { deleteAuthUser } from '@/actions/delete-user';
+import { UpdateBalanceDialog } from '@/components/update-balance-dialog';
 
-const UpdateBalanceDialog = dynamic(() => import('@/components/update-balance-dialog'), {
-  ssr: false,
-  loading: () => <Loader />,
-});
 
 interface User extends DocumentData {
     id: string;
