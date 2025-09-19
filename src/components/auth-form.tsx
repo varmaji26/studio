@@ -81,9 +81,10 @@ export function AuthForm({ mode }: AuthFormProps) {
         
         const userDocRef = doc(db, "users", userCredential.user.uid);
         const statsDocRef = doc(db, 'app-stats', 'dashboard');
-
+        
+        // Firestore transaction to ensure atomicity
         await runTransaction(db, async (transaction) => {
-            // Save user data
+            // First, create the user document.
             transaction.set(userDocRef, {
                 uid: userCredential.user.uid,
                 displayName: values.username,
@@ -97,7 +98,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 createdAt: serverTimestamp(),
             });
 
-            // Update stats
+            // Then, update the stats.
             transaction.set(statsDocRef, { totalUsers: increment(1) }, { merge: true });
         });
       } else {
