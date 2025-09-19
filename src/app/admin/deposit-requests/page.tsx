@@ -106,6 +106,11 @@ export default function DepositRequestsPage() {
         if (!requestDoc.exists() || requestDoc.data().status !== 'pending') {
           throw new Error("This request has already been processed.");
         }
+        
+        const userDoc = await transaction.get(userDocRef);
+        if (!userDoc.exists()) {
+            throw new Error("User not found!");
+        }
 
         if (status === 'approved') {
           const settingsDoc = await transaction.get(settingsDocRef);
@@ -294,5 +299,3 @@ export default function DepositRequestsPage() {
     </div>
   );
 }
-
-    
