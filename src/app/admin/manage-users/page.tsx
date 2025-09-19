@@ -72,9 +72,7 @@ export default function ManageUsersPage() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const usersData: User[] = [];
         querySnapshot.forEach((doc) => {
-            if (doc.data().displayName && doc.data().mobile) {
-                usersData.push({ id: doc.id, ...doc.data() } as User);
-            }
+            usersData.push({ id: doc.id, ...doc.data() } as User);
         });
         setAllUsers(usersData);
         setUsersLoading(false);
