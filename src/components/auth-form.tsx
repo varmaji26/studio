@@ -83,7 +83,6 @@ export function AuthForm({ mode }: AuthFormProps) {
         const statsDocRef = doc(db, 'app-stats', 'dashboard');
         
         await runTransaction(db, async (transaction) => {
-            // First, create the user document
             transaction.set(userDocRef, {
                 uid: userCredential.user.uid,
                 displayName: values.username,
@@ -97,12 +96,14 @@ export function AuthForm({ mode }: AuthFormProps) {
                 createdAt: serverTimestamp(),
             });
 
-            // Then, read the stats doc and update it
             const statsDoc = await transaction.get(statsDocRef);
             if (statsDoc.exists()) {
                 transaction.update(statsDocRef, { totalUsers: increment(1) });
             } else {
-                transaction.set(statsDocRef, { totalUsers: 1 }, { merge: true });
+                // If the doc doesn't exist, we create it.
+                // This is a fallback and shouldn't happen in normal operation
+                // if setInitialStats has run.
+                transaction.set(statsDocRef, { totalUsers: 1 });
             }
         });
 
