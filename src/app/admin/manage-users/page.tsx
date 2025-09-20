@@ -142,34 +142,32 @@ export default function ManageUsersPage() {
 
   const handleDeleteUser = async (user: User) => {
     try {
-        // First, delete the user from Firebase Authentication
         const authResult = await deleteAuthUser(user.id);
 
         if (!authResult.success && authResult.message.includes('User not found')) {
-            // If user is not in Auth, they might be a leftover. 
-            // We can still proceed to delete from Firestore.
             toast({
                 variant: 'default',
                 title: 'Partial Reset',
                 description: 'User not found in Authentication, but proceeding to delete from database.',
             });
         } else if (!authResult.success) {
-            // For other auth errors, stop the process.
             throw new Error(authResult.message);
         }
 
-        // Then, delete from Firestore and update stats
-        const batch = writeBatch(db);
         const userDocRef = doc(db, "users", user.id);
-        batch.delete(userDocRef);
-
         const statsDocRef = doc(db, 'app-stats', 'dashboard');
-        batch.update(statsDocRef, { 
-            totalUsers: increment(-1),
-            totalBalance: increment(-(user.balance || 0))
-        });
         
-        await batch.commit();
+        await runTransaction(db, async (transaction) => {
+            const statsDoc = await transaction.get(statsDocRef);
+            if (statsDoc.exists()) {
+                 transaction.update(statsDocRef, { 
+                    totalUsers: increment(-1),
+                    totalBalance: increment(-(user.balance || 0))
+                });
+            }
+            transaction.delete(userDocRef);
+        });
+
 
         toast({
             title: 'User Reset Successfully!',
@@ -209,7 +207,6 @@ export default function ManageUsersPage() {
                     transaction.update(bidDoc.ref, { status: 'cancelled', winningAmount: 0 });
                 });
                 
-                // Set balance and bonus balance to 0 and update total balance stats
                 transaction.update(userDocRef, { 
                     balance: 0,
                     bonusBalance: 0,

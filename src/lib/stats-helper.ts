@@ -2,45 +2,48 @@
 'use client';
 
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, writeBatch, updateDoc } from 'firebase/firestore';
 
-// This helper function calculates initial stats and sets them in Firestore.
-// It should be run once, or whenever you need to recalculate stats from scratch.
 export async function setInitialStats() {
     const statsDocRef = doc(db, 'app-stats', 'dashboard');
-    const statsDoc = await getDoc(statsDocRef);
-
-    // Only run if the stats document doesn't exist
-    if (statsDoc.exists()) {
-        return;
-    }
-
-    console.log("Initializing application statistics...");
-
-    const usersCollection = collection(db, 'users');
-    const gamesCollection = collection(db, 'games');
-
-    const usersSnapshot = await getDocs(usersCollection);
-    const gamesSnapshot = await getDocs(gamesCollection);
-
-    const totalUsers = usersSnapshot.size;
-    const totalGames = gamesSnapshot.size;
-
-    let totalBalance = 0;
-    usersSnapshot.forEach(userDoc => {
-        totalBalance += userDoc.data().balance || 0;
-    });
-    
-    const initialStats = {
-        totalUsers,
-        totalGames,
-        totalBalance
-    };
+    const usersCollectionRef = collection(db, 'users');
 
     try {
-        await setDoc(statsDocRef, initialStats);
-        console.log("Successfully initialized application statistics:", initialStats);
+        const [statsDoc, usersSnapshot] = await Promise.all([
+            getDoc(statsDocRef),
+            getDocs(usersCollectionRef)
+        ]);
+
+        const actualUserCount = usersSnapshot.size;
+
+        if (!statsDoc.exists()) {
+            console.log("Stats document not found. Initializing application statistics...");
+            const gamesSnapshot = await getDocs(collection(db, 'games'));
+            const totalGames = gamesSnapshot.size;
+
+            let totalBalance = 0;
+            usersSnapshot.forEach(userDoc => {
+                totalBalance += userDoc.data().balance || 0;
+            });
+            
+            const initialStats = {
+                totalUsers: actualUserCount,
+                totalGames,
+                totalBalance
+            };
+
+            await setDoc(statsDocRef, initialStats);
+            console.log("Successfully initialized application statistics:", initialStats);
+
+        } else {
+            const currentStats = statsDoc.data();
+            if (currentStats.totalUsers !== actualUserCount) {
+                console.log(`User count mismatch detected. Synced: ${currentStats.totalUsers} -> Actual: ${actualUserCount}. Correcting...`);
+                await updateDoc(statsDocRef, { totalUsers: actualUserCount });
+            }
+        }
+
     } catch (error) {
-        console.error("Error setting initial stats:", error);
+        console.error("Error ensuring initial stats are set and synced:", error);
     }
 }
