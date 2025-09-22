@@ -586,13 +586,10 @@ export default function Home() {
               <CardContent>
                 {games.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
-                        {games.map((game, index) => (
+                        {games.map((game) => (
                              <motion.div
                                 key={game.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5, delay: index * 0.05 }}
-                                viewport={{ once: true }}
+                                className="w-full"
                             >
                                 <GameCard 
                                     game={game}
