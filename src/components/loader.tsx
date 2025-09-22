@@ -19,7 +19,7 @@ export function Loader({ className }: { className?: string }) {
             src="https://lottie.host/0df14788-d445-40bb-b7e6-413e847a169e/x9kAYkhru6.lottie"
             autoplay 
             loop
-            style={{ width: '300px', height: '300px' }}>
+            style={{ width: '400px', height: '400px' }}>
         </dotlottie-wc>
     </div>
   );
