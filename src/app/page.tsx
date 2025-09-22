@@ -125,7 +125,7 @@ const GameCard = memo(function GameCard({
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-3 space-y-2 shadow-2xl shadow-black/50 animate-breathe">
+        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-3 space-y-2 shadow-2xl shadow-black/50">
             <h3 className="text-lg font-bold text-white text-center">{game.name}</h3>
             
             <div className="bg-yellow-400 rounded-full flex items-center justify-between p-1">
@@ -334,6 +334,24 @@ export default function Home() {
     whileInView: { opacity: 1, y: 0 },
     transition: { duration: 0.5 },
     viewport: { once: true },
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+    },
   };
 
   return (
@@ -585,18 +603,25 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 {games.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4">
+                    <motion.div
+                      className="grid grid-cols-1 gap-4"
+                      variants={containerVariants}
+                      initial="hidden"
+                      whileInView="visible"
+                      viewport={{ once: true, amount: 0.2 }}
+                    >
                         {games.map((game) => (
                              <motion.div
                                 key={game.id}
                                 className="w-full"
+                                variants={itemVariants}
                             >
                                 <GameCard 
                                     game={game}
                                 />
                             </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
                 ) : (
                   <p className="text-center text-muted-foreground">No games available right now.</p>
                 )}
