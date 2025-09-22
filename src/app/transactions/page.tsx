@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -27,6 +26,8 @@ interface Transaction extends DocumentData {
 interface UserProfile extends DocumentData {
   balance?: number;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 const TransactionIcon = ({ type }: { type: Transaction['type'] }) => {
     switch (type) {
@@ -84,6 +85,7 @@ export default function TransactionDetailsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [profile, setProfile] = useState<UserProfile>({});
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         if (authLoading) return;
@@ -159,6 +161,39 @@ export default function TransactionDetailsPage() {
         return filtered.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
     }, [transactions]);
     
+    const totalPages = Math.ceil(sortedTransactions.length / ITEMS_PER_PAGE);
+    const paginatedTransactions = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return sortedTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [sortedTransactions, currentPage]);
+
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+        return (
+            <div className="flex justify-center items-center mt-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                    >
+                        PREV
+                    </Button>
+                    <span className="bg-primary text-primary-foreground rounded-md px-3 py-1">{currentPage}</span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                    >
+                        NEXT
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+    
     if (authLoading || loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
@@ -189,14 +224,15 @@ export default function TransactionDetailsPage() {
                  <div className="bg-background flex-1 p-4 -mt-2">
                     <h2 className="text-lg font-bold text-foreground mb-4 bg-teal-900/50 p-2 rounded-md text-center text-teal-200">Transactions</h2>
                      <div className="space-y-3">
-                        {sortedTransactions.length > 0 ? (
-                            sortedTransactions.map(t => <TransactionItem key={t.id} transaction={t} />)
+                        {paginatedTransactions.length > 0 ? (
+                            paginatedTransactions.map(t => <TransactionItem key={t.id} transaction={t} />)
                         ) : (
                             <div className="text-center py-10">
                                 <p className="text-muted-foreground">No transactions found.</p>
                             </div>
                         )}
                     </div>
+                    {renderPagination()}
                 </div>
             </main>
             <BottomNavbar />
