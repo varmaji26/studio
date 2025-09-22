@@ -51,7 +51,7 @@ import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { motion } from 'framer-motion';
+import { motion, useAnimation, useInView } from 'framer-motion';
 
 
 interface Game extends DocumentData {
@@ -162,6 +162,33 @@ const GameCard = memo(function GameCard({
         </div>
     );
 });
+
+const AnimatedSection = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, amount: 0.1 });
+    const controls = useAnimation();
+
+    useEffect(() => {
+        if (isInView) {
+            controls.start("visible");
+        }
+    }, [isInView, controls]);
+
+    return (
+        <motion.div
+            ref={ref}
+            variants={{
+                hidden: { opacity: 0, y: 50 },
+                visible: { opacity: 1, y: 0 },
+            }}
+            initial="hidden"
+            animate={controls}
+            transition={{ duration: 0.5, delay }}
+        >
+            {children}
+        </motion.div>
+    );
+};
 
 
 export default function Home() {
@@ -329,13 +356,6 @@ export default function Home() {
   
   const totalBalance = Number(userProfile?.balance || 0) + Number(userProfile?.bonusBalance || 0);
 
-  const motionProps = {
-    initial: { opacity: 0, y: 20 },
-    whileInView: { opacity: 1, y: 0 },
-    transition: { duration: 0.5 },
-    viewport: { once: true },
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
@@ -494,7 +514,7 @@ export default function Home() {
 
 
         {settings.welcomeBanner?.imageUrl && (
-             <motion.div {...motionProps} transition={{ duration: 0.5 }}>
+             <AnimatedSection>
                 <Card className="bg-card/80 border-white/10 shadow-lg shadow-white/10">
                     <CardContent className="p-0">
                         <Image
@@ -508,11 +528,11 @@ export default function Home() {
                         />
                     </CardContent>
                 </Card>
-             </motion.div>
+             </AnimatedSection>
         )}
         
         {banners.length > 0 && (
-            <motion.div {...motionProps} transition={{ duration: 0.5, delay: 0.1 }}>
+            <AnimatedSection delay={0.1}>
                 <Carousel 
                     plugins={[autoplayPlugin.current]}
                     className="w-full"
@@ -537,10 +557,10 @@ export default function Home() {
                     <CarouselPrevious className="left-4" />
                     <CarouselNext className="right-4" />
                 </Carousel>
-            </motion.div>
+            </AnimatedSection>
         )}
         
-        <motion.div {...motionProps} transition={{ duration: 0.5, delay: 0.2 }}>
+        <AnimatedSection delay={0.2}>
             <Card className="bg-card/80 border-white/10 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
@@ -560,9 +580,9 @@ export default function Home() {
                 )}
               </CardContent>
             </Card>
-        </motion.div>
+        </AnimatedSection>
 
-        <motion.div {...motionProps} transition={{ duration: 0.5, delay: 0.3 }}>
+        <AnimatedSection delay={0.3}>
             <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
                 <CardHeader>
                     <CardTitle className="text-xl text-white">Notice</CardTitle>
@@ -576,9 +596,9 @@ export default function Home() {
                     </p>
                 </CardContent>
             </Card>
-        </motion.div>
+        </AnimatedSection>
 
-        <motion.div {...motionProps} transition={{ duration: 0.5, delay: 0.4 }}>
+        <AnimatedSection delay={0.4}>
             <Card className="bg-card/80 border-white/10 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-xl text-center">Matka Games</CardTitle>
@@ -586,12 +606,10 @@ export default function Home() {
               <CardContent>
                 {games.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
-                        {games.map((game) => (
-                            <div key={game.id} className="w-full animate-breathe">
-                                <GameCard 
-                                    game={game}
-                                />
-                            </div>
+                        {games.map((game, index) => (
+                            <AnimatedSection key={game.id} delay={index * 0.1}>
+                                <GameCard game={game} />
+                            </AnimatedSection>
                         ))}
                     </div>
                 ) : (
@@ -599,7 +617,7 @@ export default function Home() {
                 )}
               </CardContent>
             </Card>
-        </motion.div>
+        </AnimatedSection>
       </main>
       
       <BottomNavbar settings={settings} />
