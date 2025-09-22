@@ -336,24 +336,6 @@ export default function Home() {
     viewport: { once: true },
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
@@ -603,25 +585,15 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 {games.length > 0 ? (
-                    <motion.div
-                      className="grid grid-cols-1 gap-4"
-                      variants={containerVariants}
-                      initial="hidden"
-                      whileInView="visible"
-                      viewport={{ once: true }}
-                    >
+                    <div className="grid grid-cols-1 gap-4">
                         {games.map((game) => (
-                             <motion.div
-                                key={game.id}
-                                className="w-full"
-                                variants={itemVariants}
-                            >
+                            <div key={game.id} className="w-full animate-breathe">
                                 <GameCard 
                                     game={game}
                                 />
-                            </motion.div>
+                            </div>
                         ))}
-                    </motion.div>
+                    </div>
                 ) : (
                   <p className="text-center text-muted-foreground">No games available right now.</p>
                 )}
