@@ -607,8 +607,7 @@ export default function Home() {
                       className="grid grid-cols-1 gap-4"
                       variants={containerVariants}
                       initial="hidden"
-                      whileInView="visible"
-                      viewport={{ once: true, amount: 0.2 }}
+                      animate="visible"
                     >
                         {games.map((game) => (
                              <motion.div
