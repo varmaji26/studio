@@ -51,7 +51,7 @@ import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import dynamic from 'next/dynamic';
+import { motion } from 'framer-motion';
 
 
 interface Game extends DocumentData {
@@ -329,6 +329,13 @@ export default function Home() {
   
   const totalBalance = Number(userProfile?.balance || 0) + Number(userProfile?.bonusBalance || 0);
 
+  const motionProps = {
+    initial: { opacity: 0, y: 20 },
+    whileInView: { opacity: 1, y: 0 },
+    transition: { duration: 0.5 },
+    viewport: { once: true },
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
@@ -487,101 +494,118 @@ export default function Home() {
 
 
         {settings.welcomeBanner?.imageUrl && (
-             <Card className="bg-card/80 border-white/10 shadow-lg shadow-white/10">
-                <CardContent className="p-0">
-                    <Image
-                        src={settings.welcomeBanner.imageUrl}
-                        alt="Welcome Banner"
-                        width={1200}
-                        height={400}
-                        className="w-full h-auto object-cover rounded-lg"
-                        data-ai-hint="king"
-                        priority
-                    />
-                </CardContent>
-            </Card>
+             <motion.div {...motionProps} transition={{ duration: 0.5 }}>
+                <Card className="bg-card/80 border-white/10 shadow-lg shadow-white/10">
+                    <CardContent className="p-0">
+                        <Image
+                            src={settings.welcomeBanner.imageUrl}
+                            alt="Welcome Banner"
+                            width={1200}
+                            height={400}
+                            className="w-full h-auto object-cover rounded-lg"
+                            data-ai-hint="king"
+                            priority
+                        />
+                    </CardContent>
+                </Card>
+             </motion.div>
         )}
         
         {banners.length > 0 && (
-            <Carousel 
-                plugins={[autoplayPlugin.current]}
-                className="w-full"
-                onMouseEnter={autoplayPlugin.current.stop}
-                onMouseLeave={autoplayPlugin.current.reset}
-            >
-                <CarouselContent>
-                    {banners.map((banner) => (
-                        <CarouselItem key={banner.id}>
-                        <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-                            <CardContent className="p-0">
-                                <img
-                                    src={banner.imageUrl}
-                                    alt="Banner"
-                                    className="w-full h-auto max-h-[250px] object-cover"
-                                />
-                            </CardContent>
-                        </Card>
-                        </CarouselItem>
-                    ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-4" />
-                <CarouselNext className="right-4" />
-            </Carousel>
+            <motion.div {...motionProps} transition={{ duration: 0.5, delay: 0.1 }}>
+                <Carousel 
+                    plugins={[autoplayPlugin.current]}
+                    className="w-full"
+                    onMouseEnter={autoplayPlugin.current.stop}
+                    onMouseLeave={autoplayPlugin.current.reset}
+                >
+                    <CarouselContent>
+                        {banners.map((banner) => (
+                            <CarouselItem key={banner.id}>
+                            <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+                                <CardContent className="p-0">
+                                    <img
+                                        src={banner.imageUrl}
+                                        alt="Banner"
+                                        className="w-full h-auto max-h-[250px] object-cover"
+                                    />
+                                </CardContent>
+                            </Card>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-4" />
+                    <CarouselNext className="right-4" />
+                </Carousel>
+            </motion.div>
         )}
         
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {games.length > 0 ? (
-              <div className="grid grid-cols-2 gap-1">
-                {games.map((game) => (
-                  <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-0.5 rounded-lg border border-black text-center">
-                    <span className="text-xs font-medium text-white [text-shadow:1px_1px_2px_#000]">{game.name}</span>
-                    <span className="text-xs font-bold text-black">{formatGameResult(game, true)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground">No results available right now.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
-            <CardHeader>
-                <CardTitle className="text-xl text-white">Notice</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p 
-                  className="text-white font-bold" 
-                  style={{ whiteSpace: 'pre-wrap' }}
-                >
-                  {settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}
-                </p>
-            </CardContent>
-        </Card>
-
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl text-center">Matka Games</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {games.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4">
+        <motion.div {...motionProps} transition={{ duration: 0.5, delay: 0.2 }}>
+            <Card className="bg-card/80 border-white/10 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {games.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-1">
                     {games.map((game) => (
-                        <GameCard 
-                            key={game.id}
-                            game={game}
-                        />
+                      <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-0.5 rounded-lg border border-black text-center">
+                        <span className="text-xs font-medium text-white [text-shadow:1px_1px_2px_#000]">{game.name}</span>
+                        <span className="text-xs font-bold text-black">{formatGameResult(game, true)}</span>
+                      </div>
                     ))}
-                </div>
-            ) : (
-              <p className="text-center text-muted-foreground">No games available right now.</p>
-            )}
-          </CardContent>
-        </Card>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground">No results available right now.</p>
+                )}
+              </CardContent>
+            </Card>
+        </motion.div>
+
+        <motion.div {...motionProps} transition={{ duration: 0.5, delay: 0.3 }}>
+            <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
+                <CardHeader>
+                    <CardTitle className="text-xl text-white">Notice</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p 
+                      className="text-white font-bold" 
+                      style={{ whiteSpace: 'pre-wrap' }}
+                    >
+                      {settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}
+                    </p>
+                </CardContent>
+            </Card>
+        </motion.div>
+
+        <motion.div {...motionProps} transition={{ duration: 0.5, delay: 0.4 }}>
+            <Card className="bg-card/80 border-white/10 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-xl text-center">Matka Games</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {games.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4">
+                        {games.map((game, index) => (
+                             <motion.div
+                                key={game.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: index * 0.05 }}
+                                viewport={{ once: true }}
+                            >
+                                <GameCard 
+                                    game={game}
+                                />
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : (
+                  <p className="text-center text-muted-foreground">No games available right now.</p>
+                )}
+              </CardContent>
+            </Card>
+        </motion.div>
       </main>
       
       <BottomNavbar settings={settings} />
