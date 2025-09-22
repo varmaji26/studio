@@ -71,7 +71,7 @@ export default function ContactPage() {
     if (authLoading || loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
-                <Loader className="h-10 w-10 text-primary" />
+                <Loader className="h-20 w-20 text-primary" />
             </div>
         );
     }
