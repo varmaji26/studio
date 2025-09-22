@@ -18,7 +18,8 @@ export function Loader({ className }: { className?: string }) {
         <dotlottie-wc 
             src="https://lottie.host/0df14788-d445-40bb-b7e6-413e847a169e/x9kAYkhru6.lottie"
             autoplay 
-            loop>
+            loop
+            className="w-full h-full">
         </dotlottie-wc>
     </div>
   );
