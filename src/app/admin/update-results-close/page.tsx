@@ -158,13 +158,14 @@ export default function UpdateResultsClosePage() {
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelChartDataString = panelChartSnap.data().data || '';
-            const dayOfWeek = resultDate.getUTCDay(); // Sunday - 0, Monday - 1, ...
-            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Correct index: Monday - 0, ..., Sunday - 6
+            const dayOfWeek = resultDate.getUTCDay();
+            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
             const rows = panelChartDataString.split('\n').filter((row: string) => row.trim() !== '');
             let weekFound = false;
             let finalDataArray = [...rows];
+            const resultDateStartOfDay = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
 
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
@@ -172,9 +173,8 @@ export default function UpdateResultsClosePage() {
                 if (match) {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
-                    
                     if (startDate && endDate) {
-                        const resultDateStartOfDay = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
+                        endDate.setUTCHours(23, 59, 59, 999);
                         if (resultDateStartOfDay >= startDate && resultDateStartOfDay <= endDate) {
                             weekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
@@ -188,18 +188,17 @@ export default function UpdateResultsClosePage() {
                             
                             const updatedDataPart = dailyBlocks.join(' ');
                             finalDataArray[i] = `${match[0]} ${updatedDataPart}`;
-                            break; 
+                            break;
                         }
                     }
                 }
             }
             
             if (!weekFound) {
-                const dayOfWeek = resultDate.getUTCDay(); // Sunday - 0, Monday - 1, ...
-                const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Correct index: Monday - 0, ..., Sunday - 6
+                const dayIndexForNewWeek = resultDate.getUTCDay() === 0 ? 6 : resultDate.getUTCDay() - 1;
                 
-                const startOfWeek = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
-                startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayIndex);
+                const startOfWeek = new Date(resultDateStartOfDay);
+                startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayIndexForNewWeek);
                 
                 const endOfWeek = new Date(startOfWeek);
                 endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
@@ -208,7 +207,7 @@ export default function UpdateResultsClosePage() {
                 const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
                 
                 const newWeekDataArr = Array(7).fill('********');
-                newWeekDataArr[dayIndex] = newDayData;
+                newWeekDataArr[dayIndexForNewWeek] = newDayData;
                 const newWeekData = newWeekDataArr.join(' ');
                 
                 const newRow = `${newDateRange} ${newWeekData}`;
