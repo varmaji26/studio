@@ -159,7 +159,7 @@ export default function UpdateResultsClosePage() {
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelChartDataString = panelChartSnap.data().data || '';
-            const dayOfWeek = resultDate.getUTCDay(); // Sunday - 0, Monday - 1, ...
+            const dayOfWeek = resultDate.getDay(); // Sunday - 0, Monday - 1, ...
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Correct index: Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
@@ -196,7 +196,7 @@ export default function UpdateResultsClosePage() {
             }
             
             if (!weekFound) {
-                 const dayOfWeek = resultDate.getUTCDay(); // Sunday - 0, Monday - 1, ...
+                const dayOfWeek = resultDate.getDay(); // Sunday - 0, Monday - 1, ...
                 const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Correct index: Monday - 0, ..., Sunday - 6
                 
                 const startOfWeek = new Date(resultDate);
