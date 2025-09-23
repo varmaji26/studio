@@ -37,6 +37,7 @@ import {
   X,
   Gift,
   IndianRupee,
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -106,19 +107,21 @@ interface UserProfile extends DocumentData {
 
 // Memoized Game Card Component for performance optimization
 const GameCard = memo(function GameCard({
-    game
+    game,
+    onBettingClosedClick
 }: {
-    game: Game
+    game: Game;
+    onBettingClosedClick: (game: Game) => void;
 }) {
     const bettingClosed = isBettingClosed(game.closeTime);
 
     const PlayButton = () => (
         <Button
+            onClick={bettingClosed ? () => onBettingClosedClick(game) : undefined}
             className={cn(
                 "w-full h-10 text-base font-bold text-white rounded-lg shadow-md transition-transform active:scale-95",
-                bettingClosed ? "bg-gray-600 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700"
+                bettingClosed ? "bg-gray-600 hover:bg-gray-700" : "bg-orange-600 hover:bg-orange-700"
             )}
-            disabled={bettingClosed}
         >
             Play Now
         </Button>
@@ -176,6 +179,7 @@ export default function Home() {
   const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
+  const [closedGameInfo, setClosedGameInfo] = useState<Game | null>(null);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
 
@@ -485,6 +489,26 @@ export default function Home() {
             </DialogContent>
         </Dialog>
 
+        {/* Betting Closed Dialog */}
+         <Dialog open={!!closedGameInfo} onOpenChange={() => setClosedGameInfo(null)}>
+            <DialogContent className="bg-white text-black p-0 max-w-sm rounded-lg">
+                <div className="flex flex-col items-center text-center p-6 space-y-4">
+                    <XCircle className="h-16 w-16 text-red-500" />
+                    <h2 className="text-xl font-bold text-red-600">Betting Is Closed For Today</h2>
+                    <p className="text-lg font-bold text-black">{closedGameInfo?.name}</p>
+                    <div className="text-left w-full space-y-2 text-sm">
+                        <div className="flex justify-between"><span>Open Result Time :</span> <span>{formatTime(closedGameInfo?.openTime)}</span></div>
+                        <div className="flex justify-between"><span>Open Bid Last Time :</span> <span>{formatTime(closedGameInfo?.openTime)}</span></div>
+                        <div className="flex justify-between"><span>Close Result Time :</span> <span>{formatTime(closedGameInfo?.closeTime)}</span></div>
+                        <div className="flex justify-between"><span>Close Bid Last Time :</span> <span>{formatTime(closedGameInfo?.closeTime)}</span></div>
+                    </div>
+                    <DialogClose asChild>
+                        <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold">OK</Button>
+                    </DialogClose>
+                </div>
+            </DialogContent>
+        </Dialog>
+
 
         {settings.welcomeBanner?.imageUrl && (
             <Card className="bg-card/80 border-white/10 shadow-lg shadow-white/10">
@@ -571,7 +595,7 @@ export default function Home() {
             {games.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
                     {games.map((game) => (
-                        <GameCard key={game.id} game={game} />
+                        <GameCard key={game.id} game={game} onBettingClosedClick={setClosedGameInfo} />
                     ))}
                 </div>
             ) : (
