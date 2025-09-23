@@ -50,11 +50,14 @@ const parseDateString = (dateStr: string): Date | null => {
     const parts = dateStr.trim().split('/');
     if (parts.length !== 3) return null;
     
+    // Assuming format is dd/mm/yyyy
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
-    const date = new Date(Date.UTC(year, month - 1, day));
+    // Use UTC to avoid timezone issues during parsing and comparison
+    const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
+    // Validate the date components
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
         return date;
     }
@@ -155,7 +158,7 @@ export default function UpdateResultsClosePage() {
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelChartDataString = panelChartSnap.data().data || '';
-            const dayOfWeek = resultDate.getDay(); // Sunday - 0, Monday - 1, ...
+            const dayOfWeek = resultDate.getUTCDay(); // Sunday - 0, Monday - 1, ...
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Correct index: Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
@@ -192,16 +195,16 @@ export default function UpdateResultsClosePage() {
             }
             
             if (!weekFound) {
-                const dayOfWeek = resultDate.getDay(); // Sunday - 0, Monday - 1, ...
+                const dayOfWeek = resultDate.getUTCDay(); // Sunday - 0, Monday - 1, ...
                 const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Correct index: Monday - 0, ..., Sunday - 6
                 
-                const startOfWeek = new Date(resultDate);
-                startOfWeek.setDate(resultDate.getDate() - dayIndex);
+                const startOfWeek = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
+                startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayIndex);
                 
                 const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
                 
-                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
                 const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
                 
                 const newWeekDataArr = Array(7).fill('********');
