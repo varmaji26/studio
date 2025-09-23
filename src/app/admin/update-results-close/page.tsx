@@ -53,7 +53,6 @@ const parseDateString = (dateStr: string): Date | null => {
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
-    // Create date in UTC to avoid timezone issues during parsing
     const date = new Date(Date.UTC(year, month - 1, day));
     
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
@@ -129,7 +128,6 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
-        // --- Corrected Date and Chart Logic ---
         const now = new Date();
         const [openHours, openMinutes] = game.openTime.split(':').map(Number);
         const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, openMinutes, 0, 0);
@@ -139,7 +137,6 @@ export default function UpdateResultsClosePage() {
             resultDate.setDate(resultDate.getDate() - 1);
         }
         
-        // Update Jodi Chart
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
         const jodiChartSnap = await getDoc(jodiChartRef);
         if (jodiChartSnap.exists()) {
@@ -154,7 +151,6 @@ export default function UpdateResultsClosePage() {
             }
         }
         
-        // Update Panel Chart
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
@@ -218,7 +214,6 @@ export default function UpdateResultsClosePage() {
 
             batch.update(panelChartRef, { data: finalDataArray.join('\n') });
         }
-        // --- End of Corrected Date and Chart Logic ---
 
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
         const bidsSnapshot = await getDocs(bidsQuery);
@@ -279,7 +274,6 @@ export default function UpdateResultsClosePage() {
         const batch = writeBatch(db);
         const gameDocRef = doc(db, 'games', game.id);
 
-        // Query for bets that were decided by this close result (Close session and Jodi Digit)
         const affectedBidsQuery = query(
             collection(db, 'bids'),
             where('gameId', '==', game.id),
@@ -290,7 +284,6 @@ export default function UpdateResultsClosePage() {
 
         bidsSnapshot.forEach(bidDoc => {
             const bid = bidDoc.data();
-            // Revert ONLY bids that were decided by the close result
             if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
                  if (bid.status === 'won') {
                     const userDocRef = doc(db, 'users', bid.userId);
