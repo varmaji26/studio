@@ -163,33 +163,6 @@ const GameCard = memo(function GameCard({
     );
 });
 
-const AnimatedSection = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
-    const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, amount: 0.1 });
-    const controls = useAnimation();
-
-    useEffect(() => {
-        if (isInView) {
-            controls.start("visible");
-        }
-    }, [isInView, controls]);
-
-    return (
-        <motion.div
-            ref={ref}
-            variants={{
-                hidden: { opacity: 0, y: 50 },
-                visible: { opacity: 1, y: 0 },
-            }}
-            initial="hidden"
-            animate={controls}
-            transition={{ duration: 0.5, delay }}
-        >
-            {children}
-        </motion.div>
-    );
-};
-
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -514,110 +487,98 @@ export default function Home() {
 
 
         {settings.welcomeBanner?.imageUrl && (
-             <AnimatedSection>
-                <Card className="bg-card/80 border-white/10 shadow-lg shadow-white/10">
-                    <CardContent className="p-0">
-                        <Image
-                            src={settings.welcomeBanner.imageUrl}
-                            alt="Welcome Banner"
-                            width={1200}
-                            height={400}
-                            className="w-full h-auto object-cover rounded-lg"
-                            data-ai-hint="king"
-                            priority
-                        />
-                    </CardContent>
-                </Card>
-             </AnimatedSection>
+            <Card className="bg-card/80 border-white/10 shadow-lg shadow-white/10">
+                <CardContent className="p-0">
+                    <Image
+                        src={settings.welcomeBanner.imageUrl}
+                        alt="Welcome Banner"
+                        width={1200}
+                        height={400}
+                        className="w-full h-auto object-cover rounded-lg"
+                        data-ai-hint="king"
+                        priority
+                    />
+                </CardContent>
+            </Card>
         )}
         
         {banners.length > 0 && (
-            <AnimatedSection delay={0.1}>
-                <Carousel 
-                    plugins={[autoplayPlugin.current]}
-                    className="w-full"
-                    onMouseEnter={autoplayPlugin.current.stop}
-                    onMouseLeave={autoplayPlugin.current.reset}
-                >
-                    <CarouselContent>
-                        {banners.map((banner) => (
-                            <CarouselItem key={banner.id}>
-                            <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-                                <CardContent className="p-0">
-                                    <img
-                                        src={banner.imageUrl}
-                                        alt="Banner"
-                                        className="w-full h-auto max-h-[250px] object-cover"
-                                    />
-                                </CardContent>
-                            </Card>
-                            </CarouselItem>
-                        ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="left-4" />
-                    <CarouselNext className="right-4" />
-                </Carousel>
-            </AnimatedSection>
+            <Carousel 
+                plugins={[autoplayPlugin.current]}
+                className="w-full"
+                onMouseEnter={autoplayPlugin.current.stop}
+                onMouseLeave={autoplayPlugin.current.reset}
+            >
+                <CarouselContent>
+                    {banners.map((banner) => (
+                        <CarouselItem key={banner.id}>
+                        <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+                            <CardContent className="p-0">
+                                <img
+                                    src={banner.imageUrl}
+                                    alt="Banner"
+                                    className="w-full h-auto max-h-[250px] object-cover"
+                                />
+                            </CardContent>
+                        </Card>
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-4" />
+                <CarouselNext className="right-4" />
+            </Carousel>
         )}
         
-        <AnimatedSection delay={0.2}>
-            <Card className="bg-card/80 border-white/10 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {games.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-1">
-                    {games.map((game) => (
-                      <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-0.5 rounded-lg border border-black text-center">
-                        <span className="text-xs font-medium text-white [text-shadow:1px_1px_2px_#000]">{game.name}</span>
-                        <span className="text-xs font-bold text-black">{formatGameResult(game, true)}</span>
-                      </div>
-                    ))}
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {games.length > 0 ? (
+              <div className="grid grid-cols-2 gap-1">
+                {games.map((game) => (
+                  <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-0.5 rounded-lg border border-black text-center">
+                    <span className="text-xs font-medium text-white [text-shadow:1px_1px_2px_#000]">{game.name}</span>
+                    <span className="text-xs font-bold text-black">{formatGameResult(game, true)}</span>
                   </div>
-                ) : (
-                  <p className="text-center text-muted-foreground">No results available right now.</p>
-                )}
-              </CardContent>
-            </Card>
-        </AnimatedSection>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground">No results available right now.</p>
+            )}
+          </CardContent>
+        </Card>
 
-        <AnimatedSection delay={0.3}>
-            <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
-                <CardHeader>
-                    <CardTitle className="text-xl text-white">Notice</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p 
-                      className="text-white font-bold" 
-                      style={{ whiteSpace: 'pre-wrap' }}
-                    >
-                      {settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}
-                    </p>
-                </CardContent>
-            </Card>
-        </AnimatedSection>
+        <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
+            <CardHeader>
+                <CardTitle className="text-xl text-white">Notice</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p 
+                  className="text-white font-bold" 
+                  style={{ whiteSpace: 'pre-wrap' }}
+                >
+                  {settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}
+                </p>
+            </CardContent>
+        </Card>
 
-        <AnimatedSection delay={0.4}>
-            <Card className="bg-card/80 border-white/10 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-xl text-center">Matka Games</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {games.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4">
-                        {games.map((game, index) => (
-                            <AnimatedSection key={game.id} delay={index * 0.1}>
-                                <GameCard game={game} />
-                            </AnimatedSection>
-                        ))}
-                    </div>
-                ) : (
-                  <p className="text-center text-muted-foreground">No games available right now.</p>
-                )}
-              </CardContent>
-            </Card>
-        </AnimatedSection>
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl text-center">Matka Games</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {games.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4">
+                    {games.map((game) => (
+                        <GameCard key={game.id} game={game} />
+                    ))}
+                </div>
+            ) : (
+              <p className="text-center text-muted-foreground">No games available right now.</p>
+            )}
+          </CardContent>
+        </Card>
       </main>
       
       <BottomNavbar settings={settings} />
