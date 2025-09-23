@@ -491,7 +491,7 @@ export default function Home() {
 
         {/* Betting Closed Dialog */}
          <Dialog open={!!closedGameInfo} onOpenChange={() => setClosedGameInfo(null)}>
-            <DialogContent className="bg-white text-black p-0 max-w-sm rounded-lg">
+            <DialogContent className="bg-white text-black p-0 max-w-xs rounded-lg">
                 <div className="flex flex-col items-center text-center p-6 space-y-4">
                     <XCircle className="h-16 w-16 text-red-500" />
                     <h2 className="text-xl font-bold text-red-600">Betting Is Closed For Today</h2>
