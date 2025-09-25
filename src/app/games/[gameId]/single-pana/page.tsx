@@ -199,6 +199,7 @@ export default function SinglePanaPage() {
             transaction.set(doc(bidsCollectionRef), {
                 userId: user.uid,
                 displayName: user.displayName,
+                mobile: user.email?.split('@')[0],
                 gameId,
                 gameName: game?.name,
                 betType: 'Single Pana',
