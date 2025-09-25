@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -147,9 +146,10 @@ export default function SingleDigitPage() {
             if (!userDoc.exists()) {
                 throw new Error("User document does not exist!");
             }
-
-            const currentBalance = userDoc.data().balance || 0;
-            const currentBonusBalance = userDoc.data().bonusBalance || 0;
+            
+            const userData = userDoc.data();
+            const currentBalance = userData.balance || 0;
+            const currentBonusBalance = userData.bonusBalance || 0;
             const totalUserBalance = currentBalance + currentBonusBalance;
 
             if (totalUserBalance < totalAmount) {
@@ -175,7 +175,7 @@ export default function SingleDigitPage() {
             transaction.set(doc(bidsCollectionRef), {
                 userId: user.uid,
                 displayName: user.displayName,
-                mobile: user.email?.split('@')[0],
+                mobile: userData.mobile,
                 gameId,
                 gameName: game?.name,
                 betType: 'Single Digit',
