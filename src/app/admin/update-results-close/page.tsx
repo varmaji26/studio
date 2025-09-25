@@ -135,7 +135,7 @@ export default function UpdateResultsClosePage() {
         const [openHours, openMinutes] = game.openTime.split(':').map(Number);
         const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, openMinutes, 0, 0);
 
-        const resultDate = new Date(now);
+        let resultDate = new Date();
         if (now < gameOpenTimeToday) {
             resultDate.setDate(resultDate.getDate() - 1);
         }
