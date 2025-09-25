@@ -88,7 +88,7 @@ export default function JodiChartPage() {
     const activeDays = chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
     const numberOfDays = activeDays.length;
 
-    const parsedData = chartData?.data.split(/\s+/).filter(d => d) || [];
+    const parsedData = chartData?.data.split(/\s+/).filter(d => d).map(item => item.split('_')[0]) || [];
     
     if (loading) {
         return (

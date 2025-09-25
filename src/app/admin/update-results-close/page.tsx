@@ -136,8 +136,6 @@ export default function UpdateResultsClosePage() {
         const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, openMinutes, 0, 0);
 
         const resultDate = new Date(now);
-        // If the current time is past midnight but before the game's official open time,
-        // the result belongs to the previous day.
         if (now < gameOpenTimeToday) {
             resultDate.setDate(resultDate.getDate() - 1);
         }
@@ -151,12 +149,16 @@ export default function UpdateResultsClosePage() {
             
             if (activeDays.includes(gameDayName)) {
                 let currentData = jodiData.data ? jodiData.data.trim().split(/\s+/) : [];
-                // Replace the last entry. This prevents adding multiple entries for the same day.
-                if (currentData.length > 0) {
-                    currentData[currentData.length - 1] = finalJodi;
+                const resultDateString = `${resultDate.getFullYear()}-${String(resultDate.getMonth() + 1).padStart(2, '0')}-${String(resultDate.getDate()).padStart(2, '0')}`;
+                
+                const existingEntryIndex = currentData.findIndex((entry: string) => entry.includes(`_${resultDateString}`));
+
+                if (existingEntryIndex > -1) {
+                    currentData[existingEntryIndex] = `${finalJodi}_${resultDateString}`;
                 } else {
-                    currentData.push(finalJodi);
+                    currentData.push(`${finalJodi}_${resultDateString}`);
                 }
+                
                 batch.update(jodiChartRef, { data: currentData.join(' ') });
             }
         }
