@@ -136,6 +136,8 @@ export default function UpdateResultsClosePage() {
         const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, openMinutes, 0, 0);
 
         const resultDate = new Date(now);
+        // If the current time is past midnight but before the game's official open time,
+        // the result belongs to the previous day.
         if (now < gameOpenTimeToday) {
             resultDate.setDate(resultDate.getDate() - 1);
         }
@@ -149,21 +151,7 @@ export default function UpdateResultsClosePage() {
             
             if (activeDays.includes(gameDayName)) {
                 let currentData = jodiData.data ? jodiData.data.trim().split(/\s+/) : [];
-                // Replace the last entry if it's for today, otherwise add new one.
-                // This simple logic prevents adding multiple entries for the same day.
-                // For a more robust solution, a date-based check would be needed.
-                // For now, we assume one result per day.
-                const today = new Date();
-                const lastResultTime = game.createdAt?.toDate(); // Assuming createdAt is available for the game
-                let shouldReplace = false;
-                if (lastResultTime) {
-                    const sameDay = today.getFullYear() === lastResultTime.getFullYear() &&
-                                    today.getMonth() === lastResultTime.getMonth() &&
-                                    today.getDate() === lastResultTime.getDate();
-                    if(sameDay) shouldReplace = true;
-                }
-                
-                // Simplified logic: on any update, just update the last element. This isn't perfect but prevents endless appending.
+                // Replace the last entry. This prevents adding multiple entries for the same day.
                 if (currentData.length > 0) {
                     currentData[currentData.length - 1] = finalJodi;
                 } else {
