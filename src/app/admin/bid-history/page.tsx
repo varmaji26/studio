@@ -324,7 +324,7 @@ export default function AdminBidHistoryPage() {
                                 <TableRow key={bid.id}>
                                     <TableCell>{formatDate(bid.createdAt)}</TableCell>
                                     <TableCell>{bid.displayName}</TableCell>
-                                    <TableCell>{bid.mobile}</TableCell>
+                                    <TableCell>{bid.mobile || 'N/A'}</TableCell>
                                     <TableCell>{bid.gameName} ({bid.session})</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
