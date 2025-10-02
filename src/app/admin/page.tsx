@@ -261,12 +261,12 @@ export default function AdminDashboardPage() {
                     </SelectContent>
                 </Select>
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <StatCard title="Total Deposit" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
-                <StatCard title="Total Withdrawal" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
-                <StatCard title="Total Bidding" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard title="Total Deposit This Month" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
+                <StatCard title="Total Withdrawals This Month" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
+                <StatCard title="Total Bidding This Month" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
                 <StatCard 
-                    title="Total Profit" 
+                    title="Total Profit This Month" 
                     value={`₹${monthlyStats.totalProfit.toLocaleString()}`} 
                     icon={Scale} 
                     color={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
