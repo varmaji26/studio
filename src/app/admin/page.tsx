@@ -135,8 +135,8 @@ export default function AdminDashboardPage() {
     }, []);
 
     useEffect(() => {
-        const year = parseInt(selectedYear);
-        const month = parseInt(selectedMonth) - 1;
+        const year = new Date().getFullYear();
+        const month = new Date().getMonth();
 
         const startOfMonth = new Date(year, month, 1);
         const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
@@ -182,7 +182,7 @@ export default function AdminDashboardPage() {
             unsubWithdrawals();
             unsubBids();
         }
-    }, [selectedMonth, selectedYear]);
+    }, []);
 
     const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
     const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('default', { month: 'long' }) }));
@@ -239,28 +239,6 @@ export default function AdminDashboardPage() {
         
          <div>
             <h3 className="text-xl font-bold mb-4">This Month's Report</h3>
-             <div className="flex items-center gap-2 mb-4">
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {months.map(m => (
-                            <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder="Select Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {years.map(y => (
-                            <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Total Deposit This Month" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
                 <StatCard title="Total Withdrawals This Month" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
