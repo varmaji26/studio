@@ -113,10 +113,6 @@ export default function MonthlyReportPage() {
 
         const tableColumn = ["Metric", "Amount (₹)"];
         const tableRows = [
-            ["Total Deposit", monthlyStats.totalDeposit.toLocaleString()],
-            ["Total Withdrawal", monthlyStats.totalWithdrawal.toLocaleString()],
-            ["Total Bidding", monthlyStats.totalBidding.toLocaleString()],
-            ["Total Profit", monthlyStats.totalProfit.toLocaleString()],
             ["Monthly Net Balance", monthlyStats.monthlyNetBalance.toLocaleString()],
         ];
 
@@ -182,16 +178,6 @@ export default function MonthlyReportPage() {
                                 icon={Landmark} 
                                 color={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
                                 textColor={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
-                            />
-                            <StatCard title="Total Deposit" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
-                            <StatCard title="Total Withdrawal" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
-                            <StatCard title="Total Bidding" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
-                            <StatCard 
-                                title="Total Profit" 
-                                value={`₹${monthlyStats.totalProfit.toLocaleString()}`} 
-                                icon={Scale} 
-                                color={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
-                                textColor={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
                             />
                         </div>
                     )}
