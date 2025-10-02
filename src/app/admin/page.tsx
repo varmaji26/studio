@@ -208,7 +208,13 @@ export default function AdminDashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <StatCard title="Total Users" value={stats.totalUsers.toString()} icon={Users} color="#8b5cf6" />
                 <StatCard title="Total Games" value={stats.totalGames.toString()} icon={Gamepad2} color="#ec4899" />
-                <StatCard title="Total User Balance" value={`₹${stats.totalBalance.toLocaleString()}`} icon={Landmark} color="#f59e0b" />
+                <StatCard 
+                    title="Monthly Net Balance" 
+                    value={`₹${monthlyStats.monthlyNetBalance.toLocaleString()}`} 
+                    icon={Landmark} 
+                    color={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
+                    textColor={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
+                />
             </div>
         </div>
         
@@ -262,13 +268,6 @@ export default function AdminDashboardPage() {
                 </Select>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                 <StatCard 
-                    title="Monthly Net Balance" 
-                    value={`₹${monthlyStats.monthlyNetBalance.toLocaleString()}`} 
-                    icon={Landmark} 
-                    color={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
-                    textColor={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
-                />
                 <StatCard title="Total Deposit" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
                 <StatCard title="Total Withdrawal" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
                 <StatCard title="Total Bidding" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
