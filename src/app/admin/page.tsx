@@ -219,18 +219,10 @@ export default function AdminDashboardPage() {
         </div>
         
         <div>
-            <h3 className="text-xl font-bold mb-4">Daily Transaction Report</h3>
+            <h3 className="text-xl font-bold mb-4">Daily Transaction &amp; Bidding Report</h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Today's Deposits" value={`₹${dailyStats.todaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
                 <StatCard title="Withdrawals Given Today" value={`₹${dailyStats.todaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
-                <StatCard title="Yesterday's Deposits" value={`₹${dailyStats.yesterdaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#10b981" />
-                <StatCard title="Withdrawal Given Yesterday" value={`₹${dailyStats.yesterdaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#ef4444" />
-            </div>
-        </div>
-        
-        <div>
-            <h3 className="text-xl font-bold mb-4">Daily Bidding Report</h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <StatCard title="Today's Bidding" value={`₹${biddingStats.todaysBidding.toLocaleString()}`} icon={TrendingUp} color="#38bdf8" />
                 <StatCard title="Today's Winning" value={`₹${biddingStats.todaysWinning.toLocaleString()}`} icon={TrendingDown} color="#fb7185" />
                 <StatCard 
@@ -240,6 +232,8 @@ export default function AdminDashboardPage() {
                     color={biddingStats.todaysProfitLoss >= 0 ? "#4ade80" : "#f87171"}
                     textColor={biddingStats.todaysProfitLoss >= 0 ? "#4ade80" : "#f87171"}
                 />
+                <StatCard title="Yesterday's Deposits" value={`₹${dailyStats.yesterdaysDeposits.toLocaleString()}`} icon={ArrowUpCircle} color="#10b981" />
+                <StatCard title="Withdrawal Given Yesterday" value={`₹${dailyStats.yesterdaysWithdrawals.toLocaleString()}`} icon={ArrowDownCircle} color="#ef4444" />
             </div>
         </div>
         
