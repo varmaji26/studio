@@ -9,6 +9,8 @@ import { Users, Gamepad2, Wallet, ArrowUpCircle, ArrowDownCircle, TrendingUp, Tr
 import { Loader } from '@/components/loader';
 import { useAuth } from '@/hooks/use-auth';
 import { setInitialStats } from '@/lib/stats-helper';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 
 interface StatCardProps {
   title: string;
@@ -65,8 +67,12 @@ export default function AdminDashboardPage() {
     const [monthlyStats, setMonthlyStats] = useState<MonthlyStats>({ totalBidding: 0, totalProfit: 0, totalDeposit: 0, totalWithdrawal: 0 });
     const [loading, setLoading] = useState(true);
 
+    const currentYear = new Date().getFullYear();
+    const [selectedYear, setSelectedYear] = useState(currentYear.toString());
+    const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+
+
     useEffect(() => {
-        // Run this once to initialize stats if they don't exist
         setInitialStats().catch(console.error);
         
         const statsDocRef = doc(db, "app-stats", "dashboard");
@@ -84,8 +90,7 @@ export default function AdminDashboardPage() {
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const startOfYesterday = new Date(startOfToday);
         startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
+       
         const sumApprovedAmount = (snapshot: DocumentData) => snapshot.docs
             .filter((doc: DocumentData) => doc.data().status === 'approved')
             .reduce((sum: number, doc: DocumentData) => sum + (doc.data().amount || 0), 0);
@@ -94,56 +99,11 @@ export default function AdminDashboardPage() {
         const todayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfToday));
         const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
         const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
-        const monthDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfMonth));
-        const monthWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfMonth));
 
         const unsubTodayDeposits = onSnapshot(todayDepositsQuery, (snap) => setDailyStats(s => ({ ...s, todaysDeposits: sumApprovedAmount(snap) })));
         const unsubTodayWithdrawals = onSnapshot(todayWithdrawalsQuery, (snap) => setDailyStats(s => ({ ...s, todaysWithdrawals: sumApprovedAmount(snap) })));
         const unsubYesterdayDeposits = onSnapshot(yesterdayDepositsQuery, (snap) => setDailyStats(s => ({ ...s, yesterdaysDeposits: sumApprovedAmount(snap) })));
         const unsubYesterdayWithdrawals = onSnapshot(yesterdayWithdrawalsQuery, (snap) => setDailyStats(s => ({ ...s, yesterdaysWithdrawals: sumApprovedAmount(snap) })));
-        const unsubMonthDeposits = onSnapshot(monthDepositsQuery, (snap) => setMonthlyStats(s => ({ ...s, totalDeposit: sumApprovedAmount(snap) })));
-        const unsubMonthWithdrawals = onSnapshot(monthWithdrawalsQuery, (snap) => setMonthlyStats(s => ({ ...s, totalWithdrawal: sumApprovedAmount(snap) })));
-
-        // Real-time Bidding Stats
-        const bidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfMonth));
-        const unsubBids = onSnapshot(bidsQuery, (bidsSnap) => {
-            let todaysBidding = 0;
-            let todaysWinning = 0;
-            let monthBidding = 0;
-            let monthWinning = 0;
-
-            bidsSnap.forEach(doc => {
-                const bid = doc.data();
-                const bidDate = bid.createdAt.toDate();
-                
-                // Monthly calculation
-                monthBidding += bid.totalAmount || 0;
-                if (bid.status === 'won') {
-                    monthWinning += bid.winningAmount || 0;
-                }
-
-                // Daily calculation
-                if (bidDate >= startOfToday) {
-                    todaysBidding += bid.totalAmount || 0;
-                    if (bid.status === 'won') {
-                        todaysWinning += bid.winningAmount || 0;
-                    }
-                }
-            });
-
-            setBiddingStats({
-                todaysBidding,
-                todaysWinning,
-                todaysProfitLoss: todaysBidding - todaysWinning
-            });
-
-            setMonthlyStats(s => ({
-                ...s,
-                totalBidding: monthBidding,
-                totalProfit: monthBidding - monthWinning,
-            }));
-        });
-
 
         return () => {
             unsubscribeStats();
@@ -151,13 +111,79 @@ export default function AdminDashboardPage() {
             unsubTodayWithdrawals();
             unsubYesterdayDeposits();
             unsubYesterdayWithdrawals();
-            unsubMonthDeposits();
-            unsubMonthWithdrawals();
-            unsubBids();
         };
     }, []);
     
+    useEffect(() => {
+        const year = parseInt(selectedYear);
+        const month = parseInt(selectedMonth) - 1;
+
+        const startOfMonth = new Date(year, month, 1);
+        const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+        const monthDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
+        const monthWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
+        const bidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
+        
+        const sumApprovedAmount = (snapshot: DocumentData) => snapshot.docs
+            .filter((doc: DocumentData) => doc.data().status === 'approved')
+            .reduce((sum: number, doc: DocumentData) => sum + (doc.data().amount || 0), 0);
+
+        const unsubMonthDeposits = onSnapshot(monthDepositsQuery, (snap) => setMonthlyStats(s => ({ ...s, totalDeposit: sumApprovedAmount(snap) })));
+        const unsubMonthWithdrawals = onSnapshot(monthWithdrawalsQuery, (snap) => setMonthlyStats(s => ({ ...s, totalWithdrawal: sumApprovedAmount(snap) })));
+
+        const unsubBids = onSnapshot(bidsQuery, (bidsSnap) => {
+            let monthBidding = 0;
+            let monthWinning = 0;
+
+            bidsSnap.forEach(doc => {
+                const bid = doc.data();
+                monthBidding += bid.totalAmount || 0;
+                if (bid.status === 'won') {
+                    monthWinning += bid.winningAmount || 0;
+                }
+            });
+
+            setMonthlyStats(s => ({
+                ...s,
+                totalBidding: monthBidding,
+                totalProfit: monthBidding - monthWinning,
+            }));
+            
+            // This is for daily stats, should be based on `now` not selected month
+             const now = new Date();
+             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+             let todaysBidding = 0;
+             let todaysWinning = 0;
+             bidsSnap.forEach(doc => {
+                const bid = doc.data();
+                const bidDate = bid.createdAt.toDate();
+                 if (bidDate >= startOfToday) {
+                    todaysBidding += bid.totalAmount || 0;
+                    if (bid.status === 'won') {
+                        todaysWinning += bid.winningAmount || 0;
+                    }
+                }
+             });
+              setBiddingStats({
+                todaysBidding,
+                todaysWinning,
+                todaysProfitLoss: todaysBidding - todaysWinning
+            });
+        });
+
+        return () => {
+            unsubMonthDeposits();
+            unsubMonthWithdrawals();
+            unsubBids();
+        }
+
+    }, [selectedMonth, selectedYear]);
+
     const monthlyNetDeposit = monthlyStats.totalDeposit - monthlyStats.totalWithdrawal;
+
+    const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+    const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('default', { month: 'long' }) }));
 
     if (loading) {
         return (
@@ -213,7 +239,31 @@ export default function AdminDashboardPage() {
         </div>
         
         <div>
-            <h3 className="text-xl font-bold mb-4">This Month's Report</h3>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h3 className="text-xl font-bold">This Month's Report</h3>
+                <div className="flex items-center gap-2">
+                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {months.map(m => (
+                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                     <Select value={selectedYear} onValueChange={setSelectedYear}>
+                        <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {years.map(y => (
+                                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Total Bidding This Month" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
                 <StatCard 
