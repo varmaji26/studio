@@ -67,7 +67,7 @@ export default function AdminLayout({
   const isRequestsMenuInitiallyOpen = isActive('/admin/deposit-requests') || isActive('/admin/withdrawal-requests');
   const [isRequestsMenuOpen, setRequestsMenuOpen] = React.useState(isRequestsMenuInitiallyOpen);
   
-  const isPaymentHistoryMenuInitiallyOpen = isActive('/admin/deposit-history') || isActive('/admin/withdrawal-history') || isActive('/admin/monthly-report');
+  const isPaymentHistoryMenuInitiallyOpen = isActive('/admin/deposit-history') || isActive('/admin/withdrawal-history');
   const [isPaymentHistoryMenuOpen, setPaymentHistoryMenuOpen] = React.useState(isPaymentHistoryMenuInitiallyOpen);
 
 
@@ -434,14 +434,6 @@ export default function AdminLayout({
                                 <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/withdrawal-history')}>
                                     <ArrowDownCircle className="h-4 w-4" />
                                     <span>Withdrawal History</span>
-                                </SidebarMenuButton>
-                            </Link>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <Link href="/admin/monthly-report" passHref onClick={handleLinkClick}>
-                                <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/monthly-report')}>
-                                    <PieChart className="h-4 w-4" />
-                                    <span>Monthly Report</span>
                                 </SidebarMenuButton>
                             </Link>
                         </SidebarMenuItem>

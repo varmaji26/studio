@@ -140,7 +140,6 @@ export default function MonthlyReportPage() {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <CardTitle className="text-3xl font-bold">Monthly Report</CardTitle>
-                            <CardDescription>View detailed reports for any month.</CardDescription>
                         </div>
                         <Button onClick={handleDownloadPDF} variant="outline" size="sm">
                             <Download className="mr-2 h-4 w-4" />
