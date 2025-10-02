@@ -29,6 +29,7 @@ import {
   Sun,
   Moon,
   PieChart,
+  List,
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, Sidebar, SidebarTrigger } from '@/components/ui/sidebar';
@@ -264,6 +265,14 @@ export default function AdminLayout({
                      )}
                     </SidebarMenuButton>
                 </Link>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                 <Link href="/admin/user-list" passHref onClick={handleLinkClick}>
+                    <SidebarMenuButton isActive={isActive('/admin/user-list')} tooltip={{children: "User List"}}>
+                        <List />
+                        <span>User List</span>
+                    </SidebarMenuButton>
+                 </Link>
               </SidebarMenuItem>
                <SidebarMenuItem>
                  <Link href="/admin/manage-games" passHref onClick={handleLinkClick}>
