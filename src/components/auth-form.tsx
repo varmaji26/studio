@@ -40,12 +40,13 @@ export function AuthForm({ mode }: AuthFormProps) {
       formSchema.refine(
         (data) => {
           if (mode === 'signup') {
-            return !!data.username && data.username.length >= 3;
+            const usernameRegex = /^[a-zA-Z\s]+$/;
+            return !!data.username && data.username.length >= 3 && usernameRegex.test(data.username);
           }
           return true;
         },
         {
-          message: 'Username must be at least 3 characters.',
+          message: 'Username must be at least 3 characters and contain only letters and spaces.',
           path: ['username'],
         }
       )
@@ -159,11 +160,11 @@ export function AuthForm({ mode }: AuthFormProps) {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white">Username</FormLabel>
+                    <FormLabel className="text-white">Name</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input placeholder="Enter your username" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
+                        <Input placeholder="Enter your name" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
                       </div>
                     </FormControl>
                     <FormMessage />
