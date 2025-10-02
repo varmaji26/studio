@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, LockKeyhole } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 // Extend jsPDF with autoTable for TypeScript
 declare module 'jspdf' {
@@ -25,11 +27,21 @@ interface User extends DocumentData {
     mobile: string;
 }
 
+const PASSWORD = "2085";
+
 export default function UserListPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+        setLoading(false);
+        return;
+    };
+
     const fetchUsers = async () => {
       setLoading(true);
       try {
@@ -39,12 +51,31 @@ export default function UserListPage() {
         setUsers(usersData);
       } catch (error) {
         console.error("Error fetching users: ", error);
+         toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to fetch user list.",
+        });
       } finally {
         setLoading(false);
       }
     };
     fetchUsers();
-  }, []);
+  }, [isAuthenticated, toast]);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === PASSWORD) {
+        setIsAuthenticated(true);
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Incorrect Password",
+            description: "The password you entered is incorrect.",
+        });
+        setPasswordInput('');
+    }
+  };
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -71,6 +102,36 @@ export default function UserListPage() {
 
     doc.save(`user-list.pdf`);
   };
+
+  if (!isAuthenticated) {
+      return (
+        <div className="flex-1 space-y-6">
+            <Card className="bg-card/80 border-white/10 shadow-lg max-w-md mx-auto">
+                <CardHeader className="text-center">
+                    <div className="flex justify-center mb-4">
+                        <LockKeyhole className="h-12 w-12 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold">Access Required</CardTitle>
+                    <CardDescription>Please enter the password to view the user list.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                        <Input
+                            type="password"
+                            placeholder="Enter password"
+                            value={passwordInput}
+                            onChange={(e) => setPasswordInput(e.target.value)}
+                            className="text-center"
+                        />
+                        <Button type="submit" className="w-full">
+                            Unlock
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+      );
+  }
 
   return (
     <div className="flex-1 space-y-6">
