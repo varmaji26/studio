@@ -2,13 +2,13 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, ArrowDown, Download, Calendar as CalendarIcon, ArrowDownCircle } from 'lucide-react';
+import { Search, ArrowDown, Download, Calendar as CalendarIcon, ArrowDownCircle, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import jsPDF from 'jspdf';
@@ -18,6 +18,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface Transaction extends DocumentData {
     id: string;
@@ -25,7 +27,7 @@ interface Transaction extends DocumentData {
     displayName: string;
     mobile?: string;
     amount: number;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'approved' | 'rejected' | 'reverted';
     createdAt: Timestamp;
     withdrawalMethod?: string;
 }
@@ -46,6 +48,7 @@ export default function AdminWithdrawalHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
+  const { toast } = useToast();
 
   useEffect(() => {
     setLoading(true);
@@ -115,9 +118,42 @@ export default function AdminWithdrawalHistoryPage() {
     switch (status) {
         case 'approved': return 'secondary';
         case 'rejected': return 'destructive';
+        case 'reverted': return 'outline';
         case 'pending':
         default:
             return 'default';
+    }
+  };
+
+  const handleRevertWithdrawal = async (transactionToRevert: Transaction) => {
+    const withdrawalDocRef = doc(db, 'withdrawals', transactionToRevert.id);
+    const userDocRef = doc(db, 'users', transactionToRevert.userId);
+    const statsDocRef = doc(db, 'app-stats', 'dashboard');
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const withdrawalDoc = await transaction.get(withdrawalDocRef);
+            if (!withdrawalDoc.exists() || withdrawalDoc.data().status !== 'approved') {
+                throw new Error("This withdrawal has not been approved or has already been reverted.");
+            }
+            
+            // Re-add balance to user
+            transaction.update(userDocRef, { balance: increment(transactionToRevert.amount) });
+            // Re-add balance to stats
+            transaction.update(statsDocRef, { totalBalance: increment(transactionToRevert.amount) });
+            // Update withdrawal status
+            transaction.update(withdrawalDocRef, { status: 'reverted' });
+        });
+        toast({
+            title: 'Withdrawal Reverted!',
+            description: `₹${transactionToRevert.amount} has been returned to ${transactionToRevert.displayName}'s wallet.`
+        });
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error.message || 'Failed to revert withdrawal. Please try again.'
+        });
     }
   };
 
@@ -234,6 +270,7 @@ export default function AdminWithdrawalHistoryPage() {
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Method</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -245,7 +282,40 @@ export default function AdminWithdrawalHistoryPage() {
                                     <TableCell>₹{t.amount}</TableCell>
                                     <TableCell>{t.withdrawalMethod}</TableCell>
                                     <TableCell>
-                                        <Badge variant={getStatusBadgeVariant(t.status)} className={t.status === 'approved' ? 'bg-green-500 text-white' : t.status === 'rejected' ? 'bg-red-500 text-white' : ''}>{t.status}</Badge>
+                                        <Badge 
+                                          variant={getStatusBadgeVariant(t.status)} 
+                                          className={cn(
+                                              t.status === 'approved' && 'bg-green-500 text-white', 
+                                              t.status === 'rejected' && 'bg-red-500 text-white',
+                                              t.status === 'reverted' && 'border-yellow-500 text-yellow-500',
+                                          )}
+                                        >
+                                          {t.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {t.status === 'approved' && (
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="outline" size="sm" className="border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400">
+                                                        <RotateCcw className="h-4 w-4 mr-1" />
+                                                        Revert
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure you want to revert this withdrawal?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This will return ₹{t.amount} to {t.displayName}'s wallet and mark this transaction as 'reverted'. This action cannot be undone.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleRevertWithdrawal(t)}>Confirm Revert</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}
