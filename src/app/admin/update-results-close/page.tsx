@@ -49,7 +49,6 @@ const parseDateString = (dateStr: string): Date | null => {
     const parts = dateStr.trim().split('/');
     if (parts.length !== 3) return null;
     
-    // Assuming format is dd/mm/yyyy
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
@@ -129,21 +128,26 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
+        // --- Correct Result Date and Day Index Calculation ---
         const now = new Date();
         const [openHours, openMinutes] = game.openTime.split(':').map(Number);
         const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, openMinutes, 0, 0);
 
         let resultDate = new Date();
+        // If 'now' is past midnight but before the game's open time, the result is for the previous day.
         if (now < gameOpenTimeToday) {
             resultDate.setDate(resultDate.getDate() - 1);
         }
-        
+        // resultDate is now correctly set to the date the game session belongs to.
+
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
-            const panelChartDataString = panelChartSnap.data()?.data || '';
-            const dayOfWeek = resultDate.getUTCDay(); 
-            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday = 0, Sunday = 6
+            const panelChartData = panelChartSnap.data();
+            const panelChartDataString = panelChartData?.data || '';
+            
+            // Monday is 0, Sunday is 6
+            const dayIndex = (resultDate.getUTCDay() + 6) % 7; 
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
             const rows = panelChartDataString.split('\n').filter((row: string) => row.trim() !== '');
@@ -180,7 +184,7 @@ export default function UpdateResultsClosePage() {
             }
             
              if (!weekFound) {
-                const dayIndexForNewWeek = resultDate.getUTCDay() === 0 ? 6 : resultDate.getUTCDay() - 1;
+                const dayIndexForNewWeek = (resultDate.getUTCDay() + 6) % 7;
                 
                 const startOfWeek = new Date(resultDateStartOfDay);
                 startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayIndexForNewWeek);
