@@ -141,18 +141,19 @@ export default function UpdateResultsClosePage() {
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
-            const panelChartDataString = panelChartSnap.data().data || '';
-            const dayOfWeek = resultDate.getUTCDay(); // Sunday = 0, Monday = 1, ...
+            const panelChartDataString = panelChartSnap.data()?.data || '';
+            const dayOfWeek = resultDate.getUTCDay(); 
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday = 0, Sunday = 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
             const rows = panelChartDataString.split('\n').filter((row: string) => row.trim() !== '');
-            let weekFound = false;
             let finalDataArray = [...rows];
+            let weekFound = false;
+
             const resultDateStartOfDay = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
 
-            for (let i = 0; i < rows.length; i++) {
-                const row = rows[i];
+            for (let i = 0; i < finalDataArray.length; i++) {
+                const row = finalDataArray[i];
                 const match = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
                 if (match) {
                     const startDate = parseDateString(match[1]);
@@ -178,7 +179,7 @@ export default function UpdateResultsClosePage() {
                 }
             }
             
-            if (!weekFound) {
+             if (!weekFound) {
                 const dayIndexForNewWeek = resultDate.getUTCDay() === 0 ? 6 : resultDate.getUTCDay() - 1;
                 
                 const startOfWeek = new Date(resultDateStartOfDay);
@@ -197,6 +198,7 @@ export default function UpdateResultsClosePage() {
                 const newRow = `${newDateRange} ${newWeekData}`;
                 finalDataArray.push(newRow);
             }
+
 
             batch.update(panelChartRef, { data: finalDataArray.join('\n') });
         }
