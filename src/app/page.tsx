@@ -146,7 +146,7 @@ const GameCard = memo(function GameCard({
                     "text-center font-semibold rounded-md text-base",
                     bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                 )}>
-                    {bettingClosed ? 'Betting Closed' : game.status}
+                    {bettingClosed ? 'Market is Close' : game.status}
                 </p>
             </div>
             
