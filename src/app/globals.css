@@ -189,35 +189,54 @@ body {
   .loader {
     width: 48px;
     height: 48px;
+    border-radius: 50%;
     display: inline-block;
     position: relative;
+    border: 3px solid;
+    border-color: hsl(var(--primary)) hsl(var(--primary)) transparent transparent;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
   }
   .loader::after,
   .loader::before {
     content: '';  
     box-sizing: border-box;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 2px solid hsl(var(--primary));
     position: absolute;
     left: 0;
+    right: 0;
     top: 0;
-    animation: rotation 2s ease-in-out infinite;
+    bottom: 0;
+    margin: auto;
+    border: 3px solid;
+    border-color: transparent transparent hsl(var(--destructive)) hsl(var(--destructive));
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    box-sizing: border-box;
+    animation: rotationBack 0.5s linear infinite;
+    transform-origin: center center;
   }
-  .loader::after {
-    border-color: hsl(var(--destructive));
-    animation-delay: 1s;
+  .loader::before {
+    width: 32px;
+    height: 32px;
+    border-color: hsl(var(--primary)) hsl(var(--primary)) transparent transparent;
+    animation: rotation 1.5s linear infinite;
   }
 
   @keyframes rotation {
     0% {
-      transform: scale(0);
-      opacity: 1;
+      transform: rotate(0deg);
     }
     100% {
-      transform: scale(1);
-      opacity: 0;
+      transform: rotate(360deg);
+    }
+  } 
+  @keyframes rotationBack {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(-360deg);
     }
   }
 }
