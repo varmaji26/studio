@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -57,7 +56,6 @@ const parseDateString = (dateStr: string): Date | null => {
     // Use UTC to avoid timezone issues during parsing and comparison
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
-    // Validate the date components
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
         return date;
     }
@@ -140,35 +138,12 @@ export default function UpdateResultsClosePage() {
             resultDate.setDate(resultDate.getDate() - 1);
         }
         
-        const jodiChartRef = doc(db, 'jodiCharts', game.id);
-        const jodiChartSnap = await getDoc(jodiChartRef);
-        if (jodiChartSnap.exists()) {
-            const jodiData = jodiChartSnap.data();
-            const gameDayName = resultDate.toLocaleDateString('en-US', { weekday: 'long' });
-            const activeDays = jodiData.activeDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            
-            if (activeDays.includes(gameDayName)) {
-                let currentData = jodiData.data ? jodiData.data.trim().split(/\s+/) : [];
-                const resultDateString = `${resultDate.getFullYear()}-${String(resultDate.getMonth() + 1).padStart(2, '0')}-${String(resultDate.getDate()).padStart(2, '0')}`;
-                
-                const existingEntryIndex = currentData.findIndex((entry: string) => entry.includes(`_${resultDateString}`));
-
-                if (existingEntryIndex > -1) {
-                    currentData[existingEntryIndex] = `${finalJodi}_${resultDateString}`;
-                } else {
-                    currentData.push(`${finalJodi}_${resultDateString}`);
-                }
-                
-                batch.update(jodiChartRef, { data: currentData.join(' ') });
-            }
-        }
-        
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelChartDataString = panelChartSnap.data().data || '';
-            const dayOfWeek = resultDate.getUTCDay();
-            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const dayOfWeek = resultDate.getUTCDay(); // Sunday = 0, Monday = 1, ...
+            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday = 0, Sunday = 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
             const rows = panelChartDataString.split('\n').filter((row: string) => row.trim() !== '');
