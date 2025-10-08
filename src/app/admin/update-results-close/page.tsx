@@ -144,8 +144,7 @@ export default function UpdateResultsClosePage() {
         const panelChartSnap = await getDoc(panelChartRef);
 
         if (panelChartSnap.exists()) {
-            const panelChartData = panelChartSnap.data();
-            const panelChartDataString = panelChartData?.data || '';
+            const panelChartDataString = panelChartSnap.data()?.data || '';
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
             
             // Indian Standard Time is UTC+5:30. getUTCDay() where Sunday is 0. We want Monday=0.
