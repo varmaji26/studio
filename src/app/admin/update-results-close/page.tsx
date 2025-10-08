@@ -52,8 +52,10 @@ const parseDateString = (dateStr: string): Date | null => {
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
+    // Create date in UTC to avoid timezone issues
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
+    // Validate if the created date is correct
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
         return date;
     }
@@ -134,6 +136,7 @@ export default function UpdateResultsClosePage() {
 
         let resultDate = new Date();
         if (now < gameOpenTimeToday) {
+            // If we are updating before the game's open time, it must be for the previous day's result.
             resultDate.setDate(resultDate.getDate() - 1);
         }
         
@@ -161,7 +164,7 @@ export default function UpdateResultsClosePage() {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
                     if (startDate && endDate) {
-                        endDate.setUTCHours(23, 59, 59, 999);
+                        endDate.setUTCHours(23, 59, 59, 999); // Include the whole end day
                          if (resultDateStartOfDay >= startDate && resultDateStartOfDay <= endDate) {
                             weekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
@@ -179,10 +182,11 @@ export default function UpdateResultsClosePage() {
             }
             
             if (!weekFound) {
-                const dayIndexForNewWeek = (resultDate.getUTCDay() + 6) % 7;
+                // Determine the start (Monday) and end (Sunday) of the week for the resultDate
+                const dayOfWeekForNewWeek = (resultDate.getUTCDay() + 6) % 7; // Monday = 0, Sunday = 6
                 
                 const startOfWeek = new Date(resultDateStartOfDay);
-                startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayIndexForNewWeek);
+                startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayOfWeekForNewWeek);
                 
                 const endOfWeek = new Date(startOfWeek);
                 endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
@@ -191,15 +195,16 @@ export default function UpdateResultsClosePage() {
                 const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
                 
                 const newWeekDataArr = Array(7).fill('********');
-                newWeekDataArr[dayIndexForNewWeek] = newDayData;
+                newWeekDataArr[dayIndex] = newDayData;
                 const newWeekData = newWeekDataArr.join(' ');
                 
                 const newRow = `${newDateRange} ${newWeekData}`;
-                finalDataArray.push(newRow);
+                finalDataArray.push(newRow); // Add as a new row
             }
 
             batch.update(panelChartRef, { data: finalDataArray.join('\n') });
         }
+
 
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
         const bidsSnapshot = await getDocs(bidsQuery);
