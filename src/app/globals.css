@@ -187,35 +187,29 @@ body {
   }
 
   .loader {
+    width: 70px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .loader span {
     width: 15px;
     height: 15px;
     border-radius: 50%;
-    background-color: hsl(var(--primary));
-    box-shadow: 30px 0 #fff, -30px 0 #fff;
-    animation: shadowPulse 1s linear infinite;
+    background: hsl(var(--primary));
+    animation: pulse 1.4s infinite ease-in-out both;
   }
-  
-  @keyframes shadowPulse {
-    33% {
-      background-color: #FFF;
-      box-shadow: 30px 0 hsl(var(--primary)), -30px 0 #FFF;
-    }
-    66% {
-      background-color: #FFF;
-      box-shadow: 30px 0 #FFF, -30px 0 hsl(var(--primary));
-    }
-    100% {
-      background-color: hsl(var(--primary));
-      box-shadow: 30px 0 #FFF, -30px 0 #FFF;
-    }
+  .loader span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  .loader span:nth-child(2) {
+    animation-delay: -0.16s;
   }
 
- @keyframes rotation {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
+ @keyframes pulse {
+    0%, 80%, 100% { 
+      transform: scale(0);
+    } 40% { 
+      transform: scale(1.0);
     }
   }
 }
