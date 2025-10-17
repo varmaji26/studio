@@ -186,6 +186,30 @@ body {
       animation: won-glow 2s ease-in-out infinite;
   }
 
+  .loader {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: hsl(var(--primary));
+    box-shadow: 30px 0 #fff, -30px 0 #fff;
+    animation: shadowPulse 1s linear infinite;
+  }
+  
+  @keyframes shadowPulse {
+    33% {
+      background-color: #FFF;
+      box-shadow: 30px 0 hsl(var(--primary)), -30px 0 #FFF;
+    }
+    66% {
+      background-color: #FFF;
+      box-shadow: 30px 0 #FFF, -30px 0 hsl(var(--primary));
+    }
+    100% {
+      background-color: hsl(var(--primary));
+      box-shadow: 30px 0 #FFF, -30px 0 #FFF;
+    }
+  }
+
  @keyframes rotation {
     from {
       transform: rotate(0deg);
@@ -193,13 +217,5 @@ body {
     to {
       transform: rotate(360deg);
     }
-  }
-
-  .loader {
-    aspect-ratio: 1;
-    border-radius: 50%;
-    border: 6px solid hsl(var(--muted-foreground));
-    border-top-color: hsl(var(--primary));
-    animation: rotation 1s linear infinite;
   }
 }
