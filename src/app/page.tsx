@@ -530,7 +530,7 @@ export default function Home() {
             <CardContent className="p-0 relative h-64 flex flex-col items-center justify-center bg-black">
                 <div className="absolute inset-0">
                     <dotlottie-wc
-                        src="https://lottie.host/96a69a4b-1a93-4e42-8c01-3b76f6437340/YpTCRmB3p1.json"
+                        src="https://lottie.host/4f977458-1405-4f40-8730-17e1139a04a3/h2A9i32B51.json"
                         autoplay
                         loop
                         style={{ width: '100%', height: '100%' }}
