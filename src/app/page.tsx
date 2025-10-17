@@ -526,6 +526,27 @@ export default function Home() {
             </Card>
         )}
         
+        <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+            <CardContent className="p-0 relative h-64 flex flex-col items-center justify-center bg-black">
+                <div className="absolute inset-0">
+                    <dotlottie-wc
+                        src="https://lottie.host/96a69a4b-1a93-4e42-8c01-3b76f6437340/YpTCRmB3p1.json"
+                        autoplay
+                        loop
+                        style={{ width: '100%', height: '100%' }}
+                    />
+                </div>
+                <div 
+                    className="relative z-10 text-center text-white"
+                    style={{ textShadow: '0 0 10px #FFD700, 0 0 20px #FFD700, 0 0 30px #E1341E' }}
+                >
+                    <h2 className="text-4xl md:text-5xl font-extrabold tracking-wider">
+                        HAPPY DIWALI
+                    </h2>
+                </div>
+            </CardContent>
+        </Card>
+
         {banners.length > 0 && (
             <Carousel 
                 plugins={[autoplayPlugin.current]}
