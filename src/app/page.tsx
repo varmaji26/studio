@@ -53,6 +53,7 @@ import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { motion, useAnimation, useInView } from 'framer-motion';
+import { Player } from '@lottiefiles/react-lottie-player';
 
 
 interface Game extends DocumentData {
@@ -529,12 +530,12 @@ export default function Home() {
         <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
             <CardContent className="p-0 relative h-64 flex flex-col items-center justify-center bg-black">
                 <div className="absolute inset-0">
-                    <dotlottie-wc
+                   <Player
                         src="https://lottie.host/e31a3138-1558-4171-87a4-37059119747d/uIclL8hG4a.json"
-                        autoplay
+                        className="w-full h-full"
                         loop
-                        style={{ width: '100%', height: '100%' }}
-                    ></dotlottie-wc>
+                        autoplay
+                    />
                 </div>
                 <div 
                     className="relative z-10 text-center text-white"
