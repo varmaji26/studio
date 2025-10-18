@@ -167,22 +167,13 @@ const GameCard = memo(function GameCard({
 });
 
 const FireworksAnimation = () => {
-    const fireworks = Array.from({ length: 15 });
-  
-    const colors = ['#FFC700', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF'];
+    const fireworks = Array.from({ length: 50 });
   
     return (
       <div className="fireworks-container">
-        {fireworks.map((_, i) => {
-          const style = {
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            background: colors[Math.floor(Math.random() * colors.length)],
-            animationDelay: `${Math.random() * 2}s`,
-            animationDuration: `1.5s`
-          };
-          return <div key={i} className="firework" style={style} />;
-        })}
+        {fireworks.map((_, i) => (
+          <div key={i} className="firework"></div>
+        ))}
         <div className="happy-diwali-text">Happy Diwali</div>
       </div>
     );

@@ -187,31 +187,19 @@ body {
   }
 
   .loader {
-    width: 70px;
-    display: flex;
-    justify-content: space-between;
-  }
-  .loader span {
-    width: 15px;
-    height: 15px;
+    width: 50px;
+    aspect-ratio: 1;
     border-radius: 50%;
-    background: hsl(var(--primary));
-    animation: pulse 1.4s infinite ease-in-out both;
+    border: 8px solid;
+    border-color: hsl(var(--primary)) #0000;
+    animation: l1 1s infinite;
   }
-  .loader span:nth-child(1) {
-    animation-delay: -0.32s;
-  }
-  .loader span:nth-child(2) {
-    animation-delay: -0.16s;
-  }
-
- @keyframes pulse {
-    0%, 80%, 100% { 
-      transform: scale(0);
-    } 40% { 
-      transform: scale(1.0);
+  @keyframes l1 {
+    to {
+      transform: rotate(0.5turn);
     }
   }
+  
   .fireworks-container {
     position: relative;
     width: 100%;
@@ -219,30 +207,110 @@ body {
     overflow: hidden;
     background-color: #000;
   }
-  
+
   .firework {
+    --color1: hsl(var(--primary));
+    --color2: #fff;
+    --color3: #ffc700;
+    --color4: #00ff00;
+    --color5: #ff00ff;
+    --color6: #00ffff;
     position: absolute;
-    width: 0.5rem;
-    height: 0.5rem;
+    width: 4px;
+    height: 4px;
     border-radius: 50%;
+    background-color: var(--color1);
+    opacity: 0;
+    animation: firework-launch 2s infinite;
+  }
+
+  .firework::before,
+  .firework::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    opacity: 0;
   }
 
   .firework::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: inherit;
-    border-radius: 50%;
-    animation: firework-explode 1.5s ease-out infinite;
+    animation: firework-explode 1s ease-out infinite;
   }
-  
+
+  .firework::after {
+    animation: firework-trail 1s ease-out infinite;
+  }
+
+  @keyframes firework-launch {
+    0% {
+      transform: translateY(256px);
+      opacity: 1;
+    }
+    50% {
+      transform: translateY(100px);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+  }
+
   @keyframes firework-explode {
-    0% { transform: scale(0); opacity: 1; }
-    50% { opacity: 1; }
-    100% { transform: scale(20); opacity: 0; }
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(15);
+      opacity: 0;
+    }
+  }
+
+  @keyframes firework-trail {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+  .firework:nth-child(1) {
+    left: 50%; animation-delay: 0s;
+  }
+  .firework:nth-child(2) {
+    left: 25%; animation-delay: 0.8s; background-color: var(--color2);
+  }
+  .firework:nth-child(3) {
+    left: 75%; animation-delay: 1.2s; background-color: var(--color3);
+  }
+  .firework:nth-child(4) {
+    left: 10%; animation-delay: 1.5s; background-color: var(--color4);
+  }
+  .firework:nth-child(5) {
+    left: 90%; animation-delay: 0.5s; background-color: var(--color5);
+  }
+  .firework:nth-child(6) {
+    left: 40%; animation-delay: 1s; background-color: var(--color6);
+  }
+  .firework:nth-child(7) {
+    left: 60%; animation-delay: 0.3s; background-color: var(--color2);
+  }
+  .firework:nth-child(8) {
+    left: 20%; animation-delay: 1.8s; background-color: var(--color3);
+  }
+  .firework:nth-child(9) {
+    left: 80%; animation-delay: 0.2s; background-color: var(--color4);
+  }
+  .firework:nth-child(10) {
+    left: 30%; animation-delay: 0.7s; background-color: var(--color5);
   }
 
   .happy-diwali-text {
