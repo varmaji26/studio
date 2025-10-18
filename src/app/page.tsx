@@ -166,6 +166,28 @@ const GameCard = memo(function GameCard({
     );
 });
 
+const FireworksAnimation = () => {
+    const fireworks = Array.from({ length: 15 });
+  
+    const colors = ['#FFC700', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF'];
+  
+    return (
+      <div className="fireworks-container">
+        {fireworks.map((_, i) => {
+          const style = {
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            background: colors[Math.floor(Math.random() * colors.length)],
+            animationDelay: `${Math.random() * 2}s`,
+            animationDuration: `1.5s`
+          };
+          return <div key={i} className="firework" style={style} />;
+        })}
+        <div className="happy-diwali-text">Happy Diwali</div>
+      </div>
+    );
+};
+
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -333,34 +355,6 @@ export default function Home() {
   
   const totalBalance = Number(userProfile?.balance || 0) + Number(userProfile?.bonusBalance || 0);
 
-  const Sparks = () => {
-    const sparks = Array.from({ length: 20 });
-    return (
-      <>
-        {sparks.map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full bg-yellow-400"
-            style={{
-              top: `${50 + Math.sin(i * 18) * 40}%`,
-              left: `${50 + Math.cos(i * 18) * 40}%`,
-              x: '-50%',
-              y: '-50%',
-            }}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              repeatType: "loop",
-              delay: i * 0.1,
-            }}
-          />
-        ))}
-      </>
-    );
-  };
-  
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
@@ -555,22 +549,9 @@ export default function Home() {
         )}
         
         <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-          <CardContent className="p-0 relative h-64 flex flex-col items-center justify-center bg-black">
-              <Sparks />
-              <motion.h2
-                  className="text-4xl md:text-5xl font-extrabold tracking-wider"
-                  style={{
-                      color: 'transparent',
-                      WebkitTextStroke: '1px #FFD700',
-                      textShadow: '0 0 10px #FFD700, 0 0 20px #FFD700',
-                  }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-              >
-                  HAPPY DIWALI
-              </motion.h2>
-          </CardContent>
+            <CardContent className="p-0">
+                <FireworksAnimation />
+            </CardContent>
         </Card>
 
         {banners.length > 0 && (

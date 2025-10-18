@@ -212,4 +212,58 @@ body {
       transform: scale(1.0);
     }
   }
+  .fireworks-container {
+    position: relative;
+    width: 100%;
+    height: 256px; /* 16rem */
+    overflow: hidden;
+    background-color: #000;
+  }
+  
+  .firework {
+    position: absolute;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+  }
+
+  .firework::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: inherit;
+    border-radius: 50%;
+    animation: firework-explode 1.5s ease-out infinite;
+  }
+  
+  @keyframes firework-explode {
+    0% { transform: scale(0); opacity: 1; }
+    50% { opacity: 1; }
+    100% { transform: scale(20); opacity: 0; }
+  }
+
+  .happy-diwali-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: transparent;
+    font-size: 2.5rem;
+    font-weight: bold;
+    -webkit-text-stroke: 1px #FFD700;
+    text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+    animation: diwali-glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes diwali-glow {
+    from {
+      text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+    }
+    to {
+      text-shadow: 0 0 20px #FFA500, 0 0 30px #FFA500;
+    }
+  }
 }
