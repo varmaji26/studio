@@ -52,8 +52,7 @@ import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { motion, useAnimation, useInView } from 'framer-motion';
-import { Player } from '@lottiefiles/react-lottie-player';
+import { motion } from 'framer-motion';
 
 
 interface Game extends DocumentData {
@@ -334,6 +333,34 @@ export default function Home() {
   
   const totalBalance = Number(userProfile?.balance || 0) + Number(userProfile?.bonusBalance || 0);
 
+  const Sparks = () => {
+    const sparks = Array.from({ length: 20 });
+    return (
+      <>
+        {sparks.map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-yellow-400"
+            style={{
+              top: `${50 + Math.sin(i * 18) * 40}%`,
+              left: `${50 + Math.cos(i * 18) * 40}%`,
+              x: '-50%',
+              y: '-50%',
+            }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              repeatType: "loop",
+              delay: i * 0.1,
+            }}
+          />
+        ))}
+      </>
+    );
+  };
+  
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
@@ -528,24 +555,22 @@ export default function Home() {
         )}
         
         <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-            <CardContent className="p-0 relative h-64 flex flex-col items-center justify-center bg-black">
-                <div className="absolute inset-0">
-                   <Player
-                        src="https://lottie.host/e31a3138-1558-4171-87a4-37059119747d/uIclL8hG4a.json"
-                        className="w-full h-full"
-                        loop
-                        autoplay
-                    />
-                </div>
-                <div 
-                    className="relative z-10 text-center text-white"
-                    style={{ textShadow: '0 0 10px #FFD700, 0 0 20px #FFD700, 0 0 30px #E1341E' }}
-                >
-                    <h2 className="text-4xl md:text-5xl font-extrabold tracking-wider">
-                        HAPPY DIWALI
-                    </h2>
-                </div>
-            </CardContent>
+          <CardContent className="p-0 relative h-64 flex flex-col items-center justify-center bg-black">
+              <Sparks />
+              <motion.h2
+                  className="text-4xl md:text-5xl font-extrabold tracking-wider"
+                  style={{
+                      color: 'transparent',
+                      WebkitTextStroke: '1px #FFD700',
+                      textShadow: '0 0 10px #FFD700, 0 0 20px #FFD700',
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+              >
+                  HAPPY DIWALI
+              </motion.h2>
+          </CardContent>
         </Card>
 
         {banners.length > 0 && (
