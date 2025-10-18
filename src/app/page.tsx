@@ -184,15 +184,6 @@ export default function Home() {
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@lottiefiles/dotlottie-wc@latest/dist/dotlottie-wc.js';
-      script.type = 'module';
-      document.body.appendChild(script);
-    }
-  }, []);
-
-  useEffect(() => {
     if (!loading && !user) {
       router.replace('/login');
     }
@@ -639,7 +630,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
-
-    
