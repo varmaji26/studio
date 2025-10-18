@@ -166,19 +166,6 @@ const GameCard = memo(function GameCard({
     );
 });
 
-const FireworksAnimation = () => {
-    const fireworks = Array.from({ length: 50 });
-  
-    return (
-      <div className="fireworks-container">
-        {fireworks.map((_, i) => (
-          <div key={i} className="firework"></div>
-        ))}
-        <div className="happy-diwali-text">Happy Diwali</div>
-      </div>
-    );
-};
-
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -539,12 +526,6 @@ export default function Home() {
             </Card>
         )}
         
-        <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-            <CardContent className="p-0">
-                <FireworksAnimation />
-            </CardContent>
-        </Card>
-
         {banners.length > 0 && (
             <Carousel 
                 plugins={[autoplayPlugin.current]}
