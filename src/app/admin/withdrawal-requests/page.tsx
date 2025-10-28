@@ -97,26 +97,19 @@ export default function WithdrawalRequestsPage() {
   const handleWithdrawalRequest = async (request: Request, status: 'approved' | 'rejected') => {
     const requestDocRef = doc(db, 'withdrawals', request.id);
     const userDocRef = doc(db, 'users', request.userId);
-    const statsDocRef = doc(db, 'app-stats', 'dashboard');
-    
+
     try {
         await runTransaction(db, async (transaction) => {
             const requestDoc = await transaction.get(requestDocRef);
             if (!requestDoc.exists() || requestDoc.data().status !== 'pending') {
                 throw new Error("This request has already been processed.");
             }
-            const userDoc = await transaction.get(userDocRef);
-            if (!userDoc.exists()) throw new Error(`User not found!`);
-
-            if (status === 'approved') {
-                const currentBalance = userDoc.data().balance || 0;
-                if (currentBalance < request.amount) {
-                    throw new Error("User has insufficient balance for this withdrawal.");
-                }
-                // Deduct amount on approval
-                transaction.update(userDocRef, { balance: increment(-request.amount) });
-                transaction.update(statsDocRef, { totalBalance: increment(-request.amount) });
+            
+            if (status === 'rejected') {
+                // If rejected, refund the amount to the user's real balance
+                transaction.update(userDocRef, { balance: increment(request.amount) });
             }
+
             // For both approve and reject, update the request status
             transaction.update(requestDocRef, { status: status });
         });
@@ -138,13 +131,16 @@ export default function WithdrawalRequestsPage() {
         const batch = writeBatch(db);
         for (const request of requests) {
             const docRef = doc(db, 'withdrawals', request.id);
-            // Just update the status to rejected, no need to refund as balance was not deducted.
+            const userDocRef = doc(db, 'users', request.userId);
+            
+            // Refund the amount for each rejected request
+            batch.update(userDocRef, { balance: increment(request.amount) });
             batch.update(docRef, { status: 'rejected' });
         }
         await batch.commit();
         toast({
             title: 'Success!',
-            description: `All pending withdrawals have been rejected.`
+            description: `All pending withdrawals have been rejected and amounts refunded.`
         });
     } catch (error) {
         console.error(`Error rejecting all withdrawals:`, error);
@@ -217,7 +213,7 @@ export default function WithdrawalRequestsPage() {
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This will reject all {requests.length} pending withdrawals. This action cannot be undone.
+                                    This will reject all {requests.length} pending withdrawals and refund the amount to the users. This action cannot be undone.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

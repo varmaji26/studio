@@ -86,8 +86,8 @@ const TransactionItem = ({ transaction, onCancel }: { transaction: Transaction, 
                             <AlertDialogHeader>
                             <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will cancel your withdrawal request of ₹{transaction.amount}.
-                                {transaction.bonusResetAmount && transaction.bonusResetAmount > 0 ? ` Your bonus of ₹${transaction.bonusResetAmount} will be restored.` : ''}
+                                This will cancel your withdrawal request of ₹{transaction.amount}. Your funds will be returned to your wallet.
+                                {transaction.bonusResetAmount && transaction.bonusResetAmount > 0 ? ` Your bonus of ₹${transaction.bonusResetAmount} will also be restored.` : ''}
                                 This action cannot be undone.
                             </AlertDialogDescription>
                             </AlertDialogHeader>
@@ -202,6 +202,9 @@ export default function TransactionDetailsPage() {
                 // Update withdrawal status to 'reverted'
                 transaction.update(withdrawalDocRef, { status: 'reverted' });
 
+                // Refund the amount to the user's real balance
+                transaction.update(userDocRef, { balance: increment(withdrawalDoc.data().amount) });
+                
                 // If a bonus was reset, restore it
                 const bonusToRestore = withdrawalDoc.data().bonusResetAmount || 0;
                 if (bonusToRestore > 0) {

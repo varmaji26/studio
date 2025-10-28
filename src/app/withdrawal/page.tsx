@@ -103,6 +103,9 @@ export default function WithdrawalPage() {
 
                 transaction.update(withdrawalDocRef, { status: 'reverted' });
 
+                // Refund the amount to the user's real balance
+                transaction.update(userDocRef, { balance: increment(withdrawalDoc.data().amount) });
+
                 const bonusToRestore = withdrawalDoc.data().bonusResetAmount || 0;
                 if (bonusToRestore > 0) {
                     transaction.update(userDocRef, { bonusBalance: increment(bonusToRestore) });
@@ -178,6 +181,10 @@ export default function WithdrawalPage() {
                 const bonusToReset = userDoc.data().bonusBalance || 0;
                 const withdrawalsCollectionRef = collection(db, 'withdrawals');
                 
+                // Deduct balance immediately
+                transaction.update(userDocRef, { balance: increment(-parsedAmount) });
+
+                // Create withdrawal request
                 transaction.set(doc(withdrawalsCollectionRef), {
                     userId: user.uid,
                     displayName: user.displayName,
@@ -315,7 +322,7 @@ export default function WithdrawalPage() {
                                 <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This action will cancel your pending withdrawal request and restore any bonus amount that was reset. This cannot be undone.
+                                    This action will cancel your pending withdrawal request and return the funds to your wallet. This cannot be undone.
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
