@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -59,11 +58,10 @@ const TransactionIcon = ({ type }: { type: Transaction['type'] }) => {
     }
 };
 
-const TransactionItem = ({ transaction, onCancel }: { transaction: Transaction, onCancel: (transaction: Transaction) => void; }) => {
+const TransactionItem = ({ transaction }: { transaction: Transaction; }) => {
     const isCredit = transaction.type === 'deposit' || transaction.type === 'win';
     const amountColor = isCredit ? 'text-green-400' : 'text-red-400';
-    const isCancellable = transaction.type === 'withdrawal' && transaction.status === 'pending';
-
+    
     return (
         <div className={cn(
             "bg-card/80 p-3 rounded-lg shadow-sm flex items-center justify-between border border-white/10",
@@ -77,27 +75,6 @@ const TransactionItem = ({ transaction, onCancel }: { transaction: Transaction, 
                 </div>
             </div>
             <div className="flex items-center gap-2">
-                 {isCancellable && (
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="destructive" size="sm" className="h-7 text-xs">Cancel</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will cancel your withdrawal request of ₹{transaction.amount}. Your funds will be returned to your wallet.
-                                {transaction.bonusResetAmount && transaction.bonusResetAmount > 0 ? ` Your bonus of ₹${transaction.bonusResetAmount} will also be restored.` : ''}
-                                This action cannot be undone.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>Close</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onCancel(transaction)}>Confirm Cancel</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                )}
                 <div className="text-right">
                     <p className={cn("font-bold text-sm", amountColor)}>
                         {isCredit ? '+' : '-'}₹{transaction.amount}
@@ -297,7 +274,7 @@ export default function TransactionDetailsPage() {
                     <h2 className="text-lg font-bold text-foreground mb-4 bg-teal-900/50 p-2 rounded-md text-center text-teal-200">Transactions</h2>
                      <div className="space-y-3">
                         {paginatedTransactions.length > 0 ? (
-                            paginatedTransactions.map(t => <TransactionItem key={t.id} transaction={t} onCancel={handleCancelWithdrawal} />)
+                            paginatedTransactions.map(t => <TransactionItem key={t.id} transaction={t} />)
                         ) : (
                             <div className="text-center py-10">
                                 <p className="text-muted-foreground">No transactions found.</p>
