@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Landmark, Phone, Gift, Wallet, Info } from 'lucide-react';
 import Link from 'next/link';
-import { doc, onSnapshot, DocumentData, collection, addDoc, serverTimestamp, runTransaction, query, where, increment } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData, collection, addDoc, serverTimestamp, runTransaction, query, where, increment, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 interface UserProfile extends DocumentData {
   balance?: number;
@@ -71,6 +73,56 @@ export default function WithdrawalPage() {
             unsubscribePendingWithdrawals();
         };
     }, [user]);
+
+    const handleCancelWithdrawal = async () => {
+        if (!user) return;
+
+        const pendingWithdrawalsQuery = query(
+            collection(db, 'withdrawals'),
+            where('userId', '==', user.uid),
+            where('status', '==', 'pending'),
+            orderBy('createdAt', 'desc'),
+            limit(1)
+        );
+
+        setIsSubmitting(true);
+        try {
+            const snapshot = await getDocs(pendingWithdrawalsQuery);
+            if (snapshot.empty) {
+                throw new Error("No pending withdrawal request found to cancel.");
+            }
+            const withdrawalToCancelDoc = snapshot.docs[0];
+            const withdrawalDocRef = withdrawalToCancelDoc.ref;
+            const userDocRef = doc(db, 'users', user.uid);
+
+            await runTransaction(db, async (transaction) => {
+                const withdrawalDoc = await transaction.get(withdrawalDocRef);
+                if (!withdrawalDoc.exists() || withdrawalDoc.data().status !== 'pending') {
+                    throw new Error("This withdrawal request cannot be cancelled anymore.");
+                }
+
+                transaction.update(withdrawalDocRef, { status: 'reverted' });
+
+                const bonusToRestore = withdrawalDoc.data().bonusResetAmount || 0;
+                if (bonusToRestore > 0) {
+                    transaction.update(userDocRef, { bonusBalance: increment(bonusToRestore) });
+                }
+            });
+
+            toast({
+                title: "Withdrawal Cancelled",
+                description: `Your request has been successfully cancelled.`,
+            });
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Cancellation Failed",
+                description: error.message || "An unexpected error occurred.",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleQuickAmount = (value: string) => {
         setAmount(value);
@@ -253,8 +305,25 @@ export default function WithdrawalPage() {
                         <Info className="h-4 w-4" />
                         <AlertTitle>Pending Request</AlertTitle>
                         <AlertDescription>
-                            You already have a pending withdrawal request. Please wait for it to be processed before making a new one.
+                            You already have a pending withdrawal request. Please wait for it to be processed.
                         </AlertDescription>
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                               <Button variant="destructive" size="sm" className="mt-2" disabled={isSubmitting}>Cancel Request</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action will cancel your pending withdrawal request and restore any bonus amount that was reset. This cannot be undone.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Close</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleCancelWithdrawal}>Confirm Cancel</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </Alert>
                 ) : (
                 <div className="my-4">
@@ -286,9 +355,10 @@ export default function WithdrawalPage() {
                     disabled={isSubmitting || hasPendingWithdrawal}
                 >
                     {isSubmitting && <Loader className="mr-2 h-5 w-5"/>}
-                    {isSubmitting ? 'Sending...' : hasPendingWithdrawal ? 'Pending Request' : 'Send Request'}
+                    {isSubmitting ? 'Sending...' : hasPendingWithdrawal ? 'Request Pending' : 'Send Request'}
                 </Button>
             </footer>
         </div>
     );
 }
+
