@@ -1,26 +1,31 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { ArrowLeft, Wallet, ArrowDown, ArrowUp, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Wallet, ArrowDown, ArrowUp, MessageCircle, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { BottomNavbar } from '@/components/bottom-navbar';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface Transaction extends DocumentData {
     id: string;
     amount: number;
-    status?: 'pending' | 'approved' | 'rejected' | 'won' | 'lost' | 'running' | 'cancelled';
+    status?: 'pending' | 'approved' | 'rejected' | 'won' | 'lost' | 'running' | 'cancelled' | 'reverted';
     createdAt: Timestamp;
     type: 'deposit' | 'withdrawal' | 'bet' | 'win';
     description: string;
     title: string;
+    bonusResetAmount?: number;
 }
 
 interface UserProfile extends DocumentData {
@@ -54,9 +59,10 @@ const TransactionIcon = ({ type }: { type: Transaction['type'] }) => {
     }
 };
 
-const TransactionItem = ({ transaction }: { transaction: Transaction }) => {
+const TransactionItem = ({ transaction, onCancel }: { transaction: Transaction, onCancel: (transaction: Transaction) => void; }) => {
     const isCredit = transaction.type === 'deposit' || transaction.type === 'win';
     const amountColor = isCredit ? 'text-green-400' : 'text-red-400';
+    const isCancellable = transaction.type === 'withdrawal' && transaction.status === 'pending';
 
     return (
         <div className={cn(
@@ -70,10 +76,33 @@ const TransactionItem = ({ transaction }: { transaction: Transaction }) => {
                     <p className="text-xs text-muted-foreground">{transaction.description}</p>
                 </div>
             </div>
-            <div className="text-right">
-                <p className={cn("font-bold text-sm", amountColor)}>
-                    {isCredit ? '+' : '-'}₹{transaction.amount}
-                </p>
+            <div className="flex items-center gap-2">
+                 {isCancellable && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="destructive" size="sm" className="h-7 text-xs">Cancel</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will cancel your withdrawal request of ₹{transaction.amount}.
+                                {transaction.bonusResetAmount && transaction.bonusResetAmount > 0 ? ` Your bonus of ₹${transaction.bonusResetAmount} will be restored.` : ''}
+                                This action cannot be undone.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Close</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onCancel(transaction)}>Confirm Cancel</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
+                <div className="text-right">
+                    <p className={cn("font-bold text-sm", amountColor)}>
+                        {isCredit ? '+' : '-'}₹{transaction.amount}
+                    </p>
+                </div>
             </div>
         </div>
     );
@@ -86,6 +115,7 @@ export default function TransactionDetailsPage() {
     const [profile, setProfile] = useState<UserProfile>({});
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (authLoading) return;
@@ -156,6 +186,45 @@ export default function TransactionDetailsPage() {
 
     }, [user, authLoading, router]);
 
+     const handleCancelWithdrawal = async (transactionToCancel: Transaction) => {
+        if (!user) return;
+
+        const withdrawalDocRef = doc(db, 'withdrawals', transactionToCancel.id);
+        const userDocRef = doc(db, 'users', user.uid);
+
+        try {
+            await runTransaction(db, async (transaction) => {
+                const withdrawalDoc = await transaction.get(withdrawalDocRef);
+                if (!withdrawalDoc.exists() || withdrawalDoc.data().status !== 'pending') {
+                    throw new Error("This withdrawal request cannot be cancelled anymore.");
+                }
+
+                // Update withdrawal status to 'reverted'
+                transaction.update(withdrawalDocRef, { status: 'reverted' });
+
+                // If a bonus was reset, restore it
+                const bonusToRestore = withdrawalDoc.data().bonusResetAmount || 0;
+                if (bonusToRestore > 0) {
+                    transaction.update(userDocRef, { bonusBalance: increment(bonusToRestore) });
+                }
+            });
+
+            toast({
+                title: "Withdrawal Cancelled",
+                description: `Your request for ₹${transactionToCancel.amount} has been successfully cancelled.`,
+            });
+
+        } catch (error: any) {
+            console.error("Error cancelling withdrawal:", error);
+            toast({
+                variant: "destructive",
+                title: "Cancellation Failed",
+                description: error.message || "An unexpected error occurred.",
+            });
+        }
+    };
+
+
     const sortedTransactions = useMemo(() => {
         const filtered = transactions.filter(t => t.type !== 'bet');
         return filtered.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
@@ -225,7 +294,7 @@ export default function TransactionDetailsPage() {
                     <h2 className="text-lg font-bold text-foreground mb-4 bg-teal-900/50 p-2 rounded-md text-center text-teal-200">Transactions</h2>
                      <div className="space-y-3">
                         {paginatedTransactions.length > 0 ? (
-                            paginatedTransactions.map(t => <TransactionItem key={t.id} transaction={t} />)
+                            paginatedTransactions.map(t => <TransactionItem key={t.id} transaction={t} onCancel={handleCancelWithdrawal} />)
                         ) : (
                             <div className="text-center py-10">
                                 <p className="text-muted-foreground">No transactions found.</p>

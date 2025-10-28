@@ -126,7 +126,6 @@ export default function WithdrawalPage() {
                 const bonusToReset = userDoc.data().bonusBalance || 0;
                 const withdrawalsCollectionRef = collection(db, 'withdrawals');
                 
-                // Just create the withdrawal request, don't deduct balance.
                 transaction.set(doc(withdrawalsCollectionRef), {
                     userId: user.uid,
                     displayName: user.displayName,
@@ -135,6 +134,7 @@ export default function WithdrawalPage() {
                     withdrawalMethod: 'Bank Transfer',
                     withdrawalDetails: 'Registered Bank Account',
                     status: 'pending',
+                    bonusResetAmount: bonusToReset, // Store the amount of bonus being reset
                     createdAt: serverTimestamp(),
                 });
 
