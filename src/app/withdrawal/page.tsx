@@ -81,7 +81,6 @@ export default function WithdrawalPage() {
             collection(db, 'withdrawals'),
             where('userId', '==', user.uid),
             where('status', '==', 'pending'),
-            orderBy('createdAt', 'desc'),
             limit(1)
         );
 
@@ -368,4 +367,3 @@ export default function WithdrawalPage() {
         </div>
     );
 }
-
