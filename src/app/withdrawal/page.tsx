@@ -74,58 +74,6 @@ export default function WithdrawalPage() {
         };
     }, [user]);
 
-    const handleCancelWithdrawal = async () => {
-        if (!user) return;
-
-        const pendingWithdrawalsQuery = query(
-            collection(db, 'withdrawals'),
-            where('userId', '==', user.uid),
-            where('status', '==', 'pending'),
-            limit(1)
-        );
-
-        setIsSubmitting(true);
-        try {
-            const snapshot = await getDocs(pendingWithdrawalsQuery);
-            if (snapshot.empty) {
-                throw new Error("No pending withdrawal request found to cancel.");
-            }
-            const withdrawalToCancelDoc = snapshot.docs[0];
-            const withdrawalDocRef = withdrawalToCancelDoc.ref;
-            const userDocRef = doc(db, 'users', user.uid);
-
-            await runTransaction(db, async (transaction) => {
-                const withdrawalDoc = await transaction.get(withdrawalDocRef);
-                if (!withdrawalDoc.exists() || withdrawalDoc.data().status !== 'pending') {
-                    throw new Error("This withdrawal request cannot be cancelled anymore.");
-                }
-
-                transaction.update(withdrawalDocRef, { status: 'reverted' });
-
-                // Refund the amount to the user's real balance
-                transaction.update(userDocRef, { balance: increment(withdrawalDoc.data().amount) });
-
-                const bonusToRestore = withdrawalDoc.data().bonusResetAmount || 0;
-                if (bonusToRestore > 0) {
-                    transaction.update(userDocRef, { bonusBalance: increment(bonusToRestore) });
-                }
-            });
-
-            toast({
-                title: "Withdrawal Cancelled",
-                description: `Your request has been successfully cancelled.`,
-            });
-        } catch (error: any) {
-            toast({
-                variant: "destructive",
-                title: "Cancellation Failed",
-                description: error.message || "An unexpected error occurred.",
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
     const handleQuickAmount = (value: string) => {
         setAmount(value);
     };
@@ -313,23 +261,6 @@ export default function WithdrawalPage() {
                         <AlertDescription>
                             You already have a pending withdrawal request. Please wait for it to be processed.
                         </AlertDescription>
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                               <Button variant="destructive" size="sm" className="mt-2" disabled={isSubmitting}>Cancel Request</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action will cancel your pending withdrawal request and return the funds to your wallet. This cannot be undone.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Close</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleCancelWithdrawal}>Confirm Cancel</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
                     </Alert>
                 ) : (
                 <div className="my-4">
