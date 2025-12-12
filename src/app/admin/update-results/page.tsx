@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, Timestamp, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -189,12 +189,13 @@ export default function UpdateResultsPage() {
                     transaction.update(userRef, { balance: increment(-winningAmount) });
                     
                     const userDoc = await transaction.get(userRef);
-                    const newBalance = (userDoc.data()?.balance || 0) - winningAmount;
+                    const currentBalance = userDoc.data()?.balance || 0;
                     
-                    if (newBalance < 0) {
+                    // NEW LOGIC: Check if balance goes negative
+                    if (currentBalance < winningAmount) {
+                        let balanceToRecover = winningAmount - currentBalance;
                         const runningBetsQuery = query(collection(db, 'bids'), where('userId', '==', bid.userId), where('status', '==', 'running'), orderBy('createdAt', 'desc'));
                         const runningBetsSnapshot = await getDocs(runningBetsQuery);
-                        let balanceToRecover = Math.abs(newBalance);
 
                         for (const runningBetDoc of runningBetsSnapshot.docs) {
                             if (balanceToRecover <= 0) break;

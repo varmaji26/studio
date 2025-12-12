@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, updateDoc, Timestamp, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,6 +54,7 @@ const parseDateString = (dateStr: string): Date | null => {
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
+    // Create date in UTC to avoid timezone issues
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
@@ -130,14 +131,14 @@ export default function UpdateResultsClosePage() {
         });
 
         const now = new Date();
-        const [openHours] = game.openTime.split(':').map(Number);
-        const [closeHours] = game.closeTime.split(':').map(Number);
+        const [openHours] = (game.openTime || "00:00").split(':').map(Number);
+        const [closeHours] = (game.closeTime || "00:00").split(':').map(Number);
         let resultDate = new Date(now);
-        if (closeHours < openHours) { 
-            const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, 0);
-            if (now < gameOpenTimeToday) {
-                 resultDate.setDate(now.getDate() - 1);
-            }
+
+        // If close time is on the next day (e.g., open 21:00, close 01:00) AND current time is before open time
+        // then the result is for the previous day.
+        if (closeHours < openHours && now.getHours() < openHours) { 
+             resultDate.setDate(now.getDate() - 1);
         }
         const resultDateStartOfDay = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
         const dayIndex = (resultDateStartOfDay.getUTCDay() + 6) % 7; 
@@ -303,68 +304,69 @@ export default function UpdateResultsClosePage() {
         return;
     }
     setIsReverting(true);
-    const batch = writeBatch(db);
     const gameDocRef = doc(db, 'games', game.id);
 
     try {
-        const now = new Date();
-        let resultDate = new Date(now);
-        const [openHours] = game.openTime.split(':').map(Number);
-        const [closeHours] = game.closeTime.split(':').map(Number);
-        if (closeHours < openHours) {
-            const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, 0);
-            if (now < gameOpenTimeToday) {
+        await runTransaction(db, async (transaction) => {
+            const now = new Date();
+            let resultDate = new Date(now);
+            const [openHours] = (game.openTime || "00:00").split(':').map(Number);
+            const [closeHours] = (game.closeTime || "00:00").split(':').map(Number);
+            if (closeHours < openHours && now.getHours() < openHours) {
                  resultDate.setDate(now.getDate() - 1);
             }
-        }
-        const startOfDay = new Date(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate());
-        
-        const affectedBidsQuery = query(
-            collection(db, 'bids'),
-            where('gameId', '==', game.id),
-            where('status', 'in', ['won', 'lost']),
-            where('createdAt', '>=', Timestamp.fromDate(startOfDay))
-        );
-        const bidsSnapshot = await getDocs(affectedBidsQuery);
+            const startOfDay = new Date(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate());
+            
+            const affectedBidsQuery = query(
+                collection(db, 'bids'),
+                where('gameId', '==', game.id),
+                where('status', 'in', ['won', 'lost']),
+                where('createdAt', '>=', Timestamp.fromDate(startOfDay))
+            );
+            const bidsSnapshot = await getDocs(affectedBidsQuery);
 
-        for (const bidDoc of bidsSnapshot.docs) {
-            const bid = bidDoc.data();
-            if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
-                 if (bid.status === 'won') {
-                    const userRef = doc(db, 'users', bid.userId);
-                    const winningAmount = bid.winningAmount;
-                    transaction.update(userRef, { balance: increment(-winningAmount) });
-                    const userDoc = await transaction.get(userRef);
-                    const newBalance = (userDoc.data()?.balance || 0) - winningAmount;
-                    if (newBalance < 0) {
-                        const runningBetsQuery = query(collection(db, 'bids'), where('userId', '==', bid.userId), where('status', '==', 'running'), orderBy('createdAt', 'desc'));
-                        const runningBetsSnapshot = await getDocs(runningBetsQuery);
-                        let balanceToRecover = Math.abs(newBalance);
-                        for (const runningBetDoc of runningBetsSnapshot.docs) {
-                            if (balanceToRecover <= 0) break;
-                            const betToCancel = runningBetDoc.data();
-                            const cancelAmount = betToCancel.totalAmount;
-                            transaction.update(runningBetDoc.ref, { status: 'cancelled' });
-                            transaction.update(userRef, { balance: increment(cancelAmount) });
-                            balanceToRecover -= cancelAmount;
+            for (const bidDoc of bidsSnapshot.docs) {
+                const bid = bidDoc.data();
+                if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
+                    if (bid.status === 'won') {
+                        const userRef = doc(db, 'users', bid.userId);
+                        const winningAmount = bid.winningAmount;
+                        transaction.update(userRef, { balance: increment(-winningAmount) });
+                        
+                        const userDoc = await transaction.get(userRef);
+                        const currentBalance = userDoc.data()?.balance || 0;
+
+                        if (currentBalance < winningAmount) {
+                            let balanceToRecover = winningAmount - currentBalance;
+                            const runningBetsQuery = query(collection(db, 'bids'), where('userId', '==', bid.userId), where('status', '==', 'running'), orderBy('createdAt', 'desc'));
+                            const runningBetsSnapshot = await getDocs(runningBetsQuery);
+
+                            for (const runningBetDoc of runningBetsSnapshot.docs) {
+                                if (balanceToRecover <= 0) break;
+                                const betToCancel = runningBetDoc.data();
+                                const cancelAmount = betToCancel.totalAmount;
+                                transaction.update(runningBetDoc.ref, { status: 'cancelled' });
+                                transaction.update(userRef, { balance: increment(cancelAmount) });
+                                balanceToRecover -= cancelAmount;
+                            }
                         }
+                        
+                        transaction.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
+                    } else { // status is 'lost'
+                        transaction.update(bidDoc.ref, { status: 'running' });
                     }
-                    transaction.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
-                 } else { // status is 'lost'
-                    transaction.update(bidDoc.ref, { status: 'running' });
-                 }
+                }
             }
-        }
-
-        const gameDoc = await getDoc(gameDocRef);
-        const openPana = gameDoc.data()?.openResult || '***';
-        
-        batch.update(gameDocRef, {
-            closeResult: '**',
-            result: `${openPana}-**-**`,
+            
+            const gameDoc = await transaction.get(gameDocRef);
+            const openPana = gameDoc.data()?.openResult || '***';
+            
+            transaction.update(gameDocRef, {
+                closeResult: '**',
+                result: `${openPana}-**-**`,
+            });
         });
 
-        await batch.commit();
         toast({
             title: 'Result Reverted!',
             description: `Close result for ${game.name} has been reverted. Affected bets are running again.`
