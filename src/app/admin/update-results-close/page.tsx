@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -315,16 +314,21 @@ export default function UpdateResultsClosePage() {
         const batch = writeBatch(db);
         const gameDocRef = doc(db, 'games', game.id);
 
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
         const affectedBidsQuery = query(
             collection(db, 'bids'),
             where('gameId', '==', game.id),
-            where('status', 'in', ['won', 'lost'])
+            where('status', 'in', ['won', 'lost']),
+            where('createdAt', '>=', Timestamp.fromDate(startOfDay))
         );
 
         const bidsSnapshot = await getDocs(affectedBidsQuery);
 
-        bidsSnapshot.forEach(bidDoc => {
+        for (const bidDoc of bidsSnapshot.docs) {
             const bid = bidDoc.data();
+            // Only revert bets affected by the close result (Close session or Jodi)
             if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
                  if (bid.status === 'won') {
                     const userDocRef = doc(db, 'users', bid.userId);
@@ -334,7 +338,7 @@ export default function UpdateResultsClosePage() {
                     batch.update(bidDoc.ref, { status: 'running' });
                 }
             }
-        });
+        }
 
         const gameDoc = await getDoc(gameDocRef);
         const openPana = gameDoc.data()?.openResult || '***';

@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -172,17 +171,21 @@ export default function UpdateResultsPage() {
         const batch = writeBatch(db);
         const gameDocRef = doc(db, 'games', game.id);
 
-        // Query for bets that were decided by this open result
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        // Query for bets that were decided by this open result, for today only
         const affectedBidsQuery = query(
             collection(db, 'bids'),
             where('gameId', '==', game.id),
             where('session', '==', 'Open'),
-            where('status', 'in', ['won', 'lost'])
+            where('status', 'in', ['won', 'lost']),
+            where('createdAt', '>=', Timestamp.fromDate(startOfDay))
         );
 
         const bidsSnapshot = await getDocs(affectedBidsQuery);
 
-        bidsSnapshot.forEach(bidDoc => {
+        for (const bidDoc of bidsSnapshot.docs) {
             const bid = bidDoc.data();
             if (bid.status === 'won') {
                 const userDocRef = doc(db, 'users', bid.userId);
@@ -194,7 +197,7 @@ export default function UpdateResultsPage() {
                 // Just reset the status for lost bets
                 batch.update(bidDoc.ref, { status: 'running' });
             }
-        });
+        }
         
         const gameDoc = await getDoc(gameDocRef);
         const closeResult = gameDoc.data()?.closeResult || '**';
