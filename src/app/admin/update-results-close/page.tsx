@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -54,13 +53,18 @@ const parseDateString = (dateStr: string): Date | null => {
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
-    // Create date in UTC to avoid timezone issues
+    // Create date in UTC to avoid timezone issues during parsing
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
         return date;
     }
     return null;
+};
+
+// Helper to get date string in YYYY-MM-DD format for reliable comparison
+const toDateString = (date: Date) => {
+    return date.toISOString().split('T')[0];
 };
 
 
@@ -133,15 +137,15 @@ export default function UpdateResultsClosePage() {
         const now = new Date();
         const [openHours] = (game.openTime || "00:00").split(':').map(Number);
         const [closeHours] = (game.closeTime || "00:00").split(':').map(Number);
-        let resultDate = new Date(now);
+        let resultDate = new Date();
 
-        // If close time is on the next day (e.g., open 21:00, close 01:00) AND current time is before open time
-        // then the result is for the previous day.
         if (closeHours < openHours && now.getHours() < openHours) { 
              resultDate.setDate(now.getDate() - 1);
         }
-        const resultDateStartOfDay = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
-        const dayIndex = (resultDateStartOfDay.getUTCDay() + 6) % 7; 
+        
+        // Use UTC date for consistent day index calculation
+        const resultDateUTC = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
+        const dayIndex = (resultDateUTC.getUTCDay() + 6) % 7; 
 
 
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
@@ -159,8 +163,7 @@ export default function UpdateResultsClosePage() {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
                     if (startDate && endDate) {
-                        endDate.setUTCHours(23, 59, 59, 999);
-                        if (resultDateStartOfDay >= startDate && resultDateStartOfDay <= endDate) {
+                         if (toDateString(resultDate) >= toDateString(startDate) && toDateString(resultDate) <= toDateString(endDate)) {
                             jodiWeekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
                             const dailyBlocks = dataPart.split(/\s+/).filter(String);
@@ -176,8 +179,8 @@ export default function UpdateResultsClosePage() {
             }
 
              if (!jodiWeekFound) {
-                const dayOfWeekForNewWeek = (resultDateStartOfDay.getUTCDay() + 6) % 7;
-                const startOfWeek = new Date(resultDateStartOfDay);
+                const dayOfWeekForNewWeek = (resultDateUTC.getUTCDay() + 6) % 7;
+                const startOfWeek = new Date(resultDateUTC);
                 startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayOfWeekForNewWeek);
                 const endOfWeek = new Date(startOfWeek);
                 endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
@@ -209,8 +212,7 @@ export default function UpdateResultsClosePage() {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
                     if (startDate && endDate) {
-                        endDate.setUTCHours(23, 59, 59, 999); 
-                         if (resultDateStartOfDay >= startDate && resultDateStartOfDay <= endDate) {
+                         if (toDateString(resultDate) >= toDateString(startDate) && toDateString(resultDate) <= toDateString(endDate)) {
                             panelWeekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
                             const dailyBlocks = dataPart.split(/\s+/).filter(String);
@@ -227,9 +229,9 @@ export default function UpdateResultsClosePage() {
             }
             
             if (!panelWeekFound) {
-                const dayOfWeekForNewWeek = (resultDateStartOfDay.getUTCDay() + 6) % 7;
+                const dayOfWeekForNewWeek = (resultDateUTC.getUTCDay() + 6) % 7;
                 
-                const startOfWeek = new Date(resultDateStartOfDay);
+                const startOfWeek = new Date(resultDateUTC);
                 startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayOfWeekForNewWeek);
                 
                 const endOfWeek = new Date(startOfWeek);
