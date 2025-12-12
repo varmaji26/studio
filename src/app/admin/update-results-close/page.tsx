@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -53,7 +54,6 @@ const parseDateString = (dateStr: string): Date | null => {
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
-    // Create date in UTC to avoid timezone issues with chart dates
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
@@ -129,15 +129,11 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
-        // --- Correct Result Date and Day Index Calculation ---
         const now = new Date();
         const [openHours] = game.openTime.split(':').map(Number);
         const [closeHours] = game.closeTime.split(':').map(Number);
-
-        let resultDate = new Date();
-        const isOvernightGame = closeHours < openHours;
-        
-        if (isOvernightGame) {
+        let resultDate = new Date(now);
+        if (closeHours < openHours) { 
             const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, 0);
             if (now < gameOpenTimeToday) {
                  resultDate.setDate(now.getDate() - 1);
@@ -147,7 +143,6 @@ export default function UpdateResultsClosePage() {
         const dayIndex = (resultDateStartOfDay.getUTCDay() + 6) % 7; 
 
 
-        // --- JODI CHART UPDATE LOGIC ---
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
         const jodiChartSnap = await getDoc(jodiChartRef);
         if (jodiChartSnap.exists()) {
@@ -195,7 +190,6 @@ export default function UpdateResultsClosePage() {
             batch.update(jodiChartRef, { data: jodiChartFinalDataArray.join('\n') });
         }
         
-        // --- PANEL CHART UPDATE LOGIC ---
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
 
@@ -308,35 +302,57 @@ export default function UpdateResultsClosePage() {
         toast({ variant: 'destructive', title: 'Error', description: 'No close result to revert for this game.' });
         return;
     }
-
     setIsReverting(true);
+    const batch = writeBatch(db);
+    const gameDocRef = doc(db, 'games', game.id);
+
     try {
-        const batch = writeBatch(db);
-        const gameDocRef = doc(db, 'games', game.id);
-
-        const today = new Date();
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
+        const now = new Date();
+        let resultDate = new Date(now);
+        const [openHours] = game.openTime.split(':').map(Number);
+        const [closeHours] = game.closeTime.split(':').map(Number);
+        if (closeHours < openHours) {
+            const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, 0);
+            if (now < gameOpenTimeToday) {
+                 resultDate.setDate(now.getDate() - 1);
+            }
+        }
+        const startOfDay = new Date(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate());
+        
         const affectedBidsQuery = query(
             collection(db, 'bids'),
             where('gameId', '==', game.id),
             where('status', 'in', ['won', 'lost']),
             where('createdAt', '>=', Timestamp.fromDate(startOfDay))
         );
-
         const bidsSnapshot = await getDocs(affectedBidsQuery);
 
         for (const bidDoc of bidsSnapshot.docs) {
             const bid = bidDoc.data();
-            // Only revert bets affected by the close result (Close session or Jodi)
             if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
                  if (bid.status === 'won') {
-                    const userDocRef = doc(db, 'users', bid.userId);
-                    batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
-                    batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
-                } else if (bid.status === 'lost') {
-                    batch.update(bidDoc.ref, { status: 'running' });
-                }
+                    const userRef = doc(db, 'users', bid.userId);
+                    const winningAmount = bid.winningAmount;
+                    transaction.update(userRef, { balance: increment(-winningAmount) });
+                    const userDoc = await transaction.get(userRef);
+                    const newBalance = (userDoc.data()?.balance || 0) - winningAmount;
+                    if (newBalance < 0) {
+                        const runningBetsQuery = query(collection(db, 'bids'), where('userId', '==', bid.userId), where('status', '==', 'running'), orderBy('createdAt', 'desc'));
+                        const runningBetsSnapshot = await getDocs(runningBetsQuery);
+                        let balanceToRecover = Math.abs(newBalance);
+                        for (const runningBetDoc of runningBetsSnapshot.docs) {
+                            if (balanceToRecover <= 0) break;
+                            const betToCancel = runningBetDoc.data();
+                            const cancelAmount = betToCancel.totalAmount;
+                            transaction.update(runningBetDoc.ref, { status: 'cancelled' });
+                            transaction.update(userRef, { balance: increment(cancelAmount) });
+                            balanceToRecover -= cancelAmount;
+                        }
+                    }
+                    transaction.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
+                 } else { // status is 'lost'
+                    transaction.update(bidDoc.ref, { status: 'running' });
+                 }
             }
         }
 
@@ -353,7 +369,6 @@ export default function UpdateResultsClosePage() {
             title: 'Result Reverted!',
             description: `Close result for ${game.name} has been reverted. Affected bets are running again.`
         });
-
     } catch (error: any) {
         console.error('Error reverting result: ', error);
         toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to revert result.' });
