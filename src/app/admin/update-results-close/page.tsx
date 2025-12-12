@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -64,7 +65,10 @@ const parseDateString = (dateStr: string): Date | null => {
 
 // Helper to get date string in YYYY-MM-DD format for reliable comparison
 const toDateString = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    const year = date.getUTCFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
 
 
