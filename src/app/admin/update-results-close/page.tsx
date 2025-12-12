@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -52,10 +53,9 @@ const parseDateString = (dateStr: string): Date | null => {
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
-    // Create date in UTC to avoid timezone issues
+    // Create date in UTC to avoid timezone issues with chart dates
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
-    // Validate if the created date is correct
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
         return date;
     }
@@ -134,7 +134,7 @@ export default function UpdateResultsClosePage() {
         const [openHours, openMinutes] = game.openTime.split(':').map(Number);
         const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, openMinutes, 0, 0);
 
-        let resultDate = new Date();
+        let resultDate = new Date(now);
         if (now < gameOpenTimeToday) {
             // If we are updating before the game's open time, it must be for the previous day's result.
             resultDate.setDate(resultDate.getDate() - 1);
@@ -147,8 +147,7 @@ export default function UpdateResultsClosePage() {
             const panelChartDataString = panelChartSnap.data()?.data || '';
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
             
-            // Indian Standard Time is UTC+5:30. getUTCDay() where Sunday is 0. We want Monday=0.
-            const dayIndex = (resultDate.getUTCDay() + 6) % 7; 
+            const dayIndex = (resultDate.getUTCDay() + 6) % 7; // Monday=0, Sunday=6
             
             const rows = panelChartDataString.split('\n').filter((row: string) => row.trim() !== '');
             let finalDataArray = [...rows];
@@ -163,7 +162,7 @@ export default function UpdateResultsClosePage() {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
                     if (startDate && endDate) {
-                        endDate.setUTCHours(23, 59, 59, 999); // Include the whole end day
+                        endDate.setUTCHours(23, 59, 59, 999); 
                          if (resultDateStartOfDay >= startDate && resultDateStartOfDay <= endDate) {
                             weekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
@@ -181,8 +180,7 @@ export default function UpdateResultsClosePage() {
             }
             
             if (!weekFound) {
-                // Determine the start (Monday) and end (Sunday) of the week for the resultDate
-                const dayOfWeekForNewWeek = (resultDate.getUTCDay() + 6) % 7; // Monday = 0, Sunday = 6
+                const dayOfWeekForNewWeek = (resultDate.getUTCDay() + 6) % 7;
                 
                 const startOfWeek = new Date(resultDateStartOfDay);
                 startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayOfWeekForNewWeek);
@@ -198,7 +196,7 @@ export default function UpdateResultsClosePage() {
                 const newWeekData = newWeekDataArr.join(' ');
                 
                 const newRow = `${newDateRange} ${newWeekData}`;
-                finalDataArray.push(newRow); // Add as a new row
+                finalDataArray.push(newRow);
             }
 
             batch.update(panelChartRef, { data: finalDataArray.join('\n') });
