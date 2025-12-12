@@ -30,6 +30,7 @@ interface Game extends DocumentData {
     closeResult: string;
     result: string;
     openTime: string;
+    closeTime: string;
 }
 
 const WIN_RATES = {
@@ -132,12 +133,19 @@ export default function UpdateResultsClosePage() {
         // --- Correct Result Date and Day Index Calculation ---
         const now = new Date();
         const [openHours, openMinutes] = game.openTime.split(':').map(Number);
-        const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, openMinutes, 0, 0);
+        const [closeHours, closeMinutes] = game.closeTime.split(':').map(Number);
 
-        let resultDate = new Date(now);
-        if (now < gameOpenTimeToday) {
-            // If we are updating before the game's open time, it must be for the previous day's result.
-            resultDate.setDate(resultDate.getDate() - 1);
+        let resultDate = new Date();
+        // A game is considered "overnight" if its close time is on the next calendar day
+        // (e.g., opens at 21:00, closes at 01:00).
+        const isOvernightGame = closeHours < openHours;
+        
+        if (isOvernightGame) {
+            const gameCloseTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), closeHours, closeMinutes);
+            // If we are updating after midnight but before the game's next open time, the result is for yesterday.
+            if (now < gameCloseTimeToday) {
+                 resultDate.setDate(now.getDate() - 1);
+            }
         }
         
         const panelChartRef = doc(db, 'panelCharts', game.id);
