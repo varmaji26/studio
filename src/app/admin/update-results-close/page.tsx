@@ -54,14 +54,17 @@ const parseDateString = (dateStr: string): Date | null => {
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
+    // Create date in UTC to avoid timezone issues
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
+    // Validate the date
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
         return date;
     }
     return null;
 };
 
+// Converts a Date object to a 'YYYY-MM-DD' string in UTC
 const toDateString = (date: Date) => {
     const year = date.getUTCFullYear();
     const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
@@ -139,9 +142,12 @@ export default function UpdateResultsClosePage() {
         const now = new Date();
         const [openHours] = (game.openTime || "00:00").split(':').map(Number);
         const [closeHours] = (game.closeTime || "00:00").split(':').map(Number);
+        
+        // Smart date logic for midnight-crossing games
         let resultDate = new Date();
-
         if (closeHours < openHours && now.getHours() < openHours) { 
+             // If close time is on the next day (e.g., 1 AM) and current time is before open time (e.g., 3 AM),
+             // the result belongs to the previous day.
              resultDate.setDate(now.getDate() - 1);
         }
         
@@ -216,8 +222,10 @@ export default function UpdateResultsClosePage() {
                          if (toDateString(resultDateUTC) >= toDateString(startDate) && toDateString(resultDateUTC) <= toDateString(endDate)) {
                             panelWeekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
+                            // Split by whitespace, this will handle both single and multiple spaces
                             const dailyBlocks = dataPart.split(/\s+/).filter(String);
                             
+                            // Ensure the array has 7 slots, filling empty ones
                             while(dailyBlocks.length < 7) { dailyBlocks.push('********'); }
                             dailyBlocks[dayIndex] = newDayData;
                             
