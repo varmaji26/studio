@@ -42,7 +42,7 @@ const WIN_RATES = {
 };
 
 const calculateJodiDigit = (pana: string): string => {
-    if (!pana || pana.length !== 3 || !/^\d+$/.test(pana)) return '';
+    if (!pana || pana.length !== 3 || !/^\d+$/.test(pana) || pana.includes('*')) return '';
     return (pana.split('').reduce((acc, digit) => acc + parseInt(digit, 10), 0) % 10).toString();
 };
 
@@ -54,7 +54,6 @@ const parseDateString = (dateStr: string): Date | null => {
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
     
-    // Create date in UTC to avoid timezone issues during parsing
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
@@ -63,7 +62,6 @@ const parseDateString = (dateStr: string): Date | null => {
     return null;
 };
 
-// Helper to get date string in YYYY-MM-DD format for reliable comparison
 const toDateString = (date: Date) => {
     const year = date.getUTCFullYear();
     const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
@@ -147,8 +145,7 @@ export default function UpdateResultsClosePage() {
              resultDate.setDate(now.getDate() - 1);
         }
         
-        // Use UTC date for consistent day index calculation
-        const resultDateUTC = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
+        const resultDateUTC = new Date(Date.UTC(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate()));
         const dayIndex = (resultDateUTC.getUTCDay() + 6) % 7; 
 
 
@@ -167,7 +164,7 @@ export default function UpdateResultsClosePage() {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
                     if (startDate && endDate) {
-                         if (toDateString(resultDate) >= toDateString(startDate) && toDateString(resultDate) <= toDateString(endDate)) {
+                         if (toDateString(resultDateUTC) >= toDateString(startDate) && toDateString(resultDateUTC) <= toDateString(endDate)) {
                             jodiWeekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
                             const dailyBlocks = dataPart.split(/\s+/).filter(String);
@@ -216,7 +213,7 @@ export default function UpdateResultsClosePage() {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
                     if (startDate && endDate) {
-                         if (toDateString(resultDate) >= toDateString(startDate) && toDateString(resultDate) <= toDateString(endDate)) {
+                         if (toDateString(resultDateUTC) >= toDateString(startDate) && toDateString(resultDateUTC) <= toDateString(endDate)) {
                             panelWeekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
                             const dailyBlocks = dataPart.split(/\s+/).filter(String);
