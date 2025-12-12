@@ -185,16 +185,20 @@ export default function UpdateResultsPage() {
                 const bid = bidDoc.data();
                 if (bid.status === 'won') {
                     const userRef = doc(db, 'users', bid.userId);
-                    const winningAmount = bid.winningAmount;
+                    const winningAmount = bid.winningAmount || 0;
+                    
+                    // Deduct the winnings first
                     transaction.update(userRef, { balance: increment(-winningAmount) });
                     
+                    // After deduction, check the balance
                     const userDoc = await transaction.get(userRef);
                     const currentBalance = userDoc.data()?.balance || 0;
                     
-                    // NEW LOGIC: Check if balance goes negative
-                    if (currentBalance < winningAmount) {
-                        let balanceToRecover = winningAmount - currentBalance;
+                    if (currentBalance < 0) {
+                        let balanceToRecover = Math.abs(currentBalance);
                         const runningBetsQuery = query(collection(db, 'bids'), where('userId', '==', bid.userId), where('status', '==', 'running'), orderBy('createdAt', 'desc'));
+                        
+                        // We must get running bets within the transaction
                         const runningBetsSnapshot = await getDocs(runningBetsQuery);
 
                         for (const runningBetDoc of runningBetsSnapshot.docs) {
@@ -202,7 +206,7 @@ export default function UpdateResultsPage() {
                             const betToCancel = runningBetDoc.data();
                             const cancelAmount = betToCancel.totalAmount;
                             transaction.update(runningBetDoc.ref, { status: 'cancelled' });
-                            transaction.update(userRef, { balance: increment(cancelAmount) });
+                            transaction.update(userRef, { balance: increment(cancelAmount) }); // Refund the bet amount
                             balanceToRecover -= cancelAmount;
                         }
                     }

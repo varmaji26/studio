@@ -327,18 +327,23 @@ export default function UpdateResultsClosePage() {
 
             for (const bidDoc of bidsSnapshot.docs) {
                 const bid = bidDoc.data();
+                // Only revert 'Close' session bets and 'Jodi' bets
                 if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
                     if (bid.status === 'won') {
                         const userRef = doc(db, 'users', bid.userId);
-                        const winningAmount = bid.winningAmount;
-                        transaction.update(userRef, { balance: increment(-winningAmount) });
+                        const winningAmount = bid.winningAmount || 0;
                         
+                        // Deduct winnings
+                        transaction.update(userRef, { balance: increment(-winningAmount) });
+
+                        // Check user balance and cancel running bets if it goes negative
                         const userDoc = await transaction.get(userRef);
                         const currentBalance = userDoc.data()?.balance || 0;
 
-                        if (currentBalance < winningAmount) {
-                            let balanceToRecover = winningAmount - currentBalance;
+                        if (currentBalance < 0) {
+                            let balanceToRecover = Math.abs(currentBalance);
                             const runningBetsQuery = query(collection(db, 'bids'), where('userId', '==', bid.userId), where('status', '==', 'running'), orderBy('createdAt', 'desc'));
+                            
                             const runningBetsSnapshot = await getDocs(runningBetsQuery);
 
                             for (const runningBetDoc of runningBetsSnapshot.docs) {
