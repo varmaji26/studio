@@ -132,22 +132,71 @@ export default function UpdateResultsClosePage() {
 
         // --- Correct Result Date and Day Index Calculation ---
         const now = new Date();
-        const [openHours, openMinutes] = game.openTime.split(':').map(Number);
-        const [closeHours, closeMinutes] = game.closeTime.split(':').map(Number);
+        const [openHours] = game.openTime.split(':').map(Number);
+        const [closeHours] = game.closeTime.split(':').map(Number);
 
         let resultDate = new Date();
-        // A game is considered "overnight" if its close time is on the next calendar day
-        // (e.g., opens at 21:00, closes at 01:00).
         const isOvernightGame = closeHours < openHours;
         
         if (isOvernightGame) {
-            const gameCloseTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), closeHours, closeMinutes);
-            // If we are updating after midnight but before the game's next open time, the result is for yesterday.
-            if (now < gameCloseTimeToday) {
+            const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, 0);
+            if (now < gameOpenTimeToday) {
                  resultDate.setDate(now.getDate() - 1);
             }
         }
+        const resultDateStartOfDay = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
+        const dayIndex = (resultDateStartOfDay.getUTCDay() + 6) % 7; 
+
+
+        // --- JODI CHART UPDATE LOGIC ---
+        const jodiChartRef = doc(db, 'jodiCharts', game.id);
+        const jodiChartSnap = await getDoc(jodiChartRef);
+        if (jodiChartSnap.exists()) {
+            const jodiChartDataString = jodiChartSnap.data()?.data || '';
+            const rows = jodiChartDataString.split('\n').filter((row: string) => row.trim() !== '');
+            let jodiChartFinalDataArray = [...rows];
+            let jodiWeekFound = false;
+
+            for (let i = 0; i < jodiChartFinalDataArray.length; i++) {
+                const row = jodiChartFinalDataArray[i];
+                const match = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
+                if (match) {
+                    const startDate = parseDateString(match[1]);
+                    const endDate = parseDateString(match[2]);
+                    if (startDate && endDate) {
+                        endDate.setUTCHours(23, 59, 59, 999);
+                        if (resultDateStartOfDay >= startDate && resultDateStartOfDay <= endDate) {
+                            jodiWeekFound = true;
+                            const dataPart = row.substring(match[0].length).trim();
+                            const dailyBlocks = dataPart.split(/\s+/).filter(String);
+                            
+                            while(dailyBlocks.length < 7) { dailyBlocks.push('**'); }
+                            dailyBlocks[dayIndex] = finalJodi;
+                            
+                            jodiChartFinalDataArray[i] = `${match[0]} ${dailyBlocks.join(' ')}`;
+                            break;
+                        }
+                    }
+                }
+            }
+
+             if (!jodiWeekFound) {
+                const dayOfWeekForNewWeek = (resultDateStartOfDay.getUTCDay() + 6) % 7;
+                const startOfWeek = new Date(resultDateStartOfDay);
+                startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayOfWeekForNewWeek);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
+                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+                const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
+                
+                const newWeekDataArr = Array(7).fill('**');
+                newWeekDataArr[dayIndex] = finalJodi;
+                jodiChartFinalDataArray.push(`${newDateRange} ${newWeekDataArr.join(' ')}`);
+            }
+            batch.update(jodiChartRef, { data: jodiChartFinalDataArray.join('\n') });
+        }
         
+        // --- PANEL CHART UPDATE LOGIC ---
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
 
@@ -155,16 +204,12 @@ export default function UpdateResultsClosePage() {
             const panelChartDataString = panelChartSnap.data()?.data || '';
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
             
-            const dayIndex = (resultDate.getUTCDay() + 6) % 7; // Monday=0, Sunday=6
-            
             const rows = panelChartDataString.split('\n').filter((row: string) => row.trim() !== '');
-            let finalDataArray = [...rows];
-            let weekFound = false;
-            
-            const resultDateStartOfDay = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
+            let panelChartFinalDataArray = [...rows];
+            let panelWeekFound = false;
 
-            for (let i = 0; i < finalDataArray.length; i++) {
-                const row = finalDataArray[i];
+            for (let i = 0; i < panelChartFinalDataArray.length; i++) {
+                const row = panelChartFinalDataArray[i];
                 const match = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
                 if (match) {
                     const startDate = parseDateString(match[1]);
@@ -172,7 +217,7 @@ export default function UpdateResultsClosePage() {
                     if (startDate && endDate) {
                         endDate.setUTCHours(23, 59, 59, 999); 
                          if (resultDateStartOfDay >= startDate && resultDateStartOfDay <= endDate) {
-                            weekFound = true;
+                            panelWeekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
                             const dailyBlocks = dataPart.split(/\s+/).filter(String);
                             
@@ -180,15 +225,15 @@ export default function UpdateResultsClosePage() {
                             dailyBlocks[dayIndex] = newDayData;
                             
                             const updatedDataPart = dailyBlocks.join(' ');
-                            finalDataArray[i] = `${match[0]} ${updatedDataPart}`;
+                            panelChartFinalDataArray[i] = `${match[0]} ${updatedDataPart}`;
                             break;
                         }
                     }
                 }
             }
             
-            if (!weekFound) {
-                const dayOfWeekForNewWeek = (resultDate.getUTCDay() + 6) % 7;
+            if (!panelWeekFound) {
+                const dayOfWeekForNewWeek = (resultDateStartOfDay.getUTCDay() + 6) % 7;
                 
                 const startOfWeek = new Date(resultDateStartOfDay);
                 startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayOfWeekForNewWeek);
@@ -204,10 +249,10 @@ export default function UpdateResultsClosePage() {
                 const newWeekData = newWeekDataArr.join(' ');
                 
                 const newRow = `${newDateRange} ${newWeekData}`;
-                finalDataArray.push(newRow);
+                panelChartFinalDataArray.push(newRow);
             }
 
-            batch.update(panelChartRef, { data: finalDataArray.join('\n') });
+            batch.update(panelChartRef, { data: panelChartFinalDataArray.join('\n') });
         }
 
 
