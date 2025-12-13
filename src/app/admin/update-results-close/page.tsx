@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -47,11 +48,11 @@ const calculateJodiDigit = (pana: string): string => {
 
 const parseDateString = (dateStr: string): Date | null => {
     if (!dateStr || typeof dateStr !== 'string') return null;
-    const parts = dateStr.trim().split('/');
-    if (parts.length !== 3) return null;
+    // Use regex to handle "dd/mm/yyyy" and "d/m/yyyy" formats
+    const match = dateStr.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!match) return null;
     
-    const [day, month, year] = parts.map(Number);
-    if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
+    const [_, day, month, year] = match.map(Number);
     
     // Create date in UTC to avoid timezone issues. month is 0-indexed.
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
@@ -152,7 +153,7 @@ export default function UpdateResultsClosePage() {
 
             for (let i = 0; i < jodiChartFinalDataArray.length; i++) {
                 const row = jodiChartFinalDataArray[i];
-                const match = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
+                const match = row.match(/(\d{1,2}\/\d{1,2}\/\d{4})\s*to\s*(\d{1,2}\/\d{1,2}\/\d{4})/);
                 if (match) {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
@@ -201,7 +202,7 @@ export default function UpdateResultsClosePage() {
 
             for (let i = 0; i < panelChartFinalDataArray.length; i++) {
                 const row = panelChartFinalDataArray[i];
-                const match = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
+                const match = row.match(/(\d{1,2}\/\d{1,2}\/\d{4})\s*to\s*(\d{1,2}\/\d{1,2}\/\d{4})/);
                 if (match) {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);

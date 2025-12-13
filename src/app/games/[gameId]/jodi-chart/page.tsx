@@ -89,9 +89,8 @@ export default function JodiChartPage() {
     const numberOfDays = activeDays.length;
 
     const parsedData = chartData?.data
-        .split(/\s+/) // Split by any whitespace
-        .filter(d => d && !d.includes('/') && d.toLowerCase() !== 'to') // Remove empty strings, dates, and 'to'
-        .map(item => item.split('_')[0]) || [];
+        .split(/[\s\n]+/) // Split by any whitespace or new lines
+        .filter(d => d && /^\d{2}$/.test(d.trim())) || []; // Keep only valid 2-digit numbers
     
     if (loading) {
         return (
