@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -88,14 +87,12 @@ export default function JodiChartPage() {
     const activeDays = chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
     const numberOfDays = activeDays.length;
 
-    const parsedData = chartData?.data
-        .split(/[\s\n]+/) // Split by any whitespace or new lines
-        .filter(d => d && /^\d{2}$/.test(d.trim())) || []; // Keep only valid 2-digit numbers
+    const parsedData = chartData?.data.split(/\s+/).filter(d => d) || [];
     
     if (loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
-                <Loader className="h-20 w-20 text-primary" />
+                <Loader className="h-10 w-10 text-primary" />
             </div>
         );
     }
