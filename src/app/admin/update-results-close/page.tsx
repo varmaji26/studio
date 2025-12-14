@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -48,16 +47,13 @@ const calculateJodiDigit = (pana: string): string => {
 
 const parseDateString = (dateStr: string): Date | null => {
     if (!dateStr || typeof dateStr !== 'string') return null;
-    // Use regex to handle "dd/mm/yyyy" and "d/m/yyyy" formats
     const match = dateStr.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (!match) return null;
     
     const [_, day, month, year] = match.map(Number);
     
-    // Create date in UTC to avoid timezone issues. month is 0-indexed.
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
-    // Validate the date to prevent issues like `new Date(2025, 1, 30)` becoming March 1st
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
         return date;
     }
