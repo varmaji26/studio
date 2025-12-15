@@ -55,8 +55,10 @@ const parseDateString = (dateStr: string): Date | null => {
     
     const [_, day, month, year] = match.map(Number);
     
+    // Create date in UTC to avoid timezone issues.
     const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     
+    // Validate if the created date is correct (handles invalid dates like 31/02/2025)
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
         return date;
     }
@@ -129,19 +131,20 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
+        // --- New Robust Date Calculation Logic ---
         const now = new Date();
         const [openHours] = (game.openTime || "00:00").split(':').map(Number);
         const [closeHours] = (game.closeTime || "00:00").split(':').map(Number);
         
         let resultDate = new Date();
+        // If close time is on the next day (e.g., open 9PM, close 1AM) and current time is before open time,
+        // it means the result is for the *previous* day.
         if (closeHours < openHours && now.getHours() < openHours) { 
              resultDate.setDate(now.getDate() - 1);
         }
         
-        const resultDateUTC = new Date(Date.UTC(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate()));
-        
+        const resultDayName = allDaysOfWeek[resultDate.getUTCDay() === 0 ? 6 : resultDate.getUTCDay() - 1];
         const activeDays = game.activeDays || allDaysOfWeek;
-        const resultDayName = allDaysOfWeek[(resultDateUTC.getUTCDay() + 6) % 7];
         const dayIndexInActiveList = activeDays.indexOf(resultDayName);
 
 
@@ -159,6 +162,9 @@ export default function UpdateResultsClosePage() {
                 if (match) {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
+
+                    const resultDateUTC = new Date(Date.UTC(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate()));
+
                     if (startDate && endDate) {
                          if (resultDateUTC >= startDate && resultDateUTC <= endDate) {
                             jodiWeekFound = true;
@@ -177,19 +183,18 @@ export default function UpdateResultsClosePage() {
                 }
             }
 
-             if (!jodiWeekFound) {
-                const dayOfWeekForNewWeek = (resultDateUTC.getUTCDay() + 6) % 7;
-                const startOfWeek = new Date(resultDateUTC);
-                startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayOfWeekForNewWeek);
+             if (!jodiWeekFound && dayIndexInActiveList !== -1) {
+                const dayOfWeekForNewWeek = resultDate.getDay() === 0 ? 6 : resultDate.getDay() - 1; // Monday is 0, Sunday is 6
+                const startOfWeek = new Date(resultDate);
+                startOfWeek.setDate(startOfWeek.getDate() - dayOfWeekForNewWeek);
                 const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
-                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
                 
                 const newWeekDataArr = Array(activeDays.length).fill('**');
-                if (dayIndexInActiveList !== -1) {
-                    newWeekDataArr[dayIndexInActiveList] = finalJodi;
-                }
+                newWeekDataArr[dayIndexInActiveList] = finalJodi;
+                
                 jodiChartFinalDataArray.push(`${newDateRange} ${newWeekDataArr.join(' ')}`);
             }
             batch.update(jodiChartRef, { data: jodiChartFinalDataArray.join('\n') });
@@ -198,7 +203,7 @@ export default function UpdateResultsClosePage() {
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
 
-        if (panelChartSnap.exists()) {
+        if (panelChartSnap.exists() && dayIndexInActiveList !== -1) {
             const panelChartDataString = panelChartSnap.data()?.data || '';
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
             
@@ -212,16 +217,20 @@ export default function UpdateResultsClosePage() {
                 if (match) {
                     const startDate = parseDateString(match[1]);
                     const endDate = parseDateString(match[2]);
+                    const resultDateUTC = new Date(Date.UTC(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate()));
+
                     if (startDate && endDate) {
                          if (resultDateUTC >= startDate && resultDateUTC <= endDate) {
                             panelWeekFound = true;
                             const dataPart = row.substring(match[0].length).trim();
                             const dailyBlocks = dataPart.split(/\s+/).filter(String);
                             
-                            while(dailyBlocks.length < activeDays.length) { dailyBlocks.push('********'); }
-                            if (dayIndexInActiveList !== -1) {
-                                dailyBlocks[dayIndexInActiveList] = newDayData;
-                            }
+                            while(dailyBlocks.length < activeDays.length * 2) { dailyBlocks.push('********'); }
+                            
+                            // Each day has 2 blocks. The index for the day is `dayIndexInActiveList`.
+                            const dayStartIndex = dayIndexInActiveList * 2;
+                            dailyBlocks[dayStartIndex] = openPana;
+                            dailyBlocks[dayStartIndex+1] = closePana;
                             
                             const updatedDataPart = dailyBlocks.join(' ');
                             panelChartFinalDataArray[i] = `${match[0]} ${updatedDataPart}`;
@@ -232,21 +241,22 @@ export default function UpdateResultsClosePage() {
             }
             
             if (!panelWeekFound) {
-                const dayOfWeekForNewWeek = (resultDateUTC.getUTCDay() + 6) % 7;
+                const dayOfWeekForNewWeek = resultDate.getDay() === 0 ? 6 : resultDate.getDay() - 1; // Monday is 0, Sunday is 6
                 
-                const startOfWeek = new Date(resultDateUTC);
-                startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayOfWeekForNewWeek);
+                const startOfWeek = new Date(resultDate);
+                startOfWeek.setDate(startOfWeek.getDate() - dayOfWeekForNewWeek);
                 
                 const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
                 
-                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
                 
-                const newWeekDataArr = Array(activeDays.length).fill('********');
-                if(dayIndexInActiveList !== -1) {
-                    newWeekDataArr[dayIndexInActiveList] = newDayData;
-                }
+                const newWeekDataArr = Array(activeDays.length * 2).fill('********');
+                const dayStartIndex = dayIndexInActiveList * 2;
+                newWeekDataArr[dayStartIndex] = openPana;
+                newWeekDataArr[dayStartIndex+1] = closePana;
+
                 const newWeekData = newWeekDataArr.join(' ');
                 
                 const newRow = `${newDateRange} ${newWeekData}`;
@@ -492,7 +502,7 @@ export default function UpdateResultsClosePage() {
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Are you sure you want to revert the close result?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        This action will find all winning bets for this game's close and jodi sessions, deduct the winnings from users' wallets, and reset the bet status to 'running'. This cannot be undone.
+                                        This action will find all winning bids for this game's close and jodi sessions, deduct the winnings from users' wallets, and reset the bet status to 'running'. This cannot be undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

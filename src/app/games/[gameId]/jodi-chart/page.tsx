@@ -89,8 +89,8 @@ export default function JodiChartPage() {
 
     // This improved parsing logic will only extract valid Jodi numbers or placeholders.
     const parsedData = chartData?.data
-        .split(/\s+/) // Split by any whitespace
-        .filter(d => /^\d{2}$/.test(d) || d === '**' || d === '*') // Keep only 2-digit numbers or placeholders
+        .split('\n') // Split into rows first
+        .flatMap(row => row.split(/\s+/).filter(d => /^\d{2}$/.test(d) || d === '**' || d === '*'))
         || [];
     
     if (loading) {
