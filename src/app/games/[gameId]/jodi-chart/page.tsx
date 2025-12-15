@@ -87,11 +87,9 @@ export default function JodiChartPage() {
     const activeDays = chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
     const numberOfDays = activeDays.length;
 
-    // This improved parsing logic will only extract valid Jodi numbers or placeholders.
-    const parsedData = chartData?.data
-        .split('\n') // Split into rows first
-        .flatMap(row => row.split(/\s+/).filter(d => /^\d{2}$/.test(d) || d === '**' || d === '*'))
-        || [];
+    // This is the new, robust parsing logic.
+    // It specifically looks for 2-digit numbers or "**" or "*" and ignores everything else.
+    const parsedData = chartData?.data.match(/(\d{2}|\*\*|\*)/g) || [];
     
     if (loading) {
         return (
