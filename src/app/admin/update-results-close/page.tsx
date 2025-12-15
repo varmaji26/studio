@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -230,7 +231,7 @@ export default function UpdateResultsClosePage() {
                             // Each day has 2 blocks. The index for the day is `dayIndexInActiveList`.
                             const dayStartIndex = dayIndexInActiveList * 2;
                             dailyBlocks[dayStartIndex] = openPana;
-                            dailyBlocks[dayStartIndex+1] = closePana;
+                            dailyBlocks[dayStartIndex+1] = newClosePana;
                             
                             const updatedDataPart = dailyBlocks.join(' ');
                             panelChartFinalDataArray[i] = `${match[0]} ${updatedDataPart}`;
@@ -255,7 +256,7 @@ export default function UpdateResultsClosePage() {
                 const newWeekDataArr = Array(activeDays.length * 2).fill('********');
                 const dayStartIndex = dayIndexInActiveList * 2;
                 newWeekDataArr[dayStartIndex] = openPana;
-                newWeekDataArr[dayStartIndex+1] = closePana;
+                newWeekDataArr[dayStartIndex+1] = newClosePana;
 
                 const newWeekData = newWeekDataArr.join(' ');
                 
