@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -132,142 +131,41 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
-        // --- New Robust Date Calculation Logic ---
-        const now = new Date();
-        const [openHours] = (game.openTime || "00:00").split(':').map(Number);
-        const [closeHours] = (game.closeTime || "00:00").split(':').map(Number);
-        
-        let resultDate = new Date();
-        // If close time is on the next day (e.g., open 9PM, close 1AM) and current time is before open time,
-        // it means the result is for the *previous* day.
-        if (closeHours < openHours && now.getHours() < openHours) { 
-             resultDate.setDate(now.getDate() - 1);
-        }
-        
-        const resultDayName = allDaysOfWeek[resultDate.getUTCDay() === 0 ? 6 : resultDate.getUTCDay() - 1];
-        const activeDays = game.activeDays || allDaysOfWeek;
-        const dayIndexInActiveList = activeDays.indexOf(resultDayName);
-
-
+        // --- Simplified Jodi Chart Update Logic ---
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
         const jodiChartSnap = await getDoc(jodiChartRef);
         if (jodiChartSnap.exists()) {
-            const jodiChartDataString = jodiChartSnap.data()?.data || '';
-            const rows = jodiChartDataString.split('\n').filter((row: string) => row.trim() !== '');
-            let jodiChartFinalDataArray = [...rows];
-            let jodiWeekFound = false;
+            const chartData = jodiChartSnap.data();
+            const activeDays = chartData.activeDays || allDaysOfWeek;
+            
+            const today = new Date();
+            const dayOfWeek = allDaysOfWeek[(today.getDay() + 6) % 7]; // Monday is 0, Sunday is 6
+            const dayIndex = activeDays.indexOf(dayOfWeek);
 
-            for (let i = 0; i < jodiChartFinalDataArray.length; i++) {
-                const row = jodiChartFinalDataArray[i];
-                const match = row.match(/(\d{1,2}\/\d{1,2}\/\d{4})\s*to\s*(\d{1,2}\/\d{1,2}\/\d{4})/);
-                if (match) {
-                    const startDate = parseDateString(match[1]);
-                    const endDate = parseDateString(match[2]);
+            if (dayIndex !== -1) {
+                let dataArray = chartData.data ? chartData.data.split(/\s+/) : [];
+                
+                // Find the last non-empty row to update
+                let lastRowStartIndex = Math.floor((dataArray.length -1) / activeDays.length) * activeDays.length;
+                
+                // Ensure the array is long enough
+                while (dataArray.length < lastRowStartIndex + dayIndex + 1) {
+                    dataArray.push('**');
+                }
 
-                    const resultDateUTC = new Date(Date.UTC(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate()));
-
-                    if (startDate && endDate) {
-                         if (resultDateUTC >= startDate && resultDateUTC <= endDate) {
-                            jodiWeekFound = true;
-                            const dataPart = row.substring(match[0].length).trim();
-                            const dailyBlocks = dataPart.split(/\s+/).filter(String);
-                            
-                            while(dailyBlocks.length < activeDays.length) { dailyBlocks.push('**'); }
-                            if (dayIndexInActiveList !== -1) {
-                                dailyBlocks[dayIndexInActiveList] = finalJodi;
-                            }
-                            
-                            jodiChartFinalDataArray[i] = `${match[0]} ${dailyBlocks.join(' ')}`;
-                            break;
-                        }
+                dataArray[lastRowStartIndex + dayIndex] = finalJodi;
+                
+                // If it's the last day of the active week, add a new row of placeholders
+                if (dayIndex === activeDays.length - 1) {
+                    for(let i=0; i<activeDays.length; i++) {
+                        dataArray.push('**');
                     }
                 }
-            }
 
-             if (!jodiWeekFound && dayIndexInActiveList !== -1) {
-                const dayOfWeekForNewWeek = resultDate.getDay() === 0 ? 6 : resultDate.getDay() - 1; // Monday is 0, Sunday is 6
-                const startOfWeek = new Date(resultDate);
-                startOfWeek.setDate(startOfWeek.getDate() - dayOfWeekForNewWeek);
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
-                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
-                
-                const newWeekDataArr = Array(activeDays.length).fill('**');
-                newWeekDataArr[dayIndexInActiveList] = finalJodi;
-                
-                jodiChartFinalDataArray.push(`${newDateRange} ${newWeekDataArr.join(' ')}`);
+                batch.update(jodiChartRef, { data: dataArray.join(' ') });
             }
-            batch.update(jodiChartRef, { data: jodiChartFinalDataArray.join('\n') });
         }
         
-        const panelChartRef = doc(db, 'panelCharts', game.id);
-        const panelChartSnap = await getDoc(panelChartRef);
-
-        if (panelChartSnap.exists() && dayIndexInActiveList !== -1) {
-            const panelChartDataString = panelChartSnap.data()?.data || '';
-            const newDayData = `${openPana}${finalJodi}${newClosePana}`;
-            
-            const rows = panelChartDataString.split('\n').filter((row: string) => row.trim() !== '');
-            let panelChartFinalDataArray = [...rows];
-            let panelWeekFound = false;
-
-            for (let i = 0; i < panelChartFinalDataArray.length; i++) {
-                const row = panelChartFinalDataArray[i];
-                const match = row.match(/(\d{1,2}\/\d{1,2}\/\d{4})\s*to\s*(\d{1,2}\/\d{1,2}\/\d{4})/);
-                if (match) {
-                    const startDate = parseDateString(match[1]);
-                    const endDate = parseDateString(match[2]);
-                    const resultDateUTC = new Date(Date.UTC(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate()));
-
-                    if (startDate && endDate) {
-                         if (resultDateUTC >= startDate && resultDateUTC <= endDate) {
-                            panelWeekFound = true;
-                            const dataPart = row.substring(match[0].length).trim();
-                            const dailyBlocks = dataPart.split(/\s+/).filter(String);
-                            
-                            while(dailyBlocks.length < activeDays.length * 2) { dailyBlocks.push('********'); }
-                            
-                            // Each day has 2 blocks. The index for the day is `dayIndexInActiveList`.
-                            const dayStartIndex = dayIndexInActiveList * 2;
-                            dailyBlocks[dayStartIndex] = openPana;
-                            dailyBlocks[dayStartIndex+1] = newClosePana;
-                            
-                            const updatedDataPart = dailyBlocks.join(' ');
-                            panelChartFinalDataArray[i] = `${match[0]} ${updatedDataPart}`;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if (!panelWeekFound) {
-                const dayOfWeekForNewWeek = resultDate.getDay() === 0 ? 6 : resultDate.getDay() - 1; // Monday is 0, Sunday is 6
-                
-                const startOfWeek = new Date(resultDate);
-                startOfWeek.setDate(startOfWeek.getDate() - dayOfWeekForNewWeek);
-                
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
-                
-                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
-                
-                const newWeekDataArr = Array(activeDays.length * 2).fill('********');
-                const dayStartIndex = dayIndexInActiveList * 2;
-                newWeekDataArr[dayStartIndex] = openPana;
-                newWeekDataArr[dayStartIndex+1] = newClosePana;
-
-                const newWeekData = newWeekDataArr.join(' ');
-                
-                const newRow = `${newDateRange} ${newWeekData}`;
-                panelChartFinalDataArray.push(newRow);
-            }
-
-            batch.update(panelChartRef, { data: panelChartFinalDataArray.join('\n') });
-        }
-
-
         const bidsQuery = query(collection(db, 'bids'), where('gameId', '==', game.id), where('status', '==', 'running'));
         const bidsSnapshot = await getDocs(bidsQuery);
         let winnersFound = 0;

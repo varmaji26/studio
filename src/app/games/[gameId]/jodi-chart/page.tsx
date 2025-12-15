@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -23,19 +23,18 @@ const isRedNumber = (num: string) => {
     const digits = num.split('');
     if (digits.some(d => isNaN(parseInt(d, 10)))) return false;
     const [first, second] = [parseInt(digits[0], 10), parseInt(digits[1], 10)];
-    const diff = Math.abs(first - second);
-    return diff === 5 || first === second;
+    return first === second || Math.abs(first - second) === 5;
 };
 
 const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const dayAbbreviations: { [key: string]: string } = {
     Monday: 'Mo',
-    Tuesday: 'Tue',
-    Wednesday: 'Wed',
-    Thursday: 'Thu',
-    Friday: 'Fri',
-    Saturday: 'Sat',
-    Sunday: 'Sun',
+    Tuesday: 'Tu',
+    Wednesday: 'We',
+    Thursday: 'Th',
+    Friday: 'Fr',
+    Saturday: 'Sa',
+    Sunday: 'Su',
 };
 
 export default function JodiChartPage() {
@@ -57,7 +56,6 @@ export default function JodiChartPage() {
                 if (chartDoc.exists()) {
                     setChartData({ id: chartDoc.id, ...chartDoc.data() } as JodiChartData);
                 } else {
-                     // If no specific jodi chart, check the game for active days as a fallback
                     const gameDocRef = doc(db, 'games', gameId);
                     const gameDoc = await getDoc(gameDocRef);
                     if (gameDoc.exists()) {
@@ -66,14 +64,13 @@ export default function JodiChartPage() {
                             id: gameId,
                             gameName: gameData.name || 'Game',
                             title: `Jodi Chart for ${gameData.name}`,
-                            data: '', // No data available
+                            data: '', 
                             activeDays: gameData.activeDays || allDays
                         });
                     } else {
                         setChartData(null);
                     }
                 }
-
             } catch (error) {
                 console.error("Error fetching Jodi chart data:", error);
             } finally {
@@ -84,12 +81,20 @@ export default function JodiChartPage() {
         fetchChartAndGameData();
     }, [gameId]);
 
-    const activeDays = chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
-    const numberOfDays = activeDays.length;
+    const activeDays = useMemo(() => chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays, [chartData]);
+    
+    const parsedData = useMemo(() => {
+        if (!chartData?.data) return [];
+        return chartData.data.trim().split(/\s+/);
+    }, [chartData]);
 
-    // This is the new, robust parsing logic.
-    // It specifically looks for 2-digit numbers or "**" or "*" and ignores everything else.
-    const parsedData = chartData?.data.match(/(\d{2}|\*\*|\*)/g) || [];
+    const rows = useMemo(() => {
+        const rowData = [];
+        for (let i = 0; i < parsedData.length; i += activeDays.length) {
+            rowData.push(parsedData.slice(i, i + activeDays.length));
+        }
+        return rowData;
+    }, [parsedData, activeDays]);
     
     if (loading) {
         return (
@@ -120,27 +125,29 @@ export default function JodiChartPage() {
                                 </Link>
                             </Button>
                         </div>
-                        {chartData && chartData.data ? (
+                        {chartData && parsedData.length > 0 ? (
                             <div className="overflow-x-auto border-2 border-primary bg-orange-100 p-1">
-                                <div 
-                                    className="grid text-center font-bold text-white bg-blue-800"
-                                    style={{ gridTemplateColumns: `repeat(${numberOfDays}, minmax(0, 1fr))` }}
-                                >
-                                    {activeDays.map(day => (
-                                        <div key={day} className="p-2 border-b-2 border-primary">{dayAbbreviations[day]}</div>
-                                    ))}
-                                </div>
-                                <div 
-                                    className="grid text-center"
-                                    style={{ gridTemplateColumns: `repeat(${numberOfDays}, minmax(0, 1fr))` }}
-                                >
-                                    {parsedData.map((num, index) => (
-                                        <div key={index} 
-                                             className={`p-2 border border-gray-300 font-bold ${isRedNumber(num) ? 'text-red-600' : 'text-black'}`}>
-                                            {num}
-                                        </div>
-                                    ))}
-                                </div>
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-blue-800 text-white font-bold text-sm">
+                                            {activeDays.map(day => (
+                                                <th key={day} className="p-2 border border-gray-300">{dayAbbreviations[day]}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {rows.map((row, rowIndex) => (
+                                            <tr key={rowIndex} className="text-center">
+                                                {row.map((num, cellIndex) => (
+                                                    <td key={cellIndex} 
+                                                        className={`p-2 border border-gray-300 font-bold ${isRedNumber(num) ? 'text-red-600' : 'text-black'}`}>
+                                                        {num}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         ) : (
                              <p className="text-center text-muted-foreground mt-8 py-10">
