@@ -30,6 +30,7 @@ interface Game extends DocumentData {
     result: string;
     openTime: string;
     closeTime: string;
+    activeDays?: string[];
 }
 
 const WIN_RATES = {
@@ -44,6 +45,8 @@ const calculateJodiDigit = (pana: string): string => {
     if (!pana || pana.length !== 3 || !/^\d+$/.test(pana) || pana.includes('*')) return '';
     return (pana.split('').reduce((acc, digit) => acc + parseInt(digit, 10), 0) % 10).toString();
 };
+
+const allDaysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 const parseDateString = (dateStr: string): Date | null => {
     if (!dateStr || typeof dateStr !== 'string') return null;
@@ -136,7 +139,10 @@ export default function UpdateResultsClosePage() {
         }
         
         const resultDateUTC = new Date(Date.UTC(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate()));
-        const dayIndex = (resultDateUTC.getUTCDay() + 6) % 7; 
+        
+        const activeDays = game.activeDays || allDaysOfWeek;
+        const resultDayName = allDaysOfWeek[(resultDateUTC.getUTCDay() + 6) % 7];
+        const dayIndexInActiveList = activeDays.indexOf(resultDayName);
 
 
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
@@ -159,8 +165,10 @@ export default function UpdateResultsClosePage() {
                             const dataPart = row.substring(match[0].length).trim();
                             const dailyBlocks = dataPart.split(/\s+/).filter(String);
                             
-                            while(dailyBlocks.length < 7) { dailyBlocks.push('**'); }
-                            dailyBlocks[dayIndex] = finalJodi;
+                            while(dailyBlocks.length < activeDays.length) { dailyBlocks.push('**'); }
+                            if (dayIndexInActiveList !== -1) {
+                                dailyBlocks[dayIndexInActiveList] = finalJodi;
+                            }
                             
                             jodiChartFinalDataArray[i] = `${match[0]} ${dailyBlocks.join(' ')}`;
                             break;
@@ -178,8 +186,10 @@ export default function UpdateResultsClosePage() {
                 const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
                 const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
                 
-                const newWeekDataArr = Array(7).fill('**');
-                newWeekDataArr[dayIndex] = finalJodi;
+                const newWeekDataArr = Array(activeDays.length).fill('**');
+                if (dayIndexInActiveList !== -1) {
+                    newWeekDataArr[dayIndexInActiveList] = finalJodi;
+                }
                 jodiChartFinalDataArray.push(`${newDateRange} ${newWeekDataArr.join(' ')}`);
             }
             batch.update(jodiChartRef, { data: jodiChartFinalDataArray.join('\n') });
@@ -208,8 +218,10 @@ export default function UpdateResultsClosePage() {
                             const dataPart = row.substring(match[0].length).trim();
                             const dailyBlocks = dataPart.split(/\s+/).filter(String);
                             
-                            while(dailyBlocks.length < 7) { dailyBlocks.push('********'); }
-                            dailyBlocks[dayIndex] = newDayData;
+                            while(dailyBlocks.length < activeDays.length) { dailyBlocks.push('********'); }
+                            if (dayIndexInActiveList !== -1) {
+                                dailyBlocks[dayIndexInActiveList] = newDayData;
+                            }
                             
                             const updatedDataPart = dailyBlocks.join(' ');
                             panelChartFinalDataArray[i] = `${match[0]} ${updatedDataPart}`;
@@ -231,8 +243,10 @@ export default function UpdateResultsClosePage() {
                 const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
                 const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
                 
-                const newWeekDataArr = Array(7).fill('********');
-                newWeekDataArr[dayIndex] = newDayData;
+                const newWeekDataArr = Array(activeDays.length).fill('********');
+                if(dayIndexInActiveList !== -1) {
+                    newWeekDataArr[dayIndexInActiveList] = newDayData;
+                }
                 const newWeekData = newWeekDataArr.join(' ');
                 
                 const newRow = `${newDateRange} ${newWeekData}`;
