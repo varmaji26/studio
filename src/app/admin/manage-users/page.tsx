@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -50,13 +49,17 @@ interface User extends DocumentData {
 const ITEMS_PER_PAGE = 10;
 
 export default function ManageUsersPage() {
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const searchParams = useSearchParams();
+
+  const [firstVisible, setFirstVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [totalUsersCount, setTotalUsersCount] = useState(0);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -65,16 +68,32 @@ export default function ManageUsersPage() {
     }
   }, [searchParams]);
 
-   useEffect(() => {
+   const fetchUsers = useCallback((pageDirection?: 'next' | 'prev') => {
     setUsersLoading(true);
-    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+    let q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+
+    if (pageDirection === 'next' && lastVisible) {
+        q = query(q, startAfter(lastVisible));
+    } else if (pageDirection === 'prev' && firstVisible) {
+        q = query(q, endBefore(firstVisible), limitToLast(ITEMS_PER_PAGE));
+    }
+    
+    q = query(q, limit(ITEMS_PER_PAGE));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const usersData: User[] = [];
-        querySnapshot.forEach((doc) => {
-            usersData.push({ id: doc.id, ...doc.data() } as User);
-        });
-        setAllUsers(usersData);
+        const usersData: User[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(usersData);
+        
+        if (querySnapshot.docs.length > 0) {
+            setFirstVisible(querySnapshot.docs[0]);
+            setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+        }
+
+        if(currentPage === 1){
+            const countQuery = query(collection(db, "users"));
+            getDocs(countQuery).then(snap => setTotalUsersCount(snap.size));
+        }
+
         setUsersLoading(false);
     }, (error) => {
         console.error("Error fetching users: ", error);
@@ -87,10 +106,15 @@ export default function ManageUsersPage() {
     });
 
     return () => unsubscribe();
-   }, [toast]);
+   }, [lastVisible, firstVisible, currentPage, toast]);
+
+   useEffect(() => {
+        const unsubscribe = fetchUsers();
+        return () => unsubscribe();
+   }, [fetchUsers])
   
   const filteredUsers = useMemo(() => {
-    let source = allUsers;
+    let source = users;
     let filtered = source;
 
     if (selectedDate) {
@@ -117,17 +141,9 @@ export default function ManageUsersPage() {
     }
 
     return filtered;
-  }, [searchTerm, allUsers, selectedDate]);
+  }, [searchTerm, users, selectedDate]);
   
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredUsers, currentPage]);
-
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, selectedDate]);
+  const totalPages = Math.ceil(totalUsersCount / ITEMS_PER_PAGE);
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
     if (!timestamp || typeof timestamp.seconds !== 'number') return 'N/A';
@@ -249,7 +265,10 @@ export default function ManageUsersPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => {
+                        setCurrentPage(p => Math.max(1, p - 1));
+                        fetchUsers('prev');
+                    }}
                     disabled={currentPage === 1}
                 >
                     Previous
@@ -257,7 +276,10 @@ export default function ManageUsersPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => {
+                        setCurrentPage(p => p + 1);
+                        fetchUsers('next');
+                    }}
                     disabled={currentPage === totalPages}
                 >
                     Next
@@ -340,7 +362,7 @@ export default function ManageUsersPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedUsers.map((user, index) => (
+                            {filteredUsers.map((user, index) => (
                                 <TableRow key={user.id}>
                                     <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
                                     <TableCell>{user.displayName}</TableCell>
@@ -390,7 +412,7 @@ export default function ManageUsersPage() {
                 {renderPagination()}
                 </>
             )}
-            {paginatedUsers.length === 0 && !usersLoading && (
+            {filteredUsers.length === 0 && !usersLoading && (
                 <p className="text-center text-muted-foreground mt-4">
                   {searchTerm || selectedDate ? `No users found matching the criteria.` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
                 </p>

@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, limit, startAfter, endBefore, limitToLast, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -47,7 +46,7 @@ declare module 'jspdf' {
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminBidHistoryPage() {
-  const [allBids, setAllBids] = useState<Bid[]>([]);
+  const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -55,28 +54,60 @@ export default function AdminBidHistoryPage() {
   const { toast } = useToast();
   
   const [currentPage, setCurrentPage] = useState(1);
+  const [firstVisible, setFirstVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [totalBidsCount, setTotalBidsCount] = useState(0);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
         localStorage.setItem('lastViewedBidsTimestamp', Date.now().toString());
     }
   }, [searchParams]);
-  
-  const fetchBids = useCallback(() => {
+
+  const fetchBids = useCallback((pageDirection?: 'next' | 'prev') => {
     setLoading(true);
-    const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+
+    let q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
     
+    if (pageDirection === 'next' && lastVisible) {
+        q = query(q, startAfter(lastVisible));
+    } else if (pageDirection === 'prev' && firstVisible) {
+        q = query(collection(db, "bids"), orderBy("createdAt", "asc"), startAfter(firstVisible), limit(ITEMS_PER_PAGE));
+        // For 'prev', we reverse order, get previous docs, then reverse back
+    }
+    
+    q = query(q, limit(ITEMS_PER_PAGE));
+
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
-        setAllBids(bidsData);
+        
+        if (pageDirection === 'prev') {
+            bidsData.reverse(); // reverse back to descending order
+        }
+
+        setBids(bidsData);
+        
+        if (querySnapshot.docs.length > 0) {
+            setFirstVisible(querySnapshot.docs[0]);
+            setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+        }
+        
+        // This is a simplified count, for a full count we might need a separate query
+        // For now, we use this to estimate total pages, but a better approach might be needed
+        if (currentPage === 1) {
+            const countQuery = query(collection(db, "bids"));
+            getDocs(countQuery).then(snap => setTotalBidsCount(snap.size));
+        }
+        
         setLoading(false);
     }, (error) => {
         console.error("Error fetching bids: ", error);
         setLoading(false);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch bid history.' });
     });
 
     return unsubscribe;
-  }, []);
+  }, [lastVisible, firstVisible, currentPage, toast]);
 
   useEffect(() => {
     const unsubscribe = fetchBids();
@@ -84,7 +115,7 @@ export default function AdminBidHistoryPage() {
   }, [fetchBids]);
 
   const filteredBids = useMemo(() => {
-    let filtered = allBids;
+    let filtered = bids;
     
     if (selectedDate) {
         const startOfDay = new Date(selectedDate);
@@ -111,20 +142,18 @@ export default function AdminBidHistoryPage() {
     }
     
     return filtered;
-  }, [searchTerm, allBids, selectedDate]);
+  }, [searchTerm, bids, selectedDate]);
   
   const totalBiddingAmount = useMemo(() => {
     return filteredBids.reduce((acc, bid) => acc + (bid.totalAmount || 0), 0);
   }, [filteredBids]);
 
-  const totalPages = Math.ceil(filteredBids.length / ITEMS_PER_PAGE);
-  const paginatedBids = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredBids.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredBids, currentPage]);
+  const totalPages = Math.ceil(totalBidsCount / ITEMS_PER_PAGE);
 
   useEffect(() => {
-      setCurrentPage(1);
+      // We are not resetting to page 1 on filter change because the logic is now based on DB query pagination
+      // For a full implementation, filtering should be done in the query itself.
+      // This is a client-side filter on top of paginated data.
   }, [searchTerm, selectedDate]);
 
 
@@ -138,13 +167,29 @@ export default function AdminBidHistoryPage() {
     const reportDate = selectedDate ? format(selectedDate, "PPP") : 'All Time';
     doc.text(`Bid History Report - ${reportDate}`, 14, 16);
     
-    // Use the already client-side filtered bids for the PDF
-    const bidsForPdf = filteredBids;
+    // For PDF, fetch all filtered bids, not just paginated
+    const allBidsQuery = query(collection(db, "bids"), orderBy("createdAt", "desc"));
+    const allBidsSnapshot = await getDocs(allBidsQuery);
+    const allBids = allBidsSnapshot.docs.map(d => d.data() as Bid);
 
+    let filteredForPdf = allBids;
+    if (selectedDate) {
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        filteredForPdf = filteredForPdf.filter(bid => {
+            if (!bid.createdAt?.seconds) return false;
+            const bidDate = new Date(bid.createdAt.seconds * 1000);
+            return bidDate >= startOfDay && bidDate <= endOfDay;
+        });
+    }
+    
     const tableColumn = ["Date", "Username", "Mobile", "Game", "Bet Details", "Amount (₹)", "Status"];
     const tableRows: (string | number)[][] = [];
 
-    bidsForPdf.forEach(bid => {
+    filteredForPdf.forEach(bid => {
         const bidRow = [
             formatDate(bid.createdAt),
             bid.displayName,
@@ -207,7 +252,7 @@ export default function AdminBidHistoryPage() {
   };
 
   const renderPagination = () => {
-    if(totalPages <= 1) return null;
+    if(totalPages <= 1 && currentPage === 1) return null;
 
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
@@ -216,7 +261,10 @@ export default function AdminBidHistoryPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => {
+                        setCurrentPage(p => Math.max(1, p - 1));
+                        fetchBids('prev');
+                    }}
                     disabled={currentPage === 1}
                 >
                     Previous
@@ -224,7 +272,10 @@ export default function AdminBidHistoryPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => {
+                        setCurrentPage(p => p + 1);
+                        fetchBids('next');
+                    }}
                     disabled={currentPage === totalPages}
                 >
                     Next
@@ -290,7 +341,7 @@ export default function AdminBidHistoryPage() {
             <Card className="bg-primary/10 border-primary/20 mb-4">
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                        <p className="text-lg font-semibold">Total Bidding Amount</p>
+                        <p className="text-lg font-semibold">Total Bidding Amount (Visible Page)</p>
                         <p className="text-2xl font-bold text-primary">
                             ₹{totalBiddingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
@@ -319,8 +370,8 @@ export default function AdminBidHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedBids.length > 0 ? (
-                                paginatedBids.map((bid) => (
+                            {filteredBids.length > 0 ? (
+                                filteredBids.map((bid) => (
                                 <TableRow key={bid.id}>
                                     <TableCell>{formatDate(bid.createdAt)}</TableCell>
                                     <TableCell>{bid.displayName}</TableCell>

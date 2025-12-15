@@ -1,8 +1,7 @@
-
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -47,16 +46,45 @@ export default function AdminWithdrawalHistoryPage() {
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
 
-  useEffect(() => {
+  const [firstVisible, setFirstVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [totalTransactionsCount, setTotalTransactionsCount] = useState(0);
+
+  const fetchTransactions = useCallback((pageDirection?: 'next' | 'prev') => {
     setLoading(true);
-    const q = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
+    let q = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
+    
+    if (pageDirection === 'next' && lastVisible) {
+        q = query(q, startAfter(lastVisible));
+    } else if (pageDirection === 'prev' && firstVisible) {
+        q = query(q, endBefore(firstVisible), limitToLast(ITEMS_PER_PAGE));
+    }
+    
+    q = query(q, limit(ITEMS_PER_PAGE));
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Transaction));
         setTransactions(data);
+
+        if (snapshot.docs.length > 0) {
+            setFirstVisible(snapshot.docs[0]);
+            setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+        }
+        
+        if (currentPage === 1) {
+            const countQuery = query(collection(db, "withdrawals"));
+            getDocs(countQuery).then(snap => setTotalTransactionsCount(snap.size));
+        }
+
         setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [lastVisible, firstVisible, currentPage]);
+
+  useEffect(() => {
+    const unsubscribe = fetchTransactions();
+    return () => unsubscribe();
+  }, [fetchTransactions]);
 
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
@@ -96,15 +124,7 @@ export default function AdminWithdrawalHistoryPage() {
     );
   }, [filteredTransactions]);
 
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, fromDate, toDate]);
-
-  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
-  const paginatedTransactions = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredTransactions, currentPage]);
+  const totalPages = Math.ceil(totalTransactionsCount / ITEMS_PER_PAGE);
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -122,14 +142,18 @@ export default function AdminWithdrawalHistoryPage() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const doc = new jsPDF();
     doc.text("Admin Withdrawal History", 14, 16);
+
+    const allQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(allQuery);
+    const allTransactions = snapshot.docs.map(d => d.data() as Transaction);
 
     const tableColumn = ["Date", "Username", "Mobile", "Amount (INR)", "Method", "Status"];
     const tableRows: (string | number)[][] = [];
     
-    filteredTransactions.forEach(t => {
+    allTransactions.forEach(t => {
         const transactionData = [
             formatDate(t.createdAt),
             t.displayName,
@@ -172,7 +196,7 @@ export default function AdminWithdrawalHistoryPage() {
                     <CardTitle className="text-3xl font-bold">Withdrawal History</CardTitle>
                     <CardDescription>View all withdrawal history for all users.</CardDescription>
                 </div>
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={paginatedTransactions.length === 0}>
+                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={transactions.length === 0}>
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                 </Button>
@@ -181,7 +205,7 @@ export default function AdminWithdrawalHistoryPage() {
           <CardContent>
              <Card className="mb-6">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
+                    <CardTitle className="text-sm font-medium">Total Withdrawals (Visible Page)</CardTitle>
                     <ArrowDownCircle className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
@@ -238,7 +262,7 @@ export default function AdminWithdrawalHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedTransactions.map((t) => (
+                            {filteredTransactions.map((t) => (
                                 <TableRow key={t.id}>
                                     <TableCell>{formatDate(t.createdAt)}</TableCell>
                                     <TableCell>{t.displayName}</TableCell>
@@ -261,7 +285,7 @@ export default function AdminWithdrawalHistoryPage() {
                             ))}
                         </TableBody>
                     </Table>
-                    {paginatedTransactions.length === 0 && !loading && (<p className="text-center text-muted-foreground mt-4">No transactions found.</p>)}
+                    {filteredTransactions.length === 0 && !loading && (<p className="text-center text-muted-foreground mt-4">No transactions found.</p>)}
                     {renderPagination()}
                 </div>
             )}
