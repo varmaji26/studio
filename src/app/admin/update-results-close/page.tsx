@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -384,7 +385,7 @@ export default function UpdateResultsClosePage() {
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Are you sure you want to revert the close result?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        This action will find all winning bids for this game's close and jodi sessions, deduct the winnings from users' wallets, and reset the bet status to 'running'. This cannot be undone.
+                                        This action will find all winning bets for this game's close and jodi sessions, deduct the winnings from users' wallets, and reset the bet status to 'running'. This cannot be undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
