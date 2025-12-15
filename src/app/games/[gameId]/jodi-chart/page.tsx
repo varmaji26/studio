@@ -144,6 +144,10 @@ export default function JodiChartPage() {
                                                         {num}
                                                     </td>
                                                 ))}
+                                                {/* Pad row with empty cells if it's not full */}
+                                                {Array.from({ length: activeDays.length - row.length }).map((_, padIndex) => (
+                                                    <td key={`pad-${padIndex}`} className="p-2 border border-gray-300 font-bold text-black">**</td>
+                                                ))}
                                             </tr>
                                         ))}
                                     </tbody>

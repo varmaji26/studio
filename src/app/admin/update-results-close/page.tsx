@@ -48,23 +48,6 @@ const calculateJodiDigit = (pana: string): string => {
 
 const allDaysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-const parseDateString = (dateStr: string): Date | null => {
-    if (!dateStr || typeof dateStr !== 'string') return null;
-    const match = dateStr.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (!match) return null;
-    
-    const [_, day, month, year] = match.map(Number);
-    
-    // Create date in UTC to avoid timezone issues.
-    const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-    
-    // Validate if the created date is correct (handles invalid dates like 31/02/2025)
-    if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-        return date;
-    }
-    return null;
-};
-
 export default function UpdateResultsClosePage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -143,7 +126,7 @@ export default function UpdateResultsClosePage() {
             const dayIndex = activeDays.indexOf(dayOfWeek);
 
             if (dayIndex !== -1) {
-                let dataArray = chartData.data ? chartData.data.split(/\s+/) : [];
+                let dataArray = chartData.data ? chartData.data.trim().split(/\s+/) : [];
                 
                 // Find the last non-empty row to update
                 let lastRowStartIndex = Math.floor((dataArray.length -1) / activeDays.length) * activeDays.length;
