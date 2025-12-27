@@ -556,7 +556,7 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
-
+        
         {settings.notice?.enabled && settings.notice.text && (
             <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
                 <CardHeader>
@@ -595,4 +595,3 @@ export default function Home() {
     </div>
   );
 }
-
