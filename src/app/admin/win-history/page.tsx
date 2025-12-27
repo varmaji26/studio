@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -328,7 +329,7 @@ export default function AdminWinHistoryPage() {
             <Card className="bg-primary/10 border-primary/20 mb-4">
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                        <p className="text-lg font-semibold">Total Winning Amount (Visible Page)</p>
+                        <p className="text-lg font-semibold">Total Winning Amount</p>
                         <p className="text-2xl font-bold text-green-400">
                             ₹{totalWinningAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>

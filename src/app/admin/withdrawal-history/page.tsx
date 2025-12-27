@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -205,7 +206,7 @@ export default function AdminWithdrawalHistoryPage() {
           <CardContent>
              <Card className="mb-6">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Withdrawals (Visible Page)</CardTitle>
+                    <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
                     <ArrowDownCircle className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
