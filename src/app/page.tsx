@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { auth, db, storage } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc, getDocs, limit } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -443,10 +443,10 @@ export default function Home() {
         </div>
       </header>
       
-      {settings.marquee?.text && (
+      {settings.notice?.enabled && settings.notice.text && (
         <div 
             className="relative flex overflow-x-hidden text-white py-2" 
-            style={{ backgroundColor: settings.marquee.backgroundColor || '#b91c1c' }}
+            style={{ backgroundColor: settings.marquee?.backgroundColor || '#b91c1c' }}
         >
             <div className="animate-marquee whitespace-nowrap flex">
                 <MarqueeContent />
