@@ -148,13 +148,56 @@ export default function UpdateResultsClosePage() {
             batch.update(jodiChartRef, { data: updatedDataString });
         }
         
-        // --- Panel Chart Update Logic Remains the same ---
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
-             // This logic needs to be robust. Assuming simple text replacement for now.
-             // A better approach would be structured data.
-             // For simplicity, this part is left as is, but might need review if panel chart format is complex.
+          const panelChartData = panelChartSnap.data()?.data || '';
+          const dataRows = panelChartData.split('\n').filter((row:string) => row.trim());
+          
+          let updated = false;
+          const todayFormatted = `${resultDate.getDate().toString().padStart(2, '0')}/${(resultDate.getMonth() + 1).toString().padStart(2, '0')}/${resultDate.getFullYear()}`;
+
+          for (let i = 0; i < dataRows.length; i++) {
+              if (dataRows[i].includes(todayFormatted)) {
+                  const dayDataLength = 8; // open(3) + jodi(2) + close(3)
+                  const startIndex = dataRows[i].indexOf(todayFormatted) + "xx/xx/xxxx to xx/xx/xxxx".length + 1 + (dayIndex * dayDataLength);
+                  
+                  let rowArr = dataRows[i].split(/\s+/);
+                  let dataPartIndex = rowArr.findIndex((part:string) => part.length === 56); // 7 days * 8 chars
+                  if(dataPartIndex > -1){
+                      let dataStr = rowArr[dataPartIndex];
+                      let dataArr = dataStr.split('');
+                      const updateIndex = dayIndex * 8;
+                      
+                      (openPana + finalJodi + newClosePana).split('').forEach((char, idx) => {
+                          dataArr[updateIndex + idx] = char;
+                      });
+
+                      rowArr[dataPartIndex] = dataArr.join('');
+                      dataRows[i] = rowArr.join(' ');
+                      updated = true;
+                  }
+                  break;
+              }
+          }
+          if(!updated){
+              const startOfWeek = new Date(resultDate);
+              startOfWeek.setDate(resultDate.getDate() - dayIndex);
+              const endOfWeek = new Date(startOfWeek);
+              endOfWeek.setDate(startOfWeek.getDate() + 6);
+              const dateRange = `${startOfWeek.getDate().toString().padStart(2, '0')}/${(startOfWeek.getMonth() + 1).toString().padStart(2, '0')}/${startOfWeek.getFullYear()} to ${endOfWeek.getDate().toString().padStart(2, '0')}/${(endOfWeek.getMonth() + 1).toString().padStart(2, '0')}/${endOfWeek.getFullYear()}`;
+              
+              let newData = Array(7).fill('********').join('');
+              let dataArr = newData.split('');
+              const updateIndex = dayIndex * 8;
+              (openPana + finalJodi + newClosePana).split('').forEach((char, idx) => {
+                  dataArr[updateIndex + idx] = char;
+              });
+
+              dataRows.push(`${dateRange} ${dataArr.join('')}`);
+          }
+
+          batch.update(panelChartRef, { data: dataRows.join('\n') });
         }
 
 
