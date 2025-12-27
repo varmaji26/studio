@@ -43,7 +43,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { formatTime, cn, isBettingClosed, formatGameResult } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -51,7 +50,6 @@ import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { motion } from 'framer-motion';
 
 
 interface Game extends DocumentData {
@@ -232,7 +230,7 @@ export default function Home() {
       setGames(filteredGames);
     });
 
-    const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"));
+    const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"), limit(1));
     const unsubscribeBanners = onSnapshot(bannersQuery, (querySnapshot) => {
         const bannersData: Banner[] = [];
         querySnapshot.forEach((doc) => {
@@ -528,27 +526,15 @@ export default function Home() {
         )}
         
         {banners.length > 0 && (
-            <Carousel 
-                className="w-full"
-            >
-                <CarouselContent>
-                    {banners.map((banner) => (
-                        <CarouselItem key={banner.id}>
-                        <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-                            <CardContent className="p-0">
-                                <img
-                                    src={banner.imageUrl}
-                                    alt="Banner"
-                                    className="w-full h-auto max-h-[250px] object-cover"
-                                />
-                            </CardContent>
-                        </Card>
-                        </CarouselItem>
-                    ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-4" />
-                <CarouselNext className="right-4" />
-            </Carousel>
+            <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+                <CardContent className="p-0">
+                    <img
+                        src={banners[0].imageUrl}
+                        alt="Banner"
+                        className="w-full h-auto max-h-[250px] object-cover"
+                    />
+                </CardContent>
+            </Card>
         )}
         
         <Card className="bg-card/80 border-white/10 shadow-lg">
@@ -571,7 +557,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {settings.notice?.enabled && (
+        {settings.notice?.enabled && settings.notice.text && (
             <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
                 <CardHeader>
                     <CardTitle className="text-xl text-white">Notice</CardTitle>
@@ -581,7 +567,7 @@ export default function Home() {
                     className="text-white font-bold" 
                     style={{ whiteSpace: 'pre-wrap' }}
                     >
-                    {settings.notice?.text || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}
+                    {settings.notice.text}
                     </p>
                 </CardContent>
             </Card>
@@ -609,3 +595,4 @@ export default function Home() {
     </div>
   );
 }
+
