@@ -44,7 +44,6 @@ import Image from 'next/image';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import Autoplay from "embla-carousel-autoplay"
 import { formatTime, cn, isBettingClosed, formatGameResult } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -176,7 +175,6 @@ export default function Home() {
   const [settings, setSettings] = useState<AppSettings>({});
   const [userProfile, setUserProfile] = useState<UserProfile>({ balance: 0, bonusBalance: 0 });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   const [closedGameInfo, setClosedGameInfo] = useState<Game | null>(null);
@@ -528,10 +526,7 @@ export default function Home() {
         
         {banners.length > 0 && (
             <Carousel 
-                plugins={[autoplayPlugin.current]}
                 className="w-full"
-                onMouseEnter={autoplayPlugin.current.stop}
-                onMouseLeave={autoplayPlugin.current.reset}
             >
                 <CarouselContent>
                     {banners.map((banner) => (
