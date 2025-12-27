@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, updateDoc, Timestamp, runTransaction } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,8 +29,6 @@ interface Game extends DocumentData {
     openResult: string;
     closeResult: string;
     result: string;
-    openTime: string;
-    closeTime: string;
 }
 
 const WIN_RATES = {
@@ -44,6 +42,16 @@ const WIN_RATES = {
 const calculateJodiDigit = (pana: string): string => {
     if (!pana || pana.length !== 3 || !/^\d+$/.test(pana)) return '';
     return (pana.split('').reduce((acc, digit) => acc + parseInt(digit, 10), 0) % 10).toString();
+};
+
+const parseDateString = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.trim().split('/');
+    if (parts.length !== 3) return null;
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+    // Assuming year is in YYYY format. The Date constructor uses month index 0-11.
+    return new Date(year, month - 1, day);
 };
 
 export default function UpdateResultsClosePage() {
@@ -112,92 +120,78 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
-        const now = new Date();
-        const [openHours] = (game.openTime || "00:00").split(':').map(Number);
-        const [closeHours] = (game.closeTime || "00:00").split(':').map(Number);
-        let resultDate = new Date(now);
-
-        if (closeHours < openHours && now.getHours() < openHours) { 
-             resultDate.setDate(now.getDate() - 1);
-        }
-        const dayIndex = (resultDate.getDay() + 6) % 7; 
-
-
+        // Update Jodi Chart
         const jodiChartRef = doc(db, 'jodiCharts', game.id);
         const jodiChartSnap = await getDoc(jodiChartRef);
         if (jodiChartSnap.exists()) {
-            const jodiChartDataString = jodiChartSnap.data()?.data || '';
-            let jodiChartFinalDataArray = jodiChartDataString.split('\n').map((r:string) => r.trim().split(/\s+/)).filter((r:string[]) => r.length > 0);
-
-            if (jodiChartFinalDataArray.length === 0) {
-              const newWeek = Array(7).fill('**');
-              jodiChartFinalDataArray.push(newWeek);
-            }
+            const jodiData = jodiChartSnap.data();
+            const today = new Date();
+            const todayDay = today.toLocaleDateString('en-US', { weekday: 'long' });
+            const activeDays = jodiData.activeDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             
-            let lastWeek = jodiChartFinalDataArray[jodiChartFinalDataArray.length - 1];
-
-            if (lastWeek[dayIndex] !== '**' && dayIndex === 0) {
-              const newWeek = Array(7).fill('**');
-              newWeek[dayIndex] = finalJodi;
-              jodiChartFinalDataArray.push(newWeek);
-            } else {
-              lastWeek[dayIndex] = finalJodi;
+            if (activeDays.includes(todayDay)) {
+                let newData = jodiData.data ? `${jodiData.data} ${finalJodi}` : finalJodi;
+                batch.update(jodiChartRef, { data: newData });
             }
-
-            const updatedDataString = jodiChartFinalDataArray.map(week => week.join(' ')).join('\n');
-            batch.update(jodiChartRef, { data: updatedDataString });
         }
         
+        // Update Panel Chart
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
-          const panelChartData = panelChartSnap.data()?.data || '';
-          const dataRows = panelChartData.split('\n').filter((row:string) => row.trim());
-          
-          let updated = false;
-          const todayFormatted = `${resultDate.getDate().toString().padStart(2, '0')}/${(resultDate.getMonth() + 1).toString().padStart(2, '0')}/${resultDate.getFullYear()}`;
+            const panelChartData = panelChartSnap.data().data || '';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
+            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
+            const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
-          for (let i = 0; i < dataRows.length; i++) {
-              if (dataRows[i].includes(todayFormatted)) {
-                  const dayDataLength = 8; // open(3) + jodi(2) + close(3)
-                  const startIndex = dataRows[i].indexOf(todayFormatted) + "xx/xx/xxxx to xx/xx/xxxx".length + 1 + (dayIndex * dayDataLength);
-                  
-                  let rowArr = dataRows[i].split(/\s+/);
-                  let dataPartIndex = rowArr.findIndex((part:string) => part.length === 56); // 7 days * 8 chars
-                  if(dataPartIndex > -1){
-                      let dataStr = rowArr[dataPartIndex];
-                      let dataArr = dataStr.split('');
-                      const updateIndex = dayIndex * 8;
-                      
-                      (openPana + finalJodi + newClosePana).split('').forEach((char, idx) => {
-                          dataArr[updateIndex + idx] = char;
-                      });
+            const rows = panelChartData.split('\n').filter((row: string) => row.trim() !== '');
+            let weekFound = false;
+            let finalDataArray = [...rows];
 
-                      rowArr[dataPartIndex] = dataArr.join('');
-                      dataRows[i] = rowArr.join(' ');
-                      updated = true;
-                  }
-                  break;
-              }
-          }
-          if(!updated){
-              const startOfWeek = new Date(resultDate);
-              startOfWeek.setDate(resultDate.getDate() - dayIndex);
-              const endOfWeek = new Date(startOfWeek);
-              endOfWeek.setDate(startOfWeek.getDate() + 6);
-              const dateRange = `${startOfWeek.getDate().toString().padStart(2, '0')}/${(startOfWeek.getMonth() + 1).toString().padStart(2, '0')}/${startOfWeek.getFullYear()} to ${endOfWeek.getDate().toString().padStart(2, '0')}/${(endOfWeek.getMonth() + 1).toString().padStart(2, '0')}/${endOfWeek.getFullYear()}`;
-              
-              let newData = Array(7).fill('********').join('');
-              let dataArr = newData.split('');
-              const updateIndex = dayIndex * 8;
-              (openPana + finalJodi + newClosePana).split('').forEach((char, idx) => {
-                  dataArr[updateIndex + idx] = char;
-              });
+            if (rows.length > 0) {
+                const lastRow = rows[rows.length - 1];
+                const match = lastRow.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
+                if (match) {
+                    const lastStartDate = parseDateString(match[1]);
+                    const lastEndDate = parseDateString(match[2]);
+                    
+                    if (lastStartDate && lastEndDate && today >= lastStartDate && today <= lastEndDate) {
+                        weekFound = true;
+                        const dataPart = lastRow.substring(match[0].length).trim();
+                        const dailyBlocks = dataPart.split(/\s+/).filter(String);
+                        
+                        while(dailyBlocks.length < 7) {
+                            dailyBlocks.push('********');
+                        }
 
-              dataRows.push(`${dateRange} ${dataArr.join('')}`);
-          }
+                        dailyBlocks[dayIndex] = newDayData;
+                        
+                        const updatedDataPart = dailyBlocks.join(' ');
+                        finalDataArray[rows.length - 1] = `${match[0]} ${updatedDataPart}`;
+                    }
+                }
+            }
+            
+            if (!weekFound) {
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - dayIndex);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                
+                const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const newDateRange = `${formatDate(startOfWeek)} to ${formatDate(endOfWeek)}`;
+                
+                const newWeekDataArr = Array(7).fill('********');
+                newWeekDataArr[dayIndex] = newDayData;
+                const newWeekData = newWeekDataArr.join(' ');
+                
+                const newRow = `${newDateRange} ${newWeekData}`;
+                finalDataArray.push(newRow);
+            }
 
-          batch.update(panelChartRef, { data: dataRows.join('\n') });
+            batch.update(panelChartRef, { data: finalDataArray.join('\n').trim() });
         }
 
 
@@ -254,82 +248,50 @@ export default function UpdateResultsClosePage() {
         toast({ variant: 'destructive', title: 'Error', description: 'No close result to revert for this game.' });
         return;
     }
+
     setIsReverting(true);
-    const gameDocRef = doc(db, 'games', game.id);
-
     try {
-        await runTransaction(db, async (transaction) => {
-            const now = new Date();
-            let resultDate = new Date(now);
-            const [openHours] = (game.openTime || "00:00").split(':').map(Number);
-            const [closeHours] = (game.closeTime || "00:00").split(':').map(Number);
-            if (closeHours < openHours && now.getHours() < openHours) {
-                 resultDate.setDate(now.getDate() - 1);
-            }
-            const startOfDay = new Date(resultDate.getFullYear(), resultDate.getMonth(), resultDate.getDate());
-            
-            const affectedBidsQuery = query(
-                collection(db, 'bids'),
-                where('gameId', '==', game.id),
-                where('status', 'in', ['won', 'lost']),
-                where('createdAt', '>=', Timestamp.fromDate(startOfDay))
-            );
-            const bidsSnapshot = await getDocs(affectedBidsQuery);
+        const batch = writeBatch(db);
+        const gameDocRef = doc(db, 'games', game.id);
 
-            for (const bidDoc of bidsSnapshot.docs) {
-                const bid = bidDoc.data();
-                // Only revert 'Close' session bets and 'Jodi' bets
-                if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
-                    if (bid.status === 'won') {
-                        const userRef = doc(db, 'users', bid.userId);
-                        const winningAmount = bid.winningAmount || 0;
-                        
-                        // Deduct winnings
-                        transaction.update(userRef, { balance: increment(-winningAmount) });
+        const affectedBidsQuery = query(
+            collection(db, 'bids'),
+            where('gameId', '==', game.id)
+        );
 
-                        // Check user balance and cancel running bets if it goes negative
-                        const userDoc = await transaction.get(userRef);
-                        const currentBalance = userDoc.data()?.balance || 0;
+        const bidsSnapshot = await getDocs(affectedBidsQuery);
 
-                        if (currentBalance < 0) {
-                            let balanceToRecover = Math.abs(currentBalance);
-                            const runningBetsQuery = query(collection(db, 'bids'), where('userId', '==', bid.userId), where('status', '==', 'running'), orderBy('createdAt', 'desc'));
-                            
-                            const runningBetsSnapshot = await getDocs(runningBetsQuery);
-
-                            for (const runningBetDoc of runningBetsSnapshot.docs) {
-                                if (balanceToRecover <= 0) break;
-                                const betToCancel = runningBetDoc.data();
-                                const cancelAmount = betToCancel.totalAmount;
-                                transaction.update(runningBetDoc.ref, { status: 'cancelled' });
-                                transaction.update(userRef, { balance: increment(cancelAmount) });
-                                balanceToRecover -= cancelAmount;
-                            }
-                        }
-                        
-                        transaction.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
-                    } else { // status is 'lost'
-                        transaction.update(bidDoc.ref, { status: 'running' });
-                    }
+        bidsSnapshot.forEach(bidDoc => {
+            const bid = bidDoc.data();
+            if (bid.status === 'won' && (bid.session === 'Close' || bid.betType === 'Jodi Digit')) {
+                const userDocRef = doc(db, 'users', bid.userId);
+                batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                batch.update(bidDoc.ref, { status: 'running', winningAmount: null });
+            } else if (bid.status === 'lost') {
+                // We also need to revert 'lost' bids that were not for the 'Open' session
+                if(bid.session !== 'Open') {
+                    batch.update(bidDoc.ref, { status: 'running' });
                 }
             }
-            
-            const gameDoc = await transaction.get(gameDocRef);
-            const openPana = gameDoc.data()?.openResult || '***';
-            
-            transaction.update(gameDocRef, {
-                closeResult: '**',
-                result: `${openPana}-**-**`,
-            });
         });
 
+        const gameDoc = await getDoc(gameDocRef);
+        const openPana = gameDoc.data()?.openResult || '***';
+        
+        batch.update(gameDocRef, {
+            closeResult: '**',
+            result: `${openPana}-**-**`,
+        });
+
+        await batch.commit();
         toast({
             title: 'Result Reverted!',
-            description: `Close result for ${game.name} has been reverted. Affected bets are running again.`
+            description: `Close result for ${game.name} has been reverted. Incorrect winnings have been clawed back.`
         });
-    } catch (error: any) {
+
+    } catch (error) {
         console.error('Error reverting result: ', error);
-        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to revert result.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to revert result.' });
     } finally {
         setIsReverting(false);
     }
