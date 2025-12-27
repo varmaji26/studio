@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,9 @@ interface Game extends DocumentData {
     openResult: string;
     closeResult: string;
     result: string;
+    openTime: string;
+    closeTime: string;
+    activeDays?: string[];
 }
 
 const WIN_RATES = {

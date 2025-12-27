@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs, onSnapshot, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -43,7 +42,7 @@ declare module 'jspdf' {
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminWinHistoryPage() {
-  const [allWins, setAllWins] = useState<Win[]>([]);
+  const [wins, setWins] = useState<Win[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [fromDate, setFromDate] = useState<Date | undefined>();
@@ -51,6 +50,9 @@ export default function AdminWinHistoryPage() {
   const searchParams = useSearchParams();
   
   const [currentPage, setCurrentPage] = useState(1);
+  const [firstVisible, setFirstVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [totalWinsCount, setTotalWinsCount] = useState(0);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -58,7 +60,7 @@ export default function AdminWinHistoryPage() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
+  const fetchWins = useCallback((pageDirection?: 'next' | 'prev') => {
       setLoading(true);
       
       let q = query(
@@ -66,10 +68,29 @@ export default function AdminWinHistoryPage() {
           where("status", "==", "won"),
           orderBy("createdAt", "desc")
       );
+
+      if (pageDirection === 'next' && lastVisible) {
+        q = query(q, startAfter(lastVisible));
+      } else if (pageDirection === 'prev' && firstVisible) {
+        q = query(q, endBefore(firstVisible), limitToLast(ITEMS_PER_PAGE));
+      } else {
+        q = query(q, limit(ITEMS_PER_PAGE));
+      }
       
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
           const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
-          setAllWins(winsData);
+          setWins(winsData);
+          
+          if (querySnapshot.docs.length > 0) {
+            setFirstVisible(querySnapshot.docs[0]);
+            setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+          }
+
+          if(currentPage === 1){
+              const countQuery = query(collection(db, "bids"), where("status", "==", "won"));
+              getDocs(countQuery).then(snap => setTotalWinsCount(snap.size));
+          }
+
           setLoading(false);
       }, (error) => {
           console.error("Error fetching wins: ", error);
@@ -77,10 +98,14 @@ export default function AdminWinHistoryPage() {
       });
       
       return () => unsubscribe();
-  }, []);
+  }, [lastVisible, firstVisible, currentPage]);
+
+  useEffect(() => {
+    fetchWins();
+  }, [fetchWins]);
 
   const filteredWins = useMemo(() => {
-    let filtered = allWins;
+    let filtered = wins;
     
     if (fromDate) {
         const startOfDay = new Date(fromDate);
@@ -107,20 +132,17 @@ export default function AdminWinHistoryPage() {
       });
     }
     return filtered;
-  }, [searchTerm, allWins, fromDate, toDate]);
+  }, [searchTerm, wins, fromDate, toDate]);
   
   const totalWinningAmount = useMemo(() => {
     return filteredWins.reduce((acc, win) => acc + (win.winningAmount || 0), 0);
   }, [filteredWins]);
   
-  const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
-  const paginatedWins = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredWins.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredWins, currentPage]);
+  const totalPages = Math.ceil(totalWinsCount / ITEMS_PER_PAGE);
 
   useEffect(() => {
-      setCurrentPage(1);
+      // This is a client-side filter. For a full implementation on large datasets,
+      // filtering should be done as part of the Firestore query.
   }, [searchTerm, fromDate, toDate]);
 
 
@@ -133,10 +155,29 @@ export default function AdminWinHistoryPage() {
     const doc = new jsPDF();
     const dateRange = fromDate && toDate ? `${format(fromDate, "PPP")} to ${format(toDate, "PPP")}` : "All Time";
     doc.text(`Win History Report - ${dateRange}`, 14, 16);
-    doc.text(`Total Winning Amount: ${totalWinningAmount.toFixed(2)}`, 14, 22);
-
-    const winsForPdf = filteredWins;
     
+    // Fetch all wins for the PDF, not just the paginated ones
+    const allWinsQuery = query(collection(db, "bids"), where("status", "==", "won"), orderBy("createdAt", "desc"));
+    const allWinsSnapshot = await getDocs(allWinsQuery);
+    const allWins = allWinsSnapshot.docs.map(d => d.data() as Win);
+    let winsForPdf = allWins;
+
+    if (fromDate && toDate) {
+        const startOfDay = new Date(fromDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        winsForPdf = winsForPdf.filter(win => {
+            if (!win.createdAt?.seconds) return false;
+            const winDate = new Date(win.createdAt.seconds * 1000);
+            return winDate >= startOfDay && winDate <= endOfDay;
+        });
+    }
+
+    const totalForPdf = winsForPdf.reduce((acc, win) => acc + (win.winningAmount || 0), 0);
+    doc.text(`Total Winning Amount: ${totalForPdf.toFixed(2)}`, 14, 22);
+
     const tableColumn = ["Date", "Username", "Mobile", "Game", "Bet Details", "Bet (₹)", "Win (₹)"];
     const tableRows: (string | number)[][] = [];
 
@@ -174,7 +215,10 @@ export default function AdminWinHistoryPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => {
+                        setCurrentPage(p => Math.max(1, p - 1));
+                        fetchWins('prev');
+                    }}
                     disabled={currentPage === 1}
                 >
                     Previous
@@ -182,7 +226,10 @@ export default function AdminWinHistoryPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => {
+                        setCurrentPage(p => p + 1);
+                        fetchWins('next');
+                    }}
                     disabled={currentPage === totalPages}
                 >
                     Next
@@ -281,7 +328,7 @@ export default function AdminWinHistoryPage() {
             <Card className="bg-primary/10 border-primary/20 mb-4">
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                        <p className="text-lg font-semibold">Total Winning Amount</p>
+                        <p className="text-lg font-semibold">Total Winning Amount (Visible Page)</p>
                         <p className="text-2xl font-bold text-green-400">
                             ₹{totalWinningAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
@@ -309,8 +356,8 @@ export default function AdminWinHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedWins.length > 0 ? (
-                                paginatedWins.map((win) => (
+                            {filteredWins.length > 0 ? (
+                                filteredWins.map((win) => (
                                     <TableRow key={win.id}>
                                         <TableCell>{formatDate(win.createdAt)}</TableCell>
                                         <TableCell>{win.displayName}</TableCell>
