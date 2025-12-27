@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, limit, startAfter, QueryDocumentSnapshot, endBefore, limitToLast } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -40,47 +39,24 @@ declare module 'jspdf' {
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminWithdrawalHistoryPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
 
-  const [firstVisible, setFirstVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const [totalTransactionsCount, setTotalTransactionsCount] = useState(0);
-
-  const fetchTransactions = useCallback((pageDirection?: 'next' | 'prev') => {
+  const fetchTransactions = useCallback(() => {
     setLoading(true);
-    let q = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
-    
-    if (pageDirection === 'next' && lastVisible) {
-        q = query(q, startAfter(lastVisible));
-    } else if (pageDirection === 'prev' && firstVisible) {
-        q = query(q, endBefore(firstVisible), limitToLast(ITEMS_PER_PAGE));
-    }
-    
-    q = query(q, limit(ITEMS_PER_PAGE));
+    const q = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Transaction));
-        setTransactions(data);
-
-        if (snapshot.docs.length > 0) {
-            setFirstVisible(snapshot.docs[0]);
-            setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
-        }
-        
-        if (currentPage === 1) {
-            const countQuery = query(collection(db, "withdrawals"));
-            getDocs(countQuery).then(snap => setTotalTransactionsCount(snap.size));
-        }
-
+        setAllTransactions(data);
         setLoading(false);
     });
     return () => unsubscribe();
-  }, [lastVisible, firstVisible, currentPage]);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = fetchTransactions();
@@ -88,7 +64,7 @@ export default function AdminWithdrawalHistoryPage() {
   }, [fetchTransactions]);
 
   const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
+    let filtered = allTransactions;
 
     if (fromDate && toDate) {
         const startOfDay = new Date(fromDate);
@@ -111,7 +87,7 @@ export default function AdminWithdrawalHistoryPage() {
       );
     }
     return filtered;
-  }, [searchTerm, transactions, fromDate, toDate]);
+  }, [searchTerm, allTransactions, fromDate, toDate]);
   
   const { totalWithdrawals } = useMemo(() => {
     return filteredTransactions.reduce(
@@ -125,7 +101,15 @@ export default function AdminWithdrawalHistoryPage() {
     );
   }, [filteredTransactions]);
 
-  const totalPages = Math.ceil(totalTransactionsCount / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredTransactions, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, fromDate, toDate]);
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -147,14 +131,10 @@ export default function AdminWithdrawalHistoryPage() {
     const doc = new jsPDF();
     doc.text("Admin Withdrawal History", 14, 16);
 
-    const allQuery = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
-    const snapshot = await getDocs(allQuery);
-    const allTransactions = snapshot.docs.map(d => d.data() as Transaction);
-
     const tableColumn = ["Date", "Username", "Mobile", "Amount (INR)", "Method", "Status"];
     const tableRows: (string | number)[][] = [];
     
-    allTransactions.forEach(t => {
+    filteredTransactions.forEach(t => {
         const transactionData = [
             formatDate(t.createdAt),
             t.displayName,
@@ -197,7 +177,7 @@ export default function AdminWithdrawalHistoryPage() {
                     <CardTitle className="text-3xl font-bold">Withdrawal History</CardTitle>
                     <CardDescription>View all withdrawal history for all users.</CardDescription>
                 </div>
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={transactions.length === 0}>
+                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={allTransactions.length === 0}>
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                 </Button>
@@ -263,7 +243,7 @@ export default function AdminWithdrawalHistoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredTransactions.map((t) => (
+                            {paginatedTransactions.map((t) => (
                                 <TableRow key={t.id}>
                                     <TableCell>{formatDate(t.createdAt)}</TableCell>
                                     <TableCell>{t.displayName}</TableCell>
@@ -286,7 +266,7 @@ export default function AdminWithdrawalHistoryPage() {
                             ))}
                         </TableBody>
                     </Table>
-                    {filteredTransactions.length === 0 && !loading && (<p className="text-center text-muted-foreground mt-4">No transactions found.</p>)}
+                    {paginatedTransactions.length === 0 && !loading && (<p className="text-center text-muted-foreground mt-4">No transactions found.</p>)}
                     {renderPagination()}
                 </div>
             )}
