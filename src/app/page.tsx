@@ -91,7 +91,10 @@ interface AppSettings extends DocumentData {
         titleSize?: number;
         textSize?: number;
     };
-    noticeText?: string;
+    notice?: {
+        text: string;
+        enabled: boolean;
+    };
     bonusPopup?: {
         enabled: boolean;
         imageUrl: string;
@@ -568,19 +571,21 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
-            <CardHeader>
-                <CardTitle className="text-xl text-white">Notice</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p 
-                  className="text-white font-bold" 
-                  style={{ whiteSpace: 'pre-wrap' }}
-                >
-                  {settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}
-                </p>
-            </CardContent>
-        </Card>
+        {settings.notice?.enabled && (
+            <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
+                <CardHeader>
+                    <CardTitle className="text-xl text-white">Notice</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p 
+                    className="text-white font-bold" 
+                    style={{ whiteSpace: 'pre-wrap' }}
+                    >
+                    {settings.notice?.text || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}
+                    </p>
+                </CardContent>
+            </Card>
+        )}
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>

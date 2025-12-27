@@ -103,6 +103,7 @@ const settingsSchema = z.object({
     z.number().min(8, 'Minimum size is 8px.').optional()
   ),
   noticeText: z.string().optional(),
+  noticeEnabled: z.boolean().default(true),
   bonusEnabled: z.boolean().default(false),
   bonusPercentage: z.preprocess(
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
@@ -159,6 +160,7 @@ export default function SettingsPage() {
       marqueeTitleSize: 20,
       marqueeTextSize: 12,
       noticeText: '',
+      noticeEnabled: true,
       bonusEnabled: false,
       bonusPercentage: 0,
       bonusPopupEnabled: false,
@@ -201,7 +203,8 @@ export default function SettingsPage() {
             marqueeLogoSize: data.marquee?.logoSize || 24,
             marqueeTitleSize: data.marquee?.titleSize || 20,
             marqueeTextSize: data.marquee?.textSize || 12,
-            noticeText: data.noticeText || '',
+            noticeText: data.notice?.text || '',
+            noticeEnabled: data.notice?.enabled ?? true,
             bonusEnabled: data.bonus?.enabled || false,
             bonusPercentage: data.bonus?.percentage || 0,
             bonusPopupEnabled: data.bonusPopup?.enabled || false,
@@ -464,7 +467,10 @@ export default function SettingsPage() {
               titleSize: values.marqueeTitleSize,
               textSize: values.marqueeTextSize,
             },
-            noticeText: values.noticeText,
+            notice: {
+              text: values.noticeText,
+              enabled: values.noticeEnabled,
+            },
             bonus: {
               enabled: values.bonusEnabled,
               percentage: values.bonusPercentage,
@@ -834,6 +840,7 @@ export default function SettingsPage() {
                         <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="e.g., https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <Separator/>
+                        <FormField control={form.control} name="noticeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Enable Notice</FormLabel><FormDescriptionComponent>Show the notice board on the home page.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                         <FormField control={form.control} name="noticeText" render={({ field }) => (<FormItem><FormLabel>Notice Text</FormLabel><FormControl><Textarea placeholder="Enter notice text for home page." {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                     </AccordionContent>
