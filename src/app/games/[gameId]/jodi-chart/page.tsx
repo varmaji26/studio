@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface JodiChartData extends DocumentData {
   id: string;
@@ -42,7 +43,6 @@ const dayAbbreviations: { [key: string]: string } = {
 export default function JodiChartPage() {
     const params = useParams();
     const gameId = params.gameId;
-    const router = useRouter();
     const [chartData, setChartData] = useState<JodiChartData | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -88,11 +88,10 @@ export default function JodiChartPage() {
         return chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
     }, [chartData]);
     
-    const parsedData = useMemo(() => {
+    const parsedWeeklyData = useMemo(() => {
         if (!chartData?.data) return [];
-        // This regex will find all 2-digit numbers or "**" placeholders
-        const numbers = chartData.data.match(/(\d{2}|\*\*|\*)/g);
-        return numbers || [];
+        const rows = chartData.data.trim().split('\n');
+        return rows.map(row => row.trim().split(/\s+/).filter(Boolean));
     }, [chartData]);
 
 
@@ -125,27 +124,35 @@ export default function JodiChartPage() {
                                 </Link>
                             </Button>
                         </div>
-                        {chartData && parsedData.length > 0 ? (
+                        {chartData && parsedWeeklyData.length > 0 ? (
                             <div className="overflow-x-auto border-2 border-primary bg-orange-100 p-1">
-                                <div 
-                                    className="grid text-center font-bold text-white bg-blue-800"
-                                    style={{ gridTemplateColumns: `repeat(${activeDays.length}, minmax(0, 1fr))` }}
-                                >
-                                    {activeDays.map(day => (
-                                        <div key={day} className="p-2 border-b-2 border-primary">{dayAbbreviations[day] || day}</div>
-                                    ))}
-                                </div>
-                                <div 
-                                    className="grid text-center"
-                                    style={{ gridTemplateColumns: `repeat(${activeDays.length}, minmax(0, 1fr))` }}
-                                >
-                                    {parsedData.map((num, index) => (
-                                        <div key={index} 
-                                             className={`p-2 border border-gray-300 font-bold ${isRedNumber(num) ? 'text-red-600' : 'text-black'}`}>
-                                            {num}
-                                        </div>
-                                    ))}
-                                </div>
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-blue-800 text-white font-bold text-center">
+                                            {activeDays.map(day => (
+                                                <th key={day} className="p-2 border border-gray-300">{dayAbbreviations[day] || day}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {parsedWeeklyData.map((week, weekIndex) => (
+                                            <tr key={weekIndex}>
+                                                {week.map((num, dayIndex) => (
+                                                    <td key={dayIndex} className={cn(
+                                                        "p-2 border border-gray-300 font-bold text-center",
+                                                        isRedNumber(num) ? 'text-red-600' : 'text-black'
+                                                    )}>
+                                                        {num}
+                                                    </td>
+                                                ))}
+                                                {/* Pad row with empty cells if needed */}
+                                                {Array.from({ length: Math.max(0, activeDays.length - week.length) }).map((_, i) => (
+                                                    <td key={`pad-${i}`} className="p-2 border border-gray-300 font-bold text-black"></td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         ) : (
                              <p className="text-center text-muted-foreground mt-8 py-10">
