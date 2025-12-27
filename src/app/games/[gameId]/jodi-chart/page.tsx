@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -31,12 +31,12 @@ const isRedNumber = (num: string) => {
 const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const dayAbbreviations: { [key: string]: string } = {
     Monday: 'Mo',
-    Tuesday: 'Tue',
-    Wednesday: 'Wed',
-    Thursday: 'Thu',
-    Friday: 'Fri',
-    Saturday: 'Sat',
-    Sunday: 'Sun',
+    Tuesday: 'Tu',
+    Wednesday: 'We',
+    Thursday: 'Th',
+    Friday: 'Fr',
+    Saturday: 'Sa',
+    Sunday: 'Su',
 };
 
 export default function JodiChartPage() {
@@ -58,7 +58,6 @@ export default function JodiChartPage() {
                 if (chartDoc.exists()) {
                     setChartData({ id: chartDoc.id, ...chartDoc.data() } as JodiChartData);
                 } else {
-                     // If no specific jodi chart, check the game for active days as a fallback
                     const gameDocRef = doc(db, 'games', gameId);
                     const gameDoc = await getDoc(gameDocRef);
                     if (gameDoc.exists()) {
@@ -67,7 +66,7 @@ export default function JodiChartPage() {
                             id: gameId,
                             gameName: gameData.name || 'Game',
                             title: `Jodi Chart for ${gameData.name}`,
-                            data: '', // No data available
+                            data: '',
                             activeDays: gameData.activeDays || allDays
                         });
                     } else {
@@ -85,10 +84,29 @@ export default function JodiChartPage() {
         fetchChartAndGameData();
     }, [gameId]);
 
-    const activeDays = chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
-    const numberOfDays = activeDays.length;
+    const activeDays = useMemo(() => {
+        return chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
+    }, [chartData]);
+    
+    const parsedRows = useMemo(() => {
+        if (!chartData?.data) return [];
+        const rows = chartData.data.split('\n').filter(row => row.trim() !== '');
+        return rows.map(row => {
+            const parts = row.trim().split(/\s+/);
+            const dateRangeMatch = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
+            
+            const dateRange = dateRangeMatch ? `${dateRangeMatch[1]} to ${dateRangeMatch[2]}` : null;
+            const jodiNumbers = parts.filter(p => /^\d{2}$/.test(p) || p === '**' || p === '*');
+            
+            // Pad the numbers if they don't match the number of active days
+            while (jodiNumbers.length < activeDays.length) {
+                jodiNumbers.push('**');
+            }
 
-    const parsedData = chartData?.data.split(/\s+/).filter(d => d) || [];
+            return { dateRange, numbers: jodiNumbers.slice(0, activeDays.length) };
+        });
+    }, [chartData, activeDays]);
+
 
     if (loading) {
         return (
@@ -119,27 +137,33 @@ export default function JodiChartPage() {
                                 </Link>
                             </Button>
                         </div>
-                        {chartData && chartData.data ? (
+                        {chartData && parsedRows.length > 0 ? (
                             <div className="overflow-x-auto border-2 border-primary bg-orange-100 p-1">
-                                <div 
-                                    className="grid text-center font-bold text-white bg-blue-800"
-                                    style={{ gridTemplateColumns: `repeat(${numberOfDays}, minmax(0, 1fr))` }}
-                                >
-                                    {activeDays.map(day => (
-                                        <div key={day} className="p-2 border-b-2 border-primary">{dayAbbreviations[day]}</div>
-                                    ))}
-                                </div>
-                                <div 
-                                    className="grid text-center"
-                                    style={{ gridTemplateColumns: `repeat(${numberOfDays}, minmax(0, 1fr))` }}
-                                >
-                                    {parsedData.map((num, index) => (
-                                        <div key={index} 
-                                             className={`p-2 border border-gray-300 font-bold ${isRedNumber(num) ? 'text-red-600' : 'text-black'}`}>
-                                            {num}
-                                        </div>
-                                    ))}
-                                </div>
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-blue-800 text-white font-bold text-xs">
+                                            <th className="p-2 border border-blue-900">Date</th>
+                                            {activeDays.map(day => (
+                                                <th key={day} className="p-2 border border-blue-900">{dayAbbreviations[day] || day}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {parsedRows.map((row, rowIndex) => (
+                                            <tr key={rowIndex} className="text-center">
+                                                <td className="p-1 border border-gray-300 font-bold text-black text-[10px] leading-tight">
+                                                    {row.dateRange?.replace(' to ', '\nto\n')}
+                                                </td>
+                                                {row.numbers.map((num, numIndex) => (
+                                                     <td key={numIndex} 
+                                                         className={`p-2 border border-gray-300 font-bold ${isRedNumber(num) ? 'text-red-600' : 'text-black'}`}>
+                                                        {num}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         ) : (
                              <p className="text-center text-muted-foreground mt-8 py-10">
