@@ -443,7 +443,7 @@ export default function Home() {
         </div>
       </header>
       
-      {settings.notice?.enabled && settings.notice.text && (
+      {settings.marquee?.text && (
         <div 
             className="relative flex overflow-x-hidden text-white py-2" 
             style={{ backgroundColor: settings.marquee?.backgroundColor || '#b91c1c' }}
