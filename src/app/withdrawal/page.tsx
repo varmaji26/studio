@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -254,8 +255,8 @@ export default function WithdrawalPage() {
                 <hr className="border-gray-300" />
                 
                 {hasPendingWithdrawal ? (
-                     <Alert variant="destructive" className="my-4 bg-yellow-100 border-yellow-200 text-yellow-800">
-                        <Info className="h-4 w-4" />
+                     <Alert variant="destructive" className="my-4 bg-red-100 border-red-200 text-red-800">
+                        <Info className="h-4 w-4 text-red-800" />
                         <AlertTitle>Pending Request</AlertTitle>
                         <AlertDescription>
                             You already have a pending withdrawal request. Your withdrawal will be credited to your account within 24 hours. Please wait.
