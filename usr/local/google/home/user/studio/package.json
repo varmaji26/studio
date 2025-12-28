@@ -6,7 +6,7 @@
     "predev": "npm install",
     "dev": "npm install && next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-8080}",
     "lint": "next lint",
     "deploy": "npm install && npm run build && firebase deploy"
   },
