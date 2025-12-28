@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment, collection } from 'firebase/firestore';
 
 
 import { Button } from '@/components/ui/button';
@@ -82,6 +82,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         
         const userDocRef = doc(db, "users", userCredential.user.uid);
         const statsDocRef = doc(db, 'app-stats', 'dashboard');
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
         
         await runTransaction(db, async (transaction) => {
             const statsDoc = await transaction.get(statsDocRef);
@@ -91,18 +92,39 @@ export function AuthForm({ mode }: AuthFormProps) {
                 transaction.update(statsDocRef, { totalUsers: increment(1) });
             }
 
+            const settingsDoc = await transaction.get(settingsDocRef);
+            const welcomeBonusSettings = settingsDoc.exists() ? settingsDoc.data().welcomeBonus : { enabled: false, amount: 0 };
+
+            let welcomeBonusAmount = 0;
+            if (welcomeBonusSettings?.enabled && welcomeBonusSettings?.amount > 0) {
+                welcomeBonusAmount = welcomeBonusSettings.amount;
+            }
+
             transaction.set(userDocRef, {
                 uid: userCredential.user.uid,
                 displayName: values.username,
                 mobile: values.mobile,
                 email: email,
                 balance: 0,
-                bonusBalance: 0,
-                totalBonusGiven: 0,
+                bonusBalance: welcomeBonusAmount,
+                totalBonusGiven: welcomeBonusAmount,
                 isAdmin: false,
                 isBlocked: false,
                 createdAt: serverTimestamp(),
             });
+
+            if (welcomeBonusAmount > 0) {
+              const newBonusTransactionRef = doc(collection(db, 'bonusTransactions'));
+              transaction.set(newBonusTransactionRef, {
+                  userId: userCredential.user.uid,
+                  displayName: values.username,
+                  mobile: values.mobile,
+                  amount: welcomeBonusAmount,
+                  type: 'Given',
+                  description: 'Welcome bonus on signup.',
+                  createdAt: serverTimestamp(),
+              });
+            }
         });
 
       } else {
@@ -230,3 +252,5 @@ export function AuthForm({ mode }: AuthFormProps) {
     </Card>
   );
 }
+
+  

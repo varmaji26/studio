@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -112,6 +111,11 @@ const settingsSchema = z.object({
   bonusPopupEnabled: z.boolean().default(false),
   bonusPopupImage: z.any().optional(),
   bonusPopupLink: z.string().optional(),
+  welcomeBonusEnabled: z.boolean().default(false),
+  welcomeBonusAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 0 : Number(val)),
+    z.number().min(0, 'Bonus amount cannot be negative.')
+  ),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -165,6 +169,8 @@ export default function SettingsPage() {
       bonusPercentage: 0,
       bonusPopupEnabled: false,
       bonusPopupLink: '/add-fund',
+      welcomeBonusEnabled: false,
+      welcomeBonusAmount: 0,
     },
   });
 
@@ -209,6 +215,8 @@ export default function SettingsPage() {
             bonusPercentage: data.bonus?.percentage || 0,
             bonusPopupEnabled: data.bonusPopup?.enabled || false,
             bonusPopupLink: data.bonusPopup?.link || '/add-fund',
+            welcomeBonusEnabled: data.welcomeBonus?.enabled || false,
+            welcomeBonusAmount: data.welcomeBonus?.amount || 0,
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -476,6 +484,10 @@ export default function SettingsPage() {
               percentage: values.bonusPercentage,
             },
             bonusPopup: bonusPopupData,
+            welcomeBonus: {
+              enabled: values.welcomeBonusEnabled,
+              amount: values.welcomeBonusAmount,
+            },
         };
 
         if (qrCodeData) {
@@ -740,7 +752,7 @@ export default function SettingsPage() {
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <Accordion type="multiple" className="w-full">
+                <Accordion type="multiple" defaultValue={['item-1']} className="w-full">
                   {/* Golden Ank & Marquee Section */}
                   <AccordionItem value="item-1">
                     <AccordionTrigger className="text-lg font-semibold">Golden Ank & Marquee</AccordionTrigger>
@@ -805,10 +817,13 @@ export default function SettingsPage() {
                   <AccordionItem value="item-2">
                     <AccordionTrigger className="text-lg font-semibold">Bonus Settings</AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-4">
-                      <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel><FormDescriptionComponent>Give users a bonus on deposits.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel><FormDescriptionComponent>Give users a bonus on deposits.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                       {form.watch('bonusEnabled') && (<FormField control={form.control} name="bonusPercentage" render={({ field }) => (<FormItem><FormLabel>Bonus Percentage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
                       <Separator />
-                      <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel><FormDescriptionComponent>Show a bonus offer popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="welcomeBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Welcome Bonus</FormLabel><FormDescriptionComponent>Give new users a bonus on signup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      {form.watch('welcomeBonusEnabled') && (<FormField control={form.control} name="welcomeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Welcome Bonus Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                      <Separator />
+                      <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel><FormDescriptionComponent>Show a bonus offer popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                       {form.watch('bonusPopupEnabled') && (
                         <div className="space-y-4">
                             {existingBonusPopupUrl && (
@@ -903,3 +918,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+  
