@@ -258,7 +258,9 @@ export default function WithdrawalPage() {
                         <Info className="h-4 w-4" />
                         <AlertTitle>Pending Request</AlertTitle>
                         <AlertDescription>
-                            You already have a pending withdrawal request. Please wait for it to be processed.
+                            You already have a pending withdrawal request. Your withdrawal will be credited to your account within 24 hours. Please wait.
+                            <br/>
+                            आपका पिछला भुगतान अनुरोध लंबित है। आपका भुगतान 24 घंटे के भीतर आपके खाते में जमा कर दिया जाएगा। कृपया प्रतीक्षा करें।
                         </AlertDescription>
                     </Alert>
                 ) : (
