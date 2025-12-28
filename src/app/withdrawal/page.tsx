@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Landmark, Phone, Gift, Wallet, Info } from 'lucide-react';
+import { ArrowLeft, Landmark, Phone, Gift, Wallet, Info, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { doc, onSnapshot, DocumentData, collection, addDoc, serverTimestamp, runTransaction, query, where, increment, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -36,6 +36,7 @@ export default function WithdrawalPage() {
     const [amount, setAmount] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasPendingWithdrawal, setHasPendingWithdrawal] = useState(false);
+    const [isMobileVisible, setIsMobileVisible] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -231,7 +232,12 @@ export default function WithdrawalPage() {
             <main className="flex-1 p-4">
                  <div className="bg-[#112a45] text-white rounded-lg p-4 text-center">
                     <h2 className="text-lg font-bold">{user.displayName}</h2>
-                    <p className="text-lg">{mobileNumber}</p>
+                    <div className="flex items-center justify-center gap-2 text-lg">
+                        <span>{isMobileVisible ? mobileNumber : '**********'}</span>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-white" onClick={() => setIsMobileVisible(!isMobileVisible)}>
+                            {isMobileVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                    </div>
                     <div className="bg-black/50 mt-2 p-2 rounded-md">
                         <p className="text-sm">Withdrawable Balance</p>
                         <p className="text-xl font-bold">₹ {profile.balance?.toFixed(1) || '0.0'}</p>

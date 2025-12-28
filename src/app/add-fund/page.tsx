@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Landmark, Phone, Wallet, Info } from 'lucide-react';
+import { ArrowLeft, Landmark, Phone, Wallet, Info, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { doc, onSnapshot, DocumentData, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -32,6 +32,7 @@ export default function AddFundPage() {
     const [settings, setSettings] = useState<AppSettings>({});
     const [amount, setAmount] = useState('');
     const [hasPendingDeposit, setHasPendingDeposit] = useState(false);
+    const [isMobileVisible, setIsMobileVisible] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -141,7 +142,12 @@ export default function AddFundPage() {
             <main className="flex-1 p-4">
                 <div className="bg-[#112a45] text-white rounded-lg p-4 mb-4 text-center">
                     <h2 className="text-lg font-bold">{user.displayName}</h2>
-                    <p className="text-sm">{mobileNumber}</p>
+                    <div className="flex items-center justify-center gap-2 text-sm">
+                        <span>{isMobileVisible ? mobileNumber : '**********'}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsMobileVisible(!isMobileVisible)}>
+                            {isMobileVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                    </div>
                     <div className="bg-black/50 mt-2 p-2 rounded-md">
                         <p className="text-sm">Available Balance</p>
                         <p className="text-xl font-bold">₹ {totalBalance.toFixed(1) || '0.0'}</p>
