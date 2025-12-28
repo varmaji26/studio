@@ -116,6 +116,15 @@ const settingsSchema = z.object({
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
     z.number().min(0, 'Bonus amount cannot be negative.')
   ),
+  referralBonusEnabled: z.boolean().default(false),
+  referrerBonusAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 0 : Number(val)),
+    z.number().min(0, 'Bonus amount cannot be negative.')
+  ),
+  refereeBonusAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 0 : Number(val)),
+    z.number().min(0, 'Bonus amount cannot be negative.')
+  ),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -171,6 +180,9 @@ export default function SettingsPage() {
       bonusPopupLink: '/add-fund',
       welcomeBonusEnabled: false,
       welcomeBonusAmount: 0,
+      referralBonusEnabled: false,
+      referrerBonusAmount: 0,
+      refereeBonusAmount: 0,
     },
   });
 
@@ -217,6 +229,9 @@ export default function SettingsPage() {
             bonusPopupLink: data.bonusPopup?.link || '/add-fund',
             welcomeBonusEnabled: data.welcomeBonus?.enabled || false,
             welcomeBonusAmount: data.welcomeBonus?.amount || 0,
+            referralBonusEnabled: data.referralBonus?.enabled || false,
+            referrerBonusAmount: data.referralBonus?.referrerAmount || 0,
+            refereeBonusAmount: data.referralBonus?.refereeAmount || 0,
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -488,6 +503,11 @@ export default function SettingsPage() {
               enabled: values.welcomeBonusEnabled,
               amount: values.welcomeBonusAmount,
             },
+            referralBonus: {
+                enabled: values.referralBonusEnabled,
+                referrerAmount: values.referrerBonusAmount,
+                refereeAmount: values.refereeBonusAmount,
+            }
         };
 
         if (qrCodeData) {
@@ -752,7 +772,7 @@ export default function SettingsPage() {
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <Accordion type="multiple" defaultValue={['item-1']} className="w-full">
+                <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5']} className="w-full">
                   {/* Golden Ank & Marquee Section */}
                   <AccordionItem value="item-1">
                     <AccordionTrigger className="text-lg font-semibold">Golden Ank & Marquee</AccordionTrigger>
@@ -822,6 +842,15 @@ export default function SettingsPage() {
                       <Separator />
                       <FormField control={form.control} name="welcomeBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Welcome Bonus</FormLabel><FormDescriptionComponent>Give new users a bonus on signup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                       {form.watch('welcomeBonusEnabled') && (<FormField control={form.control} name="welcomeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Welcome Bonus Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                      <Separator />
+                        <FormField control={form.control} name="referralBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Referral Bonus</FormLabel><FormDescriptionComponent>Reward users for referring new players.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      {form.watch('referralBonusEnabled') && (
+                        <>
+                            <FormField control={form.control} name="referrerBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referrer Bonus (Old User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the person who referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="refereeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referee Bonus (New User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the new user who was referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        </>
+                      )}
+
                       <Separator />
                       <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel><FormDescriptionComponent>Show a bonus offer popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                       {form.watch('bonusPopupEnabled') && (
@@ -918,5 +947,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-  

@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, getDoc, where, writeBatch, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, DocumentData, orderBy, runTransaction, increment, getDoc, where, writeBatch, getDocs, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -111,22 +110,63 @@ export default function DepositRequestsPage() {
         if (!userDoc.exists()) {
             throw new Error("User not found!");
         }
+        const userData = userDoc.data();
 
         if (status === 'approved') {
           const settingsDoc = await transaction.get(settingsDocRef);
-          const settings = settingsDoc.data()?.bonus || { enabled: false, percentage: 0 };
+          const settings = settingsDoc.data();
+          const bonusSettings = settings?.bonus || { enabled: false, percentage: 0 };
           
           let bonusAmount = 0;
-          if (settings.enabled && settings.percentage > 0) {
-              bonusAmount = (request.amount * settings.percentage) / 100;
+          if (bonusSettings.enabled && bonusSettings.percentage > 0) {
+              bonusAmount = (request.amount * bonusSettings.percentage) / 100;
           }
 
           transaction.update(userDocRef, { 
               balance: increment(request.amount),
               bonusBalance: increment(bonusAmount),
-              totalBonusGiven: increment(bonusAmount)
+              totalBonusGiven: increment(bonusAmount),
+              hasDeposited: true
           });
           transaction.update(statsDocRef, { totalBalance: increment(request.amount) });
+          
+          // Referral bonus logic
+          const referralSettings = settings?.referralBonus || { enabled: false, referrerAmount: 0, refereeAmount: 0 };
+          if (referralSettings.enabled && !userData.hasDeposited && userData.referredBy) {
+              const referrerDocRef = doc(db, 'users', userData.referredBy);
+              const referrerDoc = await transaction.get(referrerDocRef);
+
+              if (referrerDoc.exists()) {
+                  // Give bonus to referrer
+                  if (referralSettings.referrerAmount > 0) {
+                    transaction.update(referrerDocRef, { bonusBalance: increment(referralSettings.referrerAmount) });
+                    const bonusTxRef = doc(collection(db, 'bonusTransactions'));
+                    transaction.set(bonusTxRef, {
+                        userId: userData.referredBy,
+                        displayName: referrerDoc.data()?.displayName,
+                        mobile: referrerDoc.data()?.mobile,
+                        amount: referralSettings.referrerAmount,
+                        type: 'Given',
+                        description: `Referral bonus for referring ${userData.displayName}`,
+                        createdAt: serverTimestamp(),
+                    });
+                  }
+                  // Give bonus to new user (referee)
+                  if (referralSettings.refereeAmount > 0) {
+                      transaction.update(userDocRef, { bonusBalance: increment(referralSettings.refereeAmount) });
+                      const bonusTxRef = doc(collection(db, 'bonusTransactions'));
+                      transaction.set(bonusTxRef, {
+                          userId: request.userId,
+                          displayName: userData.displayName,
+                          mobile: userData.mobile,
+                          amount: referralSettings.refereeAmount,
+                          type: 'Given',
+                          description: 'Bonus for being referred',
+                          createdAt: serverTimestamp(),
+                      });
+                  }
+              }
+          }
         }
         
         transaction.update(requestDocRef, { status: status });
