@@ -7,6 +7,7 @@ import { doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore'
 
 export const requestForToken = async (userId: string) => {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    console.log("Push messaging is not supported");
     return null;
   }
   
@@ -15,7 +16,12 @@ export const requestForToken = async (userId: string) => {
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      const currentToken = await getToken(messaging, { vapidKey: 'BM-2iy1G5_2mnN8A5II7mf0pTISah5HU7i9xQx6hB_8-Fk2y9L3V-w4y_C0X_5d0AFlY50D_c5lZ_619WTJ-Q_Y' });
+      console.log('Notification permission granted.');
+      // Get the token
+      const currentToken = await getToken(messaging, { 
+          vapidKey: 'BM-2iy1G5_2mnN8A5II7mf0pTISah5HU7i9xQx6hB_8-Fk2y9L3V-w4y_C0X_5d0AFlY50D_c5lZ_619WTJ-Q_Y',
+          serviceWorkerRegistration: await navigator.serviceWorker.ready
+      });
       if (currentToken) {
         console.log('FCM token:', currentToken);
         // Save the token to the user's document in Firestore
