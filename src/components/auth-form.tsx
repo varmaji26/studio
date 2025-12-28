@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 
 
 import { Button } from '@/components/ui/button';
@@ -157,9 +158,19 @@ export function AuthForm({ mode }: AuthFormProps) {
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
 
-        if (userDoc.exists() && userDoc.data().isBlocked) {
-            await auth.signOut();
-            throw new Error("Your account has been blocked. Please contact support.");
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.isBlocked) {
+                await auth.signOut();
+                throw new Error("Your account has been blocked. Please contact support.");
+            }
+            // Check if referral code exists, if not, generate and set it.
+            if (!userData.referralCode) {
+                const newReferralCode = user.uid.substring(0, 8).toUpperCase();
+                await updateDoc(userDocRef, {
+                    referralCode: newReferralCode
+                });
+            }
         }
       }
       router.push('/');
@@ -287,6 +298,13 @@ export function AuthForm({ mode }: AuthFormProps) {
                 {mode === 'login' ? 'Create Account' : 'Sign In'}
               </Link>
             </p>
+             {mode === 'login' && (
+                <p className="mt-2 text-center text-sm">
+                    <Link href="/forgot-password" passHref>
+                        <span className="font-semibold text-orange-400 hover:underline cursor-pointer">Forgot Password?</span>
+                    </Link>
+                </p>
+             )}
           </CardFooter>
         </form>
       </Form>
