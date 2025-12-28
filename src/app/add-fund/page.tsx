@@ -183,7 +183,7 @@ export default function AddFundPage() {
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-3 mt-3">
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('100')}>100</Button>
+                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount(minDeposit.toString())}>{minDeposit}</Button>
                         <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('500')}>500</Button>
                         <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('1000')}>1000</Button>
                         <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('1500')}>1500</Button>
