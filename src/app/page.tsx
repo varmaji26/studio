@@ -51,6 +51,12 @@ import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel"
+import Autoplay from "embla-carousel-autoplay"
 
 
 interface Game extends DocumentData {
@@ -232,7 +238,7 @@ export default function Home() {
       setGames(filteredGames);
     });
 
-    const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"), limit(1));
+    const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"));
     const unsubscribeBanners = onSnapshot(bannersQuery, (querySnapshot) => {
         const bannersData: Banner[] = [];
         querySnapshot.forEach((doc) => {
@@ -537,32 +543,33 @@ export default function Home() {
         </Dialog>
 
 
-        {settings.welcomeBanner?.imageUrl && (
-            <Card className="bg-card/80 border-white/10 shadow-lg shadow-white/10">
-                <CardContent className="p-0">
-                    <Image
-                        src={settings.welcomeBanner.imageUrl}
-                        alt="Welcome Banner"
-                        width={1200}
-                        height={400}
-                        className="w-full h-auto object-cover rounded-lg"
-                        data-ai-hint="king"
-                        priority
-                    />
-                </CardContent>
-            </Card>
-        )}
-        
         {banners.length > 0 && (
-            <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-                <CardContent className="p-0">
-                    <img
-                        src={banners[0].imageUrl}
+          <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+            <CardContent className="p-0">
+              <Carousel
+                className="w-full"
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                    stopOnInteraction: false,
+                    stopOnMouseEnter: true,
+                  }),
+                ]}
+              >
+                <CarouselContent>
+                  {banners.map((banner) => (
+                    <CarouselItem key={banner.id}>
+                      <img
+                        src={banner.imageUrl}
                         alt="Banner"
                         className="w-full h-auto max-h-[250px] object-cover"
-                    />
-                </CardContent>
-            </Card>
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            </CardContent>
+          </Card>
         )}
         
         <Card className="bg-card/80 border-white/10 shadow-lg">
