@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -286,14 +285,29 @@ export default function WithdrawalPage() {
             </main>
 
             <footer className="p-4 bg-white sticky bottom-0">
-                <Button 
-                    className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full"
-                    onClick={handleSendRequest}
-                    disabled={isSubmitting || hasPendingWithdrawal}
-                >
-                    {isSubmitting && <Loader className="mr-2 h-5 w-5"/>}
-                    {isSubmitting ? 'Sending...' : hasPendingWithdrawal ? 'Request Pending' : 'Send Request'}
-                </Button>
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button 
+                            className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full"
+                            disabled={isSubmitting || hasPendingWithdrawal || !amount || parseInt(amount, 10) < 1000 || parseInt(amount, 10) > (profile.balance || 0)}
+                        >
+                            {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
+                            {isSubmitting ? 'Sending...' : hasPendingWithdrawal ? 'Request Pending' : 'Send Request'}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Your withdrawal request will be processed within 24 hours. Please wait.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSendRequest}>Confirm</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </footer>
         </div>
     );
