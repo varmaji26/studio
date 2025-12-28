@@ -21,6 +21,7 @@ interface UserProfile extends DocumentData {
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
+    minimumDepositAmount?: number;
 }
 
 export default function AddFundPage() {
@@ -76,12 +77,13 @@ export default function AddFundPage() {
     };
     
     const handlePayNow = () => {
+        const minDeposit = settings.minimumDepositAmount || 100;
         const parsedAmount = parseInt(amount, 10);
-        if (isNaN(parsedAmount) || parsedAmount < 100) {
+        if (isNaN(parsedAmount) || parsedAmount < minDeposit) {
             toast({
                 variant: 'destructive',
                 title: 'Invalid Amount',
-                description: 'Minimum amount to add is ₹100.',
+                description: `Minimum amount to add is ₹${minDeposit}.`,
             });
             return;
         }
@@ -119,6 +121,7 @@ export default function AddFundPage() {
 
     const mobileNumber = user.email?.split('@')[0];
     const totalBalance = (profile.balance || 0);
+    const minDeposit = settings.minimumDepositAmount || 100;
 
     return (
         <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
@@ -168,7 +171,7 @@ export default function AddFundPage() {
                     </Alert>
                 ) : (
                 <div className="my-4">
-                    <p className="text-center text-gray-600 mb-2">Enter Amount</p>
+                    <p className="text-center text-gray-600 mb-2">Enter Amount (Min: ₹{minDeposit})</p>
                     <div className="relative">
                         <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400"/>
                         <Input 

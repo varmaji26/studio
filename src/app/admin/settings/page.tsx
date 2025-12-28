@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -125,6 +126,14 @@ const settingsSchema = z.object({
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
     z.number().min(0, 'Bonus amount cannot be negative.')
   ),
+  minimumDepositAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 100 : Number(val)),
+    z.number().min(1, 'Minimum deposit must be at least 1.')
+  ),
+   minimumWithdrawalAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 1000 : Number(val)),
+    z.number().min(1, 'Minimum withdrawal must be at least 1.')
+  ),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -183,6 +192,8 @@ export default function SettingsPage() {
       referralBonusEnabled: false,
       referrerBonusAmount: 0,
       refereeBonusAmount: 0,
+      minimumDepositAmount: 100,
+      minimumWithdrawalAmount: 1000,
     },
   });
 
@@ -232,6 +243,8 @@ export default function SettingsPage() {
             referralBonusEnabled: data.referralBonus?.enabled || false,
             referrerBonusAmount: data.referralBonus?.referrerAmount || 0,
             refereeBonusAmount: data.referralBonus?.refereeAmount || 0,
+            minimumDepositAmount: data.minimumDepositAmount || 100,
+            minimumWithdrawalAmount: data.minimumWithdrawalAmount || 1000,
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -469,6 +482,8 @@ export default function SettingsPage() {
             whatsappNumber: values.whatsappNumber,
             callSupportNumber: values.callSupportNumber,
             telegramLink: values.telegramLink,
+            minimumDepositAmount: values.minimumDepositAmount,
+            minimumWithdrawalAmount: values.minimumWithdrawalAmount,
             paymentDetails: {
                 ...currentPaymentDetails,
                 'UPI': { title: "UPI Payment", details: values.upiId },
@@ -878,11 +893,14 @@ export default function SettingsPage() {
 
                   {/* Support & Notice Section */}
                    <AccordionItem value="item-3">
-                    <AccordionTrigger className="text-lg font-semibold">Support & Notice</AccordionTrigger>
+                    <AccordionTrigger className="text-lg font-semibold">Support & Amounts</AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-4">
                         <FormField control={form.control} name="whatsappNumber" render={({ field }) => (<FormItem><FormLabel>WhatsApp Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="e.g., https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                         <Separator/>
+                         <FormField control={form.control} name="minimumDepositAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Deposit Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="minimumWithdrawalAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Withdrawal Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 1000" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <Separator/>
                         <FormField control={form.control} name="noticeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Enable Notice</FormLabel><FormDescriptionComponent>Show the notice board on the home page.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                         <FormField control={form.control} name="noticeText" render={({ field }) => (<FormItem><FormLabel>Notice Text</FormLabel><FormControl><Textarea placeholder="Enter notice text for home page." {...field} /></FormControl><FormMessage /></FormItem>)} />

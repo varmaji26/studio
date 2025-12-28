@@ -24,6 +24,7 @@ interface UserProfile extends DocumentData {
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
+    minimumWithdrawalAmount?: number;
 }
 
 export default function WithdrawalPage() {
@@ -88,12 +89,13 @@ export default function WithdrawalPage() {
             return;
         }
 
+        const minWithdrawal = settings.minimumWithdrawalAmount || 1000;
         const parsedAmount = parseInt(amount, 10);
-        if (isNaN(parsedAmount) || parsedAmount < 1000) {
+        if (isNaN(parsedAmount) || parsedAmount < minWithdrawal) {
             toast({
                 variant: 'destructive',
                 title: 'Invalid Amount',
-                description: 'Minimum withdrawal amount is ₹1000.',
+                description: `Minimum withdrawal amount is ₹${minWithdrawal}.`,
             });
             return;
         }
@@ -209,6 +211,7 @@ export default function WithdrawalPage() {
     
     const mobileNumber = user.email?.split('@')[0];
     const totalBalance = (profile.balance || 0) + (profile.bonusBalance || 0);
+    const minWithdrawal = settings.minimumWithdrawalAmount || 1000;
 
     return (
         <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
@@ -266,7 +269,7 @@ export default function WithdrawalPage() {
                     </Alert>
                 ) : (
                 <div className="my-4">
-                    <p className="text-center text-gray-600 mb-2">Enter Amount</p>
+                    <p className="text-center text-gray-600 mb-2">Enter Amount (Min: ₹{minWithdrawal})</p>
                     <div className="relative">
                         <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400"/>
                          <Input 
@@ -292,7 +295,7 @@ export default function WithdrawalPage() {
                     <AlertDialogTrigger asChild>
                          <Button 
                             className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full"
-                            disabled={isSubmitting || hasPendingWithdrawal || !amount || parseInt(amount, 10) < 1000 || parseInt(amount, 10) > (profile.balance || 0)}
+                            disabled={isSubmitting || hasPendingWithdrawal || !amount || parseInt(amount, 10) < minWithdrawal || parseInt(amount, 10) > (profile.balance || 0)}
                         >
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
                             {isSubmitting ? 'Sending...' : hasPendingWithdrawal ? 'Request Pending' : 'Send Request'}
