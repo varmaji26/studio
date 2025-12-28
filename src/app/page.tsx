@@ -38,6 +38,7 @@ import {
   Gift,
   IndianRupee,
   XCircle,
+  Copy,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -103,6 +104,7 @@ interface AppSettings extends DocumentData {
 interface UserProfile extends DocumentData {
   balance?: number;
   bonusBalance?: number;
+  referralCode?: string;
 }
 
 // Memoized Game Card Component for performance optimization
@@ -259,6 +261,24 @@ export default function Home() {
         unsubscribeUserProfile();
     };
   }, [user, currentDay]);
+  
+  const handleCopyToClipboard = () => {
+    if (userProfile.referralCode) {
+        navigator.clipboard.writeText(userProfile.referralCode).then(() => {
+            toast({
+                title: 'Copied!',
+                description: 'Referral code has been copied to clipboard.',
+            });
+        }, (err) => {
+            console.error('Could not copy text: ', err);
+             toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to copy referral code.',
+            });
+        });
+    }
+  };
 
   const handleBonusPopupClose = () => {
     setShowBonusPopup(false);
@@ -358,6 +378,14 @@ export default function Home() {
                         </Avatar>
                         <p className="font-bold text-lg">{user.displayName}</p>
                         <p className="text-muted-foreground">+91 {mobileNumber}</p>
+                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <span>Referral: {userProfile.referralCode || 'N/A'}</span>
+                            {userProfile.referralCode && (
+                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleCopyToClipboard}>
+                                    <Copy className="h-3 w-3" />
+                                </Button>
+                            )}
+                        </div>
                     </div>
                     </div>
                     <Separator className="bg-white/10 my-2" />
