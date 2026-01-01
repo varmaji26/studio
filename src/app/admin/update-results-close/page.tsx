@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -123,28 +122,23 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
-        // Update Jodi Chart
-        const jodiChartRef = doc(db, 'jodiCharts', game.id);
-        const jodiChartSnap = await getDoc(jodiChartRef);
-        if (jodiChartSnap.exists()) {
-            const jodiData = jodiChartSnap.data();
-            const today = new Date();
-            const todayDay = today.toLocaleDateString('en-US', { weekday: 'long' });
-            const activeDays = jodiData.activeDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            
-            if (activeDays.includes(todayDay)) {
-                let newData = jodiData.data ? `${jodiData.data} ${finalJodi}` : finalJodi;
-                batch.update(jodiChartRef, { data: newData });
-            }
-        }
-        
         // Update Panel Chart
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelChartData = panelChartSnap.data().data || '';
+
+            // Logic to determine the correct date for the update
+            const now = new Date();
+            const closeTimeParts = game.closeTime.split(':').map(Number);
+            // If close time is before 4 AM, it belongs to the previous day's results.
+            const isLateNightResult = closeTimeParts[0] < 4;
             const today = new Date();
+            if (isLateNightResult && now.getHours() < 4) {
+              today.setDate(today.getDate() - 1);
+            }
             today.setHours(0, 0, 0, 0);
+
             const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
