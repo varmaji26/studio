@@ -29,6 +29,7 @@ interface Game extends DocumentData {
     openResult: string;
     closeResult: string;
     result: string;
+    closeTime: string;
 }
 
 const WIN_RATES = {
@@ -140,8 +141,18 @@ export default function UpdateResultsClosePage() {
         const panelChartSnap = await getDoc(panelChartRef);
         if (panelChartSnap.exists()) {
             const panelChartData = panelChartSnap.data().data || '';
-            const today = new Date();
+            
+            let today = new Date();
+            const closeTimeParts = game.closeTime.split(':').map(Number);
+            // If close time is after midnight but before ~4 AM, consider it as the previous day's result.
+            if (closeTimeParts[0] < 4) {
+                 const currentHour = new Date().getHours();
+                 if (currentHour < 4) {
+                    today.setDate(today.getDate() - 1);
+                 }
+            }
             today.setHours(0, 0, 0, 0);
+
             const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
@@ -425,3 +436,5 @@ export default function UpdateResultsClosePage() {
   );
 }
 
+
+    
