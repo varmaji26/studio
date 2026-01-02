@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -106,14 +105,17 @@ export function AuthForm({ mode }: AuthFormProps) {
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         
         await runTransaction(db, async (transaction) => {
+            // --- READS FIRST ---
             const statsDoc = await transaction.get(statsDocRef);
+            const settingsDoc = await transaction.get(settingsDocRef);
+            
+            // --- WRITES SECOND ---
             if (!statsDoc.exists()) {
                 transaction.set(statsDocRef, { totalUsers: 1, totalGames: 0, totalBalance: 0 });
             } else {
                 transaction.update(statsDocRef, { totalUsers: increment(1) });
             }
-
-            const settingsDoc = await transaction.get(settingsDocRef);
+            
             const welcomeBonusSettings = settingsDoc.exists() ? settingsDoc.data().welcomeBonus : { enabled: false, amount: 0 };
 
             let welcomeBonusAmount = 0;
