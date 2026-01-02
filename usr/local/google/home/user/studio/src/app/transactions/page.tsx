@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 interface Transaction extends DocumentData {
     id: string;
     amount: number;
-    status?: 'pending' | 'approved' | 'rejected' | 'won' | 'lost' | 'running' | 'cancelled' | 'reverted';
+    status?: 'pending' | 'approved' | 'rejected' | 'won' | 'lost' | 'running' | 'cancelled' | 'reverted' | 'Given' | 'Reset';
     createdAt: Timestamp;
     type: 'deposit' | 'withdrawal' | 'bet' | 'win' | 'bonus';
     description: string;
@@ -138,6 +138,7 @@ export default function TransactionDetailsPage() {
                             type: type,
                             title: data.type === 'Given' ? 'Bonus Given' : 'Bonus Reset',
                             description: description(data),
+                            status: data.type, // Use 'type' from bonus as 'status'
                             ...data
                         });
                     } else {
@@ -154,7 +155,7 @@ export default function TransactionDetailsPage() {
                 });
 
                 setTransactions(prev => {
-                    const otherTransactions = prev.filter(t => t.type !== type && (type !== 'bet' || t.type !== 'win'));
+                    const otherTransactions = prev.filter(t => t.type !== type && (type !== 'bet' || t.type !== 'win') && t.type !== 'bonus');
                     return [...otherTransactions, ...fetchedTransactions];
                 });
             });
