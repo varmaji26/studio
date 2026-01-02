@@ -542,6 +542,17 @@ export default function Home() {
             </DialogContent>
         </Dialog>
 
+        {settings.welcomeBanner?.imageUrl && (
+            <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+                <CardContent className="p-0">
+                    <img
+                        src={settings.welcomeBanner.imageUrl}
+                        alt="Welcome Banner"
+                        className="w-full h-auto max-h-[250px] object-cover"
+                    />
+                </CardContent>
+            </Card>
+        )}
 
         {banners.length > 0 && (
           <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
