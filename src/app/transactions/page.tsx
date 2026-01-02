@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { ArrowLeft, Wallet, ArrowDown, ArrowUp, MessageCircle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Wallet, ArrowDown, ArrowUp, MessageCircle, RotateCcw, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -19,9 +19,9 @@ import { useToast } from '@/hooks/use-toast';
 interface Transaction extends DocumentData {
     id: string;
     amount: number;
-    status?: 'pending' | 'approved' | 'rejected' | 'won' | 'lost' | 'running' | 'cancelled' | 'reverted';
+    status?: 'pending' | 'approved' | 'rejected' | 'won' | 'lost' | 'running' | 'cancelled' | 'reverted' | 'Given' | 'Reset';
     createdAt: Timestamp;
-    type: 'deposit' | 'withdrawal' | 'bet' | 'win';
+    type: 'deposit' | 'withdrawal' | 'bet' | 'win' | 'bonus';
     description: string;
     title: string;
     bonusResetAmount?: number;
@@ -33,7 +33,7 @@ interface UserProfile extends DocumentData {
 
 const ITEMS_PER_PAGE = 10;
 
-const TransactionIcon = ({ type }: { type: Transaction['type'] }) => {
+const TransactionIcon = ({ type, status }: { type: Transaction['type'], status?: Transaction['status'] }) => {
     switch (type) {
         case 'deposit':
             return <div className="p-2 bg-green-500/20 rounded-full"><ArrowUp className="h-5 w-5 text-green-400" /></div>;
@@ -47,6 +47,8 @@ const TransactionIcon = ({ type }: { type: Transaction['type'] }) => {
                     </svg>
                 </div>
             );
+        case 'bonus':
+            return <div className={`p-2 rounded-full ${status === 'Given' ? 'bg-green-500/20' : 'bg-red-500/20'}`}><Gift className={`h-5 w-5 ${status === 'Given' ? 'text-green-400' : 'text-red-400'}`} /></div>;
         case 'bet':
         default:
             return (
@@ -59,7 +61,7 @@ const TransactionIcon = ({ type }: { type: Transaction['type'] }) => {
 };
 
 const TransactionItem = ({ transaction }: { transaction: Transaction; }) => {
-    const isCredit = transaction.type === 'deposit' || transaction.type === 'win';
+    const isCredit = transaction.type === 'deposit' || transaction.type === 'win' || (transaction.type === 'bonus' && transaction.status === 'Given');
     const amountColor = isCredit ? 'text-green-400' : 'text-red-400';
     
     return (
@@ -68,7 +70,7 @@ const TransactionItem = ({ transaction }: { transaction: Transaction; }) => {
             transaction.type === 'win' && 'animate-won-glow'
         )}>
             <div className="flex items-center gap-3">
-                <TransactionIcon type={transaction.type} />
+                <TransactionIcon type={transaction.type} status={transaction.status} />
                 <div>
                     <h4 className="font-bold text-sm text-foreground">{transaction.title}</h4>
                     <p className="text-xs text-muted-foreground">{transaction.description}</p>
@@ -103,10 +105,11 @@ export default function TransactionDetailsPage() {
 
         setLoading(true);
 
-        const collectionsToQuery: { name: string; type: 'deposit' | 'withdrawal' | 'bet'; title: string; description: (doc: any) => string; }[] = [
+        const collectionsToQuery: { name: string; type: Transaction['type']; title: string; description: (doc: any) => string; }[] = [
             { name: 'deposits', type: 'deposit', title: 'Deposit', description: (doc: any) => `via ${doc.paymentMethod}` },
             { name: 'withdrawals', type: 'withdrawal', title: 'Withdraw', description: (doc: any) => `status: ${doc.status}` },
             { name: 'bids', type: 'bet', title: 'Bet Market', description: (doc: any) => `For bet ${doc.betType} ${doc.session}` },
+            { name: 'bonusTransactions', type: 'bonus', title: 'Bonus', description: (doc: any) => doc.description },
         ];
 
         const unsubscribes = collectionsToQuery.map(({ name, type, title, description }) => {
@@ -127,6 +130,17 @@ export default function TransactionDetailsPage() {
                                 ...data
                             });
                         }
+                    } else if (type === 'bonus') {
+                        fetchedTransactions.push({
+                            id: doc.id,
+                            amount: data.amount,
+                            createdAt: data.createdAt,
+                            type: type,
+                            title: data.type === 'Given' ? 'Bonus Given' : 'Bonus Reset',
+                            description: description(data),
+                            status: data.type, // Use 'type' from bonus as 'status'
+                            ...data
+                        });
                     } else {
                          fetchedTransactions.push({
                             id: doc.id,
@@ -141,7 +155,7 @@ export default function TransactionDetailsPage() {
                 });
 
                 setTransactions(prev => {
-                    const otherTransactions = prev.filter(t => t.type !== type && (type !== 'bet' || t.type !== 'win'));
+                    const otherTransactions = prev.filter(t => t.type !== type && (type !== 'bet' || t.type !== 'win') && t.type !== 'bonus');
                     return [...otherTransactions, ...fetchedTransactions];
                 });
             });
