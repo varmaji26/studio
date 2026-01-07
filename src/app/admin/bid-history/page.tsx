@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, writeBatch, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,13 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { runTransaction, doc, increment } from 'firebase/firestore';
+import { cleanOldBids } from '@/actions/clean-old-bids';
 
 
 interface Bid extends DocumentData {
@@ -198,53 +199,21 @@ export default function AdminBidHistoryPage() {
   const handleCleanOldBids = async () => {
       setIsCleaning(true);
       try {
-          const thirtyDaysAgo = Timestamp.fromDate(subDays(new Date(), 30));
-          
-          let totalDeleted = 0;
-          let hasMore = true;
-
-          while (hasMore) {
-              const oldBidsQuery = query(collection(db, 'bids'), where('createdAt', '<', thirtyDaysAgo), limit(500));
-              const querySnapshot = await getDocs(oldBidsQuery);
-              
-              if (querySnapshot.empty) {
-                  hasMore = false;
-                  break;
-              }
-
-              const batch = writeBatch(db);
-              querySnapshot.forEach(doc => {
-                  batch.delete(doc.ref);
-              });
-
-              await batch.commit();
-              totalDeleted += querySnapshot.size;
-              
-              if (querySnapshot.size < 500) {
-                  hasMore = false;
-              } else {
-                   toast({
-                      title: 'Cleaning in progress...',
-                      description: `${totalDeleted} bids deleted so far. Deleting more in batches.`
-                  });
-              }
-          }
-
-          if (totalDeleted === 0) {
-              toast({ title: 'No old bids to clean.', description: 'There are no bids older than 30 days.' });
-          } else {
+          const result = await cleanOldBids();
+          if (result.success) {
               toast({
                   title: 'Success!',
-                  description: `Cleanup complete. A total of ${totalDeleted} old bids have been successfully deleted.`
+                  description: result.message,
               });
+          } else {
+              throw new Error(result.message);
           }
-
       } catch (error: any) {
           console.error('Error cleaning old bids:', error);
           toast({
               variant: 'destructive',
               title: 'Cleanup Failed',
-              description: 'Could not delete old bids. Please check the console and try again.'
+              description: error.message || 'Could not delete old bids. Please check server logs and try again.'
           });
       } finally {
           setIsCleaning(false);
