@@ -2,18 +2,18 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, writeBatch, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, Calendar as CalendarIcon, Download, XCircle } from 'lucide-react';
+import { Search, Calendar as CalendarIcon, Download, XCircle, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -54,6 +54,7 @@ export default function AdminBidHistoryPage() {
   const { toast } = useToast();
   
   const [currentPage, setCurrentPage] = useState(1);
+  const [isCleaning, setIsCleaning] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -194,6 +195,43 @@ export default function AdminBidHistoryPage() {
     }
   };
 
+  const handleCleanOldBids = async () => {
+    setIsCleaning(true);
+    try {
+        const thirtyDaysAgo = subDays(new Date(), 30);
+        const oldBidsQuery = query(collection(db, 'bids'), where('createdAt', '<', Timestamp.fromDate(thirtyDaysAgo)));
+        
+        const querySnapshot = await getDocs(oldBidsQuery);
+
+        if (querySnapshot.empty) {
+            toast({ title: 'No old bids to clean.', description: 'There are no bids older than 30 days.' });
+            setIsCleaning(false);
+            return;
+        }
+
+        const batch = writeBatch(db);
+        querySnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+
+        toast({
+            title: 'Success!',
+            description: `${querySnapshot.size} old bids have been successfully deleted.`
+        });
+    } catch (error: any) {
+        console.error('Error cleaning old bids:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Cleanup Failed',
+            description: 'Could not delete old bids. Please try again.'
+        });
+    } finally {
+        setIsCleaning(false);
+    }
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
         case 'won': return 'secondary';
@@ -242,10 +280,32 @@ export default function AdminBidHistoryPage() {
                 <CardTitle className="text-3xl font-bold">Bid History</CardTitle>
                 <CardDescription>View all bids placed by users across all games.</CardDescription>
               </div>
-              <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-              </Button>
+              <div className="flex gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={isCleaning}>
+                        {isCleaning ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        Clean Old Bids
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action will permanently delete all bids older than 30 days. This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleCleanOldBids}>Confirm & Clean</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <Button onClick={handleDownloadPDF} variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download PDF
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
