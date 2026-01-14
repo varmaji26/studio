@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
-import { Search, Trophy, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { Search, Trophy, Calendar as CalendarIcon, Download, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,6 +18,9 @@ import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { cleanOldWins } from '@/actions/clean-old-wins';
 
 
 interface Win extends DocumentData {
@@ -45,10 +48,12 @@ const ITEMS_PER_PAGE = 10;
 export default function AdminWinHistoryPage() {
   const [allWins, setAllWins] = useState<Win[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCleaning, setIsCleaning] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -164,6 +169,29 @@ export default function AdminWinHistoryPage() {
     doc.save(`win-history-report-${fromDate ? format(fromDate, "yyyy-MM-dd") : 'all-time'}.pdf`);
   };
 
+  const handleCleanOldWins = async () => {
+    setIsCleaning(true);
+    try {
+        const result = await cleanOldWins(10);
+        if (result.success) {
+            toast({
+                title: "Success!",
+                description: `${result.deletedCount} old winning bids have been deleted.`,
+            });
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error.message || 'Failed to clean old wins.'
+        });
+    } finally {
+        setIsCleaning(false);
+    }
+  }
+
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
@@ -204,10 +232,32 @@ export default function AdminWinHistoryPage() {
                     </CardTitle>
                     <CardDescription>View all winning bids and payouts.</CardDescription>
                 </div>
-                 <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                </Button>
+                <div className="flex gap-2">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" disabled={isCleaning}>
+                                {isCleaning ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                Clean Wins (Older than 10 Days)
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete all winning bid records older than 10 days. This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleCleanOldWins}>Confirm Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <Button onClick={handleDownloadPDF} variant="outline" size="sm">
+                        <Download className="h-4 w-4 mr-2" />
+                        Download PDF
+                    </Button>
+                </div>
              </div>
           </CardHeader>
           <CardContent>
