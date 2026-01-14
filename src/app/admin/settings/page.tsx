@@ -22,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Trash2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { cleanAllUserData } from '@/actions/clean-all-user-data';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
@@ -119,6 +120,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   
   const [existingQrUrl, setExistingQrUrl] = useState<string | null>(null);
@@ -718,6 +720,29 @@ export default function SettingsPage() {
     }
   };
 
+  const handleCleanUserData = async () => {
+    setIsCleaning(true);
+    try {
+        const result = await cleanAllUserData(10);
+         if (result.success) {
+            toast({
+                title: "Success!",
+                description: `${result.deletedBidsCount} bids, ${result.deletedDepositsCount} deposits, and ${result.deletedWithdrawalsCount} withdrawals deleted.`,
+            });
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error: any) {
+         toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error.message || 'Failed to clean old user data.'
+        });
+    } finally {
+        setIsCleaning(false);
+    }
+  }
+
 
   return (
     <div className="flex-1 space-y-6">
@@ -880,6 +905,43 @@ export default function SettingsPage() {
                         <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                     </AccordionContent>
                   </AccordionItem>
+                  
+                  {/* Data Management Section */}
+                   <AccordionItem value="item-6">
+                        <AccordionTrigger className="text-lg font-semibold">Data Management</AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-4">
+                            <Card className="bg-destructive/10 border-destructive">
+                                <CardHeader>
+                                    <CardTitle className="text-destructive">Clean User Data</CardTitle>
+                                    <CardDescription className="text-destructive/80">
+                                        This will permanently delete all bids, deposits, and withdrawal records older than 10 days for ALL users. This action is irreversible and helps keep the app running smoothly.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" className="w-full" disabled={isCleaning}>
+                                                {isCleaning ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                                Clean All User Data (Older than 10 Days)
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    You are about to delete all bids, deposits, and withdrawals older than 10 days for every user. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleCleanUserData}>I understand, delete the data</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </CardContent>
+                            </Card>
+                        </AccordionContent>
+                   </AccordionItem>
                 </Accordion>
 
                 {isSubmitting && uploadProgress !== null && (

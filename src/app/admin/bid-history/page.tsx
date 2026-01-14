@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, Calendar as CalendarIcon, Download, XCircle } from 'lucide-react';
+import { Search, Calendar as CalendarIcon, Download, XCircle, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,6 +21,7 @@ import 'jspdf-autotable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { runTransaction, doc, increment } from 'firebase/firestore';
+import { cleanOldBids } from '@/actions/clean-old-bids';
 
 
 interface Bid extends DocumentData {
@@ -49,6 +50,7 @@ const ITEMS_PER_PAGE = 10;
 export default function AdminBidHistoryPage() {
   const [allBids, setAllBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCleaning, setIsCleaning] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const searchParams = useSearchParams();
@@ -195,6 +197,29 @@ export default function AdminBidHistoryPage() {
     }
   };
 
+  const handleCleanOldBids = async () => {
+    setIsCleaning(true);
+    try {
+        const result = await cleanOldBids(10);
+        if (result.success) {
+            toast({
+                title: "Success!",
+                description: `${result.deletedCount} old bids have been deleted.`,
+            });
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error.message || 'Failed to clean old bids.'
+        });
+    } finally {
+        setIsCleaning(false);
+    }
+  }
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
         case 'won': return 'secondary';
@@ -243,10 +268,32 @@ export default function AdminBidHistoryPage() {
                 <CardTitle className="text-3xl font-bold">Bid History</CardTitle>
                 <CardDescription>View all bids placed by users across all games.</CardDescription>
               </div>
-              <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-              </Button>
+              <div className="flex gap-2">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" disabled={isCleaning}>
+                            {isCleaning ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                            Clean Bids (Older than 10 Days)
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete all bid records older than 10 days. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleCleanOldBids}>Confirm Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <Button onClick={handleDownloadPDF} variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download PDF
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
