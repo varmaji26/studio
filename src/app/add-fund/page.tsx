@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Landmark, Phone, Wallet, Info } from 'lucide-react';
+import { ArrowLeft, Landmark, Phone, Wallet, Info, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { doc, onSnapshot, DocumentData, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -21,6 +21,7 @@ interface UserProfile extends DocumentData {
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
+    minimumDepositAmount?: number;
 }
 
 export default function AddFundPage() {
@@ -31,6 +32,7 @@ export default function AddFundPage() {
     const [settings, setSettings] = useState<AppSettings>({});
     const [amount, setAmount] = useState('');
     const [hasPendingDeposit, setHasPendingDeposit] = useState(false);
+    const [isMobileVisible, setIsMobileVisible] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -76,12 +78,13 @@ export default function AddFundPage() {
     };
     
     const handlePayNow = () => {
+        const minDeposit = settings.minimumDepositAmount || 100;
         const parsedAmount = parseInt(amount, 10);
-        if (isNaN(parsedAmount) || parsedAmount < 100) {
+        if (isNaN(parsedAmount) || parsedAmount < minDeposit) {
             toast({
                 variant: 'destructive',
                 title: 'Invalid Amount',
-                description: 'Minimum amount to add is ₹100.',
+                description: `Minimum amount to add is ₹${minDeposit}.`,
             });
             return;
         }
@@ -119,6 +122,7 @@ export default function AddFundPage() {
 
     const mobileNumber = user.email?.split('@')[0];
     const totalBalance = (profile.balance || 0);
+    const minDeposit = settings.minimumDepositAmount || 100;
 
     return (
         <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
@@ -138,7 +142,12 @@ export default function AddFundPage() {
             <main className="flex-1 p-4">
                 <div className="bg-[#112a45] text-white rounded-lg p-4 mb-4 text-center">
                     <h2 className="text-lg font-bold">{user.displayName}</h2>
-                    <p className="text-sm">{mobileNumber}</p>
+                    <div className="flex items-center justify-center gap-2 text-sm">
+                        <span>{isMobileVisible ? mobileNumber : '**********'}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsMobileVisible(!isMobileVisible)}>
+                            {isMobileVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                    </div>
                     <div className="bg-black/50 mt-2 p-2 rounded-md">
                         <p className="text-sm">Available Balance</p>
                         <p className="text-xl font-bold">₹ {totalBalance.toFixed(1) || '0.0'}</p>
@@ -168,7 +177,7 @@ export default function AddFundPage() {
                     </Alert>
                 ) : (
                 <div className="my-4">
-                    <p className="text-center text-gray-600 mb-2">Enter Amount</p>
+                    <p className="text-center text-gray-600 mb-2">Enter Amount (Min: ₹{minDeposit})</p>
                     <div className="relative">
                         <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400"/>
                         <Input 
@@ -180,7 +189,7 @@ export default function AddFundPage() {
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-3 mt-3">
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('100')}>100</Button>
+                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount(minDeposit.toString())}>{minDeposit}</Button>
                         <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('500')}>500</Button>
                         <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('1000')}>1000</Button>
                         <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('1500')}>1500</Button>

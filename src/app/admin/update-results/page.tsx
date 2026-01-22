@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, Timestamp, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,7 +94,7 @@ export default function UpdateResultsPage() {
       batch.update(gameDocRef, { 
         openResult: newOpenPana,
         closeResult: '**',
-        result: `${newOpenPana}-**-**` // Update result with placeholder
+        result: `${newOpenPana}-**-**`
       });
 
       const bidsQuery = query(
@@ -115,7 +115,6 @@ export default function UpdateResultsPage() {
         const winRate = WIN_RATES[bid.betType as keyof typeof WIN_RATES] || 0;
         const amountPerNumber = bid.totalAmount / bidNumbers.length;
 
-        // Check only Open session bets for winning
         if (bid.session === 'Open') {
           if (bid.betType.includes('Pana') && bidNumbers.includes(newOpenPana)) {
               isWinner = true;
@@ -124,7 +123,6 @@ export default function UpdateResultsPage() {
           }
         }
         
-        // Jodi bets are decided on close result, so they are not lost on open result
         if (bid.betType === 'Jodi Digit') {
              // Do nothing, wait for close result
         } else if (isWinner) {
@@ -135,7 +133,6 @@ export default function UpdateResultsPage() {
           const userDocRef = doc(db, 'users', bid.userId);
           batch.update(userDocRef, { balance: increment(winningAmount) });
         } else {
-          // If the bet is for the Open session and did not win, it's lost.
           if (bid.session === 'Open') {
             batch.update(bidDoc.ref, { status: 'lost' });
           }
@@ -168,49 +165,71 @@ export default function UpdateResultsPage() {
     }
 
     setIsReverting(true);
+    const gameDocRef = doc(db, 'games', game.id);
+
     try {
-        const batch = writeBatch(db);
-        const gameDocRef = doc(db, 'games', game.id);
+        await runTransaction(db, async (transaction) => {
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-        // Query for bets that were decided by this open result
-        const affectedBidsQuery = query(
-            collection(db, 'bids'),
-            where('gameId', '==', game.id),
-            where('session', '==', 'Open'),
-            where('status', 'in', ['won', 'lost'])
-        );
+            const affectedBidsQuery = query(
+                collection(db, 'bids'),
+                where('gameId', '==', game.id),
+                where('session', '==', 'Open'),
+                where('status', 'in', ['won', 'lost']),
+                where('createdAt', '>=', Timestamp.fromDate(startOfDay))
+            );
+            const bidsSnapshot = await getDocs(affectedBidsQuery);
 
-        const bidsSnapshot = await getDocs(affectedBidsQuery);
+            for (const bidDoc of bidsSnapshot.docs) {
+                const bid = bidDoc.data();
+                if (bid.status === 'won') {
+                    const userRef = doc(db, 'users', bid.userId);
+                    const winningAmount = bid.winningAmount || 0;
+                    
+                    // Deduct the winnings first
+                    transaction.update(userRef, { balance: increment(-winningAmount) });
+                    
+                    // After deduction, check the balance
+                    const userDoc = await transaction.get(userRef);
+                    const currentBalance = userDoc.data()?.balance || 0;
+                    
+                    if (currentBalance < 0) {
+                        let balanceToRecover = Math.abs(currentBalance);
+                        const runningBetsQuery = query(collection(db, 'bids'), where('userId', '==', bid.userId), where('status', '==', 'running'), orderBy('createdAt', 'desc'));
+                        
+                        // We must get running bets within the transaction
+                        const runningBetsSnapshot = await getDocs(runningBetsQuery);
 
-        bidsSnapshot.forEach(bidDoc => {
-            const bid = bidDoc.data();
-            if (bid.status === 'won') {
-                const userDocRef = doc(db, 'users', bid.userId);
-                // Decrement the user's balance by the winning amount
-                batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
-                // Reset the bid status and winning amount
-                batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
-            } else if (bid.status === 'lost') {
-                // Just reset the status for lost bets
-                batch.update(bidDoc.ref, { status: 'running' });
+                        for (const runningBetDoc of runningBetsSnapshot.docs) {
+                            if (balanceToRecover <= 0) break;
+                            const betToCancel = runningBetDoc.data();
+                            const cancelAmount = betToCancel.totalAmount;
+                            transaction.update(runningBetDoc.ref, { status: 'cancelled' });
+                            transaction.update(userRef, { balance: increment(cancelAmount) }); // Refund the bet amount
+                            balanceToRecover -= cancelAmount;
+                        }
+                    }
+
+                    transaction.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
+                } else if (bid.status === 'lost') {
+                    transaction.update(bidDoc.ref, { status: 'running' });
+                }
             }
-        });
-        
-        const gameDoc = await getDoc(gameDocRef);
-        const closeResult = gameDoc.data()?.closeResult || '**';
+            
+            const gameDoc = await transaction.get(gameDocRef);
+            const closeResult = gameDoc.data()?.closeResult || '**';
 
-        // Reset the open result fields in the game document
-        batch.update(gameDocRef, {
-            openResult: '***',
-            result: `***-**-${closeResult}`
+            transaction.update(gameDocRef, {
+                openResult: '***',
+                result: `***-**-${closeResult}`
+            });
         });
 
-        await batch.commit();
         toast({
             title: 'Result Reverted!',
             description: `Open result for ${game.name} has been reverted. Affected bets are running again.`
         });
-
     } catch (error: any) {
         console.error('Error reverting result: ', error);
         toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to revert result.' });

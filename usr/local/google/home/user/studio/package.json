@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "predev": "npm install",
+    "dev": "npm install && next dev",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-8080}",
     "lint": "next lint",
@@ -38,7 +39,7 @@
     "date-fns": "3.6.0",
     "embla-carousel-autoplay": "8.1.6",
     "embla-carousel-react": "8.1.6",
-    "eslint-config-next": "15.3.8",
+    "eslint-config-next": "15.3.6",
     "firebase": "11.3.0",
     "firebase-admin": "12.2.0",
     "framer-motion": "11.2.11",

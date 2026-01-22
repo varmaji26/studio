@@ -54,7 +54,7 @@ interface UpdateBalanceDialogProps {
 export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [submittingType, setSubmittingType] = useState<'real' | 'bonus' | 'zero' | null>(null);
+  const [submittingType, setSubmittingType] = useState<'real' | 'bonus' | 'zero-real' | 'zero-bonus' | null>(null);
 
   const form = useForm<BalanceFormValues>({
     resolver: zodResolver(balanceSchema),
@@ -64,21 +64,14 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
     },
   });
 
-  const handleUpdate = async (type: 'real' | 'bonus', amount?: number) => {
-    const values = form.getValues();
-    const balanceAmount = amount ?? (values.balanceAmount || 0);
-    const bonusAmount = values.bonusAmount || 0;
-
-    if (type === 'real' && balanceAmount === 0) {
-        toast({ variant: 'destructive', title: 'No change', description: 'Please enter an amount for real balance.' });
+  const handleUpdate = async (type: 'real' | 'bonus', amountToUpdate: number) => {
+    
+    if (amountToUpdate === 0) {
+        toast({ variant: 'destructive', title: 'No change', description: 'Please enter a non-zero amount.' });
         return;
     }
-    if (type === 'bonus' && bonusAmount === 0) {
-        toast({ variant: 'destructive', title: 'No change', description: 'Please enter an amount for bonus balance.' });
-        return;
-    }
-
-    setSubmittingType(type);
+    
+    setSubmittingType(type === 'real' ? (amountToUpdate < 0 && amountToUpdate === -user.balance ? 'zero-real' : 'real') : (amountToUpdate < 0 && amountToUpdate === -user.bonusBalance ? 'zero-bonus' : 'bonus'));
     const userDocRef = doc(db, 'users', user.id);
     const statsDocRef = doc(db, 'app-stats', 'dashboard');
     const bonusTransactionsCollectionRef = collection(db, 'bonusTransactions');
@@ -92,36 +85,40 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
 
             if (type === 'real') {
                 const currentBalance = userDoc.data().balance || 0;
-                if (currentBalance + balanceAmount < 0) {
+                if (currentBalance + amountToUpdate < 0) {
                     throw new Error("Real balance cannot be negative.");
                 }
-                transaction.update(userDocRef, { balance: increment(balanceAmount) });
-                transaction.update(statsDocRef, { totalBalance: increment(balanceAmount) });
+                transaction.update(userDocRef, { balance: increment(amountToUpdate) });
+                transaction.update(statsDocRef, { totalBalance: increment(amountToUpdate) });
             }
 
             if (type === 'bonus') {
                 const currentBonusBalance = userDoc.data().bonusBalance || 0;
-                if (currentBonusBalance + bonusAmount < 0) {
+                if (currentBonusBalance + amountToUpdate < 0) {
                     throw new Error("Bonus balance cannot be negative.");
                 }
                 
                 transaction.update(userDocRef, {
-                    bonusBalance: increment(bonusAmount)
+                    bonusBalance: increment(amountToUpdate)
                 });
                 
-                if (bonusAmount > 0) {
-                    const newBonusTransactionRef = doc(bonusTransactionsCollectionRef);
-                    transaction.set(newBonusTransactionRef, {
-                        userId: user.id,
-                        displayName: user.displayName,
-                        mobile: user.mobile,
-                        amount: Math.abs(bonusAmount),
-                        type: 'Given',
-                        description: 'Admin added bonus.',
-                        createdAt: serverTimestamp(),
-                    });
+                const newBonusTransactionRef = doc(bonusTransactionsCollectionRef);
+                const transactionType = amountToUpdate > 0 ? 'Given' : 'Reset';
+                const description = amountToUpdate > 0 ? 'Admin added bonus.' : 'Admin reset bonus.';
+                
+                transaction.set(newBonusTransactionRef, {
+                    userId: user.id,
+                    displayName: user.displayName,
+                    mobile: user.mobile,
+                    amount: Math.abs(amountToUpdate),
+                    type: transactionType,
+                    description: description,
+                    createdAt: serverTimestamp(),
+                });
+                
+                if (amountToUpdate > 0) {
                      transaction.update(userDocRef, {
-                        totalBonusGiven: increment(bonusAmount)
+                        totalBonusGiven: increment(amountToUpdate)
                     });
                 }
             }
@@ -151,15 +148,24 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
     }
   };
   
-  const handleSetToZero = async () => {
+  const handleSetRealToZero = async () => {
     const currentBalance = user.balance || 0;
     if (currentBalance === 0) {
       toast({ title: 'No change', description: 'Balance is already zero.' });
       return;
     }
     const amountToAdjust = -currentBalance;
-    setSubmittingType('zero');
     await handleUpdate('real', amountToAdjust);
+  };
+  
+  const handleSetBonusToZero = async () => {
+    const currentBonusBalance = user.bonusBalance || 0;
+    if (currentBonusBalance === 0) {
+        toast({ title: 'No change', description: 'Bonus balance is already zero.' });
+        return;
+    }
+    const amountToAdjust = -currentBonusBalance;
+    await handleUpdate('bonus', amountToAdjust);
   };
 
 
@@ -191,12 +197,12 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
                   )}
                 />
                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button type="button" onClick={() => handleUpdate('real')} disabled={!!submittingType} className="w-full">
+                    <Button type="button" onClick={() => handleUpdate('real', form.getValues().balanceAmount)} disabled={!!submittingType} className="w-full">
                         {submittingType === 'real' ? <Loader className="mr-2" /> : null}
                         Update Real Balance
                     </Button>
-                    <Button type="button" variant="destructive" onClick={handleSetToZero} disabled={!!submittingType} className="w-full sm:w-auto">
-                        {submittingType === 'zero' ? <Loader className="mr-2" /> : <RotateCcw />}
+                    <Button type="button" variant="destructive" onClick={handleSetRealToZero} disabled={!!submittingType} className="w-full sm:w-auto">
+                        {submittingType === 'zero-real' ? <Loader className="mr-2" /> : <RotateCcw />}
                         Set to Zero
                     </Button>
                 </div>
@@ -217,10 +223,16 @@ export function UpdateBalanceDialog({ user, children }: UpdateBalanceDialogProps
                     </FormItem>
                   )}
                 />
-                 <Button type="button" onClick={() => handleUpdate('bonus')} disabled={!!submittingType} className="w-full">
-                    {submittingType === 'bonus' ? <Loader className="mr-2" /> : null}
-                    Update Bonus Balance
-                </Button>
+                 <div className="flex flex-col sm:flex-row gap-2">
+                    <Button type="button" onClick={() => handleUpdate('bonus', form.getValues().bonusAmount)} disabled={!!submittingType} className="w-full">
+                        {submittingType === 'bonus' ? <Loader className="mr-2" /> : null}
+                        Update Bonus Balance
+                    </Button>
+                    <Button type="button" variant="destructive" onClick={handleSetBonusToZero} disabled={!!submittingType} className="w-full sm:w-auto">
+                        {submittingType === 'zero-bonus' ? <Loader className="mr-2" /> : <RotateCcw />}
+                        Set to Zero
+                    </Button>
+                </div>
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0">

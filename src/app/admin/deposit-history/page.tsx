@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -40,26 +40,32 @@ declare module 'jspdf' {
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminDepositHistoryPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
-
-  useEffect(() => {
+  
+  const fetchTransactions = useCallback(() => {
     setLoading(true);
     const q = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Transaction));
-        setTransactions(data);
+        setAllTransactions(data);
         setLoading(false);
     });
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = fetchTransactions();
+    return () => unsubscribe();
+  }, [fetchTransactions]);
+
   const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
+    let filtered = allTransactions;
 
     if (fromDate && toDate) {
         const startOfDay = new Date(fromDate);
@@ -82,7 +88,7 @@ export default function AdminDepositHistoryPage() {
       );
     }
     return filtered;
-  }, [searchTerm, transactions, fromDate, toDate]);
+  }, [searchTerm, allTransactions, fromDate, toDate]);
 
   const { totalDeposits } = useMemo(() => {
     return filteredTransactions.reduce(
@@ -96,15 +102,15 @@ export default function AdminDepositHistoryPage() {
     );
   }, [filteredTransactions]);
 
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, fromDate, toDate]);
-
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const paginatedTransactions = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredTransactions, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, fromDate, toDate]);
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -121,14 +127,19 @@ export default function AdminDepositHistoryPage() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const doc = new jsPDF();
     doc.text("Admin Deposit History", 14, 16);
+    
+    // Fetch all for PDF
+    const allQuery = query(collection(db, "deposits"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(allQuery);
+    const allTransactions = snapshot.docs.map(d => d.data() as Transaction);
 
     const tableColumn = ["Date", "Username", "Mobile", "Amount (INR)", "Method", "Status"];
     const tableRows: (string | number)[][] = [];
     
-    filteredTransactions.forEach(t => {
+    allTransactions.forEach(t => {
         const transactionData = [
             formatDate(t.createdAt),
             t.displayName,
@@ -171,14 +182,14 @@ export default function AdminDepositHistoryPage() {
                     <CardTitle className="text-3xl font-bold">Deposit History</CardTitle>
                     <CardDescription>View all deposit history for all users.</CardDescription>
                 </div>
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={paginatedTransactions.length === 0}>
+                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={allTransactions.length === 0}>
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                 </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <Card className="mb-6">
+             <Card className="mb-6">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Deposits</CardTitle>
                     <ArrowUpCircle className="h-4 w-4 text-green-500" />
@@ -260,3 +271,5 @@ export default function AdminDepositHistoryPage() {
       </div>
   );
 }
+
+    

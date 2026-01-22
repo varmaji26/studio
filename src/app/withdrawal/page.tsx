@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Landmark, Phone, Gift, Wallet, Info } from 'lucide-react';
+import { ArrowLeft, Landmark, Phone, Gift, Wallet, Info, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { doc, onSnapshot, DocumentData, collection, addDoc, serverTimestamp, runTransaction, query, where, increment, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -24,6 +24,7 @@ interface UserProfile extends DocumentData {
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
+    minimumWithdrawalAmount?: number;
 }
 
 export default function WithdrawalPage() {
@@ -35,6 +36,7 @@ export default function WithdrawalPage() {
     const [amount, setAmount] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasPendingWithdrawal, setHasPendingWithdrawal] = useState(false);
+    const [isMobileVisible, setIsMobileVisible] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -88,12 +90,13 @@ export default function WithdrawalPage() {
             return;
         }
 
+        const minWithdrawal = settings.minimumWithdrawalAmount || 1000;
         const parsedAmount = parseInt(amount, 10);
-        if (isNaN(parsedAmount) || parsedAmount < 1000) {
+        if (isNaN(parsedAmount) || parsedAmount < minWithdrawal) {
             toast({
                 variant: 'destructive',
                 title: 'Invalid Amount',
-                description: 'Minimum withdrawal amount is ₹1000.',
+                description: `Minimum withdrawal amount is ₹${minWithdrawal}.`,
             });
             return;
         }
@@ -209,6 +212,7 @@ export default function WithdrawalPage() {
     
     const mobileNumber = user.email?.split('@')[0];
     const totalBalance = (profile.balance || 0) + (profile.bonusBalance || 0);
+    const minWithdrawal = settings.minimumWithdrawalAmount || 1000;
 
     return (
         <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
@@ -228,7 +232,12 @@ export default function WithdrawalPage() {
             <main className="flex-1 p-4">
                  <div className="bg-[#112a45] text-white rounded-lg p-4 text-center">
                     <h2 className="text-lg font-bold">{user.displayName}</h2>
-                    <p className="text-lg">{mobileNumber}</p>
+                    <div className="flex items-center justify-center gap-2 text-lg">
+                        <span>{isMobileVisible ? mobileNumber : '**********'}</span>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-white" onClick={() => setIsMobileVisible(!isMobileVisible)}>
+                            {isMobileVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                    </div>
                     <div className="bg-black/50 mt-2 p-2 rounded-md">
                         <p className="text-sm">Withdrawable Balance</p>
                         <p className="text-xl font-bold">₹ {profile.balance?.toFixed(1) || '0.0'}</p>
@@ -255,16 +264,18 @@ export default function WithdrawalPage() {
                 <hr className="border-gray-300" />
                 
                 {hasPendingWithdrawal ? (
-                     <Alert variant="destructive" className="my-4 bg-yellow-100 border-yellow-200 text-yellow-800">
-                        <Info className="h-4 w-4" />
+                     <Alert variant="destructive" className="my-4 bg-red-100 border-red-200 text-red-800">
+                        <Info className="h-4 w-4 text-red-800" />
                         <AlertTitle>Pending Request</AlertTitle>
                         <AlertDescription>
-                            You already have a pending withdrawal request. Please wait for it to be processed.
+                            You already have a pending withdrawal request. Your withdrawal will be credited to your account within 24 hours. Please wait.
+                            <br/>
+                            आपका पिछला भुगतान अनुरोध लंबित है। आपका भुगतान 24 घंटे के भीतर आपके खाते में जमा कर दिया जाएगा। कृपया प्रतीक्षा करें।
                         </AlertDescription>
                     </Alert>
                 ) : (
                 <div className="my-4">
-                    <p className="text-center text-gray-600 mb-2">Enter Amount</p>
+                    <p className="text-center text-gray-600 mb-2">Enter Amount (Min: ₹{minWithdrawal})</p>
                     <div className="relative">
                         <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400"/>
                          <Input 
@@ -286,14 +297,29 @@ export default function WithdrawalPage() {
             </main>
 
             <footer className="p-4 bg-white sticky bottom-0">
-                <Button 
-                    className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full"
-                    onClick={handleSendRequest}
-                    disabled={isSubmitting || hasPendingWithdrawal}
-                >
-                    {isSubmitting && <Loader className="mr-2 h-5 w-5"/>}
-                    {isSubmitting ? 'Sending...' : hasPendingWithdrawal ? 'Request Pending' : 'Send Request'}
-                </Button>
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button 
+                            className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full"
+                            disabled={isSubmitting || hasPendingWithdrawal || !amount || parseInt(amount, 10) < minWithdrawal || parseInt(amount, 10) > (profile.balance || 0)}
+                        >
+                            {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
+                            {isSubmitting ? 'Sending...' : hasPendingWithdrawal ? 'Request Pending' : 'Send Request'}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Your withdrawal request will be processed within 24 hours. Please wait.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSendRequest}>Confirm</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </footer>
         </div>
     );

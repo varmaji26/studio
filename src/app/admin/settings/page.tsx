@@ -104,6 +104,7 @@ const settingsSchema = z.object({
     z.number().min(8, 'Minimum size is 8px.').optional()
   ),
   noticeText: z.string().optional(),
+  noticeEnabled: z.boolean().default(true),
   bonusEnabled: z.boolean().default(false),
   bonusPercentage: z.preprocess(
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
@@ -112,6 +113,28 @@ const settingsSchema = z.object({
   bonusPopupEnabled: z.boolean().default(false),
   bonusPopupImage: z.any().optional(),
   bonusPopupLink: z.string().optional(),
+  welcomeBonusEnabled: z.boolean().default(false),
+  welcomeBonusAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 0 : Number(val)),
+    z.number().min(0, 'Bonus amount cannot be negative.')
+  ),
+  referralBonusEnabled: z.boolean().default(false),
+  referrerBonusAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 0 : Number(val)),
+    z.number().min(0, 'Bonus amount cannot be negative.')
+  ),
+  refereeBonusAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 0 : Number(val)),
+    z.number().min(0, 'Bonus amount cannot be negative.')
+  ),
+  minimumDepositAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 100 : Number(val)),
+    z.number().min(1, 'Minimum deposit must be at least 1.')
+  ),
+   minimumWithdrawalAmount: z.preprocess(
+    (val) => (String(val).trim() === '' ? 1000 : Number(val)),
+    z.number().min(1, 'Minimum withdrawal must be at least 1.')
+  ),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -161,10 +184,18 @@ export default function SettingsPage() {
       marqueeTitleSize: 20,
       marqueeTextSize: 12,
       noticeText: '',
+      noticeEnabled: true,
       bonusEnabled: false,
       bonusPercentage: 0,
       bonusPopupEnabled: false,
       bonusPopupLink: '/add-fund',
+      welcomeBonusEnabled: false,
+      welcomeBonusAmount: 0,
+      referralBonusEnabled: false,
+      referrerBonusAmount: 0,
+      refereeBonusAmount: 0,
+      minimumDepositAmount: 100,
+      minimumWithdrawalAmount: 1000,
     },
   });
 
@@ -203,11 +234,19 @@ export default function SettingsPage() {
             marqueeLogoSize: data.marquee?.logoSize || 24,
             marqueeTitleSize: data.marquee?.titleSize || 20,
             marqueeTextSize: data.marquee?.textSize || 12,
-            noticeText: data.noticeText || '',
+            noticeText: data.notice?.text || '',
+            noticeEnabled: data.notice?.enabled ?? true,
             bonusEnabled: data.bonus?.enabled || false,
             bonusPercentage: data.bonus?.percentage || 0,
             bonusPopupEnabled: data.bonusPopup?.enabled || false,
             bonusPopupLink: data.bonusPopup?.link || '/add-fund',
+            welcomeBonusEnabled: data.welcomeBonus?.enabled || false,
+            welcomeBonusAmount: data.welcomeBonus?.amount || 0,
+            referralBonusEnabled: data.referralBonus?.enabled || false,
+            referrerBonusAmount: data.referralBonus?.referrerAmount || 0,
+            refereeBonusAmount: data.referralBonus?.refereeAmount || 0,
+            minimumDepositAmount: data.minimumDepositAmount || 100,
+            minimumWithdrawalAmount: data.minimumWithdrawalAmount || 1000,
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -445,6 +484,8 @@ export default function SettingsPage() {
             whatsappNumber: values.whatsappNumber,
             callSupportNumber: values.callSupportNumber,
             telegramLink: values.telegramLink,
+            minimumDepositAmount: values.minimumDepositAmount,
+            minimumWithdrawalAmount: values.minimumWithdrawalAmount,
             paymentDetails: {
                 ...currentPaymentDetails,
                 'UPI': { title: "UPI Payment", details: values.upiId },
@@ -466,12 +507,24 @@ export default function SettingsPage() {
               titleSize: values.marqueeTitleSize,
               textSize: values.marqueeTextSize,
             },
-            noticeText: values.noticeText,
+            notice: {
+              text: values.noticeText,
+              enabled: values.noticeEnabled,
+            },
             bonus: {
               enabled: values.bonusEnabled,
               percentage: values.bonusPercentage,
             },
             bonusPopup: bonusPopupData,
+            welcomeBonus: {
+              enabled: values.welcomeBonusEnabled,
+              amount: values.welcomeBonusAmount,
+            },
+            referralBonus: {
+                enabled: values.referralBonusEnabled,
+                referrerAmount: values.referrerBonusAmount,
+                refereeAmount: values.refereeBonusAmount,
+            }
         };
 
         if (qrCodeData) {
@@ -759,7 +812,7 @@ export default function SettingsPage() {
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <Accordion type="multiple" className="w-full">
+                <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5']} className="w-full">
                   {/* Golden Ank & Marquee Section */}
                   <AccordionItem value="item-1">
                     <AccordionTrigger className="text-lg font-semibold">Golden Ank & Marquee</AccordionTrigger>
@@ -824,10 +877,22 @@ export default function SettingsPage() {
                   <AccordionItem value="item-2">
                     <AccordionTrigger className="text-lg font-semibold">Bonus Settings</AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-4">
-                      <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel><FormDescriptionComponent>Give users a bonus on deposits.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel><FormDescriptionComponent>Give users a bonus on deposits.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                       {form.watch('bonusEnabled') && (<FormField control={form.control} name="bonusPercentage" render={({ field }) => (<FormItem><FormLabel>Bonus Percentage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
                       <Separator />
-                      <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel><FormDescriptionComponent>Show a bonus offer popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="welcomeBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Welcome Bonus</FormLabel><FormDescriptionComponent>Give new users a bonus on signup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      {form.watch('welcomeBonusEnabled') && (<FormField control={form.control} name="welcomeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Welcome Bonus Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                      <Separator />
+                        <FormField control={form.control} name="referralBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Referral Bonus</FormLabel><FormDescriptionComponent>Reward users for referring new players.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      {form.watch('referralBonusEnabled') && (
+                        <>
+                            <FormField control={form.control} name="referrerBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referrer Bonus (Old User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the person who referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="refereeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referee Bonus (New User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the new user who was referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        </>
+                      )}
+
+                      <Separator />
+                      <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel><FormDescriptionComponent>Show a bonus offer popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                       {form.watch('bonusPopupEnabled') && (
                         <div className="space-y-4">
                             {existingBonusPopupUrl && (
@@ -853,12 +918,16 @@ export default function SettingsPage() {
 
                   {/* Support & Notice Section */}
                    <AccordionItem value="item-3">
-                    <AccordionTrigger className="text-lg font-semibold">Support & Notice</AccordionTrigger>
+                    <AccordionTrigger className="text-lg font-semibold">Support & Amounts</AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-4">
                         <FormField control={form.control} name="whatsappNumber" render={({ field }) => (<FormItem><FormLabel>WhatsApp Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="e.g., https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                         <Separator/>
+                         <FormField control={form.control} name="minimumDepositAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Deposit Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="minimumWithdrawalAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Withdrawal Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 1000" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <Separator/>
+                        <FormField control={form.control} name="noticeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Enable Notice</FormLabel><FormDescriptionComponent>Show the notice board on the home page.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                         <FormField control={form.control} name="noticeText" render={({ field }) => (<FormItem><FormLabel>Notice Text</FormLabel><FormControl><Textarea placeholder="Enter notice text for home page." {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                     </AccordionContent>

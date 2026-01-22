@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -8,7 +7,8 @@ import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
-import { Search, Trophy, Calendar as CalendarIcon, Download, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, Trophy, Calendar as CalendarIcon, Download, Trash2, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,10 +21,12 @@ import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cleanOldWins } from '@/actions/clean-old-wins';
+import { runTransaction, doc, increment } from 'firebase/firestore';
 
 
 interface Win extends DocumentData {
     id: string;
+    userId: string;
     displayName: string;
     mobile?: string;
     gameName: string;
@@ -33,6 +35,7 @@ interface Win extends DocumentData {
     numbers: string[];
     totalAmount: number;
     winningAmount: number;
+    status: 'won' | 'cancelled';
     createdAt: Timestamp;
 }
 
@@ -63,17 +66,20 @@ export default function AdminWinHistoryPage() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
+  const fetchWins = useCallback(() => {
       setLoading(true);
       
-      let q = query(
+      const q = query(
           collection(db, "bids"), 
-          where("status", "==", "won"),
+          where("status", "in", ["won", "cancelled"]),
           orderBy("createdAt", "desc")
       );
       
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          const winsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
+          const winsData = querySnapshot.docs
+            .filter(doc => doc.data().status === 'won' || (doc.data().status === 'cancelled' && doc.data().winningAmount > 0))
+            .map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
+          
           setAllWins(winsData);
           setLoading(false);
       }, (error) => {
@@ -83,6 +89,10 @@ export default function AdminWinHistoryPage() {
       
       return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    fetchWins();
+  }, [fetchWins]);
 
   const filteredWins = useMemo(() => {
     let filtered = allWins;
@@ -115,7 +125,9 @@ export default function AdminWinHistoryPage() {
   }, [searchTerm, allWins, fromDate, toDate]);
   
   const totalWinningAmount = useMemo(() => {
-    return filteredWins.reduce((acc, win) => acc + (win.winningAmount || 0), 0);
+    return filteredWins
+        .filter(win => win.status === 'won') // Only sum 'won' bids for the total
+        .reduce((acc, win) => acc + (win.winningAmount || 0), 0);
   }, [filteredWins]);
   
   const totalPages = Math.ceil(filteredWins.length / ITEMS_PER_PAGE);
@@ -123,6 +135,7 @@ export default function AdminWinHistoryPage() {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredWins.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredWins, currentPage]);
+
 
   useEffect(() => {
       setCurrentPage(1);
@@ -138,11 +151,12 @@ export default function AdminWinHistoryPage() {
     const doc = new jsPDF();
     const dateRange = fromDate && toDate ? `${format(fromDate, "PPP")} to ${format(toDate, "PPP")}` : "All Time";
     doc.text(`Win History Report - ${dateRange}`, 14, 16);
-    doc.text(`Total Winning Amount: ${totalWinningAmount.toFixed(2)}`, 14, 22);
-
-    const winsForPdf = filteredWins;
     
-    const tableColumn = ["Date", "Username", "Mobile", "Game", "Bet Details", "Bet (₹)", "Win (₹)"];
+    const winsForPdf = filteredWins;
+    const totalForPdf = winsForPdf.filter(w => w.status === 'won').reduce((acc, win) => acc + (win.winningAmount || 0), 0);
+    doc.text(`Total Winning Amount: ${totalForPdf.toFixed(2)}`, 14, 22);
+
+    const tableColumn = ["Date", "Username", "Mobile", "Game", "Bet Details", "Bet (₹)", "Win (₹)", "Status"];
     const tableRows: (string | number)[][] = [];
 
     winsForPdf.forEach(win => {
@@ -153,7 +167,8 @@ export default function AdminWinHistoryPage() {
             `${win.gameName} (${win.session})`,
             `${win.betType} - ${win.numbers.join(', ')}`,
             win.totalAmount.toFixed(2),
-            win.winningAmount.toFixed(2)
+            win.winningAmount.toFixed(2),
+            win.status
         ];
         tableRows.push(winRow);
     });
@@ -191,6 +206,45 @@ export default function AdminWinHistoryPage() {
         setIsCleaning(false);
     }
   }
+
+  const handleCancelWin = async (win: Win) => {
+    const bidDocRef = doc(db, 'bids', win.id);
+    const userDocRef = doc(db, 'users', win.userId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const bidDoc = await transaction.get(bidDocRef);
+            if (!bidDoc.exists() || bidDoc.data().status !== 'won') {
+                throw new Error("This bid is not in a 'won' state.");
+            }
+            
+            // Revert winnings from user's balance
+            transaction.update(userDocRef, { balance: increment(-win.winningAmount) });
+            
+            // Update bid status
+            transaction.update(bidDocRef, { status: 'cancelled' });
+        });
+        toast({
+            title: 'Success!',
+            description: `Win for bid #${win.id} has been cancelled and ₹${win.winningAmount} deducted from ${win.displayName}.`
+        });
+    } catch (error: any) {
+        console.error('Error cancelling win:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error Cancelling Win',
+            description: error.message || 'An unexpected error occurred.',
+        });
+    }
+  };
+  
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+        case 'won': return 'secondary';
+        case 'cancelled': return 'outline';
+        default: return 'default';
+    }
+  };
 
   const renderPagination = () => {
     if (totalPages <= 1) return null;
@@ -356,6 +410,8 @@ export default function AdminWinHistoryPage() {
                                 <TableHead>Bet Details</TableHead>
                                 <TableHead>Bet Amount</TableHead>
                                 <TableHead>Win Amount</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -376,11 +432,46 @@ export default function AdminWinHistoryPage() {
                                          <TableCell className="font-bold text-green-400">
                                             ₹{win.winningAmount.toFixed(2)}
                                         </TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                variant={getStatusBadgeVariant(win.status)}
+                                                className={cn(
+                                                    win.status === 'won' && 'bg-green-500 text-white',
+                                                    win.status === 'cancelled' && 'border-yellow-500 text-yellow-500',
+                                                )}
+                                            >
+                                                {win.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {win.status === 'won' && (
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="destructive" size="sm">
+                                                            <XCircle className="h-4 w-4 mr-1" />
+                                                            Cancel
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure you want to cancel this win?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This will deduct ₹{win.winningAmount.toFixed(2)} from {win.displayName}'s wallet and change the status to cancelled. This action cannot be undone.
+                                                        </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                        <AlertDialogCancel>Close</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleCancelWin(win)}>Confirm Cancel</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="h-24 text-center">
+                                    <TableCell colSpan={9} className="h-24 text-center">
                                       {searchTerm || fromDate ? "No wins found for the selected criteria." : "No wins found."}
                                     </TableCell>
                                 </TableRow>

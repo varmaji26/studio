@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -50,13 +49,13 @@ const ITEMS_PER_PAGE = 10;
 export default function AdminBidHistoryPage() {
   const [allBids, setAllBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isCleaning, setIsCleaning] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
   const [currentPage, setCurrentPage] = useState(1);
+  const [isCleaning, setIsCleaning] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -371,7 +370,7 @@ export default function AdminBidHistoryPage() {
                                 <TableRow key={bid.id}>
                                     <TableCell>{formatDate(bid.createdAt)}</TableCell>
                                     <TableCell>{bid.displayName}</TableCell>
-                                    <TableCell>{bid.mobile || 'N/A'}</TableCell>
+                                    <TableCell>{bid.mobile}</TableCell>
                                     <TableCell>{bid.gameName} ({bid.session})</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
@@ -404,7 +403,7 @@ export default function AdminBidHistoryPage() {
                                                     <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you sure you want to cancel this bid?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        This action cannot be undone. This will cancel the bid and refund ₹{bid.totalAmount} to {bid.displayName}'s wallet.
+                                                        This action cannot be undone. This will cancel the bid and refund ₹{bid.totalAmount} to ${bid.displayName}'s wallet.
                                                     </AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>

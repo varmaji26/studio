@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -40,26 +39,32 @@ declare module 'jspdf' {
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminWithdrawalHistoryPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
 
-  useEffect(() => {
+  const fetchTransactions = useCallback(() => {
     setLoading(true);
     const q = query(collection(db, "withdrawals"), orderBy("createdAt", "desc"));
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Transaction));
-        setTransactions(data);
+        setAllTransactions(data);
         setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = fetchTransactions();
+    return () => unsubscribe();
+  }, [fetchTransactions]);
+
   const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
+    let filtered = allTransactions;
 
     if (fromDate && toDate) {
         const startOfDay = new Date(fromDate);
@@ -82,7 +87,7 @@ export default function AdminWithdrawalHistoryPage() {
       );
     }
     return filtered;
-  }, [searchTerm, transactions, fromDate, toDate]);
+  }, [searchTerm, allTransactions, fromDate, toDate]);
   
   const { totalWithdrawals } = useMemo(() => {
     return filteredTransactions.reduce(
@@ -96,15 +101,15 @@ export default function AdminWithdrawalHistoryPage() {
     );
   }, [filteredTransactions]);
 
-  useEffect(() => {
-      setCurrentPage(1);
-  }, [searchTerm, fromDate, toDate]);
-
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const paginatedTransactions = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredTransactions, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, fromDate, toDate]);
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -122,7 +127,7 @@ export default function AdminWithdrawalHistoryPage() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const doc = new jsPDF();
     doc.text("Admin Withdrawal History", 14, 16);
 
@@ -172,7 +177,7 @@ export default function AdminWithdrawalHistoryPage() {
                     <CardTitle className="text-3xl font-bold">Withdrawal History</CardTitle>
                     <CardDescription>View all withdrawal history for all users.</CardDescription>
                 </div>
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={paginatedTransactions.length === 0}>
+                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={allTransactions.length === 0}>
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                 </Button>

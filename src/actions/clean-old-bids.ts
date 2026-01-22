@@ -1,4 +1,3 @@
-
 'use server';
 
 import { collection, getDocs, query, where, Timestamp, writeBatch } from 'firebase/firestore';

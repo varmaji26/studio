@@ -18,6 +18,19 @@ export default function RootLayout({
   const { user } = useAuth();
 
   useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/firebase-messaging-sw.js')
+        .then((registration) => {
+          console.log('Service Worker registration successful, scope is:', registration.scope);
+        })
+        .catch((err) => {
+          console.log('Service Worker registration failed, error:', err);
+        });
+    }
+  }, []);
+
+  useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window && user) {
         requestForToken(user.uid);
     }

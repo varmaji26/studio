@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -70,10 +69,7 @@ export default function ManageUsersPage() {
     const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const usersData: User[] = [];
-        querySnapshot.forEach((doc) => {
-            usersData.push({ id: doc.id, ...doc.data() } as User);
-        });
+        const usersData: User[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         setAllUsers(usersData);
         setUsersLoading(false);
     }, (error) => {
@@ -88,6 +84,7 @@ export default function ManageUsersPage() {
 
     return () => unsubscribe();
    }, [toast]);
+
   
   const filteredUsers = useMemo(() => {
     let source = allUsers;
@@ -120,14 +117,16 @@ export default function ManageUsersPage() {
   }, [searchTerm, allUsers, selectedDate]);
   
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredUsers, currentPage]);
 
   useEffect(() => {
-      setCurrentPage(1);
+    setCurrentPage(1);
   }, [searchTerm, selectedDate]);
+
 
   const formatDate = (timestamp: { seconds: number, nanoseconds: number } | null | undefined) => {
     if (!timestamp || typeof timestamp.seconds !== 'number') return 'N/A';
@@ -249,7 +248,9 @@ export default function ManageUsersPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => {
+                        setCurrentPage(p => Math.max(1, p - 1));
+                    }}
                     disabled={currentPage === 1}
                 >
                     Previous
@@ -257,7 +258,9 @@ export default function ManageUsersPage() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => {
+                        setCurrentPage(p => Math.min(totalPages, p + 1));
+                    }}
                     disabled={currentPage === totalPages}
                 >
                     Next

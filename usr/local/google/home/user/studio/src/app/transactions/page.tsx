@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -30,7 +29,6 @@ interface Transaction extends DocumentData {
 
 interface UserProfile extends DocumentData {
   balance?: number;
-  bonusBalance?: number;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -266,8 +264,6 @@ export default function TransactionDetailsPage() {
             </div>
         );
     }
-    
-    const totalBalance = (profile.balance || 0) + (profile.bonusBalance || 0);
 
     return (
         <div className="dark min-h-screen bg-background text-foreground flex flex-col pb-28">
@@ -285,7 +281,7 @@ export default function TransactionDetailsPage() {
                  <div className="bg-card/80 p-4">
                     <div className="bg-teal-900/50 rounded-t-2xl p-6 text-center shadow-lg border-x border-t border-teal-500/30">
                         <p className="text-teal-200">Total Balance</p>
-                        <p className="text-4xl font-bold text-primary mt-2">₹{totalBalance.toFixed(2) || '0.00'}</p>
+                        <p className="text-4xl font-bold text-primary mt-2">₹{profile.balance?.toFixed(2) || '0.00'}</p>
                     </div>
                 </div>
                  <div className="bg-background flex-1 p-4 -mt-2">

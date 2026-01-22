@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,7 +15,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Loader } from '@/components/loader';
-import { ArrowLeft, Wallet, Gift } from 'lucide-react';
+import { ArrowLeft, Wallet, Gift, Copy } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { UpdateProfileDialog } from '@/components/update-profile-dialog';
@@ -25,6 +24,7 @@ import { ChangePasswordDialog } from '@/components/change-password-dialog';
 interface UserProfile extends DocumentData {
   balance?: number;
   bonusBalance?: number;
+  referralCode?: string;
 }
 
 export default function ProfilePage() {
@@ -55,6 +55,25 @@ export default function ProfilePage() {
     
     return () => unsubscribe();
   }, [user]);
+  
+  const handleCopyToClipboard = () => {
+    if (profile.referralCode) {
+        navigator.clipboard.writeText(profile.referralCode).then(() => {
+            toast({
+                title: 'Copied!',
+                description: 'Referral code has been copied to clipboard.',
+            });
+        }, (err) => {
+            console.error('Could not copy text: ', err);
+             toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to copy referral code.',
+            });
+        });
+    }
+  };
+
 
   if (loading || !user) {
     return (
@@ -106,6 +125,19 @@ export default function ProfilePage() {
                         Mobile Number
                         </label>
                         <p className="text-lg font-semibold">{mobileNumber}</p>
+                    </div>
+                     <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                        Referral Code
+                        </label>
+                        <div className="flex items-center gap-2">
+                           <p className="text-lg font-semibold text-primary">{profile.referralCode || 'N/A'}</p>
+                           {profile.referralCode && (
+                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleCopyToClipboard}>
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                           )}
+                        </div>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-muted-foreground">

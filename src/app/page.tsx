@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { auth, db, storage } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc, getDocs, limit } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -38,13 +38,12 @@ import {
   Gift,
   IndianRupee,
   XCircle,
+  Copy,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import Autoplay from "embla-carousel-autoplay"
 import { formatTime, cn, isBettingClosed, formatGameResult } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -52,7 +51,12 @@ import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { motion } from 'framer-motion';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel"
+import Autoplay from "embla-carousel-autoplay"
 
 
 interface Game extends DocumentData {
@@ -92,7 +96,10 @@ interface AppSettings extends DocumentData {
         titleSize?: number;
         textSize?: number;
     };
-    noticeText?: string;
+    notice?: {
+        text: string;
+        enabled: boolean;
+    };
     bonusPopup?: {
         enabled: boolean;
         imageUrl: string;
@@ -103,6 +110,7 @@ interface AppSettings extends DocumentData {
 interface UserProfile extends DocumentData {
   balance?: number;
   bonusBalance?: number;
+  referralCode?: string;
 }
 
 // Memoized Game Card Component for performance optimization
@@ -176,7 +184,6 @@ export default function Home() {
   const [settings, setSettings] = useState<AppSettings>({});
   const [userProfile, setUserProfile] = useState<UserProfile>({ balance: 0, bonusBalance: 0 });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const autoplayPlugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   const [closedGameInfo, setClosedGameInfo] = useState<Game | null>(null);
@@ -260,6 +267,24 @@ export default function Home() {
         unsubscribeUserProfile();
     };
   }, [user, currentDay]);
+  
+  const handleCopyToClipboard = () => {
+    if (userProfile.referralCode) {
+        navigator.clipboard.writeText(userProfile.referralCode).then(() => {
+            toast({
+                title: 'Copied!',
+                description: 'Referral code has been copied to clipboard.',
+            });
+        }, (err) => {
+            console.error('Could not copy text: ', err);
+             toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to copy referral code.',
+            });
+        });
+    }
+  };
 
   const handleBonusPopupClose = () => {
     setShowBonusPopup(false);
@@ -331,7 +356,7 @@ export default function Home() {
     </div>
   );
   
-  const totalBalance = Number(userProfile?.balance || 0) + Number(userProfile?.bonusBalance || 0);
+  const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -359,6 +384,14 @@ export default function Home() {
                         </Avatar>
                         <p className="font-bold text-lg">{user.displayName}</p>
                         <p className="text-muted-foreground">+91 {mobileNumber}</p>
+                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <span>Referral: {userProfile.referralCode || 'N/A'}</span>
+                            {userProfile.referralCode && (
+                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleCopyToClipboard}>
+                                    <Copy className="h-3 w-3" />
+                                </Button>
+                            )}
+                        </div>
                     </div>
                     </div>
                     <Separator className="bg-white/10 my-2" />
@@ -447,7 +480,7 @@ export default function Home() {
       {settings.marquee?.text && (
         <div 
             className="relative flex overflow-x-hidden text-white py-2" 
-            style={{ backgroundColor: settings.marquee.backgroundColor || '#b91c1c' }}
+            style={{ backgroundColor: settings.marquee?.backgroundColor || '#b91c1c' }}
         >
             <div className="animate-marquee whitespace-nowrap flex">
                 <MarqueeContent />
@@ -509,48 +542,45 @@ export default function Home() {
             </DialogContent>
         </Dialog>
 
-
         {settings.welcomeBanner?.imageUrl && (
-            <Card className="bg-card/80 border-white/10 shadow-lg shadow-white/10">
+            <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
                 <CardContent className="p-0">
-                    <Image
+                    <img
                         src={settings.welcomeBanner.imageUrl}
                         alt="Welcome Banner"
-                        width={1200}
-                        height={400}
-                        className="w-full h-auto object-cover rounded-lg"
-                        data-ai-hint="king"
-                        priority
+                        className="w-full h-auto max-h-[250px] object-cover"
                     />
                 </CardContent>
             </Card>
         )}
-        
+
         {banners.length > 0 && (
-            <Carousel 
-                plugins={[autoplayPlugin.current]}
+          <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
+            <CardContent className="p-0">
+              <Carousel
                 className="w-full"
-                onMouseEnter={autoplayPlugin.current.stop}
-                onMouseLeave={autoplayPlugin.current.reset}
-            >
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                    stopOnInteraction: false,
+                    stopOnMouseEnter: true,
+                  }),
+                ]}
+              >
                 <CarouselContent>
-                    {banners.map((banner) => (
-                        <CarouselItem key={banner.id}>
-                        <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
-                            <CardContent className="p-0">
-                                <img
-                                    src={banner.imageUrl}
-                                    alt="Banner"
-                                    className="w-full h-auto max-h-[250px] object-cover"
-                                />
-                            </CardContent>
-                        </Card>
-                        </CarouselItem>
-                    ))}
+                  {banners.map((banner) => (
+                    <CarouselItem key={banner.id}>
+                      <img
+                        src={banner.imageUrl}
+                        alt="Banner"
+                        className="w-full h-auto max-h-[250px] object-cover"
+                      />
+                    </CarouselItem>
+                  ))}
                 </CarouselContent>
-                <CarouselPrevious className="left-4" />
-                <CarouselNext className="right-4" />
-            </Carousel>
+              </Carousel>
+            </CardContent>
+          </Card>
         )}
         
         <Card className="bg-card/80 border-white/10 shadow-lg">
@@ -572,20 +602,22 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
-
-        <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
-            <CardHeader>
-                <CardTitle className="text-xl text-white">Notice</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p 
-                  className="text-white font-bold" 
-                  style={{ whiteSpace: 'pre-wrap' }}
-                >
-                  {settings.noticeText || 'Welcome to MATKA KING! Play responsibly and enjoy your gaming experience.'}
-                </p>
-            </CardContent>
-        </Card>
+        
+        {settings.notice?.enabled && settings.notice.text && (
+            <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
+                <CardHeader>
+                    <CardTitle className="text-xl text-white">Notice</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p 
+                    className="text-white font-bold" 
+                    style={{ whiteSpace: 'pre-wrap' }}
+                    >
+                    {settings.notice.text}
+                    </p>
+                </CardContent>
+            </Card>
+        )}
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader>

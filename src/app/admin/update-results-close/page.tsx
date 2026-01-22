@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -30,6 +29,7 @@ interface Game extends DocumentData {
     closeResult: string;
     result: string;
     openTime: string;
+    closeTime: string;
 }
 
 const WIN_RATES = {
@@ -46,23 +46,14 @@ const calculateJodiDigit = (pana: string): string => {
 };
 
 const parseDateString = (dateStr: string): Date | null => {
-    if (!dateStr || typeof dateStr !== 'string') return null;
+    if (!dateStr) return null;
     const parts = dateStr.trim().split('/');
     if (parts.length !== 3) return null;
-    
     const [day, month, year] = parts.map(Number);
-    if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1000) return null;
-    
-    // Create date in UTC to avoid timezone issues
-    const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-    
-    // Validate if the created date is correct
-    if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-        return date;
-    }
-    return null;
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+    // Assuming year is in YYYY format. The Date constructor uses month index 0-11.
+    return new Date(year, month - 1, day);
 };
-
 
 export default function UpdateResultsClosePage() {
   const { toast } = useToast();
@@ -130,79 +121,89 @@ export default function UpdateResultsClosePage() {
             result: finalResult,
         });
 
-        // --- Correct Result Date and Day Index Calculation ---
-        const now = new Date();
-        const [openHours, openMinutes] = game.openTime.split(':').map(Number);
-        const gameOpenTimeToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), openHours, openMinutes, 0, 0);
-
-        let resultDate = new Date();
-        if (now < gameOpenTimeToday) {
-            // If we are updating before the game's open time, it must be for the previous day's result.
-            resultDate.setDate(resultDate.getDate() - 1);
+        // Update Jodi Chart
+        const jodiChartRef = doc(db, 'jodiCharts', game.id);
+        const jodiChartSnap = await getDoc(jodiChartRef);
+        if (jodiChartSnap.exists()) {
+            const jodiData = jodiChartSnap.data();
+            const today = new Date();
+            const todayDay = today.toLocaleDateString('en-US', { weekday: 'long' });
+            const activeDays = jodiData.activeDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            
+            if (activeDays.includes(todayDay)) {
+                let newData = jodiData.data ? `${jodiData.data} ${finalJodi}` : finalJodi;
+                batch.update(jodiChartRef, { data: newData });
+            }
         }
         
+        // Update Panel Chart
         const panelChartRef = doc(db, 'panelCharts', game.id);
         const panelChartSnap = await getDoc(panelChartRef);
-
         if (panelChartSnap.exists()) {
-            const panelChartDataString = panelChartSnap.data()?.data || '';
-            const newDayData = `${openPana}${finalJodi}${newClosePana}`;
+            const panelChartData = panelChartSnap.data().data || '';
             
-            // Indian Standard Time is UTC+5:30. getUTCDay() where Sunday is 0. We want Monday=0.
-            const dayIndex = (resultDate.getUTCDay() + 6) % 7; 
-            
-            const rows = panelChartDataString.split('\n').filter((row: string) => row.trim() !== '');
-            let finalDataArray = [...rows];
-            let weekFound = false;
-            
-            const resultDateStartOfDay = new Date(Date.UTC(resultDate.getUTCFullYear(), resultDate.getUTCMonth(), resultDate.getUTCDate()));
+            let today = new Date();
+            const openTimeParts = game.openTime.split(':').map(Number);
+            const openDateTime = new Date();
+            openDateTime.setHours(openTimeParts[0], openTimeParts[1], 0, 0);
 
-            for (let i = 0; i < finalDataArray.length; i++) {
-                const row = finalDataArray[i];
-                const match = row.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
+            // If the current time is before the open time, assume result is for the previous day
+            if (new Date() < openDateTime) {
+                today.setDate(today.getDate() - 1);
+            }
+            
+            today.setHours(0, 0, 0, 0);
+
+            const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
+            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
+            const newDayData = `${openPana}${finalJodi}${newClosePana}`;
+
+            const rows = panelChartData.split('\n').filter((row: string) => row.trim() !== '');
+            let weekFound = false;
+            let finalDataArray = [...rows];
+
+            if (rows.length > 0) {
+                const lastRow = rows[rows.length - 1];
+                const match = lastRow.match(/(\d{2}\/\d{2}\/\d{4})\s*to\s*(\d{2}\/\d{2}\/\d{4})/);
                 if (match) {
-                    const startDate = parseDateString(match[1]);
-                    const endDate = parseDateString(match[2]);
-                    if (startDate && endDate) {
-                        endDate.setUTCHours(23, 59, 59, 999); // Include the whole end day
-                         if (resultDateStartOfDay >= startDate && resultDateStartOfDay <= endDate) {
-                            weekFound = true;
-                            const dataPart = row.substring(match[0].length).trim();
-                            const dailyBlocks = dataPart.split(/\s+/).filter(String);
-                            
-                            while(dailyBlocks.length < 7) { dailyBlocks.push('********'); }
-                            dailyBlocks[dayIndex] = newDayData;
-                            
-                            const updatedDataPart = dailyBlocks.join(' ');
-                            finalDataArray[i] = `${match[0]} ${updatedDataPart}`;
-                            break;
+                    const lastStartDate = parseDateString(match[1]);
+                    const lastEndDate = parseDateString(match[2]);
+                    
+                    if (lastStartDate && lastEndDate && today >= lastStartDate && today <= lastEndDate) {
+                        weekFound = true;
+                        const dataPart = lastRow.substring(match[0].length).trim();
+                        const dailyBlocks = dataPart.split(/\s+/).filter(String);
+                        
+                        while(dailyBlocks.length < 7) {
+                            dailyBlocks.push('********');
                         }
+
+                        dailyBlocks[dayIndex] = newDayData;
+                        
+                        const updatedDataPart = dailyBlocks.join(' ');
+                        finalDataArray[rows.length - 1] = `${match[0]} ${updatedDataPart}`;
                     }
                 }
             }
             
             if (!weekFound) {
-                // Determine the start (Monday) and end (Sunday) of the week for the resultDate
-                const dayOfWeekForNewWeek = (resultDate.getUTCDay() + 6) % 7; // Monday = 0, Sunday = 6
-                
-                const startOfWeek = new Date(resultDateStartOfDay);
-                startOfWeek.setUTCDate(startOfWeek.getUTCDate() - dayOfWeekForNewWeek);
-                
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - dayIndex);
                 const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
                 
-                const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
-                const newDateRange = `${formatDateStr(startOfWeek)} to ${formatDateStr(endOfWeek)}`;
+                const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const newDateRange = `${formatDate(startOfWeek)} to ${formatDate(endOfWeek)}`;
                 
                 const newWeekDataArr = Array(7).fill('********');
                 newWeekDataArr[dayIndex] = newDayData;
                 const newWeekData = newWeekDataArr.join(' ');
                 
                 const newRow = `${newDateRange} ${newWeekData}`;
-                finalDataArray.push(newRow); // Add as a new row
+                finalDataArray.push(newRow);
             }
 
-            batch.update(panelChartRef, { data: finalDataArray.join('\n') });
+            batch.update(panelChartRef, { data: finalDataArray.join('\n').trim() });
         }
 
 
@@ -267,20 +268,20 @@ export default function UpdateResultsClosePage() {
 
         const affectedBidsQuery = query(
             collection(db, 'bids'),
-            where('gameId', '==', game.id),
-            where('status', 'in', ['won', 'lost'])
+            where('gameId', '==', game.id)
         );
 
         const bidsSnapshot = await getDocs(affectedBidsQuery);
 
         bidsSnapshot.forEach(bidDoc => {
             const bid = bidDoc.data();
-            if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
-                 if (bid.status === 'won') {
-                    const userDocRef = doc(db, 'users', bid.userId);
-                    batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
-                    batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
-                } else if (bid.status === 'lost') {
+            if (bid.status === 'won' && (bid.session === 'Close' || bid.betType === 'Jodi Digit')) {
+                const userDocRef = doc(db, 'users', bid.userId);
+                batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
+                batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
+            } else if (bid.status === 'lost') {
+                // We also need to revert 'lost' bids that were not for the 'Open' session
+                if(bid.session !== 'Open') {
                     batch.update(bidDoc.ref, { status: 'running' });
                 }
             }
@@ -297,12 +298,12 @@ export default function UpdateResultsClosePage() {
         await batch.commit();
         toast({
             title: 'Result Reverted!',
-            description: `Close result for ${game.name} has been reverted. Affected bets are running again.`
+            description: `Close result for ${game.name} has been reverted. Incorrect winnings have been clawed back.`
         });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error reverting result: ', error);
-        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to revert result.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to revert result.' });
     } finally {
         setIsReverting(false);
     }
@@ -435,4 +436,3 @@ export default function UpdateResultsClosePage() {
     </div>
   );
 }
-

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -8,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 
 
 import { Button } from '@/components/ui/button';
@@ -17,13 +16,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
-import { Eye, EyeOff, User, Phone, KeyRound } from 'lucide-react';
+import { Eye, EyeOff, User, Phone, KeyRound, Gift } from 'lucide-react';
 import React from 'react';
 
 const formSchema = z.object({
   username: z.string().optional(),
   mobile: z.string().length(10, { message: 'Mobile number must be exactly 10 digits.' }).regex(/^\d+$/, 'Invalid mobile number.'),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  referralCode: z.string().optional(),
 });
 
 type AuthFormProps = {
@@ -55,6 +55,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       username: '',
       mobile: '',
       password: '',
+      referralCode: '',
     },
   });
 
@@ -75,6 +76,25 @@ export function AuthForm({ mode }: AuthFormProps) {
             });
             return;
         }
+
+        let referredBy = null;
+        if (values.referralCode) {
+            const referralCode = values.referralCode.trim();
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('referralCode', '==', referralCode));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                referredBy = querySnapshot.docs[0].id;
+            } else {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Invalid Referral Code',
+                    description: 'The referral code you entered is not valid.',
+                });
+                return;
+            }
+        }
+        
         const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
         await updateProfile(userCredential.user, {
             displayName: values.username
@@ -82,13 +102,25 @@ export function AuthForm({ mode }: AuthFormProps) {
         
         const userDocRef = doc(db, "users", userCredential.user.uid);
         const statsDocRef = doc(db, 'app-stats', 'dashboard');
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
         
         await runTransaction(db, async (transaction) => {
+            // --- READS FIRST ---
             const statsDoc = await transaction.get(statsDocRef);
+            const settingsDoc = await transaction.get(settingsDocRef);
+            
+            // --- WRITES SECOND ---
             if (!statsDoc.exists()) {
                 transaction.set(statsDocRef, { totalUsers: 1, totalGames: 0, totalBalance: 0 });
             } else {
                 transaction.update(statsDocRef, { totalUsers: increment(1) });
+            }
+            
+            const welcomeBonusSettings = settingsDoc.exists() ? settingsDoc.data().welcomeBonus : { enabled: false, amount: 0 };
+
+            let welcomeBonusAmount = 0;
+            if (welcomeBonusSettings?.enabled && welcomeBonusSettings?.amount > 0) {
+                welcomeBonusAmount = welcomeBonusSettings.amount;
             }
 
             transaction.set(userDocRef, {
@@ -97,12 +129,28 @@ export function AuthForm({ mode }: AuthFormProps) {
                 mobile: values.mobile,
                 email: email,
                 balance: 0,
-                bonusBalance: 0,
-                totalBonusGiven: 0,
+                bonusBalance: welcomeBonusAmount,
+                totalBonusGiven: welcomeBonusAmount,
                 isAdmin: false,
                 isBlocked: false,
                 createdAt: serverTimestamp(),
+                referralCode: userCredential.user.uid.substring(0, 8).toUpperCase(),
+                referredBy: referredBy,
+                hasDeposited: false,
             });
+
+            if (welcomeBonusAmount > 0) {
+              const newBonusTransactionRef = doc(collection(db, 'bonusTransactions'));
+              transaction.set(newBonusTransactionRef, {
+                  userId: userCredential.user.uid,
+                  displayName: values.username,
+                  mobile: values.mobile,
+                  amount: welcomeBonusAmount,
+                  type: 'Given',
+                  description: 'Welcome bonus on signup.',
+                  createdAt: serverTimestamp(),
+              });
+            }
         });
 
       } else {
@@ -112,9 +160,19 @@ export function AuthForm({ mode }: AuthFormProps) {
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
 
-        if (userDoc.exists() && userDoc.data().isBlocked) {
-            await auth.signOut();
-            throw new Error("Your account has been blocked. Please contact support.");
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.isBlocked) {
+                await auth.signOut();
+                throw new Error("Your account has been blocked. Please contact support.");
+            }
+            // Check if referral code exists, if not, generate and set it.
+            if (!userData.referralCode) {
+                const newReferralCode = user.uid.substring(0, 8).toUpperCase();
+                await updateDoc(userDocRef, {
+                    referralCode: newReferralCode
+                });
+            }
         }
       }
       router.push('/');
@@ -155,22 +213,40 @@ export function AuthForm({ mode }: AuthFormProps) {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
             {mode === 'signup' && (
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-white">Name</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input placeholder="Enter your name" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <>
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white">Name</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                          <Input placeholder="Enter your name" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="referralCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white">Referral Code (Optional)</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                          <Input placeholder="Enter referral code" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             )}
             <FormField
               control={form.control}
@@ -224,6 +300,13 @@ export function AuthForm({ mode }: AuthFormProps) {
                 {mode === 'login' ? 'Create Account' : 'Sign In'}
               </Link>
             </p>
+             {mode === 'login' && (
+                <p className="mt-2 text-center text-sm">
+                    <Link href="/forgot-password" passHref>
+                        <span className="font-semibold text-orange-400 hover:underline cursor-pointer">Forgot Password?</span>
+                    </Link>
+                </p>
+             )}
           </CardFooter>
         </form>
       </Form>

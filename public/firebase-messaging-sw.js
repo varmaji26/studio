@@ -1,34 +1,32 @@
-// This service worker can be customized!
-// See https://developers.google.com/web/tools/workbox/modules/workbox-sw
 
-// This service worker is a separate file that runs in the background.
-// It can't share code with the rest of your app, but it can
-// import other files and libraries.
+// Import and initialize the Firebase SDK
+// This is required to handle messages when your web app is in the background.
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
-import { initializeApp } from "firebase/app";
-import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
-
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCTncE_u2wUR8W3ptwlRuDG4wmCjI6bF-w",
   authDomain: "matka-king-66ec3.firebaseapp.com",
-  databaseURL: "https://matka-king-66ec3-default-rtdb.firebaseio.com",
   projectId: "matka-king-66ec3",
-  storageBucket: "matka-king-66ec3.appspot.com",
+  storageBucket: "matka-king-66ec3.firebasestorage.app",
   messagingSenderId: "358988541311",
   appId: "1:358988541311:web:03491fbc1031220e16be4a",
+  databaseURL: "https://matka-king-66ec3-default-rtdb.firebaseio.com",
   measurementId: "G-GFZW681BYB"
 };
 
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
 
-onBackgroundMessage(messaging, (payload) => {
+firebase.initializeApp(firebaseConfig);
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  
-  const notificationTitle = payload.notification?.title || 'New Notification';
+  const notificationTitle = payload.notification.title;
   const notificationOptions = {
-    body: payload.notification?.body || 'You have a new message.',
-    icon: '/icon-192x192.png' // Path to your icon in the public folder
+    body: payload.notification.body,
+    icon: payload.notification.icon || '/icon-192x192.png',
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
