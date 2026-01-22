@@ -16,15 +16,11 @@ export const requestForToken = async (userId: string) => {
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-<<<<<<< HEAD
-      const currentToken = await getToken(messaging);
-=======
       console.log('Notification permission granted.');
       // Get the token
       const currentToken = await getToken(messaging, { 
           serviceWorkerRegistration: await navigator.serviceWorker.ready
       });
->>>>>>> 852cd6ba54575f2177391247dc0e864751a67628
       if (currentToken) {
         console.log('FCM token:', currentToken);
         // Save the token to the user's document in Firestore
