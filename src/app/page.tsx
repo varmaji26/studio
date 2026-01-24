@@ -130,7 +130,7 @@ const GameCard = memo(function GameCard({
         <Button
             onClick={!isPlayable ? () => onBettingClosedClick(game) : undefined}
             className={cn(
-                "h-12 px-8 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
+                "h-10 px-6 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
                 !isPlayable ? "bg-gray-600 hover:bg-gray-700" : "bg-orange-600 hover:bg-orange-700"
             )}
         >
@@ -619,7 +619,9 @@ export default function Home() {
           </CardHeader>
           <CardContent className="p-2">
             {gamesLoading ? (
-              <div className="grid grid-cols-3 gap-1">
+              <div className="grid grid-cols-4 gap-1">
+                <Skeleton className="h-9 w-full bg-slate-700/50" />
+                <Skeleton className="h-9 w-full bg-slate-700/50" />
                 <Skeleton className="h-9 w-full bg-slate-700/50" />
                 <Skeleton className="h-9 w-full bg-slate-700/50" />
                 <Skeleton className="h-9 w-full bg-slate-700/50" />
@@ -628,7 +630,7 @@ export default function Home() {
                 <Skeleton className="h-9 w-full bg-slate-700/50" />
               </div>
             ) : games.length > 0 ? (
-              <div className="grid grid-cols-3 gap-1">
+              <div className="grid grid-cols-4 gap-1">
                 {games.map((game) => (
                   <div key={game.id} className="flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-900 p-1 rounded-md border border-slate-700 text-center">
                     <span className="text-[10px] font-medium text-white truncate w-full">{game.name}</span>
