@@ -1,4 +1,3 @@
-
 'use client';
 
 import './globals.css';
@@ -34,7 +33,7 @@ export default function RootLayout({
     if (typeof window !== 'undefined' && 'Notification' in window && user) {
         requestForToken(user.uid);
     }
-  }, [user]);
+  }, [user?.uid]);
 
   useEffect(() => {
     // Prevent zoom
