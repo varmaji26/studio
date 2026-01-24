@@ -166,7 +166,7 @@ const GameCard = memo(function GameCard({
                     </Link>
                 )}
                 <Link href={`/games/${game.id}/panel-chart`}>
-                     <Button size="sm" variant="outline" className="text-xs h-8 border-sky-500/50 text-sky-500 hover:bg-sky-500/10 hover:text-sky-400">Panel</Button>
+                     <Button size="sm" variant="outline" className="text-xs h-8 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400">Panel</Button>
                 </Link>
             </div>
         </div>
