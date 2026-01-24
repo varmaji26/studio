@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -264,6 +263,22 @@ export default function Home() {
         settingsUnsubscribe?.();
     };
   }, [user?.uid, currentDay]);
+  
+  useEffect(() => {
+    // This effect handles scrolling to the game card when returning from a game page.
+    if (!gamesLoading) {
+      const hash = window.location.hash.substring(1); // Get hash without '#'
+      if (hash) {
+        const element = document.getElementById(hash);
+        if (element) {
+          // Use a timeout to ensure the DOM is fully painted after the loading skeletons disappear.
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+      }
+    }
+  }, [gamesLoading]);
   
   const handleCopyToClipboard = () => {
     if (userProfile.referralCode) {
