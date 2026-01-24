@@ -136,7 +136,7 @@ const GameCard = memo(function GameCard({
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
+        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-4 shadow-lg shadow-black/30">
             <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
