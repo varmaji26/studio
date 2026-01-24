@@ -186,23 +186,27 @@ body {
       animation: won-glow 2s ease-in-out infinite;
   }
 
-  .loader {
-    width: 48px;
-    height: 48px;
-    border: 5px solid hsl(var(--primary));
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    display: inline-block;
-    box-sizing: border-box;
-    animation: rotation 1s linear infinite;
+  .animate-spinner {
+    animation: spinner-spin 1.2s linear infinite;
   }
 
-  @keyframes rotation {
-    0% {
+  @keyframes spinner-spin {
+    from {
       transform: rotate(0deg);
     }
-    100% {
+    to {
       transform: rotate(360deg);
     }
+  }
+
+  @keyframes won-glow {
+      '0%, 100%': {
+        borderColor: hsl(var(--primary) / 0.5);
+        boxShadow: 0 0 5px hsl(var(--primary) / 0.5);
+      },
+      '50%': {
+        borderColor: hsl(var(--primary) / 1);
+        boxShadow: 0 0 20px hsl(var(--primary) / 1);
+      }
   }
 }
