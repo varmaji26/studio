@@ -126,18 +126,6 @@ const GameCard = memo(function GameCard({
     const bettingClosed = isBettingClosed(game.closeTime);
     const isPlayable = isActive && !bettingClosed;
 
-    const PlayButton = () => (
-        <Button
-            onClick={!isPlayable ? () => onBettingClosedClick(game) : undefined}
-            className={cn(
-                "h-9 px-6 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
-                !isPlayable ? "bg-gray-600 hover:bg-gray-700" : "bg-orange-600 hover:bg-orange-700"
-            )}
-        >
-            Play
-        </Button>
-    );
-
     return (
         <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
             <div className="flex justify-between items-start mb-2">
@@ -153,24 +141,33 @@ const GameCard = memo(function GameCard({
                         "text-xs font-semibold",
                         !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                     )}>
-                        {!isPlayable ? 'Market is Close' : game.status}
+                        {!isActive ? 'Market Off' : !isPlayable ? 'Market is Close' : game.status}
                     </p>
                 </div>
             </div>
-            <div className="border-t border-white/20 pt-2 flex justify-between items-center">
-                <Link href={`/games/${game.id}/jodi-chart`}>
-                    <Button size="sm" variant="outline" className="text-xs h-8 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400">Jodi</Button>
-                </Link>
-                {isPlayable ? (
-                     <Link href={`/games/${game.id}`} className="block">
-                         <PlayButton />
-                     </Link>
-                ) : (
-                    <PlayButton />
-                )}
-                <Link href={`/games/${game.id}/panel-chart`}>
-                     <Button size="sm" variant="outline" className="text-xs h-8 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400">Panel</Button>
-                </Link>
+            <div className="border-t border-white/20 pt-2">
+                <div className="flex items-stretch bg-orange-600 rounded-md text-white font-bold text-sm h-9 shadow-md">
+                    <Link href={`/games/${game.id}/jodi-chart`} className="flex-1 flex items-center justify-center hover:bg-orange-700/70 rounded-l-md transition-colors">
+                        Jodi
+                    </Link>
+                    <div className="border-l border-white/20"></div>
+                    {isPlayable ? (
+                        <Link href={`/games/${game.id}`} className="flex-[2] flex items-center justify-center bg-orange-700 hover:bg-orange-800/70 transition-colors">
+                            Play
+                        </Link>
+                    ) : (
+                        <div 
+                            onClick={() => onBettingClosedClick(game)}
+                            className="flex-[2] flex items-center justify-center bg-gray-600 cursor-not-allowed"
+                        >
+                            Play
+                        </div>
+                    )}
+                    <div className="border-r border-white/20"></div>
+                    <Link href={`/games/${game.id}/panel-chart`} className="flex-1 flex items-center justify-center hover:bg-orange-700/70 rounded-r-md transition-colors">
+                        Panel
+                    </Link>
+                </div>
             </div>
         </div>
     );
@@ -673,7 +670,7 @@ export default function Home() {
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-2">
                     {games.map((game) => {
                       const isActiveToday = (() => {
                           if (!game.active) return false; // Master switch is off
