@@ -198,18 +198,6 @@ export default function Home() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const id = window.location.hash.substring(1);
-      setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 500); // Delay to ensure content has rendered
-    }
-  }, []);
-
-  useEffect(() => {
     if (!user?.uid) return;
 
     let userUnsubscribe: () => void;
