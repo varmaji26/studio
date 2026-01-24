@@ -165,14 +165,14 @@ const GameCard = memo(function GameCard({
 
                     {/* Jodi Button positioned over the main button */}
                     <Link href={`/games/${game.id}/jodi-chart`} className="absolute top-1/2 left-1 -translate-y-1/2 z-10">
-                        <div className="h-10 w-10 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold border-2 border-slate-900 shadow-md">
+                        <div className="h-10 w-10 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold shadow-md">
                             Jodi
                         </div>
                     </Link>
 
                     {/* Panel Button positioned over the main button */}
                     <Link href={`/games/${game.id}/panel-chart`} className="absolute top-1/2 right-1 -translate-y-1/2 z-10">
-                        <div className="h-10 w-10 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold border-2 border-slate-900 shadow-md">
+                        <div className="h-10 w-10 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold shadow-md">
                             Panel
                         </div>
                     </Link>
@@ -679,7 +679,7 @@ export default function Home() {
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
                     {games.map((game) => {
                       const isActiveToday = (() => {
                           if (!game.active) return false; // Master switch is off
