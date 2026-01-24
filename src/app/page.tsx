@@ -146,7 +146,7 @@ const GameCard = memo(function GameCard({
                 </div>
             </div>
             <div className="border-t border-white/20 pt-2">
-                <div className="relative mt-2 h-12">
+                <div className="relative mt-2 h-10">
                     {/* Main Playable Button or Disabled Button */}
                     {isPlayable ? (
                         <Link href={`/games/${game.id}`} className="block h-full">
@@ -165,14 +165,14 @@ const GameCard = memo(function GameCard({
 
                     {/* Jodi Button positioned over the main button */}
                     <Link href={`/games/${game.id}/jodi-chart`} className="absolute top-1/2 left-1 -translate-y-1/2 z-10">
-                        <div className="h-10 w-10 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold shadow-md">
+                        <div className="h-8 w-8 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold shadow-md">
                             Jodi
                         </div>
                     </Link>
 
                     {/* Panel Button positioned over the main button */}
                     <Link href={`/games/${game.id}/panel-chart`} className="absolute top-1/2 right-1 -translate-y-1/2 z-10">
-                        <div className="h-10 w-10 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold shadow-md">
+                        <div className="h-8 w-8 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold shadow-md">
                             Panel
                         </div>
                     </Link>
