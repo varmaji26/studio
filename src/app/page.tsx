@@ -649,14 +649,14 @@ export default function Home() {
           </CardHeader>
           <CardContent className="p-2 pt-0">
             {gamesLoading ? (
-               <div className="space-y-2">
+               <div className="space-y-4">
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
                     {games.map((game) => (
                         <GameCard key={game.id} game={game} onBettingClosedClick={setClosedGameInfo} />
                     ))}
