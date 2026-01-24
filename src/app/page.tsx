@@ -116,19 +116,22 @@ interface UserProfile extends DocumentData {
 // Memoized Game Card Component for performance optimization
 const GameCard = memo(function GameCard({
     game,
-    onBettingClosedClick
+    onBettingClosedClick,
+    isActive
 }: {
     game: Game;
     onBettingClosedClick: (game: Game) => void;
+    isActive: boolean;
 }) {
     const bettingClosed = isBettingClosed(game.closeTime);
+    const isPlayable = isActive && !bettingClosed;
 
     const PlayButton = () => (
         <Button
-            onClick={bettingClosed ? () => onBettingClosedClick(game) : undefined}
+            onClick={!isPlayable ? () => onBettingClosedClick(game) : undefined}
             className={cn(
-                "h-8 px-4 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
-                bettingClosed ? "bg-gray-600 hover:bg-gray-700" : "bg-orange-600 hover:bg-orange-700"
+                "h-10 px-6 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
+                !isPlayable ? "bg-gray-600 hover:bg-gray-700" : "bg-orange-600 hover:bg-orange-700"
             )}
         >
             Play
@@ -136,7 +139,7 @@ const GameCard = memo(function GameCard({
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-4 shadow-lg shadow-black/30">
+        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
             <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
@@ -147,10 +150,10 @@ const GameCard = memo(function GameCard({
                 <div className="text-right">
                     <p className="text-lg font-bold text-yellow-400">{formatGameResult(game)}</p>
                     <p className={cn(
-                        "text-xs font-semibold",
-                        bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
+                        "text-[11px] font-semibold",
+                        !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                     )}>
-                        {bettingClosed ? 'Market is Close' : game.status}
+                        {!isPlayable ? 'Market is Close' : game.status}
                     </p>
                 </div>
             </div>
@@ -158,12 +161,12 @@ const GameCard = memo(function GameCard({
                 <Link href={`/games/${game.id}/jodi-chart`}>
                     <Button size="sm" variant="outline" className="text-xs h-8 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400">Jodi</Button>
                 </Link>
-                {bettingClosed ? (
-                     <PlayButton />
+                {isPlayable ? (
+                     <Link href={`/games/${game.id}`} className="block">
+                         <PlayButton />
+                     </Link>
                 ) : (
-                    <Link href={`/games/${game.id}`} className="block">
-                        <PlayButton />
-                    </Link>
+                    <PlayButton />
                 )}
                 <Link href={`/games/${game.id}/panel-chart`}>
                      <Button size="sm" variant="outline" className="text-xs h-8 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400">Panel</Button>
@@ -218,17 +221,11 @@ export default function Home() {
         gamesData.push({ id: doc.id, ...doc.data() } as Game);
       });
       
-      const filteredGames = gamesData.filter(game => {
-          if (!game.active) return false;
-          if (!game.activeDays || game.activeDays.length === 0) return true;
-          return game.activeDays.includes(currentDay);
-      });
-
-      filteredGames.sort((a, b) => {
+      gamesData.sort((a, b) => {
           return a.openTime.localeCompare(b.openTime);
       });
 
-      setGames(filteredGames);
+      setGames(gamesData);
       setGamesLoading(false);
     }, (error) => {
         console.error("Error fetching games:", error);
@@ -499,7 +496,7 @@ export default function Home() {
         </div>
       )}
       
-      <main className="flex-1 flex flex-col gap-4 p-4 pb-28 overflow-y-auto">
+      <main className="flex-1 flex flex-col gap-2 p-2 pb-28 overflow-y-auto">
         
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
@@ -649,17 +646,30 @@ export default function Home() {
           </CardHeader>
           <CardContent className="p-2 pt-0">
             {gamesLoading ? (
-               <div className="space-y-4">
+               <div className="space-y-2">
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
-                <div className="space-y-4">
-                    {games.map((game) => (
-                        <GameCard key={game.id} game={game} onBettingClosedClick={setClosedGameInfo} />
-                    ))}
+                <div className="space-y-2">
+                    {games.map((game) => {
+                      const isActiveToday = (() => {
+                          if (!game.active) return false; // Master switch is off
+                          if (!game.activeDays || game.activeDays.length === 0) return true; // if no days are set, assume it runs everyday
+                          return game.activeDays.includes(currentDay);
+                      })();
+
+                      return (
+                        <GameCard 
+                            key={game.id} 
+                            game={game} 
+                            onBettingClosedClick={setClosedGameInfo}
+                            isActive={isActiveToday}
+                        />
+                      )
+                    })}
                 </div>
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
