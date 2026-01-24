@@ -139,7 +139,7 @@ const GameCard = memo(function GameCard({
             <div className="flex justify-between items-start">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                         <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
                     </div>
                 </div>
@@ -153,12 +153,9 @@ const GameCard = memo(function GameCard({
                     </p>
                 </div>
             </div>
-            <div className="mt-2 border-t border-white/20 pt-2 flex justify-end items-center gap-2">
+            <div className="mt-2 border-t border-white/20 pt-2 flex justify-between items-center">
                 <Link href={`/games/${game.id}/jodi-chart`}>
                     <Button size="sm" variant="outline" className="text-xs h-8 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400">Jodi</Button>
-                </Link>
-                <Link href={`/games/${game.id}/panel-chart`}>
-                     <Button size="sm" variant="outline" className="text-xs h-8 border-sky-500/50 text-sky-500 hover:bg-sky-500/10 hover:text-sky-400">Panel</Button>
                 </Link>
                 {bettingClosed ? (
                      <PlayButton />
@@ -167,6 +164,9 @@ const GameCard = memo(function GameCard({
                         <PlayButton />
                     </Link>
                 )}
+                <Link href={`/games/${game.id}/panel-chart`}>
+                     <Button size="sm" variant="outline" className="text-xs h-8 border-sky-500/50 text-sky-500 hover:bg-sky-500/10 hover:text-sky-400">Panel</Button>
+                </Link>
             </div>
         </div>
     );
