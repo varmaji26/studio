@@ -30,26 +30,26 @@ const isRedNumber = (num: string) => {
 const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; closePana: string; } }) => {
     const { openPana, jodi, closePana } = dayData;
     
+    const isRed = isRedNumber(jodi);
+    
     if (jodi === '**' || jodi === '*' || openPana === '***' ) {
       return (
-        <div className="relative p-0 min-h-[30px] flex items-center justify-center text-black font-bold text-sm">
+        <div className={cn("relative p-0 min-h-[30px] flex items-center justify-center font-bold text-base", isRed ? 'text-red-600' : 'text-black')}>
             **
         </div>
       );
     }
     
-    const isRed = isRedNumber(jodi);
-    
     return (
         <div className={cn(
-            "flex items-center justify-center p-0 min-h-[30px] gap-0",
+            "flex items-center justify-center p-0 min-h-[30px] gap-0.5",
             isRed ? 'text-red-600' : 'text-black'
         )}>
-            <div className="text-center text-[9px] font-semibold leading-tight flex flex-col">
+            <div className="text-center text-xs font-semibold leading-tight flex flex-col">
                 {openPana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
             </div>
-            <span className="text-sm mx-0.5 font-bold">{jodi}</span>
-            <div className="text-center text-[9px] font-semibold leading-tight flex flex-col">
+            <span className="text-base mx-0.5 font-bold">{jodi}</span>
+            <div className="text-center text-xs font-semibold leading-tight flex flex-col">
                 {closePana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
             </div>
         </div>
