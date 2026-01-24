@@ -130,7 +130,7 @@ const GameCard = memo(function GameCard({
         <Button
             onClick={!isPlayable ? () => onBettingClosedClick(game) : undefined}
             className={cn(
-                "h-10 px-6 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
+                "h-9 px-6 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
                 !isPlayable ? "bg-gray-600 hover:bg-gray-700" : "bg-orange-600 hover:bg-orange-700"
             )}
         >
