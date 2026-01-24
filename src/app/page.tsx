@@ -266,13 +266,10 @@ export default function Home() {
   
   useEffect(() => {
     if (!gamesLoading) {
-      const hash = window.location.hash.substring(1);
+      const hash = decodeURIComponent(window.location.hash.substring(1));
       if (hash) {
-        // We use a retry mechanism with setInterval because the game cards
-        // might not be rendered in the DOM immediately after gamesLoading becomes false.
-        // This ensures we find the element once it's available.
         let attempts = 0;
-        const maxAttempts = 20; // Try for 2 seconds (20 * 100ms)
+        const maxAttempts = 20;
         const interval = setInterval(() => {
           attempts++;
           const element = document.getElementById(hash);
