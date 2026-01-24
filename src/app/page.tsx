@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { auth, db, storage } from '@/lib/firebase';
 import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc, getDocs, limit } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Menu,
@@ -57,6 +56,7 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel"
 import Autoplay from "embla-carousel-autoplay"
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 interface Game extends DocumentData {
@@ -180,6 +180,7 @@ export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
   const [games, setGames] = useState<Game[]>([]);
+  const [gamesLoading, setGamesLoading] = useState(true);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [settings, setSettings] = useState<AppSettings>({});
   const [userProfile, setUserProfile] = useState<UserProfile>({ balance: 0, bonusBalance: 0 });
@@ -211,15 +212,20 @@ export default function Home() {
   useEffect(() => {
     if (!user?.uid) return;
 
+    let userUnsubscribe: () => void;
+    let gamesUnsubscribe: () => void;
+    let bannersUnsubscribe: () => void;
+    let settingsUnsubscribe: () => void;
+
     const userDocRef = doc(db, 'users', user.uid);
-    const unsubscribeUserProfile = onSnapshot(userDocRef, (doc) => {
+    userUnsubscribe = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
             setUserProfile(doc.data() as UserProfile);
         }
     });
-    
+
     const gamesQuery = query(collection(db, 'games'));
-    const unsubscribeGames = onSnapshot(gamesQuery, (querySnapshot) => {
+    gamesUnsubscribe = onSnapshot(gamesQuery, (querySnapshot) => {
       const gamesData: Game[] = [];
       querySnapshot.forEach((doc) => {
         gamesData.push({ id: doc.id, ...doc.data() } as Game);
@@ -236,10 +242,14 @@ export default function Home() {
       });
 
       setGames(filteredGames);
+      setGamesLoading(false);
+    }, (error) => {
+        console.error("Error fetching games:", error);
+        setGamesLoading(false);
     });
 
     const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"));
-    const unsubscribeBanners = onSnapshot(bannersQuery, (querySnapshot) => {
+    bannersUnsubscribe = onSnapshot(bannersQuery, (querySnapshot) => {
         const bannersData: Banner[] = [];
         querySnapshot.forEach((doc) => {
             bannersData.push({ id: doc.id, ...doc.data() } as Banner);
@@ -248,12 +258,11 @@ export default function Home() {
     });
     
     const settingsDocRef = doc(db, 'settings', 'app-settings');
-    const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+    settingsUnsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
         if (docSnap.exists()) {
             const appSettings = docSnap.data() as AppSettings;
             setSettings(appSettings);
             
-            // Bonus Popup Logic
             if (appSettings.bonusPopup?.enabled && appSettings.bonusPopup.imageUrl) {
                 setShowBonusPopup(true);
             }
@@ -261,10 +270,10 @@ export default function Home() {
     });
 
     return () => {
-        unsubscribeGames();
-        unsubscribeBanners();
-        unsubscribeSettings();
-        unsubscribeUserProfile();
+        userUnsubscribe?.();
+        gamesUnsubscribe?.();
+        bannersUnsubscribe?.();
+        settingsUnsubscribe?.();
     };
   }, [user?.uid, currentDay]);
   
@@ -593,7 +602,11 @@ export default function Home() {
             <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
           </CardHeader>
           <CardContent>
-            {games.length > 0 ? (
+            {gamesLoading ? (
+              <div className="flex justify-center p-4">
+                <Loader className="h-6 w-6 text-primary" />
+              </div>
+            ) : games.length > 0 ? (
               <div className="grid grid-cols-2 gap-1">
                 {games.map((game) => (
                   <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-0.5 rounded-lg border border-black text-center">
@@ -629,7 +642,13 @@ export default function Home() {
             <CardTitle className="text-xl text-center">Matka Games</CardTitle>
           </CardHeader>
           <CardContent>
-            {games.length > 0 ? (
+            {gamesLoading ? (
+               <div className="grid grid-cols-1 gap-4">
+                    <Skeleton className="h-40 w-full rounded-2xl" />
+                    <Skeleton className="h-40 w-full rounded-2xl" />
+                    <Skeleton className="h-40 w-full rounded-2xl" />
+                </div>
+            ) : games.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
                     {games.map((game) => (
                         <GameCard key={game.id} game={game} onBettingClosedClick={setClosedGameInfo} />
