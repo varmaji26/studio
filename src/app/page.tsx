@@ -146,26 +146,35 @@ const GameCard = memo(function GameCard({
                 </div>
             </div>
             <div className="border-t border-white/20 pt-2">
-                <div className="flex items-stretch gap-1 text-white font-bold text-sm h-10">
-                    <Link href={`/games/${game.id}/jodi-chart`} className="flex-1 flex items-center justify-center bg-yellow-400 hover:bg-yellow-500 text-black rounded-full transition-colors">
-                        Jodi
-                    </Link>
-                    
+                <div className="relative mt-2 h-12">
+                    {/* Main Playable Button or Disabled Button */}
                     {isPlayable ? (
-                        <Link href={`/games/${game.id}`} className="flex-[2] flex items-center justify-center bg-orange-600 hover:bg-orange-700 rounded-full transition-colors">
-                            Play
+                        <Link href={`/games/${game.id}`} className="block h-full">
+                            <div className="w-full h-full flex items-center justify-center bg-orange-600 text-white font-bold rounded-full text-lg shadow-lg">
+                                Play Now
+                            </div>
                         </Link>
                     ) : (
                         <div 
                             onClick={() => onBettingClosedClick(game)}
-                            className="flex-[2] flex items-center justify-center bg-gray-600 text-white rounded-full cursor-not-allowed"
+                            className="w-full h-full flex items-center justify-center bg-gray-600 text-white font-bold rounded-full text-lg shadow-lg cursor-not-allowed"
                         >
-                            Play
+                            Play Now
                         </div>
                     )}
-                    
-                    <Link href={`/games/${game.id}/panel-chart`} className="flex-1 flex items-center justify-center bg-yellow-400 hover:bg-yellow-500 text-black rounded-full transition-colors">
-                        Panel
+
+                    {/* Jodi Button positioned over the main button */}
+                    <Link href={`/games/${game.id}/jodi-chart`} className="absolute top-1/2 left-1 -translate-y-1/2 z-10">
+                        <div className="h-10 w-10 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold border-2 border-slate-900 shadow-md">
+                            Jodi
+                        </div>
+                    </Link>
+
+                    {/* Panel Button positioned over the main button */}
+                    <Link href={`/games/${game.id}/panel-chart`} className="absolute top-1/2 right-1 -translate-y-1/2 z-10">
+                        <div className="h-10 w-10 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold border-2 border-slate-900 shadow-md">
+                            Panel
+                        </div>
                     </Link>
                 </div>
             </div>
