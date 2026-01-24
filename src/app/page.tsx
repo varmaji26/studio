@@ -50,7 +50,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateProfile } from 'firebase/auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import {
   Carousel,
   CarouselContent,
@@ -496,6 +496,9 @@ export default function Home() {
             <DialogContent className="p-0 border-0 bg-transparent max-w-[280px] shadow-none" onInteractOutside={handleBonusPopupClose}>
                 <DialogHeader>
                     <DialogTitle className="sr-only">Bonus Offer</DialogTitle>
+                    <DialogDescription className="sr-only">
+                        A special bonus offer is available. Click the button to claim it.
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="relative">
                     <div
