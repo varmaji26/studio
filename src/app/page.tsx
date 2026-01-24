@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -266,16 +265,14 @@ export default function Home() {
   }, [user?.uid, currentDay]);
   
   useEffect(() => {
-    // This effect handles scrolling to the game card when returning from a game page.
     if (!gamesLoading) {
-      const hash = window.location.hash.substring(1); // Get hash without '#'
+      const hash = window.location.hash.substring(1);
       if (hash) {
         const element = document.getElementById(hash);
         if (element) {
-          // Use a timeout to ensure the DOM is fully painted after the loading skeletons disappear.
           setTimeout(() => {
-            element.scrollIntoView({ block: 'center' });
-          }, 100);
+            element.scrollIntoView({ behavior: 'instant', block: 'center' });
+          }, 100); 
         }
       }
     }
@@ -372,7 +369,7 @@ export default function Home() {
   const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
         <div className="flex items-center justify-between">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -502,7 +499,7 @@ export default function Home() {
         </div>
       )}
       
-      <main className="flex flex-col gap-4 p-4 pb-28">
+      <main className="flex-1 flex flex-col gap-4 p-4 pb-28 overflow-y-auto">
         
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
