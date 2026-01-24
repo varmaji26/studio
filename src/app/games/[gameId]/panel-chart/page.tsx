@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -150,63 +149,60 @@ export default function PanelChartPage() {
     }
     
     return (
-        <div className="dark min-h-screen bg-background text-foreground p-2 sm:p-4">
-            <div className="max-w-full mx-auto">
-                <Card className="bg-card/80 border-white/10 shadow-lg">
-                    <CardHeader className="text-center">
-                        <CardTitle className="text-xl sm:text-2xl font-bold text-primary">
-                            {chartData?.title || 'Panel Chart'}
-                        </CardTitle>
-                        <CardDescription>
-                            {chartData?.gameName.toUpperCase() || 'RECORD'}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="mb-4">
-                            <Button className="w-full bg-green-500 text-white hover:bg-green-600" onClick={() => router.push(`/#${gameId}`)}>
-                                <div className="inline-flex items-center gap-2">
-                                    <ArrowLeft className="h-4 w-4" />
-                                    <span>Back to Home</span>
-                                </div>
-                            </Button>
-                        </div>
-                        {chartData && parsedRows.length > 0 ? (
-                            <div className="overflow-x-auto border-2 border-yellow-600 bg-orange-100 p-1">
-                                <table className="w-full border-collapse">
-                                    <thead className="text-[9px] sm:text-[10px]">
-                                        <tr className="bg-blue-800 text-white font-bold">
-                                            <th className="p-0.5 border border-yellow-600">Date</th>
-                                            {activeDays.map(day => (
-                                                <th key={day} className="p-0.5 border border-yellow-600">{dayAbbreviations[day]}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="text-center">
-                                       {parsedRows.map((row, rowIndex) => (
-                                            <tr key={rowIndex}>
-                                                <td className="p-0.5 border border-gray-400 font-bold text-black text-[7px] text-center">
-                                                    <span>{row.dateRange.start}</span><br/>
-                                                    <span>To</span><br/>
-                                                    <span>{row.dateRange.end}</span>
-                                                </td>
-                                                {row.daysData.map((dayData, dayIndex) => (
-                                                    <td key={dayIndex} className="p-0 border border-gray-400">
-                                                        <DayCell dayData={dayData} />
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                       ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                             <p className="text-center text-muted-foreground mt-8 py-10">
-                                No Panel chart data found for this game.
-                             </p>
-                        )}
-                    </CardContent>
-                </Card>
+        <div className="dark min-h-screen bg-background text-foreground">
+             <div className="bg-card/80 p-4 text-center">
+                <h1 className="text-xl sm:text-2xl font-bold text-primary">
+                    {chartData?.title || 'Panel Chart'}
+                </h1>
+                <p className="text-muted-foreground">
+                    {chartData?.gameName.toUpperCase() || 'RECORD'}
+                </p>
             </div>
+             <div className="p-4">
+                <Button className="w-full bg-green-500 text-white hover:bg-green-600" onClick={() => router.push(`/#${gameId}`)}>
+                    <div className="inline-flex items-center gap-2">
+                        <ArrowLeft className="h-4 w-4" />
+                        <span>Back to Home</span>
+                    </div>
+                </Button>
+            </div>
+
+            {chartData && parsedRows.length > 0 ? (
+                <div className="overflow-x-auto border-y-2 border-yellow-600 bg-orange-100">
+                    <table className="w-full border-collapse">
+                        <thead className="text-[9px] sm:text-[10px]">
+                            <tr className="bg-blue-800 text-white font-bold">
+                                <th className="p-0.5 border border-yellow-600">Date</th>
+                                {activeDays.map(day => (
+                                    <th key={day} className="p-0.5 border border-yellow-600">{dayAbbreviations[day]}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="text-center">
+                           {parsedRows.map((row, rowIndex) => (
+                                <tr key={rowIndex}>
+                                    <td className="p-0.5 border border-gray-400 font-bold text-black text-[7px] text-center">
+                                        <span>{row.dateRange.start}</span><br/>
+                                        <span>To</span><br/>
+                                        <span>{row.dateRange.end}</span>
+                                    </td>
+                                    {row.daysData.map((dayData, dayIndex) => (
+                                        <td key={dayIndex} className="p-0 border border-gray-400">
+                                            <DayCell dayData={dayData} />
+                                        </td>
+                                    ))}
+                                </tr>
+                           ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <div className="p-4">
+                    <p className="text-center text-muted-foreground mt-8 py-10">
+                        No Panel chart data found for this game.
+                    </p>
+                </div>
+            )}
         </div>
     );
 }
