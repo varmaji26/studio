@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -499,7 +498,7 @@ export default function Home() {
         </div>
       )}
       
-      <main className="flex-1 flex flex-col gap-4 p-4 pb-28 overflow-y-auto">
+      <main className="flex-1 flex flex-col gap-2 p-2 pb-28 overflow-y-auto">
         
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
@@ -599,10 +598,10 @@ export default function Home() {
         )}
         
         <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
+          <CardHeader className="p-4">
             <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2">
             {gamesLoading ? (
               <div className="grid grid-cols-2 gap-1">
                 <Skeleton className="h-10 w-full bg-slate-700/50" />
@@ -629,10 +628,10 @@ export default function Home() {
         
         {settings.notice?.enabled && settings.notice.text && (
             <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
-                <CardHeader>
+                <CardHeader className="p-4">
                     <CardTitle className="text-xl text-white">Notice</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 pt-0">
                     <p 
                     className="text-white font-bold" 
                     style={{ whiteSpace: 'pre-wrap' }}
@@ -644,19 +643,19 @@ export default function Home() {
         )}
 
         <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl text-center">Matka Games</CardTitle>
+          <CardHeader className="p-4">
+            <CardTitle className="text-xl text-center font-bold">Matka Games</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2 pt-0">
             {gamesLoading ? (
-               <div className="space-y-3">
+               <div className="space-y-2">
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                     <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {games.map((game) => (
                         <GameCard key={game.id} game={game} onBettingClosedClick={setClosedGameInfo} />
                     ))}
