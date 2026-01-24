@@ -127,48 +127,47 @@ const GameCard = memo(function GameCard({
         <Button
             onClick={bettingClosed ? () => onBettingClosedClick(game) : undefined}
             className={cn(
-                "w-full h-9 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
+                "h-8 px-4 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
                 bettingClosed ? "bg-gray-600 hover:bg-gray-700" : "bg-orange-600 hover:bg-orange-700"
             )}
         >
-            Play Now
+            Play
         </Button>
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-lg p-2 space-y-1 shadow-lg shadow-black/30">
-            <h3 className="text-base font-bold text-white text-center truncate">{game.name}</h3>
-            
-            <div className="bg-yellow-400 rounded-full flex items-center justify-between p-0.5">
+        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
+            <div className="flex justify-between items-start">
+                <div className="flex-1">
+                    <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
+                    <div className="text-xs text-muted-foreground">
+                        <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <p className="text-lg font-bold text-yellow-400">{formatGameResult(game)}</p>
+                    <p className={cn(
+                        "text-xs font-semibold",
+                        bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
+                    )}>
+                        {bettingClosed ? 'Market is Close' : game.status}
+                    </p>
+                </div>
+            </div>
+            <div className="mt-2 border-t border-white/20 pt-2 flex justify-end items-center gap-2">
                 <Link href={`/games/${game.id}/jodi-chart`}>
-                    <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-6 px-3 shadow-md hover:bg-orange-600">Jodi</Button>
+                    <Button size="sm" variant="outline" className="text-xs h-8 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400">Jodi</Button>
                 </Link>
-                <span className="text-black font-bold text-sm tracking-tight">{formatGameResult(game)}</span>
                 <Link href={`/games/${game.id}/panel-chart`}>
-                     <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-6 px-3 shadow-md hover:bg-orange-600">Panel</Button>
+                     <Button size="sm" variant="outline" className="text-xs h-8 border-sky-500/50 text-sky-500 hover:bg-sky-500/10 hover:text-sky-400">Panel</Button>
                 </Link>
-            </div>
-            
-            <div className="h-6 flex items-center justify-center">
-                <p className={cn(
-                    "text-center font-semibold rounded-md text-sm",
-                    bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
-                )}>
-                    {bettingClosed ? 'Market is Close' : game.status}
-                </p>
-            </div>
-            
-            {bettingClosed ? (
-                 <PlayButton />
-            ) : (
-                <Link href={`/games/${game.id}`} className="block">
-                    <PlayButton />
-                </Link>
-            )}
-
-            <div className="flex items-center justify-center text-xs font-semibold text-white bg-slate-800 p-1 rounded-md gap-1">
-                <Clock className="h-3 w-3" />
-                <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
+                {bettingClosed ? (
+                     <PlayButton />
+                ) : (
+                    <Link href={`/games/${game.id}`} className="block">
+                        <PlayButton />
+                    </Link>
+                )}
             </div>
         </div>
     );
@@ -650,14 +649,14 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             {gamesLoading ? (
-               <div className="grid grid-cols-2 gap-2">
-                    <Skeleton className="h-36 w-full rounded-lg bg-slate-700/50" />
-                    <Skeleton className="h-36 w-full rounded-lg bg-slate-700/50" />
-                    <Skeleton className="h-36 w-full rounded-lg bg-slate-700/50" />
-                    <Skeleton className="h-36 w-full rounded-lg bg-slate-700/50" />
+               <div className="space-y-3">
+                    <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-3">
                     {games.map((game) => (
                         <GameCard key={game.id} game={game} onBettingClosedClick={setClosedGameInfo} />
                     ))}
