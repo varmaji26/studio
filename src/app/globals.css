@@ -200,11 +200,11 @@ body {
   }
 
   @keyframes won-glow {
-      '0%, 100%': {
+      0%, 100% {
         borderColor: hsl(var(--primary) / 0.5);
         boxShadow: 0 0 5px hsl(var(--primary) / 0.5);
-      },
-      '50%': {
+      }
+      50% {
         borderColor: hsl(var(--primary) / 1);
         boxShadow: 0 0 20px hsl(var(--primary) / 1);
       }
