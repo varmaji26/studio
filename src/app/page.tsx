@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -54,7 +55,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel"
-import Autoplay from "embla-carousel-autoplay"
+import Autoplay from "embla-carousel-react"
 import { Skeleton } from '@/components/ui/skeleton';
 
 
@@ -273,7 +274,7 @@ export default function Home() {
         if (element) {
           // Use a timeout to ensure the DOM is fully painted after the loading skeletons disappear.
           setTimeout(() => {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.scrollIntoView({ block: 'center' });
           }, 100);
         }
       }
