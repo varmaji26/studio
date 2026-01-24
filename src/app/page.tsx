@@ -149,7 +149,7 @@ const GameCard = memo(function GameCard({
                 <div className="relative mt-2 h-10">
                     {/* Main Playable Button or Disabled Button */}
                     {isPlayable ? (
-                        <Link href={`/games/${game.id}`} className="block h-full">
+                        <Link href={`/games/${game.id}`} className="block h-full transition-transform active:scale-95">
                             <div className="w-full h-full flex items-center justify-center bg-orange-600 text-white font-bold rounded-full text-lg shadow-lg">
                                 Play Now
                             </div>
@@ -164,7 +164,7 @@ const GameCard = memo(function GameCard({
                     )}
 
                     {/* Jodi Button positioned over the main button */}
-                    <Link href={`/games/${game.id}/jodi-chart`} className="absolute top-1/2 left-1 -translate-y-1/2 z-10 transition-transform hover:scale-105">
+                    <Link href={`/games/${game.id}/jodi-chart`} className="absolute top-1/2 left-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95">
                         <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
                             <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
                                 Jodi
@@ -173,7 +173,7 @@ const GameCard = memo(function GameCard({
                     </Link>
 
                     {/* Panel Button positioned over the main button */}
-                    <Link href={`/games/${game.id}/panel-chart`} className="absolute top-1/2 right-1 -translate-y-1/2 z-10 transition-transform hover:scale-105">
+                    <Link href={`/games/${game.id}/panel-chart`} className="absolute top-1/2 right-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95">
                         <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
                             <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
                                 Panel
