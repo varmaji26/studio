@@ -598,7 +598,7 @@ export default function Home() {
           </Card>
         )}
         
-        <Card className="bg-transparent border-none shadow-none">
+        <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader className="p-4">
             <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
           </CardHeader>
