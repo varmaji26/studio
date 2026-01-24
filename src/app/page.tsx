@@ -268,12 +268,21 @@ export default function Home() {
     if (!gamesLoading) {
       const hash = window.location.hash.substring(1);
       if (hash) {
-        const element = document.getElementById(hash);
-        if (element) {
-          setTimeout(() => {
-            element.scrollIntoView({ behavior: 'instant', block: 'center' });
-          }, 100); 
-        }
+        // We use a retry mechanism with setInterval because the game cards
+        // might not be rendered in the DOM immediately after gamesLoading becomes false.
+        // This ensures we find the element once it's available.
+        let attempts = 0;
+        const maxAttempts = 20; // Try for 2 seconds (20 * 100ms)
+        const interval = setInterval(() => {
+          attempts++;
+          const element = document.getElementById(hash);
+          if (element || attempts >= maxAttempts) {
+            clearInterval(interval);
+            if (element) {
+              element.scrollIntoView({ behavior: "instant", block: "center" });
+            }
+          }
+        }, 100);
       }
     }
   }, [gamesLoading]);
