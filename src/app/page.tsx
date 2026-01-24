@@ -164,16 +164,20 @@ const GameCard = memo(function GameCard({
                     )}
 
                     {/* Jodi Button positioned over the main button */}
-                    <Link href={`/games/${game.id}/jodi-chart`} className="absolute top-1/2 left-1 -translate-y-1/2 z-10">
-                        <div className="h-8 w-8 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold shadow-md">
-                            Jodi
+                    <Link href={`/games/${game.id}/jodi-chart`} className="absolute top-1/2 left-1 -translate-y-1/2 z-10 transition-transform hover:scale-105">
+                        <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
+                            <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
+                                Jodi
+                            </div>
                         </div>
                     </Link>
 
                     {/* Panel Button positioned over the main button */}
-                    <Link href={`/games/${game.id}/panel-chart`} className="absolute top-1/2 right-1 -translate-y-1/2 z-10">
-                        <div className="h-8 w-8 flex items-center justify-center p-0 rounded-full bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold shadow-md">
-                            Panel
+                    <Link href={`/games/${game.id}/panel-chart`} className="absolute top-1/2 right-1 -translate-y-1/2 z-10 transition-transform hover:scale-105">
+                        <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
+                            <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
+                                Panel
+                            </div>
                         </div>
                     </Link>
                 </div>
