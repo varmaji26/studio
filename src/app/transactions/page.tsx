@@ -176,7 +176,7 @@ export default function TransactionDetailsPage() {
             unsubProfile();
         };
 
-    }, [user?.uid, authLoading, router]);
+    }, [user, authLoading, router]);
 
      const handleCancelWithdrawal = async (transactionToCancel: Transaction) => {
         if (!user) return;
@@ -261,7 +261,7 @@ export default function TransactionDetailsPage() {
     if (authLoading || loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
-                <Loader className="h-20 w-20 text-primary" />
+                <Loader className="h-10 w-10 text-primary" />
             </div>
         );
     }

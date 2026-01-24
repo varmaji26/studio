@@ -323,7 +323,7 @@ export default function Home() {
   if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader className="h-20 w-20 text-primary" />
+        <Loader className="h-10 w-10 text-primary" />
       </div>
     );
   }
@@ -603,8 +603,13 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             {gamesLoading ? (
-              <div className="flex justify-center p-4">
-                <Loader className="h-6 w-6 text-primary" />
+              <div className="grid grid-cols-2 gap-1">
+                <Skeleton className="h-10 w-full bg-slate-700/50" />
+                <Skeleton className="h-10 w-full bg-slate-700/50" />
+                <Skeleton className="h-10 w-full bg-slate-700/50" />
+                <Skeleton className="h-10 w-full bg-slate-700/50" />
+                <Skeleton className="h-10 w-full bg-slate-700/50" />
+                <Skeleton className="h-10 w-full bg-slate-700/50" />
               </div>
             ) : games.length > 0 ? (
               <div className="grid grid-cols-2 gap-1">
@@ -644,9 +649,9 @@ export default function Home() {
           <CardContent>
             {gamesLoading ? (
                <div className="grid grid-cols-1 gap-4">
-                    <Skeleton className="h-40 w-full rounded-2xl" />
-                    <Skeleton className="h-40 w-full rounded-2xl" />
-                    <Skeleton className="h-40 w-full rounded-2xl" />
+                    <Skeleton className="h-40 w-full rounded-2xl bg-slate-700/50" />
+                    <Skeleton className="h-40 w-full rounded-2xl bg-slate-700/50" />
+                    <Skeleton className="h-40 w-full rounded-2xl bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
