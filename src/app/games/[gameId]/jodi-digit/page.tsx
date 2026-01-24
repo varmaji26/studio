@@ -237,7 +237,7 @@ export default function JodiDigitPage() {
   const isBettingDisabled = isTimeOver;
 
   return (
-    <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Jodi Digit">
+    <GameBettingLayout gameName={game.name} gameId={gameId as string} activeBetType="Jodi Digit">
         <div className="space-y-4">
             {isTimeOver && (
                  <Alert variant="destructive" className="bg-red-600 border-red-700 text-white">

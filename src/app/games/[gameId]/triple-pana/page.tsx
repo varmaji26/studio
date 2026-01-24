@@ -251,7 +251,7 @@ export default function TriplePanaPage() {
   const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || isCloseDisabled;
 
   return (
-    <GameBettingLayout gameName={game.name} gameId={game.id} activeBetType="Triple Pana">
+    <GameBettingLayout gameName={game.name} gameId={gameId as string} activeBetType="Triple Pana">
         <div className="space-y-4">
             <Card className="bg-card/80 border-white/10">
                 <CardHeader className="p-4">
