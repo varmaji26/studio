@@ -141,15 +141,19 @@ const GameCard = memo(function GameCard({
                         "text-xs font-semibold",
                         !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                     )}>
-                        {!isActive ? 'Market Off' : !isPlayable ? 'Market is Close' : game.status}
+                        {!isActive ? 'Market Off' : !isPlayable ? 'Market is close' : game.status}
                     </p>
                 </div>
             </div>
             <div className="border-t border-white/20 pt-2">
-                <div className="relative mt-2 h-10">
+                <div className="relative mt-2 h-9">
                     {/* Main Playable Button or Disabled Button */}
                     {isPlayable ? (
-                        <Link href={`/games/${game.id}`} className="block h-full transition-transform active:scale-95">
+                        <Link 
+                            href={`/games/${game.id}`} 
+                            className="block h-full transition-transform active:scale-95"
+                            onContextMenu={(e) => e.preventDefault()}
+                        >
                             <div className="w-full h-full flex items-center justify-center bg-orange-600 text-white font-bold rounded-full text-lg shadow-lg">
                                 Play Now
                             </div>
@@ -157,6 +161,7 @@ const GameCard = memo(function GameCard({
                     ) : (
                         <div 
                             onClick={() => onBettingClosedClick(game)}
+                            onContextMenu={(e) => e.preventDefault()}
                             className="w-full h-full flex items-center justify-center bg-gray-600 text-white font-bold rounded-full text-lg shadow-lg cursor-not-allowed"
                         >
                             Play Now
@@ -164,7 +169,11 @@ const GameCard = memo(function GameCard({
                     )}
 
                     {/* Jodi Button positioned over the main button */}
-                    <Link href={`/games/${game.id}/jodi-chart`} className="absolute top-1/2 left-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95">
+                    <Link 
+                        href={`/games/${game.id}/jodi-chart`} 
+                        className="absolute top-1/2 left-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
+                        onContextMenu={(e) => e.preventDefault()}
+                    >
                         <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
                             <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
                                 Jodi
@@ -173,7 +182,11 @@ const GameCard = memo(function GameCard({
                     </Link>
 
                     {/* Panel Button positioned over the main button */}
-                    <Link href={`/games/${game.id}/panel-chart`} className="absolute top-1/2 right-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95">
+                    <Link 
+                        href={`/games/${game.id}/panel-chart`} 
+                        className="absolute top-1/2 right-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
+                        onContextMenu={(e) => e.preventDefault()}
+                    >
                         <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
                             <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
                                 Panel
@@ -435,31 +448,31 @@ export default function Home() {
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><LogOut className="h-5 w-5" /></div>
                             <span>Logout</span>
                         </button>
-                        <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><HomeIcon className="h-5 w-5" /></div>
                             <span>Home</span>
                         </Link>
-                        <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><UserIcon className="h-5 w-5" /></div>
                             <span>Profile</span>
                         </Link>
-                        <Link href="/time-table" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Link href="/time-table" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Clock className="h-5 w-5" /></div>
                             <span>Time Table</span>
                         </Link>
-                        <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><BookUser className="h-5 w-5" /></div>
                             <span>Contact</span>
                         </Link>
-                        <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Download className="h-5 w-5" /></div>
                             <span>Download App</span>
                         </Link>
-                        <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Star className="h-5 w-5" /></div>
                             <span>Rate Card</span>
                         </Link>
-                        <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors">
+                        <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><BarChart2 className="h-5 w-5" /></div>
                             <span>Chart</span>
                         </Link>
@@ -467,7 +480,7 @@ export default function Home() {
                 </div>
                 <div className="p-4 border-t border-white/10">
                      {user.isAdmin && (
-                        <Link href="/admin">
+                        <Link href="/admin" onContextMenu={(e) => e.preventDefault()}>
                             <Button className="w-full bg-[#34a387] hover:bg-[#34a387]/90 text-white">
                                 <ShieldCheck className="mr-2 h-5 w-5" />
                                 Admin Panel
@@ -493,7 +506,7 @@ export default function Home() {
             </div>
         </div>
          <div className="flex justify-center items-center gap-4">
-            <Link href="/add-fund" className="flex-1">
+            <Link href="/add-fund" className="flex-1" onContextMenu={(e) => e.preventDefault()}>
                 <Button className="w-full h-10 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-lg">
                     <div className="bg-white/90 rounded-full p-1 mr-2">
                         <IndianRupee className="h-4 w-4 text-green-600" />
@@ -501,7 +514,7 @@ export default function Home() {
                     ADD MONEY
                 </Button>
             </Link>
-             <Link href="/withdrawal" className="flex-1">
+             <Link href="/withdrawal" className="flex-1" onContextMenu={(e) => e.preventDefault()}>
                 <Button className="w-full h-10 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow-lg">
                      <div className="bg-white/90 rounded-full p-1 mr-2">
                         <Landmark className="h-4 w-4 text-red-600" />
