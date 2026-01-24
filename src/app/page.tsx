@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -126,7 +127,7 @@ const GameCard = memo(function GameCard({
         <Button
             onClick={bettingClosed ? () => onBettingClosedClick(game) : undefined}
             className={cn(
-                "w-full h-10 text-base font-bold text-white rounded-lg shadow-md transition-transform active:scale-95",
+                "w-full h-9 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
                 bettingClosed ? "bg-gray-600 hover:bg-gray-700" : "bg-orange-600 hover:bg-orange-700"
             )}
         >
@@ -135,22 +136,22 @@ const GameCard = memo(function GameCard({
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl p-3 space-y-2 shadow-2xl shadow-black/50">
-            <h3 className="text-lg font-bold text-white text-center">{game.name}</h3>
+        <div id={game.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-lg p-2 space-y-1 shadow-lg shadow-black/30">
+            <h3 className="text-base font-bold text-white text-center truncate">{game.name}</h3>
             
-            <div className="bg-yellow-400 rounded-full flex items-center justify-between p-1">
+            <div className="bg-yellow-400 rounded-full flex items-center justify-between p-0.5">
                 <Link href={`/games/${game.id}/jodi-chart`}>
-                    <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-8 shadow-md hover:bg-orange-600">Jodi</Button>
+                    <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-6 px-3 shadow-md hover:bg-orange-600">Jodi</Button>
                 </Link>
-                <span className="text-black font-bold text-base tracking-wider">{formatGameResult(game)}</span>
+                <span className="text-black font-bold text-sm tracking-tight">{formatGameResult(game)}</span>
                 <Link href={`/games/${game.id}/panel-chart`}>
-                     <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-8 shadow-md hover:bg-orange-600">Panel</Button>
+                     <Button variant="default" className="bg-orange-500 text-white rounded-full text-xs h-6 px-3 shadow-md hover:bg-orange-600">Panel</Button>
                 </Link>
             </div>
             
-            <div className="h-7 flex items-center justify-center">
+            <div className="h-6 flex items-center justify-center">
                 <p className={cn(
-                    "text-center font-semibold rounded-md text-base",
+                    "text-center font-semibold rounded-md text-sm",
                     bettingClosed ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                 )}>
                     {bettingClosed ? 'Market is Close' : game.status}
@@ -165,8 +166,8 @@ const GameCard = memo(function GameCard({
                 </Link>
             )}
 
-            <div className="flex items-center justify-center text-xs font-semibold text-white bg-slate-800 p-2 rounded-lg gap-2">
-                <Clock className="h-4 w-4" />
+            <div className="flex items-center justify-center text-xs font-semibold text-white bg-slate-800 p-1 rounded-md gap-1">
+                <Clock className="h-3 w-3" />
                 <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
             </div>
         </div>
@@ -266,21 +267,15 @@ export default function Home() {
   
   useEffect(() => {
     if (!gamesLoading) {
-      const hash = decodeURIComponent(window.location.hash.substring(1));
-      if (hash) {
-        let attempts = 0;
-        const maxAttempts = 20;
-        const interval = setInterval(() => {
-          attempts++;
+      setTimeout(() => {
+        const hash = decodeURIComponent(window.location.hash.substring(1));
+        if (hash) {
           const element = document.getElementById(hash);
-          if (element || attempts >= maxAttempts) {
-            clearInterval(interval);
-            if (element) {
-              element.scrollIntoView({ behavior: "instant", block: "center" });
-            }
+          if (element) {
+            element.scrollIntoView({ behavior: "instant", block: "center" });
           }
-        }, 100);
-      }
+        }
+      }, 300); // Small delay to ensure elements are rendered
     }
   }, [gamesLoading]);
   
@@ -655,13 +650,14 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             {gamesLoading ? (
-               <div className="grid grid-cols-1 gap-4">
-                    <Skeleton className="h-40 w-full rounded-2xl bg-slate-700/50" />
-                    <Skeleton className="h-40 w-full rounded-2xl bg-slate-700/50" />
-                    <Skeleton className="h-40 w-full rounded-2xl bg-slate-700/50" />
+               <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-36 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-36 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-36 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-36 w-full rounded-lg bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-2 gap-2">
                     {games.map((game) => (
                         <GameCard key={game.id} game={game} onBettingClosedClick={setClosedGameInfo} />
                     ))}
