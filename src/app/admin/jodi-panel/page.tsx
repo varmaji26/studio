@@ -14,7 +14,7 @@ import { Loader } from '@/components/loader';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription as ShadcnDialogDescription } from '@/components/ui/dialog';
 import { PlusCircle, Trash2, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -164,7 +164,8 @@ export default function JodiPanelPage() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                <DialogTitle>Add New Jodi Chart</DialogTitle>
+                    <DialogTitle>Add New Jodi Chart</DialogTitle>
+                    <ShadcnDialogDescription className="sr-only">A form to add a new Jodi chart for a game.</ShadcnDialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -355,3 +356,5 @@ export default function JodiPanelPage() {
     </div>
   );
 }
+
+    

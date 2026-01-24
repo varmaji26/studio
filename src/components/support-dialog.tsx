@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from './ui/button';
 import { Phone } from 'lucide-react';
@@ -37,6 +38,7 @@ export function SupportDialog({ children, callNumber, whatsappNumber }: SupportD
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Support</DialogTitle>
+          <DialogDescription className="sr-only">Contact support through phone call or WhatsApp.</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-4">
             <Button
@@ -59,3 +61,5 @@ export function SupportDialog({ children, callNumber, whatsappNumber }: SupportD
     </Dialog>
   );
 }
+
+    
