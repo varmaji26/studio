@@ -1,15 +1,13 @@
-
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -69,6 +67,7 @@ const dayAbbreviations: { [key: string]: string } = {
 
 export default function PanelChartPage() {
     const params = useParams();
+    const router = useRouter();
     const gameId = params.gameId;
     const [chartData, setChartData] = useState<PanelChartData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -164,11 +163,11 @@ export default function PanelChartPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="mb-4">
-                            <Button asChild className="w-full bg-green-500 text-white hover:bg-green-600">
-                                <Link href={`/`} className="inline-flex items-center gap-2">
+                            <Button className="w-full bg-green-500 text-white hover:bg-green-600" onClick={() => router.back()}>
+                                <div className="inline-flex items-center gap-2">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
-                                </Link>
+                                </div>
                             </Button>
                         </div>
                         {chartData && parsedRows.length > 0 ? (

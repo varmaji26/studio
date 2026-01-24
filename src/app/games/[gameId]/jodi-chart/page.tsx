@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -8,7 +7,6 @@ import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -42,6 +40,7 @@ const dayAbbreviations: { [key: string]: string } = {
 
 export default function JodiChartPage() {
     const params = useParams();
+    const router = useRouter();
     const gameId = params.gameId;
     const [chartData, setChartData] = useState<JodiChartData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -117,11 +116,11 @@ export default function JodiChartPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="mb-4">
-                            <Button asChild className="w-full bg-green-500 text-white hover:bg-green-600">
-                                <Link href={`/`} className="inline-flex items-center gap-2">
+                            <Button className="w-full bg-green-500 text-white hover:bg-green-600" onClick={() => router.back()}>
+                                <div className="inline-flex items-center gap-2">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
-                                </Link>
+                                </div>
                             </Button>
                         </div>
                         {chartData && parsedWeeklyData.length > 0 ? (
