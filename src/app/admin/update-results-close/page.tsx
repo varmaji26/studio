@@ -142,19 +142,23 @@ export default function UpdateResultsClosePage() {
         if (panelChartSnap.exists()) {
             const panelChartData = panelChartSnap.data().data || '';
             
-            let today = new Date();
+            // --- REVISED LOGIC FOR DETERMINING RESULT DATE ---
+            const now = new Date();
             const openTimeParts = game.openTime.split(':').map(Number);
-            const openDateTime = new Date();
-            openDateTime.setHours(openTimeParts[0], openTimeParts[1], 0, 0);
-
-            // If the current time is before the open time, assume result is for the previous day
-            if (new Date() < openDateTime) {
-                today.setDate(today.getDate() - 1);
-            }
             
-            today.setHours(0, 0, 0, 0);
+            const gameOpenDateTimeForToday = new Date();
+            gameOpenDateTimeForToday.setHours(openTimeParts[0], openTimeParts[1], 0, 0);
 
-            const dayOfWeek = today.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
+            let resultDate = new Date();
+            // If we are updating before the game's open time today, the result is for yesterday's game.
+            if (now < gameOpenDateTimeForToday) {
+                resultDate.setDate(resultDate.getDate() - 1);
+            }
+            // --- END REVISED LOGIC ---
+
+            resultDate.setHours(0, 0, 0, 0);
+            
+            const dayOfWeek = resultDate.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
             const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday - 0, ..., Sunday - 6
             const newDayData = `${openPana}${finalJodi}${newClosePana}`;
 
@@ -169,7 +173,7 @@ export default function UpdateResultsClosePage() {
                     const lastStartDate = parseDateString(match[1]);
                     const lastEndDate = parseDateString(match[2]);
                     
-                    if (lastStartDate && lastEndDate && today >= lastStartDate && today <= lastEndDate) {
+                    if (lastStartDate && lastEndDate && resultDate >= lastStartDate && resultDate <= lastEndDate) {
                         weekFound = true;
                         const dataPart = lastRow.substring(match[0].length).trim();
                         const dailyBlocks = dataPart.split(/\s+/).filter(String);
@@ -187,8 +191,8 @@ export default function UpdateResultsClosePage() {
             }
             
             if (!weekFound) {
-                const startOfWeek = new Date(today);
-                startOfWeek.setDate(today.getDate() - dayIndex);
+                const startOfWeek = new Date(resultDate);
+                startOfWeek.setDate(resultDate.getDate() - dayIndex);
                 const endOfWeek = new Date(startOfWeek);
                 endOfWeek.setDate(startOfWeek.getDate() + 6);
                 
