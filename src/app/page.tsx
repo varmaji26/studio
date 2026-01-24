@@ -130,7 +130,7 @@ const GameCard = memo(function GameCard({
         <Button
             onClick={!isPlayable ? () => onBettingClosedClick(game) : undefined}
             className={cn(
-                "h-10 px-6 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
+                "h-12 px-8 text-sm font-bold text-white rounded-md shadow-md transition-transform active:scale-95",
                 !isPlayable ? "bg-gray-600 hover:bg-gray-700" : "bg-orange-600 hover:bg-orange-700"
             )}
         >
@@ -139,18 +139,18 @@ const GameCard = memo(function GameCard({
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
+        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-4 shadow-lg shadow-black/30">
             <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
-                    <div className="text-[11px] text-muted-foreground">
+                    <div className="text-[10px] text-muted-foreground">
                         <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
                     </div>
                 </div>
                 <div className="text-right">
                     <p className="text-lg font-bold text-yellow-400">{formatGameResult(game)}</p>
                     <p className={cn(
-                        "text-[11px] font-semibold",
+                        "text-xs font-semibold",
                         !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                     )}>
                         {!isPlayable ? 'Market is Close' : game.status}
@@ -221,9 +221,27 @@ export default function Home() {
         gamesData.push({ id: doc.id, ...doc.data() } as Game);
       });
       
-      gamesData.sort((a, b) => {
-          return a.openTime.localeCompare(b.openTime);
-      });
+      // Sort games: active & open games on top, inactive/closed at the bottom
+        gamesData.sort((a, b) => {
+            const isAActiveToday = a.active && (!a.activeDays || a.activeDays.length === 0 || a.activeDays.includes(currentDay));
+            const isBActiveToday = b.active && (!b.activeDays || b.activeDays.length === 0 || b.activeDays.includes(currentDay));
+
+            const isAClosed = isBettingClosed(a.closeTime);
+            const isBClosed = isBettingClosed(b.closeTime);
+            
+            const isAPlayable = isAActiveToday && !isAClosed;
+            const isBPlayable = isBActiveToday && !isBClosed;
+
+            if (isAPlayable && !isBPlayable) {
+                return -1; // a (playable) comes before b (not playable)
+            }
+            if (!isAPlayable && isBPlayable) {
+                return 1; // b (playable) comes after a (not playable)
+            }
+
+            // If both have the same playability, sort by openTime
+            return a.openTime.localeCompare(b.openTime);
+        });
 
       setGames(gamesData);
       setGamesLoading(false);
@@ -496,7 +514,7 @@ export default function Home() {
         </div>
       )}
       
-      <main className="flex-1 flex flex-col gap-2 p-2 pb-28 overflow-y-auto">
+      <main className="flex-1 flex flex-col gap-4 p-2 pb-28 overflow-y-auto">
         
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
@@ -646,14 +664,14 @@ export default function Home() {
           </CardHeader>
           <CardContent className="p-2 pt-0">
             {gamesLoading ? (
-               <div className="space-y-2">
-                    <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
-                    <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
-                    <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
-                    <Skeleton className="h-24 w-full rounded-lg bg-slate-700/50" />
+               <div className="space-y-4">
+                    <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
                     {games.map((game) => {
                       const isActiveToday = (() => {
                           if (!game.active) return false; // Master switch is off
@@ -682,3 +700,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
