@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -136,7 +137,7 @@ const GameCard = memo(function GameCard({
 
     return (
         <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
                     <div className="text-xs text-muted-foreground">
@@ -153,7 +154,7 @@ const GameCard = memo(function GameCard({
                     </p>
                 </div>
             </div>
-            <div className="mt-2 border-t border-white/20 pt-2 flex justify-between items-center">
+            <div className="border-t border-white/20 pt-2 flex justify-between items-center">
                 <Link href={`/games/${game.id}/jodi-chart`}>
                     <Button size="sm" variant="outline" className="text-xs h-8 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400">Jodi</Button>
                 </Link>
@@ -498,7 +499,7 @@ export default function Home() {
         </div>
       )}
       
-      <main className="flex-1 flex flex-col gap-2 p-2 pb-28 overflow-y-auto">
+      <main className="flex-1 flex flex-col gap-4 p-4 pb-28 overflow-y-auto">
         
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
@@ -597,13 +598,13 @@ export default function Home() {
           </Card>
         )}
         
-        <Card className="bg-card/80 border-white/10 shadow-lg">
+        <Card className="bg-transparent border-none shadow-none">
           <CardHeader className="p-4">
             <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
           </CardHeader>
           <CardContent className="p-2">
             {gamesLoading ? (
-              <div className="grid grid-cols-2 gap-1">
+              <div className="grid grid-cols-2 gap-2">
                 <Skeleton className="h-10 w-full bg-slate-700/50" />
                 <Skeleton className="h-10 w-full bg-slate-700/50" />
                 <Skeleton className="h-10 w-full bg-slate-700/50" />
@@ -612,11 +613,11 @@ export default function Home() {
                 <Skeleton className="h-10 w-full bg-slate-700/50" />
               </div>
             ) : games.length > 0 ? (
-              <div className="grid grid-cols-2 gap-1">
+              <div className="grid grid-cols-2 gap-2">
                 {games.map((game) => (
-                  <div key={game.id} className="flex flex-col items-center justify-center bg-[#34a387] p-0.5 rounded-lg border border-black text-center">
-                    <span className="text-xs font-medium text-white [text-shadow:1px_1px_2px_#000]">{game.name}</span>
-                    <span className="text-xs font-bold text-black">{formatGameResult(game, true)}</span>
+                  <div key={game.id} className="flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-900 p-1 rounded-lg border border-slate-700 text-center">
+                    <span className="text-xs font-medium text-white">{game.name}</span>
+                    <span className="text-xs font-bold text-yellow-400">{formatGameResult(game, true)}</span>
                   </div>
                 ))}
               </div>
