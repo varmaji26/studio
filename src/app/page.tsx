@@ -139,7 +139,7 @@ const GameCard = memo(function GameCard({
             <div className="flex justify-between items-start">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[10px] text-muted-foreground">
                         <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
                     </div>
                 </div>
