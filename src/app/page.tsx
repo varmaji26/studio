@@ -209,7 +209,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) return;
 
     const userDocRef = doc(db, 'users', user.uid);
     const unsubscribeUserProfile = onSnapshot(userDocRef, (doc) => {
@@ -266,7 +266,7 @@ export default function Home() {
         unsubscribeSettings();
         unsubscribeUserProfile();
     };
-  }, [user, currentDay]);
+  }, [user?.uid, currentDay]);
   
   const handleCopyToClipboard = () => {
     if (userProfile.referralCode) {
@@ -496,9 +496,7 @@ export default function Home() {
             <DialogContent className="p-0 border-0 bg-transparent max-w-[280px] shadow-none" onInteractOutside={handleBonusPopupClose}>
                 <DialogHeader>
                     <DialogTitle className="sr-only">Bonus Offer</DialogTitle>
-                    <DialogDescription className="sr-only">
-                        A special bonus offer is available. Click the button to claim it.
-                    </DialogDescription>
+                    <DialogDescription className="sr-only">A special bonus offer is available. Click the button to claim it.</DialogDescription>
                 </DialogHeader>
                 <div className="relative">
                     <div

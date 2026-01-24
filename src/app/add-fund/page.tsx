@@ -41,7 +41,7 @@ export default function AddFundPage() {
     }, [user, authLoading, router]);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user?.uid) return;
         
         const userDocRef = doc(db, 'users', user.uid);
         const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
@@ -71,7 +71,7 @@ export default function AddFundPage() {
             unsubscribeSettings();
             unsubscribePendingDeposits();
         };
-    }, [user]);
+    }, [user?.uid]);
 
     const handleQuickAmount = (value: string) => {
         setAmount(value);
