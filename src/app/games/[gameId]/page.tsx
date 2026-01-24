@@ -217,7 +217,7 @@ export default function GamePage() {
         
         <div className="my-2">
             <Button asChild variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white h-9">
-                <Link href={`/#${game.id}`}>
+                <Link href={`/`}>
                     <div className="flex items-center gap-2">
                         <ArrowLeft className="h-4 w-4"/>
                         <span className="text-sm">Back to Home</span>

@@ -165,7 +165,7 @@ export default function PanelChartPage() {
                     <CardContent>
                         <div className="mb-4">
                             <Button asChild className="w-full bg-green-500 text-white hover:bg-green-600">
-                                <Link href={`/#${gameId}`} className="inline-flex items-center gap-2">
+                                <Link href={`/`} className="inline-flex items-center gap-2">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
                                 </Link>
