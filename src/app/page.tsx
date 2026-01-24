@@ -139,7 +139,7 @@ const GameCard = memo(function GameCard({
     );
 
     return (
-        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-4 shadow-lg shadow-black/30">
+        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
             <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
@@ -619,20 +619,20 @@ export default function Home() {
           </CardHeader>
           <CardContent className="p-2">
             {gamesLoading ? (
-              <div className="grid grid-cols-2 gap-2">
-                <Skeleton className="h-10 w-full bg-slate-700/50" />
-                <Skeleton className="h-10 w-full bg-slate-700/50" />
-                <Skeleton className="h-10 w-full bg-slate-700/50" />
-                <Skeleton className="h-10 w-full bg-slate-700/50" />
-                <Skeleton className="h-10 w-full bg-slate-700/50" />
-                <Skeleton className="h-10 w-full bg-slate-700/50" />
+              <div className="grid grid-cols-3 gap-1">
+                <Skeleton className="h-9 w-full bg-slate-700/50" />
+                <Skeleton className="h-9 w-full bg-slate-700/50" />
+                <Skeleton className="h-9 w-full bg-slate-700/50" />
+                <Skeleton className="h-9 w-full bg-slate-700/50" />
+                <Skeleton className="h-9 w-full bg-slate-700/50" />
+                <Skeleton className="h-9 w-full bg-slate-700/50" />
               </div>
             ) : games.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-1">
                 {games.map((game) => (
-                  <div key={game.id} className="flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-900 p-1 rounded-lg border border-slate-700 text-center">
-                    <span className="text-xs font-medium text-white">{game.name}</span>
-                    <span className="text-xs font-bold text-yellow-400">{formatGameResult(game, true)}</span>
+                  <div key={game.id} className="flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-900 p-1 rounded-md border border-slate-700 text-center">
+                    <span className="text-[10px] font-medium text-white truncate w-full">{game.name}</span>
+                    <span className="text-[11px] font-bold text-yellow-400">{formatGameResult(game, true)}</span>
                   </div>
                 ))}
               </div>
@@ -700,5 +700,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
