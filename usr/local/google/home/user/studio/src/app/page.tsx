@@ -617,7 +617,7 @@ export default function Home() {
                     delay: 3000,
                     stopOnInteraction: false,
                     stopOnMouseEnter: true,
-                  }),
+                  }) as any,
                 ]}
               >
                 <CarouselContent>
