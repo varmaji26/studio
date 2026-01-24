@@ -146,25 +146,25 @@ const GameCard = memo(function GameCard({
                 </div>
             </div>
             <div className="border-t border-white/20 pt-2">
-                <div className="flex items-stretch bg-orange-600 rounded-md text-white font-bold text-sm h-9 shadow-md">
-                    <Link href={`/games/${game.id}/jodi-chart`} className="flex-1 flex items-center justify-center hover:bg-orange-700/70 rounded-l-md transition-colors">
+                <div className="flex items-stretch gap-1 text-white font-bold text-sm h-10">
+                    <Link href={`/games/${game.id}/jodi-chart`} className="flex-1 flex items-center justify-center bg-yellow-400 hover:bg-yellow-500 text-black rounded-full transition-colors">
                         Jodi
                     </Link>
-                    <div className="border-l border-white/20"></div>
+                    
                     {isPlayable ? (
-                        <Link href={`/games/${game.id}`} className="flex-[2] flex items-center justify-center bg-orange-700 hover:bg-orange-800/70 transition-colors">
+                        <Link href={`/games/${game.id}`} className="flex-[2] flex items-center justify-center bg-orange-600 hover:bg-orange-700 rounded-full transition-colors">
                             Play
                         </Link>
                     ) : (
                         <div 
                             onClick={() => onBettingClosedClick(game)}
-                            className="flex-[2] flex items-center justify-center bg-gray-600 cursor-not-allowed"
+                            className="flex-[2] flex items-center justify-center bg-gray-600 text-white rounded-full cursor-not-allowed"
                         >
                             Play
                         </div>
                     )}
-                    <div className="border-r border-white/20"></div>
-                    <Link href={`/games/${game.id}/panel-chart`} className="flex-1 flex items-center justify-center hover:bg-orange-700/70 rounded-r-md transition-colors">
+                    
+                    <Link href={`/games/${game.id}/panel-chart`} className="flex-1 flex items-center justify-center bg-yellow-400 hover:bg-yellow-500 text-black rounded-full transition-colors">
                         Panel
                     </Link>
                 </div>
