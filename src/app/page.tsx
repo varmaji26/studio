@@ -55,7 +55,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel"
-import Autoplay from "embla-carousel-react"
+import Autoplay from "embla-carousel-autoplay"
 import { Skeleton } from '@/components/ui/skeleton';
 
 
@@ -141,7 +141,7 @@ const GameCard = memo(function GameCard({
                         "text-xs font-semibold",
                         !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                     )}>
-                        {!isActive ? 'Market Off' : !isPlayable ? 'Market is close' : game.status}
+                        {!isActive ? 'Market is close' : !isPlayable ? 'Market is close' : game.status}
                     </p>
                 </div>
             </div>
@@ -340,7 +340,7 @@ export default function Home() {
 
   const handleClaimBonus = () => {
     if (settings.bonusPopup?.link) {
-        router.push(settings.bonusPopup.link);
+        router.replace(settings.bonusPopup.link);
         handleBonusPopupClose();
     }
   };
@@ -617,7 +617,7 @@ export default function Home() {
                     delay: 3000,
                     stopOnInteraction: false,
                     stopOnMouseEnter: true,
-                  }),
+                  }) as any,
                 ]}
               >
                 <CarouselContent>
