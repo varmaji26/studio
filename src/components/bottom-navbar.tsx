@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Trophy, BookText, MessageSquare, IndianRupee } from "lucide-react";
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { cn } from "@/lib/utils";
 
 interface BottomNavbarProps {
@@ -15,7 +16,6 @@ const SupportIcon = () => (
 );
 
 export function BottomNavbar({ settings }: BottomNavbarProps) {
-  const router = useRouter();
   const pathname = usePathname();
   
   const items = [
@@ -37,11 +37,6 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
   }, [pathname]);
 
 
-  const handleNavigation = (path: string, id: string) => {
-    setActive(id);
-    router.replace(path);
-  };
-
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
       <motion.nav
@@ -56,9 +51,11 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
           {items.map((it) => {
             const activeNow = active === it.id;
             return (
-              <button
+              <Link
                 key={it.id}
-                onClick={() => handleNavigation(it.path, it.id)}
+                href={it.path}
+                replace
+                onClick={() => setActive(it.id)}
                 aria-current={activeNow ? "page" : undefined}
                 aria-label={it.label}
                  className={`group relative flex flex-col items-center gap-0.5 rounded-xl px-2 py-1 transition-all duration-300 focus:outline-none ${
@@ -115,7 +112,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
                     ₹
                   </motion.span>
                 )}
-              </button>
+              </Link>
             );
           })}
         </div>
