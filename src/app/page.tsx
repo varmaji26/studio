@@ -127,69 +127,53 @@ const GameCard = memo(function GameCard({
     const isPlayable = isActive && !bettingClosed;
 
     return (
-        <div id={game.id} className="bg-gradient-to-br from-amber-400 to-yellow-600 rounded-xl p-0.5 shadow-lg shadow-amber-500/10">
-            <div className="bg-slate-900 rounded-lg p-3 h-full">
-                <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
-                        <div className="text-[10px] text-muted-foreground">
-                            <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-lg font-bold text-yellow-400">{formatGameResult(game)}</p>
-                        <p className={cn(
-                            "text-xs font-semibold",
-                            !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
-                        )}>
-                            {!isActive ? 'Market is close' : !isPlayable ? 'Market is close' : game.status}
-                        </p>
+        <div id={game.id} className={cn("bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30 transition-all duration-300", isPlayable && "animate-breathe border-primary/50")}>
+            <div className="flex justify-between items-start mb-2">
+                <div className="flex-1">
+                    <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
+                    <div className="text-[10px] text-muted-foreground">
+                        <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
                     </div>
                 </div>
-                <div className="border-t border-white/10 pt-2">
-                     <div className="relative mt-2 h-9">
-                        {isPlayable ? (
-                            <Link 
-                                href={`/games/${game.id}`} 
-                                className="block h-full transition-transform active:scale-95"
-                                onContextMenu={(e) => e.preventDefault()}
-                            >
-                                <div className="w-full h-full flex items-center justify-center bg-orange-600 text-white font-bold rounded-full text-lg shadow-lg">
-                                    Play Now
-                                </div>
-                            </Link>
-                        ) : (
-                            <div 
-                                onClick={() => onBettingClosedClick(game)}
-                                onContextMenu={(e) => e.preventDefault()}
-                                className="w-full h-full flex items-center justify-center bg-gray-600 text-white font-bold rounded-full text-lg shadow-lg cursor-not-allowed"
-                            >
-                                Play Now
-                            </div>
-                        )}
+                <div className="text-right">
+                    <p className="text-lg font-bold text-yellow-400">{formatGameResult(game)}</p>
+                    <p className={cn(
+                        "text-xs font-semibold",
+                        !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
+                    )}>
+                        {!isActive ? 'Market is close' : !isPlayable ? 'Market is close' : game.status}
+                    </p>
+                </div>
+            </div>
+            <div className="border-t border-white/20 pt-2">
+                <div className="grid grid-cols-5 items-center gap-2 mt-2">
+                    <Link href={`/games/${game.id}/jodi-chart`} className="col-span-1" onContextMenu={(e) => e.preventDefault()}>
+                        <Button variant="outline" className="w-full h-9 bg-slate-700 border-slate-600 text-white hover:bg-slate-600">Jodi</Button>
+                    </Link>
+
+                    {isPlayable ? (
                         <Link 
-                            href={`/games/${game.id}/jodi-chart`} 
-                            className="absolute top-1/2 left-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
+                            href={`/games/${game.id}`} 
+                            className="col-span-3 h-full transition-transform active:scale-95"
                             onContextMenu={(e) => e.preventDefault()}
                         >
-                            <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
-                                <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
-                                    Jodi
-                                </div>
+                            <div className="w-full h-9 flex items-center justify-center bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-600 text-black font-bold rounded-full text-lg shadow-[0_0_15px_rgba(251,191,36,0.6)] animate-pulse">
+                                PLAY
                             </div>
                         </Link>
-                        <Link 
-                            href={`/games/${game.id}/panel-chart`} 
-                            className="absolute top-1/2 right-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
+                    ) : (
+                        <div 
+                            onClick={() => onBettingClosedClick(game)}
                             onContextMenu={(e) => e.preventDefault()}
+                            className="col-span-3 w-full h-9 flex items-center justify-center bg-gray-600 text-white font-bold rounded-full text-lg shadow-lg cursor-not-allowed"
                         >
-                            <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
-                                <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
-                                    Panel
-                                </div>
-                            </div>
-                        </Link>
-                    </div>
+                            PLAY
+                        </div>
+                    )}
+                    
+                    <Link href={`/games/${game.id}/panel-chart`} className="col-span-1" onContextMenu={(e) => e.preventDefault()}>
+                        <Button variant="outline" className="w-full h-9 bg-slate-700 border-slate-600 text-white hover:bg-slate-600">Panel</Button>
+                    </Link>
                 </div>
             </div>
         </div>
@@ -541,7 +525,7 @@ export default function Home() {
             <DialogContent className="p-0 border-0 bg-transparent max-w-[280px] shadow-none" onInteractOutside={handleBonusPopupClose}>
                 <DialogHeader>
                     <DialogTitle className="sr-only">Bonus Offer</DialogTitle>
-                    <DialogDescription>A special bonus offer is available. Click the button to claim it.</DialogDescription>
+                    <DialogDescription className="sr-only">A special bonus offer is available. Click the button to claim it.</DialogDescription>
                 </DialogHeader>
                 <div className="relative">
                     <div
@@ -571,8 +555,8 @@ export default function Home() {
         {/* Betting Closed Dialog */}
          <Dialog open={!!closedGameInfo} onOpenChange={() => setClosedGameInfo(null)}>
             <DialogContent className="bg-white text-black p-0 max-w-xs rounded-lg">
-                <DialogHeader>
-                    <DialogTitle className="sr-only">Betting Closed</DialogTitle>
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Betting Closed</DialogTitle>
                     <DialogDescription>The betting market for this game is currently closed.</DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col items-center text-center p-6 space-y-4">
@@ -633,39 +617,39 @@ export default function Home() {
           </Card>
         )}
         
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader className="p-4">
-            <CardTitle className="text-xl text-center font-bold text-amber-300 tracking-widest">LATEST RESULTS</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 pt-0">
-            {gamesLoading ? (
-              <div className="h-9 flex items-center justify-center">
-                <Loader className="h-6 w-6" />
-              </div>
-            ) : games.length > 0 ? (
-              <div className="relative flex overflow-hidden group">
-                  <div className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
-                      {games.concat(games).map((game, index) => (
-                          <div key={`${game.id}-${index}`} className="flex items-center justify-center text-center mx-4 gap-2">
-                              <span className="text-sm font-medium text-white/80">{game.name}</span>
-                              <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
-                          </div>
-                      ))}
-                  </div>
-                  <div aria-hidden="true" className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
-                       {games.concat(games).map((game, index) => (
-                          <div key={`${game.id}-${index}-clone`} className="flex items-center justify-center text-center mx-4 gap-2">
-                              <span className="text-sm font-medium text-white/80">{game.name}</span>
-                              <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
-                          </div>
-                      ))}
-                  </div>
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-2">No results available right now.</p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="bg-slate-900/50 border border-slate-700 rounded-lg shadow-lg">
+            <CardHeader className="p-2 border-b border-slate-700">
+                <CardTitle className="text-base text-center font-bold text-amber-300 tracking-widest">LATEST RESULTS</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2">
+                {gamesLoading ? (
+                <div className="h-9 flex items-center justify-center">
+                    <Loader className="h-6 w-6" />
+                </div>
+                ) : games.length > 0 ? (
+                <div className="relative flex overflow-hidden group">
+                    <div className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
+                        {games.concat(games).map((game, index) => (
+                            <div key={`${game.id}-${index}`} className="flex items-center justify-center text-center mx-4 gap-2">
+                                <span className="text-sm font-medium text-white/80">{game.name}</span>
+                                <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div aria-hidden="true" className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
+                        {games.concat(games).map((game, index) => (
+                            <div key={`${game.id}-${index}-clone`} className="flex items-center justify-center text-center mx-4 gap-2">
+                                <span className="text-sm font-medium text-white/80">{game.name}</span>
+                                <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                ) : (
+                <p className="text-center text-muted-foreground py-2">No results available right now.</p>
+                )}
+            </CardContent>
+        </div>
         
         {settings.notice?.enabled && settings.notice.text && (
             <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
@@ -683,11 +667,8 @@ export default function Home() {
             </Card>
         )}
 
-        <Card className="bg-transparent border-none shadow-none">
-          <CardHeader className="p-2">
-            <CardTitle className="text-xl text-center font-bold text-amber-300 tracking-widest">MATKA GAMES</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+        <div className="space-y-4">
+          <h2 className="text-xl text-center font-bold text-amber-300 tracking-widest mt-4">MATKA GAMES</h2>
             {gamesLoading ? (
                <div className="space-y-4">
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
@@ -717,8 +698,7 @@ export default function Home() {
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
             )}
-          </CardContent>
-        </Card>
+        </div>
       </main>
       
       <BottomNavbar settings={settings} />
