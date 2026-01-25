@@ -114,6 +114,10 @@ export default function MonthlyReportPage() {
         const tableColumn = ["Metric", "Amount (₹)"];
         const tableRows = [
             ["Monthly Net Balance", monthlyStats.monthlyNetBalance.toLocaleString()],
+            ["Total Deposit This Month", monthlyStats.totalDeposit.toLocaleString()],
+            ["Total Withdrawals This Month", monthlyStats.totalWithdrawal.toLocaleString()],
+            ["Total Bidding This Month", monthlyStats.totalBidding.toLocaleString()],
+            ["Total Profit This Month", monthlyStats.totalProfit.toLocaleString()],
         ];
 
         doc.autoTable({
@@ -136,6 +140,7 @@ export default function MonthlyReportPage() {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <CardTitle className="text-3xl font-bold">Monthly Report</CardTitle>
+                            <CardDescription>An overview of your app's performance for the selected month.</CardDescription>
                         </div>
                         <Button onClick={handleDownloadPDF} variant="outline" size="sm">
                             <Download className="mr-2 h-4 w-4" />
@@ -178,6 +183,16 @@ export default function MonthlyReportPage() {
                                 icon={Landmark} 
                                 color={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
                                 textColor={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
+                            />
+                             <StatCard title="Total Deposit This Month" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
+                            <StatCard title="Total Withdrawals This Month" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
+                            <StatCard title="Total Bidding This Month" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
+                            <StatCard 
+                                title="Total Profit This Month" 
+                                value={`₹${monthlyStats.totalProfit.toLocaleString()}`} 
+                                icon={Scale} 
+                                color={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
+                                textColor={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
                             />
                         </div>
                     )}
