@@ -259,7 +259,7 @@ export default function TransactionDetailsPage() {
     if (authLoading || loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
-                <Loader className="h-10 w-10 text-primary" />
+                <Loader className="h-20 w-20 text-primary" />
             </div>
         );
     }
@@ -277,12 +277,12 @@ export default function TransactionDetailsPage() {
                 </div>
             </header>
             <main className="flex-1 flex flex-col p-4 space-y-4">
-                 <div className="bg-card/80 border border-white/10 rounded-lg p-6 text-center shadow-lg">
-                    <p className="text-muted-foreground">Total Balance</p>
+                <div className="bg-teal-900/50 rounded-2xl p-6 text-center shadow-lg border border-teal-500/30">
+                    <p className="text-teal-200">Total Balance</p>
                     <p className="text-4xl font-bold text-primary mt-2">₹{profile.balance?.toFixed(2) || '0.00'}</p>
                 </div>
                  
-                <div className="bg-card/80 border border-white/10 rounded-lg p-4">
+                <div>
                     <h2 className="text-lg font-bold text-foreground mb-4 text-center">Recent Transactions</h2>
                      <div className="space-y-3">
                         {paginatedTransactions.length > 0 ? (
