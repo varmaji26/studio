@@ -65,7 +65,7 @@ const TransactionItem = ({ transaction }: { transaction: Transaction; }) => {
     
     return (
         <div className={cn(
-            "bg-card/80 p-3 rounded-lg shadow-sm flex items-center justify-between border border-white/10",
+            "bg-background/80 p-3 rounded-lg shadow-sm flex items-center justify-between border border-white/10",
             transaction.type === 'win' && 'animate-won-glow'
         )}>
             <div className="flex items-center gap-3">
@@ -283,7 +283,7 @@ export default function TransactionDetailsPage() {
                 </div>
                  
                 <div>
-                    <h2 className="text-lg font-bold text-foreground mb-4 text-center">Recent Transactions</h2>
+                    <h2 className="text-lg font-bold text-foreground mb-4">Recent Transactions</h2>
                      <div className="space-y-3">
                         {paginatedTransactions.length > 0 ? (
                             paginatedTransactions.map(t => <TransactionItem key={t.id} transaction={t} />)
