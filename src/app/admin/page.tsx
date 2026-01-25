@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Gamepad2, Wallet, ArrowUpCircle, ArrowDownCircle, TrendingUp, TrendingDown, Scale, BarChart, Banknote, Landmark } from 'lucide-react';
 import { Loader } from '@/components/loader';
 import { useAuth } from '@/hooks/use-auth';
-import { setInitialStats } from '@/lib/stats-helper';
 
 
 interface StatCardProps {
@@ -62,8 +61,6 @@ export default function AdminDashboardPage() {
         const fetchAllStats = async () => {
             setLoading(true);
             try {
-                await setInitialStats();
-
                 // --- Base Stats (can remain onSnapshot for semi-realtime) ---
                 const statsDocRef = doc(db, "app-stats", "dashboard");
                 const unsubStats = onSnapshot(statsDocRef, (docSnap) => {
@@ -84,8 +81,6 @@ export default function AdminDashboardPage() {
                     .reduce((sum, doc) => sum + (doc.amount || 0), 0);
 
                 // --- Queries ---
-                const todayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfToday));
-                const todayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfToday));
                 const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
                 const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
                 const todayBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfToday));
@@ -94,16 +89,12 @@ export default function AdminDashboardPage() {
 
                 // --- Fetch all data at once ---
                 const [
-                    todayDepositsSnap,
-                    todayWithdrawalsSnap,
                     yesterdayDepositsSnap,
                     yesterdayWithdrawalsSnap,
                     todayBidsSnap,
                     monthDepositsSnap,
                     monthWithdrawalsSnap
                 ] = await Promise.all([
-                    getDocs(todayDepositsQuery),
-                    getDocs(todayWithdrawalsQuery),
                     getDocs(yesterdayDepositsQuery),
                     getDocs(yesterdayWithdrawalsQuery),
                     getDocs(todayBidsQuery),
@@ -112,15 +103,20 @@ export default function AdminDashboardPage() {
                 ]);
 
                 // --- Process all fetched data ---
-                const todaysDeposits = sumApprovedAmount(todayDepositsSnap.docs.map(d => d.data()));
-                const todaysWithdrawals = sumApprovedAmount(todayWithdrawalsSnap.docs.map(d => d.data()));
+                const monthDepositsDocs = monthDepositsSnap.docs.map(d => d.data());
+                const todaysDepositsDocs = monthDepositsDocs.filter(d => d.createdAt.toDate() >= startOfToday);
+                const todaysDeposits = sumApprovedAmount(todaysDepositsDocs);
+                const totalMonthDeposit = sumApprovedAmount(monthDepositsDocs);
+                
+                const monthWithdrawalsDocs = monthWithdrawalsSnap.docs.map(d => d.data());
+                const todaysWithdrawalsDocs = monthWithdrawalsDocs.filter(d => d.createdAt.toDate() >= startOfToday);
+                const todaysWithdrawals = sumApprovedAmount(todaysWithdrawalsDocs);
+                const totalMonthWithdrawal = sumApprovedAmount(monthWithdrawalsDocs);
+
                 const yesterdaysDeposits = sumApprovedAmount(yesterdayDepositsSnap.docs.map(d => d.data()));
                 const yesterdaysWithdrawals = sumApprovedAmount(yesterdayWithdrawalsSnap.docs.map(d => d.data()));
                 setDailyStats({ todaysDeposits, todaysWithdrawals, yesterdaysDeposits, yesterdaysWithdrawals });
 
-                // Monthly Net Balance
-                const totalMonthDeposit = sumApprovedAmount(monthDepositsSnap.docs.map(d => d.data()));
-                const totalMonthWithdrawal = sumApprovedAmount(monthWithdrawalsSnap.docs.map(d => d.data()));
                 setMonthlyNetBalance(totalMonthDeposit - totalMonthWithdrawal);
 
                 // Bidding Stats (Today)
