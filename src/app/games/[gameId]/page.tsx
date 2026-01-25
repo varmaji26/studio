@@ -223,7 +223,7 @@ export default function GamePage() {
             </Button>
         </div>
 
-        <Card className="bg-card/80 border-white/10 shadow-lg">
+        <Card className="bg-background/80 border-white/10 shadow-lg">
             <CardHeader className="p-4">
                 <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
             </CardHeader>
