@@ -75,20 +75,20 @@ export default function ContactPage() {
     }
     
     return (
-        <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6 pb-28">
-            <div className="max-w-4xl mx-auto">
+        <div className="dark min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-background text-foreground pb-28">
+             <header className="p-4 flex items-center gap-4 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-10">
+                <Link href="/">
+                    <Button variant="ghost" size="icon">
+                        <ArrowLeft />
+                    </Button>
+                </Link>
+                <h1 className="text-xl font-bold">Support</h1>
+            </header>
+            <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-2">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-2xl sm:text-3xl">Contact Us</CardTitle>
                         <CardDescription>We're here to help. Reach out to us through any of the channels below.</CardDescription>
-                         <div className="pt-4">
-                            <Button asChild variant="ghost" className="pl-0">
-                                <Link href="/" className="inline-flex items-center gap-2 text-sm text-green-500 hover:underline">
-                                    <ArrowLeft className="h-4 w-4" />
-                                    <span>Back to Home</span>
-                                </Link>
-                            </Button>
-                        </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {settings.callSupportNumber && (

@@ -265,26 +265,25 @@ export default function TransactionDetailsPage() {
     }
 
     return (
-        <div className="dark min-h-screen bg-background text-foreground flex flex-col pb-28">
-            <header className="bg-card/80 p-4 sticky top-0 z-10 border-b border-white/10 backdrop-blur-sm">
+        <div className="dark min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-background text-foreground flex flex-col pb-28">
+            <header className="p-4 flex items-center gap-4 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-10">
                  <div className="flex items-center gap-4 text-white">
                     <Link href="/">
                         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
                             <ArrowLeft />
                         </Button>
                     </Link>
-                    <h1 className="text-xl font-bold">Transaction Details</h1>
+                    <h1 className="text-xl font-bold">Passbook</h1>
                 </div>
             </header>
-            <main className="flex-1 flex flex-col">
-                 <div className="bg-card/80 p-4">
-                    <div className="bg-teal-900/50 rounded-t-2xl p-6 text-center shadow-lg border-x border-t border-teal-500/30">
-                        <p className="text-teal-200">Total Balance</p>
-                        <p className="text-4xl font-bold text-primary mt-2">₹{profile.balance?.toFixed(2) || '0.00'}</p>
-                    </div>
+            <main className="flex-1 flex flex-col p-4 space-y-4">
+                 <div className="bg-card/80 border border-white/10 rounded-lg p-6 text-center shadow-lg">
+                    <p className="text-muted-foreground">Total Balance</p>
+                    <p className="text-4xl font-bold text-primary mt-2">₹{profile.balance?.toFixed(2) || '0.00'}</p>
                 </div>
-                 <div className="bg-background flex-1 p-4 -mt-2">
-                    <h2 className="text-lg font-bold text-foreground mb-4 bg-teal-900/50 p-2 rounded-md text-center text-teal-200">Transactions</h2>
+                 
+                <div className="bg-card/80 border border-white/10 rounded-lg p-4">
+                    <h2 className="text-lg font-bold text-foreground mb-4 text-center">Recent Transactions</h2>
                      <div className="space-y-3">
                         {paginatedTransactions.length > 0 ? (
                             paginatedTransactions.map(t => <TransactionItem key={t.id} transaction={t} />)

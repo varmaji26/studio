@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -16,7 +16,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Label } from '@/components/ui/label';
 
 interface Bid extends DocumentData {
     id: string;
@@ -25,6 +24,7 @@ interface Bid extends DocumentData {
     session: string;
     numbers: string[];
     totalAmount: number;
+    winningAmount?: number;
     status: 'running' | 'won' | 'lost' | 'cancelled';
     createdAt: Timestamp;
 }
@@ -57,42 +57,43 @@ const BidCard = ({ bid }: { bid: Bid }) => {
 
     return (
         <div className={cn(
-            "bg-white rounded-lg shadow-md overflow-hidden border border-gray-200",
+            "bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden",
             bid.status === 'won' && 'animate-won-glow'
         )}>
-            <div className="bg-[#004D40] text-white text-center py-2">
+            <div className="bg-primary/20 text-primary-foreground text-center py-2">
                 <h3 className="font-bold">{bid.gameName} ({bid.session})</h3>
             </div>
             <div className="p-4">
                 <div className="grid grid-cols-3 text-center text-sm">
                     <div>
-                        <p className="text-gray-500">Game Type</p>
-                        <p className="font-semibold text-black">{bid.betType}</p>
+                        <p className="text-muted-foreground">Game Type</p>
+                        <p className="font-semibold text-foreground">{bid.betType}</p>
                     </div>
                     <div>
-                        <p className="text-gray-500">Digit</p>
-                        <p className="font-semibold text-black">{bid.numbers.join(', ')}</p>
+                        <p className="text-muted-foreground">Digit</p>
+                        <p className="font-semibold text-foreground">{bid.numbers.join(', ')}</p>
                     </div>
                     <div>
-                        <p className="text-gray-500">Points</p>
-                        <p className="font-semibold text-black">{bid.totalAmount}</p>
+                        <p className="text-muted-foreground">Points</p>
+                        <p className="font-semibold text-foreground">{bid.totalAmount}</p>
                     </div>
                 </div>
             </div>
-            <div className="border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-600">
+            <div className="border-t border-white/20 px-4 py-2 text-center text-xs text-muted-foreground">
                 Transaction: {formatDate(bid.createdAt)}
             </div>
-            <div className="border-t border-gray-200 px-4 py-2 text-center">
+            <div className="border-t border-white/20 px-4 py-3 text-center flex justify-center">
                  <Badge 
                     variant={getStatusBadgeVariant(bid.status)}
                     className={cn(
+                        'text-base',
                         bid.status === 'won' && 'bg-green-500 text-white',
                         bid.status === 'lost' && 'bg-red-500 text-white',
                         bid.status === 'running' && 'bg-orange-500 text-white',
                         bid.status === 'cancelled' && 'border-yellow-500 text-yellow-500',
                     )}
                 >
-                    {bid.status === 'lost' ? 'Best of luck' : bid.status}
+                    {bid.status === 'lost' ? 'Best of luck' : bid.status === 'won' ? `You Won ₹${bid.winningAmount}` : bid.status}
                 </Badge>
             </div>
         </div>
@@ -222,20 +223,20 @@ export default function BidsHistoryPage() {
     }
     
     return (
-        <div className="dark min-h-screen bg-background text-foreground pb-28">
-            <div className="max-w-4xl mx-auto p-4 sm:p-6">
+        <div className="dark min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-background text-foreground pb-28">
+             <header className="p-4 flex items-center gap-4 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-10">
+                <Link href="/">
+                    <Button variant="ghost" size="icon">
+                        <ArrowLeft />
+                    </Button>
+                </Link>
+                <h1 className="text-xl font-bold">My Bets</h1>
+            </header>
+            <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-0">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-2xl sm:text-3xl">Bids History</CardTitle>
                         <CardDescription>View all your past and current bids here.</CardDescription>
-                         <div className="pt-4">
-                            <Button asChild className="w-full bg-green-500 hover:bg-green-600 text-white">
-                                <Link href="/" className="inline-flex items-center gap-2">
-                                    <ArrowLeft className="h-4 w-4" />
-                                    <span>Back to Home</span>
-                                </Link>
-                            </Button>
-                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="flex justify-end items-center gap-2 mb-4">
@@ -288,11 +289,11 @@ export default function BidsHistoryPage() {
                         </div>
 
                         <Tabs defaultValue="all" onValueChange={setActiveTab}>
-                            <TabsList className="grid w-full grid-cols-4 bg-slate-700">
-                                <TabsTrigger value="all" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">All</TabsTrigger>
-                                <TabsTrigger value="running" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">Running</TabsTrigger>
-                                <TabsTrigger value="won" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">Won</TabsTrigger>
-                                <TabsTrigger value="lost" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">Lost</TabsTrigger>
+                            <TabsList className="grid w-full grid-cols-4 bg-slate-900/80">
+                                <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All</TabsTrigger>
+                                <TabsTrigger value="running" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Running</TabsTrigger>
+                                <TabsTrigger value="won" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Won</TabsTrigger>
+                                <TabsTrigger value="lost" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Lost</TabsTrigger>
                             </TabsList>
                             <TabsContent value="all">
                                 {renderBidCards(paginatedBids)}
