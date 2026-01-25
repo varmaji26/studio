@@ -138,7 +138,7 @@ export default function AddFundPage() {
                 </div>
             </header>
             
-            <main className="flex-1 p-4">
+            <main className="flex-1 p-4 pb-28">
                 <div className="bg-[#112a45] text-white rounded-lg p-4 mb-4 text-center">
                     <h2 className="text-lg font-bold">{user.displayName}</h2>
                     <div className="flex items-center justify-center gap-2 text-sm">
@@ -195,17 +195,17 @@ export default function AddFundPage() {
                     </div>
                 </div>
                 )}
+                
+                <div className="mt-6">
+                    <Button 
+                        className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full" 
+                        onClick={handlePayNow}
+                        disabled={hasPendingDeposit}
+                    >
+                        {hasPendingDeposit ? 'Pending Request' : 'Pay Now'}
+                    </Button>
+                </div>
             </main>
-
-            <footer className="p-4 bg-white sticky bottom-0">
-                <Button 
-                    className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full" 
-                    onClick={handlePayNow}
-                    disabled={hasPendingDeposit}
-                >
-                    {hasPendingDeposit ? 'Pending Request' : 'Pay Now'}
-                </Button>
-            </footer>
         </div>
     );
 }
