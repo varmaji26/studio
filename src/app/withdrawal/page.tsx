@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -215,8 +214,8 @@ export default function WithdrawalPage() {
     const minWithdrawal = settings.minimumWithdrawalAmount || 1000;
 
     return (
-        <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
-            <header className="p-4 flex items-center gap-4 bg-white sticky top-0 z-10 shadow-sm">
+        <div className="dark min-h-screen bg-background text-foreground flex flex-col">
+            <header className="p-4 flex items-center gap-4 bg-background/80 backdrop-blur-sm sticky top-0 z-10 border-b border-white/10">
                 <Link href="/funds" replace>
                     <Button variant="ghost" size="icon">
                         <ArrowLeft />
@@ -244,8 +243,8 @@ export default function WithdrawalPage() {
                     </div>
                 </div>
 
-                 <div className="text-center my-4 p-4 rounded-lg bg-green-100 border border-green-200">
-                    <p className="text-sm text-green-800 font-semibold">For Fund Query's please Call Or Whatsapp</p>
+                 <div className="text-center my-4 p-4 rounded-lg bg-primary/10 border-primary/20">
+                    <p className="text-sm text-primary font-semibold">For Fund Query's please Call Or Whatsapp</p>
                     <div className="flex justify-center gap-4 mt-2">
                         {settings.callSupportNumber && (
                              <Button className="rounded-full bg-red-500 hover:bg-red-600 text-white" onClick={handleCall}>
@@ -261,11 +260,11 @@ export default function WithdrawalPage() {
                     </div>
                 </div>
                 
-                <hr className="border-gray-300" />
+                <hr className="border-border" />
                 
                 {hasPendingWithdrawal ? (
-                     <Alert variant="destructive" className="my-4 bg-red-100 border-red-200 text-red-800">
-                        <Info className="h-4 w-4 text-red-800" />
+                     <Alert className="my-4 bg-amber-900/50 border-amber-500/30 text-amber-300">
+                        <Info className="h-4 w-4 text-amber-300" />
                         <AlertTitle>Pending Request</AlertTitle>
                         <AlertDescription>
                             Your previous withdrawal request is still pending. Your withdrawal will be credited to your account within 24 hours. Please wait.
@@ -275,22 +274,22 @@ export default function WithdrawalPage() {
                     </Alert>
                 ) : (
                 <div className="my-4">
-                    <p className="text-center text-gray-600 mb-2">Enter Amount (Min: ₹{minWithdrawal})</p>
+                    <p className="text-center text-muted-foreground mb-2">Enter Amount (Min: ₹{minWithdrawal})</p>
                     <div className="relative">
                         <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400"/>
                          <Input 
                             type="number"
                             placeholder="Enter Amount" 
-                            className="bg-white rounded-full h-14 pl-12 text-lg text-center"
+                            className="bg-card rounded-full h-14 pl-12 text-lg text-center"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
                         />
                     </div>
                      <div className="grid grid-cols-2 gap-3 mt-3">
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('1000')}>1000</Button>
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('2000')}>2000</Button>
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('5000')}>5000</Button>
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('10000')}>10000</Button>
+                        <Button variant="outline" className="rounded-full bg-card h-12" onClick={() => handleQuickAmount('1000')}>1000</Button>
+                        <Button variant="outline" className="rounded-full bg-card h-12" onClick={() => handleQuickAmount('2000')}>2000</Button>
+                        <Button variant="outline" className="rounded-full bg-card h-12" onClick={() => handleQuickAmount('5000')}>5000</Button>
+                        <Button variant="outline" className="rounded-full bg-card h-12" onClick={() => handleQuickAmount('10000')}>10000</Button>
                     </div>
                 </div>
                 )}

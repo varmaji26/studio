@@ -113,7 +113,7 @@ export default function AddFundPage() {
 
     if (authLoading || !user) {
         return (
-            <div className="dark flex h-screen w-full items-center justify-center bg-gray-200">
+            <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
             </div>
         );
@@ -124,8 +124,8 @@ export default function AddFundPage() {
     const minDeposit = settings.minimumDepositAmount || 100;
 
     return (
-        <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
-            <header className="p-4 flex items-center gap-4 bg-white sticky top-0 z-10 shadow-sm">
+        <div className="dark min-h-screen bg-background text-foreground flex flex-col">
+            <header className="p-4 flex items-center gap-4 bg-background/80 backdrop-blur-sm sticky top-0 z-10 border-b border-white/10">
                 <Link href="/funds" replace>
                     <Button variant="ghost" size="icon">
                         <ArrowLeft />
@@ -153,8 +153,8 @@ export default function AddFundPage() {
                     </div>
                 </div>
 
-                <div className="text-center mb-4 p-4 rounded-lg bg-green-100 border border-green-200">
-                    <p className="text-sm text-green-800 font-semibold">For Fund Query's please Call Or Whatsapp</p>
+                <div className="text-center mb-4 p-4 rounded-lg bg-primary/10 border-primary/20">
+                    <p className="text-sm text-primary font-semibold">For Fund Query's please Call Or Whatsapp</p>
                     <div className="flex justify-center gap-4 mt-2">
                         <Button className="rounded-full bg-red-500 hover:bg-red-600 text-white" onClick={handleCall}>
                             <Phone className="mr-2 h-4 w-4" /> Call
@@ -167,8 +167,8 @@ export default function AddFundPage() {
                 </div>
 
                 {hasPendingDeposit ? (
-                     <Alert variant="destructive" className="my-4 bg-yellow-100 border-yellow-200 text-yellow-800">
-                        <Info className="h-4 w-4" />
+                     <Alert className="my-4 bg-amber-900/50 border-amber-500/30 text-amber-300">
+                        <Info className="h-4 w-4 text-amber-300" />
                         <AlertTitle>Pending Request</AlertTitle>
                         <AlertDescription>
                             You already have a pending deposit request. Please wait for it to be processed before making a new one.
@@ -176,22 +176,22 @@ export default function AddFundPage() {
                     </Alert>
                 ) : (
                 <div className="my-4">
-                    <p className="text-center text-gray-600 mb-2">Enter Amount (Min: ₹{minDeposit})</p>
+                    <p className="text-center text-muted-foreground mb-2">Enter Amount (Min: ₹{minDeposit})</p>
                     <div className="relative">
                         <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400"/>
                         <Input 
                             type="number"
                             placeholder="Enter Amount" 
-                            className="bg-white rounded-full h-14 pl-12 text-lg text-center"
+                            className="bg-card rounded-full h-14 pl-12 text-lg text-center"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-3 mt-3">
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount(minDeposit.toString())}>{minDeposit}</Button>
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('500')}>500</Button>
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('1000')}>1000</Button>
-                        <Button variant="outline" className="rounded-full bg-white h-12" onClick={() => handleQuickAmount('1500')}>1500</Button>
+                        <Button variant="outline" className="rounded-full bg-card h-12" onClick={() => handleQuickAmount(minDeposit.toString())}>{minDeposit}</Button>
+                        <Button variant="outline" className="rounded-full bg-card h-12" onClick={() => handleQuickAmount('500')}>500</Button>
+                        <Button variant="outline" className="rounded-full bg-card h-12" onClick={() => handleQuickAmount('1000')}>1000</Button>
+                        <Button variant="outline" className="rounded-full bg-card h-12" onClick={() => handleQuickAmount('1500')}>1500</Button>
                     </div>
                 </div>
                 )}
