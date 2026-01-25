@@ -127,7 +127,7 @@ const GameCard = memo(function GameCard({
     const isPlayable = isActive && !bettingClosed;
 
     return (
-        <div id={game.id} className={cn("bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30 transition-all duration-300", isPlayable && "animate-breathe border-primary/50")}>
+        <div id={game.id} className={cn("bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-transparent rounded-lg p-3 shadow-lg shadow-black/30 transition-all duration-300", isPlayable && "border-primary/50")}>
             <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
@@ -146,33 +146,52 @@ const GameCard = memo(function GameCard({
                 </div>
             </div>
             <div className="border-t border-white/20 pt-2">
-                <div className="grid grid-cols-5 items-center gap-2 mt-2">
-                    <Link href={`/games/${game.id}/jodi-chart`} className="col-span-1" onContextMenu={(e) => e.preventDefault()}>
-                        <Button variant="outline" className="w-full h-9 bg-slate-700 border-slate-600 text-white hover:bg-slate-600">Jodi</Button>
-                    </Link>
-
+                <div className="relative mt-2 h-9">
+                    {/* Main Playable Button or Disabled Button */}
                     {isPlayable ? (
                         <Link 
                             href={`/games/${game.id}`} 
-                            className="col-span-3 h-full transition-transform active:scale-95"
+                            className="block h-full transition-transform active:scale-95"
                             onContextMenu={(e) => e.preventDefault()}
                         >
-                            <div className="w-full h-9 flex items-center justify-center bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-600 text-black font-bold rounded-full text-lg shadow-[0_0_15px_rgba(251,191,36,0.6)] animate-pulse">
-                                PLAY
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-600 text-black font-bold rounded-full text-lg shadow-[0_0_15px_rgba(251,191,36,0.6)] animate-won-glow">
+                                PLAY NOW
                             </div>
                         </Link>
                     ) : (
                         <div 
                             onClick={() => onBettingClosedClick(game)}
                             onContextMenu={(e) => e.preventDefault()}
-                            className="col-span-3 w-full h-9 flex items-center justify-center bg-gray-600 text-white font-bold rounded-full text-lg shadow-lg cursor-not-allowed"
+                            className="w-full h-full flex items-center justify-center bg-gray-600 text-white font-bold rounded-full text-lg shadow-lg cursor-not-allowed"
                         >
-                            PLAY
+                            PLAY NOW
                         </div>
                     )}
-                    
-                    <Link href={`/games/${game.id}/panel-chart`} className="col-span-1" onContextMenu={(e) => e.preventDefault()}>
-                        <Button variant="outline" className="w-full h-9 bg-slate-700 border-slate-600 text-white hover:bg-slate-600">Panel</Button>
+
+                    {/* Jodi Button positioned over the main button */}
+                    <Link 
+                        href={`/games/${game.id}/jodi-chart`} 
+                        className="absolute top-1/2 left-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
+                        onContextMenu={(e) => e.preventDefault()}
+                    >
+                        <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
+                            <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
+                                Jodi
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* Panel Button positioned over the main button */}
+                    <Link 
+                        href={`/games/${game.id}/panel-chart`} 
+                        className="absolute top-1/2 right-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
+                        onContextMenu={(e) => e.preventDefault()}
+                    >
+                        <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
+                            <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
+                                Panel
+                            </div>
+                        </div>
                     </Link>
                 </div>
             </div>
@@ -667,8 +686,8 @@ export default function Home() {
             </Card>
         )}
 
-        <div className="space-y-4">
-          <h2 className="text-xl text-center font-bold text-amber-300 tracking-widest mt-4">MATKA GAMES</h2>
+        <div className="space-y-4 mt-4">
+            <h2 className="text-xl text-center font-bold text-amber-300 tracking-widest">MATKA GAMES</h2>
             {gamesLoading ? (
                <div className="space-y-4">
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
