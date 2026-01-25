@@ -671,11 +671,7 @@ export default function Home() {
             </Card>
         )}
 
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader className="p-4">
-            <CardTitle className="text-xl text-center font-bold">Matka Games</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 pt-0">
+        <div className="p-2 pt-0">
             {gamesLoading ? (
                <div className="space-y-4">
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
@@ -705,8 +701,7 @@ export default function Home() {
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
             )}
-          </CardContent>
-        </Card>
+        </div>
       </main>
       
       <BottomNavbar settings={settings} />
