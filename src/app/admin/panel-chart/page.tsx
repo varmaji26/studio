@@ -163,7 +163,7 @@ export default function PanelChartPage() {
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
                     <DialogTitle>Add New Panel Chart</DialogTitle>
-                    <DialogDescription className="sr-only">A form to add a new Panel chart for a game.</DialogDescription>
+                    <DialogDescription>A form to add a new Panel chart for a game.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
