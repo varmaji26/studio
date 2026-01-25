@@ -23,7 +23,6 @@ import {
   Eye,
   ChevronDown,
   MailQuestion,
-  Send,
   Gift,
   Sun,
   Moon,
@@ -335,14 +334,6 @@ export default function AdminLayout({
                       </SidebarMenuItem>
                   </CollapsibleContent>
                </Collapsible>
-              <SidebarMenuItem>
-                <Link href="/admin/send-notification" passHref onClick={handleLinkClick}>
-                  <SidebarMenuButton isActive={isActive('/admin/send-notification')} tooltip={{children: "Send Notification"}}>
-                    <Send />
-                    <span>Send Notification</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <Link href="/admin/update-results" passHref onClick={handleLinkClick}>
                   <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result (Open)"}}>
