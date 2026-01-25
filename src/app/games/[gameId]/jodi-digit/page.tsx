@@ -248,7 +248,7 @@ export default function JodiDigitPage() {
                 </Alert>
             )}
             
-            <Card className="bg-card/80 border-white/10">
+            <Card className="bg-background/80 border-white/10">
                 <CardHeader className="p-4">
                     <CardTitle className="text-base">Enter Jodi Number(s):</CardTitle>
                 </CardHeader>
@@ -299,7 +299,7 @@ export default function JodiDigitPage() {
                 </div>
             </div>
         
-            <Card className="bg-card/80 border-white/10">
+            <Card className="bg-background/80 border-white/10">
                 <CardHeader className="p-4">
                     <CardTitle className="text-base">Bet Summary:</CardTitle>
                 </CardHeader>

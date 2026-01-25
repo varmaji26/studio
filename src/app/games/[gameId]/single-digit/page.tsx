@@ -229,7 +229,7 @@ export default function SingleDigitPage() {
   return (
     <GameBettingLayout gameName={game.name} gameId={gameId as string} activeBetType="Single Digit">
         <div className="space-y-4">
-            <Card className="bg-card/80 border-white/10">
+            <Card className="bg-background/80 border-white/10">
                 <CardHeader className="p-4">
                     <CardTitle className="text-base">Select Number(s):</CardTitle>
                 </CardHeader>
@@ -282,7 +282,7 @@ export default function SingleDigitPage() {
                 </div>
             </div>
         
-            <Card className="bg-card/80 border-white/10">
+            <Card className="bg-background/80 border-white/10">
                 <CardHeader className="p-4">
                     <CardTitle className="text-base">Bet Summary:</CardTitle>
                 </CardHeader>

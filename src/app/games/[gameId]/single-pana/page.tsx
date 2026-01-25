@@ -253,7 +253,7 @@ export default function SinglePanaPage() {
   return (
     <GameBettingLayout gameName={game.name} gameId={gameId as string} activeBetType="Single Pana">
         <div className="space-y-4">
-            <Card className="bg-card/80 border-white/10">
+            <Card className="bg-background/80 border-white/10">
                 <CardHeader className="p-4">
                     <CardTitle className="text-base">Enter Pana Number(s):</CardTitle>
                 </CardHeader>
@@ -323,7 +323,7 @@ export default function SinglePanaPage() {
                 </div>
             </div>
         
-            <Card className="bg-card/80 border-white/10">
+            <Card className="bg-background/80 border-white/10">
                 <CardHeader className="p-4">
                     <CardTitle className="text-base">Bet Summary:</CardTitle>
                 </CardHeader>
