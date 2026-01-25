@@ -273,132 +273,133 @@ export default function ManageUsersPage() {
 
   return (
      <div className="flex-1 space-y-6">
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold">Manage Users</CardTitle>
-            <CardDescription>View and manage all registered users</CardDescription>
+        <div>
+            <h1 className="text-3xl font-bold">Manage Users</h1>
+            <p className="text-muted-foreground">View and manage all registered users</p>
             <div className="pt-4">
                 <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
                     <ArrowLeft className="h-4 w-4" />
                     <span>Back to Dashboard</span>
                 </Link>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h3 className="text-xl font-semibold">All Users</h3>
-                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full sm:w-[180px] justify-start text-left font-normal",
-                                !selectedDate && "text-muted-foreground"
-                            )}
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={setSelectedDate}
-                            initialFocus
+        </div>
+        
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+            <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <h3 className="text-xl font-semibold">All Users</h3>
+                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                         <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full sm:w-[180px] justify-start text-left font-normal",
+                                    !selectedDate && "text-muted-foreground"
+                                )}
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={setSelectedDate}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <div className="relative w-full sm:w-auto sm:max-w-xs">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                                placeholder="Search by name or mobile..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="bg-input h-10 rounded-lg pl-10"
                             />
-                        </PopoverContent>
-                    </Popover>
-                    <div className="relative w-full sm:w-auto sm:max-w-xs">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                            placeholder="Search by name or mobile..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-input h-10 rounded-lg pl-10"
-                        />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {usersLoading ? (
-                <div className="flex justify-center items-center h-48">
-                    <Loader className="h-8 w-8 text-primary" />
-                </div>
-            ) : (
-                <>
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>#</TableHead>
-                                <TableHead>Username</TableHead>
-                                <TableHead>Mobile</TableHead>
-                                <TableHead>Balance</TableHead>
-                                <TableHead>Bonus</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Joined</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedUsers.map((user, index) => (
-                                <TableRow key={user.id}>
-                                    <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
-                                    <TableCell>{user.displayName}</TableCell>
-                                    <TableCell>{user.mobile}</TableCell>
-                                    <TableCell>₹{user.balance || 0}</TableCell>
-                                    <TableCell>₹{user.bonusBalance || 0}</TableCell>
-                                    <TableCell>
-                                        <Badge className={user.isBlocked ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}>
-                                            {user.isBlocked ? 'BLOCKED' : 'ACTIVE'}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>{formatDate(user.createdAt)}</TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex flex-wrap gap-2 justify-end">
-                                            <UpdateBalanceDialog user={user}>
-                                                <Button size="sm" variant="outline">Balance</Button>
-                                            </UpdateBalanceDialog>
-                                             <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                   <Button size="sm" variant={user.isBlocked ? 'secondary' : 'destructive'}>
-                                                        {user.isBlocked ? <UserCheck className="h-4 w-4 mr-1" /> : <UserX className="h-4 w-4 mr-1" />}
-                                                        {user.isBlocked ? 'Unblock' : 'Block'}
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                     <AlertDialogDescription>
-                                                        {user.isBlocked
-                                                            ? `This will unblock ${user.displayName}, allowing them to log in again.`
-                                                            : `This will block ${user.displayName}, preventing them from logging in. It will also revert all their winning bets and set their entire balance (real and bonus) to zero.`}
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleToggleBlockUser(user)}>Confirm</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
-                                    </TableCell>
+                {usersLoading ? (
+                    <div className="flex justify-center items-center h-48">
+                        <Loader className="h-8 w-8 text-primary" />
+                    </div>
+                ) : (
+                    <>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>#</TableHead>
+                                    <TableHead>Username</TableHead>
+                                    <TableHead>Mobile</TableHead>
+                                    <TableHead>Balance</TableHead>
+                                    <TableHead>Bonus</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Joined</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-                {renderPagination()}
-                </>
-            )}
-            {paginatedUsers.length === 0 && !usersLoading && (
-                <p className="text-center text-muted-foreground mt-4">
-                  {searchTerm || selectedDate ? `No users found matching the criteria.` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
-                </p>
-            )}
-          </CardContent>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedUsers.map((user, index) => (
+                                    <TableRow key={user.id}>
+                                        <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
+                                        <TableCell>{user.displayName}</TableCell>
+                                        <TableCell>{user.mobile}</TableCell>
+                                        <TableCell>₹{user.balance || 0}</TableCell>
+                                        <TableCell>₹{user.bonusBalance || 0}</TableCell>
+                                        <TableCell>
+                                            <Badge className={user.isBlocked ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}>
+                                                {user.isBlocked ? 'BLOCKED' : 'ACTIVE'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{formatDate(user.createdAt)}</TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex flex-wrap gap-2 justify-end">
+                                                <UpdateBalanceDialog user={user}>
+                                                    <Button size="sm" variant="outline">Balance</Button>
+                                                </UpdateBalanceDialog>
+                                                 <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                       <Button size="sm" variant={user.isBlocked ? 'secondary' : 'destructive'}>
+                                                            {user.isBlocked ? <UserCheck className="h-4 w-4 mr-1" /> : <UserX className="h-4 w-4 mr-1" />}
+                                                            {user.isBlocked ? 'Unblock' : 'Block'}
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                         <AlertDialogDescription>
+                                                            {user.isBlocked
+                                                                ? `This will unblock ${user.displayName}, allowing them to log in again.`
+                                                                : `This will block ${user.displayName}, preventing them from logging in. It will also revert all their winning bets and set their entire balance (real and bonus) to zero.`}
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleToggleBlockUser(user)}>Confirm</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                    {renderPagination()}
+                    </>
+                )}
+                {paginatedUsers.length === 0 && !usersLoading && (
+                    <p className="text-center text-muted-foreground mt-4">
+                      {searchTerm || selectedDate ? `No users found matching the criteria.` : "No users found. Ensure user documents in Firestore have 'displayName' and 'mobile' fields."}
+                    </p>
+                )}
+              </CardContent>
         </Card>
       </div>
   );
