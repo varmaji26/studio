@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Star, Download } from 'lucide-react';
+import { Star, ArrowUpCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -86,8 +85,8 @@ export default function DownloadPage() {
             <Button
               className="w-full h-16 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-lg shadow-lg"
             >
-              <Download className="mr-3 h-8 w-8" />
-              Download
+              <ArrowUpCircle className="mr-3 h-8 w-8" />
+              Update Now
             </Button>
           </a>
         </div>

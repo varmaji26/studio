@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -38,6 +37,7 @@ import {
   IndianRupee,
   XCircle,
   Copy,
+  ArrowUpCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -453,8 +453,8 @@ export default function Home() {
                             <span>Contact</span>
                         </Link>
                         <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
-                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Download className="h-5 w-5" /></div>
-                            <span>Download App</span>
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><ArrowUpCircle className="h-5 w-5" /></div>
+                            <span>Update App</span>
                         </Link>
                         <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Star className="h-5 w-5" /></div>
