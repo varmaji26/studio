@@ -127,70 +127,45 @@ const GameCard = memo(function GameCard({
     const isPlayable = isActive && !bettingClosed;
 
     return (
-        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
-            <div className="flex justify-between items-start mb-2">
+        <div id={game.id} className="bg-gradient-to-br from-neutral-900 to-zinc-800 border border-amber-500/20 rounded-xl p-4 shadow-lg shadow-black/40 backdrop-blur-sm">
+            <div className="flex justify-between items-center mb-3">
                 <div className="flex-1">
-                    <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
-                    <div className="text-[10px] text-muted-foreground">
-                        <span>Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}</span>
-                    </div>
+                    <h3 className="text-xl font-bold text-amber-300 tracking-wide">{game.name}</h3>
+                    <p className={cn(
+                        "text-xs font-semibold mt-1",
+                        !isPlayable ? 'text-red-500' : (game.status.toLowerCase().includes('open') ? 'text-green-400 animate-pulse' : 'text-red-500')
+                    )}>
+                        {!isActive ? 'MARKET OFF' : !isPlayable ? 'MARKET CLOSED' : game.status.toUpperCase()}
+                    </p>
                 </div>
                 <div className="text-right">
-                    <p className="text-lg font-bold text-yellow-400">{formatGameResult(game)}</p>
-                    <p className={cn(
-                        "text-xs font-semibold",
-                        !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
-                    )}>
-                        {!isActive ? 'Market is close' : !isPlayable ? 'Market is close' : game.status}
+                    <p className="text-2xl font-bold text-white tracking-widest">{formatGameResult(game)}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                        {formatTime(game.openTime)} - {formatTime(game.closeTime)}
                     </p>
                 </div>
             </div>
-            <div className="border-t border-white/20 pt-2">
-                <div className="relative mt-2 h-9">
-                    {/* Main Playable Button or Disabled Button */}
-                    {isPlayable ? (
-                        <Link 
-                            href={`/games/${game.id}`} 
-                            className="block h-full transition-transform active:scale-95"
-                            onContextMenu={(e) => e.preventDefault()}
-                        >
-                            <div className="w-full h-full flex items-center justify-center bg-orange-600 text-white font-bold rounded-full text-lg shadow-lg">
-                                Play Now
-                            </div>
-                        </Link>
-                    ) : (
-                        <div 
-                            onClick={() => onBettingClosedClick(game)}
-                            onContextMenu={(e) => e.preventDefault()}
-                            className="w-full h-full flex items-center justify-center bg-gray-600 text-white font-bold rounded-full text-lg shadow-lg cursor-not-allowed"
-                        >
-                            Play Now
-                        </div>
-                    )}
-
-                    {/* Jodi Button positioned over the main button */}
-                    <Link 
-                        href={`/games/${game.id}/jodi-chart`} 
-                        className="absolute top-1/2 left-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
-                        onContextMenu={(e) => e.preventDefault()}
-                    >
-                        <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
-                            <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
-                                Jodi
-                            </div>
+            <div className="relative mt-4 h-11 flex items-center justify-center">
+                 {isPlayable ? (
+                    <Link href={`/games/${game.id}`} className="w-full h-full transition-transform active:scale-95" onContextMenu={(e) => e.preventDefault()}>
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold rounded-full text-lg shadow-lg shadow-yellow-500/20">
+                            PLAY
                         </div>
                     </Link>
-
-                    {/* Panel Button positioned over the main button */}
-                    <Link 
-                        href={`/games/${game.id}/panel-chart`} 
-                        className="absolute top-1/2 right-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
-                        onContextMenu={(e) => e.preventDefault()}
-                    >
-                        <div className="bg-yellow-400 rounded-full p-0.5 shadow-md">
-                            <div className="bg-orange-600 text-white text-xs font-bold rounded-full px-3 py-1">
-                                Panel
-                            </div>
+                ) : (
+                    <div onClick={() => onBettingClosedClick(game)} onContextMenu={(e) => e.preventDefault()} className="w-full h-full flex items-center justify-center bg-zinc-700 text-zinc-400 font-bold rounded-full text-lg shadow-inner cursor-not-allowed">
+                        PLAY
+                    </div>
+                )}
+                 <div className="absolute top-1/2 -translate-y-1/2 flex justify-between w-full px-2 pointer-events-none">
+                    <Link href={`/games/${game.id}/jodi-chart`} className="pointer-events-auto transition-transform hover:scale-105 active:scale-95" onContextMenu={(e) => e.preventDefault()}>
+                        <div className="bg-zinc-800/80 text-amber-200 text-xs font-bold rounded-full px-4 py-1.5 border border-amber-500/50 shadow-md">
+                            JODI
+                        </div>
+                    </Link>
+                    <Link href={`/games/${game.id}/panel-chart`} className="pointer-events-auto transition-transform hover:scale-105 active:scale-95" onContextMenu={(e) => e.preventDefault()}>
+                         <div className="bg-zinc-800/80 text-amber-200 text-xs font-bold rounded-full px-4 py-1.5 border border-amber-500/50 shadow-md">
+                            PANEL
                         </div>
                     </Link>
                 </div>
@@ -574,9 +549,9 @@ export default function Home() {
         {/* Betting Closed Dialog */}
          <Dialog open={!!closedGameInfo} onOpenChange={() => setClosedGameInfo(null)}>
             <DialogContent className="bg-white text-black p-0 max-w-xs rounded-lg">
-                <DialogHeader>
-                    <DialogTitle className="sr-only">Betting Closed</DialogTitle>
-                    <DialogDescription className="sr-only">The betting market for this game is currently closed.</DialogDescription>
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Betting Closed</DialogTitle>
+                    <DialogDescription>The betting market for this game is currently closed.</DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col items-center text-center p-6 space-y-4">
                     <XCircle className="h-16 w-16 text-red-500" />
@@ -636,36 +611,27 @@ export default function Home() {
           </Card>
         )}
         
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader className="p-4">
-            <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            {gamesLoading ? (
-              <div className="grid grid-cols-4 gap-1">
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
+        <div className="my-4">
+          <h3 className="text-lg font-bold text-center text-amber-300 tracking-widest mb-3">LATEST RESULTS</h3>
+          <div className="relative flex overflow-hidden group">
+              <div className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
+                  {games.length > 0 && games.concat(games).map((game, index) => (
+                      <div key={`${game.id}-${index}`} className="flex items-center justify-center text-center mx-6 gap-2">
+                          <span className="text-sm font-medium text-white/80">{game.name}</span>
+                          <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
+                      </div>
+                  ))}
               </div>
-            ) : games.length > 0 ? (
-              <div className="grid grid-cols-4 gap-1">
-                {games.map((game) => (
-                  <div key={game.id} className="flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-900 p-1 rounded-md border border-slate-700 text-center">
-                    <span className="text-[10px] font-medium text-white truncate w-full">{game.name}</span>
-                    <span className="text-[11px] font-bold text-yellow-400">{formatGameResult(game, true)}</span>
-                  </div>
-                ))}
+              <div aria-hidden="true" className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
+                   {games.length > 0 && games.concat(games).map((game, index) => (
+                      <div key={`${game.id}-${index}-clone`} className="flex items-center justify-center text-center mx-6 gap-2">
+                          <span className="text-sm font-medium text-white/80">{game.name}</span>
+                          <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
+                      </div>
+                  ))}
               </div>
-            ) : (
-              <p className="text-center text-muted-foreground">No results available right now.</p>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
         
         {settings.notice?.enabled && settings.notice.text && (
             <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
@@ -683,24 +649,23 @@ export default function Home() {
             </Card>
         )}
 
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader className="p-4">
-            <CardTitle className="text-xl text-center font-bold">Matka Games</CardTitle>
+        <Card className="bg-transparent border-none shadow-none">
+          <CardHeader className="p-2">
+            <CardTitle className="text-xl text-center font-bold text-amber-300 tracking-widest">MATKA GAMES</CardTitle>
           </CardHeader>
-          <CardContent className="p-2 pt-0">
+          <CardContent className="p-0">
             {gamesLoading ? (
                <div className="space-y-4">
-                    <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
-                    <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
-                    <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
-                    <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-32 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-32 w-full rounded-lg bg-slate-700/50" />
+                    <Skeleton className="h-32 w-full rounded-lg bg-slate-700/50" />
                 </div>
             ) : games.length > 0 ? (
                 <div className="space-y-4">
                     {games.map((game) => {
                       const isActiveToday = (() => {
-                          if (!game.active) return false; // Master switch is off
-                          if (!game.activeDays || game.activeDays.length === 0) return true; // if no days are set, assume it runs everyday
+                          if (!game.active) return false;
+                          if (!game.activeDays || game.activeDays.length === 0) return true;
                           return game.activeDays.includes(currentDay);
                       })();
 
