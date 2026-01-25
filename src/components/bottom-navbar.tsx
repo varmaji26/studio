@@ -48,12 +48,12 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
       <motion.nav
         role="navigation"
         aria-label="Primary"
-        className="relative mx-auto w-full overflow-hidden backdrop-blur-xl ring-2 ring-white/20 shadow-[0_0_25px_rgba(255,255,255,0.1)]"
+        className="relative mx-auto w-full overflow-hidden bg-background/80 backdrop-blur-xl ring-2 ring-white/20 shadow-[0_0_25px_rgba(255,255,255,0.1)]"
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
       >
-        <div className="relative flex items-center justify-around px-2 py-2 bg-[#112a45]">
+        <div className="relative flex items-center justify-around px-2 py-2">
           {items.map((it) => {
             const activeNow = active === it.id;
             return (
