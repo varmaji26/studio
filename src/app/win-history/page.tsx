@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -16,7 +15,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { BottomNavbar } from '@/components/bottom-navbar';
 
 
 interface Win extends DocumentData {
@@ -31,12 +29,6 @@ interface Win extends DocumentData {
     createdAt: Timestamp;
 }
 
-interface AppSettings extends DocumentData {
-    whatsappNumber?: string;
-    callSupportNumber?: string;
-    telegramLink?: string;
-}
-
 const ITEMS_PER_PAGE = 10;
 
 export default function WinHistoryPage() {
@@ -46,7 +38,6 @@ export default function WinHistoryPage() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-    const [settings, setSettings] = useState<AppSettings>({});
 
     useEffect(() => {
         if (authLoading) return;
@@ -79,16 +70,6 @@ export default function WinHistoryPage() {
         
         fetchWins();
         
-        const settingsDocRef = doc(db, 'settings', 'app-settings');
-        const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                setSettings(docSnap.data() as AppSettings);
-            }
-        });
-        
-        return () => {
-            unsubscribeSettings();
-        };
     }, [user, authLoading, router]);
 
     const filteredWins = useMemo(() => {
@@ -247,7 +228,6 @@ export default function WinHistoryPage() {
                     </CardContent>
                 </Card>
             </div>
-            <BottomNavbar settings={settings} />
         </div>
     )
 }

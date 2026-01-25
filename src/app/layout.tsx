@@ -2,10 +2,19 @@
 
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { requestForToken } from '@/lib/firebase-messaging';
 import { useAuth } from '@/hooks/use-auth';
+import { BottomNavbar } from '@/components/bottom-navbar';
+import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+interface AppSettings extends DocumentData {
+    whatsappNumber?: string;
+    callSupportNumber?: string;
+    telegramLink?: string;
+}
 
 export default function RootLayout({
   children,
@@ -15,6 +24,7 @@ export default function RootLayout({
   const pathname = usePathname();
   const { user } = useAuth();
   const notificationTokenRequested = useRef(false);
+  const [settings, setSettings] = useState<AppSettings>({});
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -34,7 +44,7 @@ export default function RootLayout({
         requestForToken(user.uid);
         notificationTokenRequested.current = true;
     }
-  }, [user?.uid]);
+  }, [user]);
 
   useEffect(() => {
     // Prevent zoom
@@ -60,6 +70,21 @@ export default function RootLayout({
     }
   }, [pathname]);
 
+  useEffect(() => {
+    const settingsDocRef = doc(db, 'settings', 'app-settings');
+    const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setSettings(docSnap.data() as AppSettings);
+        }
+    });
+
+    return () => {
+        unsubscribeSettings();
+    };
+}, []);
+
+
+  const isUserPanel = !pathname.startsWith('/admin');
 
   return (
     <html lang="en">
@@ -76,6 +101,7 @@ export default function RootLayout({
         <main>
             {children}
         </main>
+        {isUserPanel && <BottomNavbar settings={settings} />}
         <Toaster />
       </body>
     </html>

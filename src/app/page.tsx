@@ -47,7 +47,6 @@ import { formatTime, cn, isBettingClosed, formatGameResult } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateProfile } from 'firebase/auth';
-import { BottomNavbar } from '@/components/bottom-navbar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import {
@@ -396,7 +395,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
+      <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
         <div className="flex items-center justify-between">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
@@ -703,8 +702,6 @@ export default function Home() {
             )}
         </div>
       </main>
-      
-      <BottomNavbar settings={settings} />
     </div>
   );
 }

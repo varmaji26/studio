@@ -11,7 +11,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { BottomNavbar } from '@/components/bottom-navbar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -269,7 +268,7 @@ export default function TransactionDetailsPage() {
         <div className="dark min-h-screen bg-background text-foreground flex flex-col pb-28">
             <header className="bg-card/80 p-4 sticky top-0 z-10 border-b border-white/10 backdrop-blur-sm">
                  <div className="flex items-center gap-4 text-white">
-                    <Link href="/" replace>
+                    <Link href="/">
                         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
                             <ArrowLeft />
                         </Button>
@@ -298,7 +297,6 @@ export default function TransactionDetailsPage() {
                     {renderPagination()}
                 </div>
             </main>
-            <BottomNavbar />
         </div>
     );
 }

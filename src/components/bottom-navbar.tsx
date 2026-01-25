@@ -54,7 +54,6 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
               <Link
                 key={it.id}
                 href={it.path}
-                replace
                 onClick={() => setActive(it.id)}
                 aria-current={activeNow ? "page" : undefined}
                 aria-label={it.label}

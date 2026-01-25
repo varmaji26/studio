@@ -16,7 +16,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { BottomNavbar } from '@/components/bottom-navbar';
 import { Label } from '@/components/ui/label';
 
 interface Bid extends DocumentData {
@@ -28,12 +27,6 @@ interface Bid extends DocumentData {
     totalAmount: number;
     status: 'running' | 'won' | 'lost' | 'cancelled';
     createdAt: Timestamp;
-}
-
-interface AppSettings extends DocumentData {
-    whatsappNumber?: string;
-    callSupportNumber?: string;
-    telegramLink?: string;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -111,7 +104,6 @@ export default function BidsHistoryPage() {
     const router = useRouter();
     const [bids, setBids] = useState<Bid[]>([]);
     const [loading, setLoading] = useState(true);
-    const [settings, setSettings] = useState<AppSettings>({});
     const [activeTab, setActiveTab] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
@@ -142,17 +134,9 @@ export default function BidsHistoryPage() {
             console.error("Error fetching bids history: ", error);
             setLoading(false);
         });
-        
-        const settingsDocRef = doc(db, 'settings', 'app-settings');
-        const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                setSettings(docSnap.data() as AppSettings);
-            }
-        });
 
         return () => {
             unsubscribeBids();
-            unsubscribeSettings();
         };
     }, [user, authLoading, router]);
 
@@ -238,15 +222,15 @@ export default function BidsHistoryPage() {
     }
     
     return (
-        <div className="dark min-h-screen bg-background text-foreground">
-            <div className="max-w-4xl mx-auto p-4 sm:p-6 pb-28">
+        <div className="dark min-h-screen bg-background text-foreground pb-28">
+            <div className="max-w-4xl mx-auto p-4 sm:p-6">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-2xl sm:text-3xl">Bids History</CardTitle>
                         <CardDescription>View all your past and current bids here.</CardDescription>
                          <div className="pt-4">
                             <Button asChild className="w-full bg-green-500 hover:bg-green-600 text-white">
-                                <Link href="/" replace className="inline-flex items-center gap-2">
+                                <Link href="/" className="inline-flex items-center gap-2">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
                                 </Link>
@@ -327,7 +311,6 @@ export default function BidsHistoryPage() {
                     </CardContent>
                 </Card>
             </div>
-             <BottomNavbar settings={settings} />
         </div>
     )
 }

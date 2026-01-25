@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft, Phone, Send } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BottomNavbar } from '@/components/bottom-navbar';
 
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
@@ -85,7 +83,7 @@ export default function ContactPage() {
                         <CardDescription>We're here to help. Reach out to us through any of the channels below.</CardDescription>
                          <div className="pt-4">
                             <Button asChild variant="ghost" className="pl-0">
-                                <Link href="/" replace className="inline-flex items-center gap-2 text-sm text-green-500 hover:underline">
+                                <Link href="/" className="inline-flex items-center gap-2 text-sm text-green-500 hover:underline">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
                                 </Link>
@@ -126,7 +124,6 @@ export default function ContactPage() {
                     </CardContent>
                 </Card>
             </div>
-            <BottomNavbar />
         </div>
     )
 }
