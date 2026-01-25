@@ -396,7 +396,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
+      <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
         <div className="flex items-center justify-between">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
@@ -671,7 +671,11 @@ export default function Home() {
             </Card>
         )}
 
-        <div className="space-y-4 mt-4">
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardHeader className="p-4">
+            <CardTitle className="text-xl text-center font-bold">Matka Games</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2 pt-0">
             {gamesLoading ? (
                <div className="space-y-4">
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
@@ -701,7 +705,8 @@ export default function Home() {
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
             )}
-        </div>
+          </CardContent>
+        </Card>
       </main>
       
       <BottomNavbar settings={settings} />
