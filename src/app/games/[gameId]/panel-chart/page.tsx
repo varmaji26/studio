@@ -162,7 +162,7 @@ export default function PanelChartPage() {
                 </p>
             </div>
              <div className="p-4">
-                <Button className="w-full bg-green-500 text-white hover:bg-green-600" onClick={() => router.push(`/#${gameId}`)}>
+                <Button className="w-full bg-green-500 text-white hover:bg-green-600" onClick={() => router.replace(`/#${gameId}`)}>
                     <div className="inline-flex items-center gap-2">
                         <ArrowLeft className="h-4 w-4" />
                         <span>Back to Home</span>

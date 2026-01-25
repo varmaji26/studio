@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -57,7 +56,7 @@ export default function RateCardPage() {
                         <CardDescription>Here you can see the betting rates for all games.</CardDescription>
                          <div className="pt-4">
                             <Button asChild variant="ghost" className="pl-0">
-                                <Link href="/" className="inline-flex items-center gap-2 text-sm text-green-500 hover:underline">
+                                <Link href="/" replace className="inline-flex items-center gap-2 text-sm text-green-500 hover:underline">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
                                 </Link>

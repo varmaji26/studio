@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -127,7 +126,7 @@ export default function AddFundPage() {
     return (
         <div className="dark min-h-screen bg-gray-200 text-black flex flex-col">
             <header className="p-4 flex items-center gap-4 bg-white sticky top-0 z-10 shadow-sm">
-                <Link href="/" replace>
+                <Link href="/funds" replace>
                     <Button variant="ghost" size="icon">
                         <ArrowLeft />
                     </Button>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -62,7 +61,7 @@ export default function TimeTablePage() {
             <div className="max-w-4xl mx-auto">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader className="text-center relative">
-                         <Link href="/" className="absolute left-4 top-1/2 -translate-y-1/2">
+                         <Link href="/" replace className="absolute left-4 top-1/2 -translate-y-1/2">
                             <Button variant="ghost" size="icon">
                                 <ArrowLeft className="h-6 w-6" />
                             </Button>

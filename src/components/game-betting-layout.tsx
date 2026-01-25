@@ -25,7 +25,7 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
         </div>
 
         <div className="my-2">
-             <Button variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white h-9" onClick={() => router.push(`/#${gameId}`)}>
+             <Button variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white h-9" onClick={() => router.replace(`/#${gameId}`)}>
                 <div className="flex items-center gap-2">
                     <ArrowLeft className="h-4 w-4"/>
                     <span className="text-sm">Back to Home</span>

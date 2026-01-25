@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -56,7 +55,7 @@ const FundsPage = () => {
     return (
         <div className="dark min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-background text-foreground pb-28">
             <header className="p-4 flex items-center gap-4 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-10">
-                <Link href="/">
+                <Link href="/" replace>
                     <Button variant="ghost" size="icon">
                         <ArrowLeft />
                     </Button>

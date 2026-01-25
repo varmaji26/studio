@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -247,7 +246,7 @@ export default function BidsHistoryPage() {
                         <CardDescription>View all your past and current bids here.</CardDescription>
                          <div className="pt-4">
                             <Button asChild className="w-full bg-green-500 hover:bg-green-600 text-white">
-                                <Link href="/" className="inline-flex items-center gap-2">
+                                <Link href="/" replace className="inline-flex items-center gap-2">
                                     <ArrowLeft className="h-4 w-4" />
                                     <span>Back to Home</span>
                                 </Link>
