@@ -55,6 +55,7 @@ export default function AdminDashboardPage() {
     const [stats, setStats] = useState<AppStats>({ totalUsers: 0, totalGames: 0, totalBalance: 0 });
     const [dailyStats, setDailyStats] = useState<DailyStats>({ todaysDeposits: 0, todaysWithdrawals: 0, yesterdaysDeposits: 0, yesterdaysWithdrawals: 0 });
     const [biddingStats, setBiddingStats] = useState<BiddingStats>({ todaysBidding: 0, todaysWinning: 0, todaysProfitLoss: 0 });
+    const [monthlyNetBalance, setMonthlyNetBalance] = useState(0);
     const [loading, setLoading] = useState(true);
     
     useEffect(() => {
@@ -76,6 +77,7 @@ export default function AdminDashboardPage() {
                 const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 const startOfYesterday = new Date(startOfToday);
                 startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
        
                 const sumApprovedAmount = (docs: DocumentData[]) => docs
                     .filter((doc) => doc.status === 'approved')
@@ -87,6 +89,8 @@ export default function AdminDashboardPage() {
                 const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
                 const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
                 const todayBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfToday));
+                const monthDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfMonth));
+                const monthWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfMonth));
 
                 // --- Fetch all data at once ---
                 const [
@@ -94,13 +98,17 @@ export default function AdminDashboardPage() {
                     todayWithdrawalsSnap,
                     yesterdayDepositsSnap,
                     yesterdayWithdrawalsSnap,
-                    todayBidsSnap
+                    todayBidsSnap,
+                    monthDepositsSnap,
+                    monthWithdrawalsSnap
                 ] = await Promise.all([
                     getDocs(todayDepositsQuery),
                     getDocs(todayWithdrawalsQuery),
                     getDocs(yesterdayDepositsQuery),
                     getDocs(yesterdayWithdrawalsQuery),
                     getDocs(todayBidsQuery),
+                    getDocs(monthDepositsQuery),
+                    getDocs(monthWithdrawalsQuery),
                 ]);
 
                 // --- Process all fetched data ---
@@ -109,6 +117,11 @@ export default function AdminDashboardPage() {
                 const yesterdaysDeposits = sumApprovedAmount(yesterdayDepositsSnap.docs.map(d => d.data()));
                 const yesterdaysWithdrawals = sumApprovedAmount(yesterdayWithdrawalsSnap.docs.map(d => d.data()));
                 setDailyStats({ todaysDeposits, todaysWithdrawals, yesterdaysDeposits, yesterdaysWithdrawals });
+
+                // Monthly Net Balance
+                const totalMonthDeposit = sumApprovedAmount(monthDepositsSnap.docs.map(d => d.data()));
+                const totalMonthWithdrawal = sumApprovedAmount(monthWithdrawalsSnap.docs.map(d => d.data()));
+                setMonthlyNetBalance(totalMonthDeposit - totalMonthWithdrawal);
 
                 // Bidding Stats (Today)
                 let todaysBidding = 0;
@@ -168,7 +181,13 @@ export default function AdminDashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <StatCard title="Total Users" value={stats.totalUsers.toString()} icon={Users} color="#8b5cf6" />
                 <StatCard title="Total Games" value={stats.totalGames.toString()} icon={Gamepad2} color="#ec4899" />
-                <StatCard title="Total App Balance" value={`₹${stats.totalBalance.toLocaleString()}`} icon={Wallet} color="#f59e0b" />
+                <StatCard 
+                    title="Monthly Net Balance" 
+                    value={`₹${monthlyNetBalance.toLocaleString()}`} 
+                    icon={Landmark} 
+                    color={monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
+                    textColor={monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
+                />
             </div>
         </div>
         
