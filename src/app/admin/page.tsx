@@ -86,72 +86,73 @@ export default function AdminDashboardPage() {
                 const startOfYesterday = new Date(startOfToday);
                 startOfYesterday.setDate(startOfYesterday.getDate() - 1);
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
        
                 const sumApprovedAmount = (docs: DocumentData[]) => docs
                     .filter((doc) => doc.status === 'approved')
                     .reduce((sum, doc) => sum + (doc.amount || 0), 0);
 
                 // --- Queries ---
-                const todayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfToday));
-                const todayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfToday));
                 const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
                 const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
-                const todayBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfToday));
-
-                const monthDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
-                const monthWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
-                const monthBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
+                
+                const monthDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfMonth));
+                const monthWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfMonth));
+                const monthBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfMonth));
 
                 // --- Fetch all data at once ---
                 const [
-                    todayDepositsSnap,
-                    todayWithdrawalsSnap,
                     yesterdayDepositsSnap,
                     yesterdayWithdrawalsSnap,
-                    todayBidsSnap,
                     monthDepositsSnap,
                     monthWithdrawalsSnap,
                     monthBidsSnap,
                 ] = await Promise.all([
-                    getDocs(todayDepositsQuery),
-                    getDocs(todayWithdrawalsQuery),
                     getDocs(yesterdayDepositsQuery),
                     getDocs(yesterdayWithdrawalsQuery),
-                    getDocs(todayBidsQuery),
                     getDocs(monthDepositsQuery),
                     getDocs(monthWithdrawalsQuery),
                     getDocs(monthBidsQuery),
                 ]);
 
-                // --- Process Daily Stats ---
-                const todaysDeposits = sumApprovedAmount(todayDepositsSnap.docs.map(d => d.data()));
-                const todaysWithdrawals = sumApprovedAmount(todayWithdrawalsSnap.docs.map(d => d.data()));
+                // --- Process all fetched data ---
                 const yesterdaysDeposits = sumApprovedAmount(yesterdayDepositsSnap.docs.map(d => d.data()));
                 const yesterdaysWithdrawals = sumApprovedAmount(yesterdayWithdrawalsSnap.docs.map(d => d.data()));
-                
+
+                const allMonthDeposits = monthDepositsSnap.docs.map(d => d.data());
+                const allMonthWithdrawals = monthWithdrawalsSnap.docs.map(d => d.data());
+                const allMonthBids = monthBidsSnap.docs.map(d => d.data());
+
+                const todaysDepositsDocs = allMonthDeposits.filter(d => d.createdAt.toDate() >= startOfToday);
+                const todaysWithdrawalsDocs = allMonthWithdrawals.filter(d => d.createdAt.toDate() >= startOfToday);
+                const todaysBidsDocs = allMonthBids.filter(d => d.createdAt.toDate() >= startOfToday);
+
+                // Daily Stats
+                const todaysDeposits = sumApprovedAmount(todaysDepositsDocs);
+                const todaysWithdrawals = sumApprovedAmount(todaysWithdrawalsDocs);
                 setDailyStats({ todaysDeposits, todaysWithdrawals, yesterdaysDeposits, yesterdaysWithdrawals });
 
-                // --- Process Bidding Stats ---
+                // Bidding Stats (Today)
                 let todaysBidding = 0;
                 let todaysWinning = 0;
-                todayBidsSnap.forEach(doc => {
-                    const bid = doc.data();
-                    todaysBidding += bid.totalAmount || 0;
+                todaysBidsDocs.forEach(bid => {
+                    if (bid.status !== 'cancelled') {
+                        todaysBidding += bid.totalAmount || 0;
+                    }
                     if (bid.status === 'won') {
                         todaysWinning += bid.winningAmount || 0;
                     }
                 });
                 setBiddingStats({ todaysBidding, todaysWinning, todaysProfitLoss: todaysBidding - todaysWinning });
 
-                // --- Process Monthly Stats ---
-                const totalDeposit = sumApprovedAmount(monthDepositsSnap.docs.map(d => d.data()));
-                const totalWithdrawal = sumApprovedAmount(monthWithdrawalsSnap.docs.map(d => d.data()));
+                // Monthly Stats
+                const totalDeposit = sumApprovedAmount(allMonthDeposits);
+                const totalWithdrawal = sumApprovedAmount(allMonthWithdrawals);
                 let totalBidding = 0;
                 let monthWinning = 0;
-                monthBidsSnap.forEach(doc => {
-                    const bid = doc.data();
-                    totalBidding += bid.totalAmount || 0;
+                allMonthBids.forEach(bid => {
+                     if (bid.status !== 'cancelled') {
+                        totalBidding += bid.totalAmount || 0;
+                    }
                     if (bid.status === 'won') {
                         monthWinning += bid.winningAmount || 0;
                     }
