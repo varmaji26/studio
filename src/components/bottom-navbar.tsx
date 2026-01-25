@@ -36,6 +36,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
     setActive(getCurrentActiveItem());
   }, [pathname]);
 
+  const isHomePage = pathname === '/';
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
@@ -54,6 +55,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
               <Link
                 key={it.id}
                 href={it.path}
+                replace={!isHomePage}
                 onClick={() => setActive(it.id)}
                 aria-current={activeNow ? "page" : undefined}
                 aria-label={it.label}
