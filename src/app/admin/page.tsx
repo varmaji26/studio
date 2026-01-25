@@ -1,16 +1,13 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot, DocumentData, collection, query, where, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData, collection, query, where, Timestamp, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Gamepad2, Wallet, ArrowUpCircle, ArrowDownCircle, TrendingUp, TrendingDown, Scale, BarChart, Banknote, Landmark } from 'lucide-react';
 import { Loader } from '@/components/loader';
 import { useAuth } from '@/hooks/use-auth';
 import { setInitialStats } from '@/lib/stats-helper';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 
 
 interface StatCardProps {
@@ -68,124 +65,127 @@ export default function AdminDashboardPage() {
     const [biddingStats, setBiddingStats] = useState<BiddingStats>({ todaysBidding: 0, todaysWinning: 0, todaysProfitLoss: 0 });
     const [monthlyStats, setMonthlyStats] = useState<MonthlyStats>({ totalBidding: 0, totalProfit: 0, totalDeposit: 0, totalWithdrawal: 0, monthlyNetBalance: 0 });
     const [loading, setLoading] = useState(true);
-    const currentYear = new Date().getFullYear();
-    const [selectedYear, setSelectedYear] = useState(currentYear.toString());
-    const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
     
     useEffect(() => {
-        setInitialStats().catch(console.error);
-        
-        const statsDocRef = doc(db, "app-stats", "dashboard");
-        const unsubscribeStats = onSnapshot(statsDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                setStats(docSnap.data() as AppStats);
-            }
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching stats: ", error);
-            setLoading(false);
-        });
+        const fetchAllStats = async () => {
+            setLoading(true);
+            try {
+                await setInitialStats();
 
-        const now = new Date();
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const startOfYesterday = new Date(startOfToday);
-        startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+                // --- Base Stats (can remain onSnapshot for semi-realtime) ---
+                const statsDocRef = doc(db, "app-stats", "dashboard");
+                const unsubStats = onSnapshot(statsDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        setStats(docSnap.data() as AppStats);
+                    }
+                });
+
+                // --- Time-based Calculations ---
+                const now = new Date();
+                const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const startOfYesterday = new Date(startOfToday);
+                startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
        
-        const sumApprovedAmount = (snapshot: DocumentData) => snapshot.docs
-            .filter((doc: DocumentData) => doc.data().status === 'approved')
-            .reduce((sum: number, doc: DocumentData) => sum + (doc.data().amount || 0), 0);
+                const sumApprovedAmount = (docs: DocumentData[]) => docs
+                    .filter((doc) => doc.status === 'approved')
+                    .reduce((sum, doc) => sum + (doc.amount || 0), 0);
 
-        const todayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfToday));
-        const todayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfToday));
-        const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
-        const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
-        const bidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfToday));
+                // --- Queries ---
+                const todayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfToday));
+                const todayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfToday));
+                const yesterdayDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
+                const yesterdayWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfYesterday), where("createdAt", "<", startOfToday));
+                const todayBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfToday));
 
-        const unsubTodayDeposits = onSnapshot(todayDepositsQuery, (snap) => setDailyStats(s => ({ ...s, todaysDeposits: sumApprovedAmount(snap) })));
-        const unsubTodayWithdrawals = onSnapshot(todayWithdrawalsQuery, (snap) => setDailyStats(s => ({ ...s, todaysWithdrawals: sumApprovedAmount(snap) })));
-        const unsubYesterdayDeposits = onSnapshot(yesterdayDepositsQuery, (snap) => setDailyStats(s => ({ ...s, yesterdaysDeposits: sumApprovedAmount(snap) })));
-        const unsubYesterdayWithdrawals = onSnapshot(yesterdayWithdrawalsQuery, (snap) => setDailyStats(s => ({ ...s, yesterdaysWithdrawals: sumApprovedAmount(snap) })));
+                const monthDepositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
+                const monthWithdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
+                const monthBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
 
-        const unsubBids = onSnapshot(bidsQuery, (bidsSnap) => {
-            let todaysBidding = 0;
-            let todaysWinning = 0;
+                // --- Fetch all data at once ---
+                const [
+                    todayDepositsSnap,
+                    todayWithdrawalsSnap,
+                    yesterdayDepositsSnap,
+                    yesterdayWithdrawalsSnap,
+                    todayBidsSnap,
+                    monthDepositsSnap,
+                    monthWithdrawalsSnap,
+                    monthBidsSnap,
+                ] = await Promise.all([
+                    getDocs(todayDepositsQuery),
+                    getDocs(todayWithdrawalsQuery),
+                    getDocs(yesterdayDepositsQuery),
+                    getDocs(yesterdayWithdrawalsQuery),
+                    getDocs(todayBidsQuery),
+                    getDocs(monthDepositsQuery),
+                    getDocs(monthWithdrawalsQuery),
+                    getDocs(monthBidsQuery),
+                ]);
 
-            bidsSnap.forEach(doc => {
-                const bid = doc.data();
-                todaysBidding += bid.totalAmount || 0;
-                if (bid.status === 'won') {
-                    todaysWinning += bid.winningAmount || 0;
-                }
-            });
-            setBiddingStats({
-                todaysBidding,
-                todaysWinning,
-                todaysProfitLoss: todaysBidding - todaysWinning
-            });
-        });
+                // --- Process Daily Stats ---
+                const todaysDeposits = sumApprovedAmount(todayDepositsSnap.docs.map(d => d.data()));
+                const todaysWithdrawals = sumApprovedAmount(todayWithdrawalsSnap.docs.map(d => d.data()));
+                const yesterdaysDeposits = sumApprovedAmount(yesterdayDepositsSnap.docs.map(d => d.data()));
+                const yesterdaysWithdrawals = sumApprovedAmount(yesterdayWithdrawalsSnap.docs.map(d => d.data()));
+                
+                setDailyStats({ todaysDeposits, todaysWithdrawals, yesterdaysDeposits, yesterdaysWithdrawals });
 
-        return () => {
-            unsubscribeStats();
-            unsubTodayDeposits();
-            unsubTodayWithdrawals();
-            unsubYesterdayDeposits();
-            unsubYesterdayWithdrawals();
-            unsubBids();
+                // --- Process Bidding Stats ---
+                let todaysBidding = 0;
+                let todaysWinning = 0;
+                todayBidsSnap.forEach(doc => {
+                    const bid = doc.data();
+                    todaysBidding += bid.totalAmount || 0;
+                    if (bid.status === 'won') {
+                        todaysWinning += bid.winningAmount || 0;
+                    }
+                });
+                setBiddingStats({ todaysBidding, todaysWinning, todaysProfitLoss: todaysBidding - todaysWinning });
+
+                // --- Process Monthly Stats ---
+                const totalDeposit = sumApprovedAmount(monthDepositsSnap.docs.map(d => d.data()));
+                const totalWithdrawal = sumApprovedAmount(monthWithdrawalsSnap.docs.map(d => d.data()));
+                let totalBidding = 0;
+                let monthWinning = 0;
+                monthBidsSnap.forEach(doc => {
+                    const bid = doc.data();
+                    totalBidding += bid.totalAmount || 0;
+                    if (bid.status === 'won') {
+                        monthWinning += bid.winningAmount || 0;
+                    }
+                });
+                setMonthlyStats({
+                    totalDeposit,
+                    totalWithdrawal,
+                    totalBidding,
+                    totalProfit: totalBidding - monthWinning,
+                    monthlyNetBalance: totalDeposit - totalWithdrawal,
+                });
+                
+                setLoading(false);
+
+                // Return the stats unsubscribe function for cleanup
+                return unsubStats;
+
+            } catch (error) {
+                console.error("Error fetching dashboard stats:", error);
+                setLoading(false);
+            }
         };
-    }, []);
 
-    useEffect(() => {
-        const year = new Date().getFullYear();
-        const month = new Date().getMonth();
-
-        const startOfMonth = new Date(year, month, 1);
-        const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
-        
-        const sumApprovedAmount = (snapshot: DocumentData) => snapshot.docs
-            .filter((doc: DocumentData) => doc.data().status === 'approved')
-            .reduce((sum: number, doc: DocumentData) => sum + (doc.data().amount || 0), 0);
-
-        const depositsQuery = query(collection(db, "deposits"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
-        const withdrawalsQuery = query(collection(db, "withdrawals"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
-        const bidsQuery = query(collection(db, "bids"), where("createdAt", ">=", startOfMonth), where("createdAt", "<=", endOfMonth));
-        
-        const unsubDeposits = onSnapshot(depositsQuery, (snap) => {
-            const totalDeposit = sumApprovedAmount(snap);
-            setMonthlyStats(s => ({ ...s, totalDeposit, monthlyNetBalance: totalDeposit - s.totalWithdrawal }));
+        let unsub: (() => void) | undefined;
+        fetchAllStats().then(unsubscribe => {
+            unsub = unsubscribe;
         });
 
-        const unsubWithdrawals = onSnapshot(withdrawalsQuery, (snap) => {
-            const totalWithdrawal = sumApprovedAmount(snap);
-            setMonthlyStats(s => ({ ...s, totalWithdrawal, monthlyNetBalance: s.totalDeposit - totalWithdrawal }));
-        });
-
-        const unsubBids = onSnapshot(bidsQuery, (bidsSnap) => {
-            let monthBidding = 0;
-            let monthWinning = 0;
-
-            bidsSnap.forEach(doc => {
-                const bid = doc.data();
-                monthBidding += bid.totalAmount || 0;
-                if (bid.status === 'won') {
-                    monthWinning += bid.winningAmount || 0;
-                }
-            });
-            setMonthlyStats(s => ({
-                ...s,
-                totalBidding: monthBidding,
-                totalProfit: monthBidding - monthWinning,
-            }));
-        });
-
+        // Cleanup function for useEffect
         return () => {
-            unsubDeposits();
-            unsubWithdrawals();
-            unsubBids();
-        }
-    }, []);
+            unsub?.();
+        };
 
-    const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
-    const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('default', { month: 'long' }) }));
+    }, []);
 
     if (loading) {
         return (
