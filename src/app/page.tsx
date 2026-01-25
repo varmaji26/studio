@@ -127,7 +127,7 @@ const GameCard = memo(function GameCard({
     const isPlayable = isActive && !bettingClosed;
 
     return (
-        <div id={game.id} className={cn("bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-transparent rounded-lg p-3 shadow-lg shadow-black/30 transition-all duration-300", isPlayable && "border-primary/50")}>
+        <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
             <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                     <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
@@ -154,8 +154,8 @@ const GameCard = memo(function GameCard({
                             className="block h-full transition-transform active:scale-95"
                             onContextMenu={(e) => e.preventDefault()}
                         >
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-600 text-black font-bold rounded-full text-lg shadow-[0_0_15px_rgba(251,191,36,0.6)] animate-won-glow">
-                                PLAY NOW
+                            <div className="w-full h-full flex items-center justify-center bg-orange-600 text-white font-bold rounded-full text-lg shadow-lg">
+                                Play Now
                             </div>
                         </Link>
                     ) : (
@@ -164,7 +164,7 @@ const GameCard = memo(function GameCard({
                             onContextMenu={(e) => e.preventDefault()}
                             className="w-full h-full flex items-center justify-center bg-gray-600 text-white font-bold rounded-full text-lg shadow-lg cursor-not-allowed"
                         >
-                            PLAY NOW
+                            Play Now
                         </div>
                     )}
 
@@ -515,10 +515,10 @@ export default function Home() {
       
       {settings.marquee?.text && (
         <div 
-            className="relative flex overflow-x-hidden text-white" 
+            className="relative flex overflow-x-hidden text-white py-1" 
             style={{ backgroundColor: settings.marquee?.backgroundColor || '#b91c1c' }}
         >
-            <div className="animate-marquee whitespace-nowrap flex py-1">
+            <div className="animate-marquee whitespace-nowrap flex">
                 <MarqueeContent />
                 <MarqueeContent />
             </div>
@@ -562,9 +562,9 @@ export default function Home() {
         {/* Betting Closed Dialog */}
          <Dialog open={!!closedGameInfo} onOpenChange={() => setClosedGameInfo(null)}>
             <DialogContent className="bg-white text-black p-0 max-w-xs rounded-lg">
-                <DialogHeader>
-                    <DialogTitle className="sr-only">Betting Closed</DialogTitle>
-                    <DialogDescription className="sr-only">The betting market for this game is currently closed.</DialogDescription>
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Betting Closed</DialogTitle>
+                    <DialogDescription>The betting market for this game is currently closed.</DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col items-center text-center p-6 space-y-4">
                     <XCircle className="h-16 w-16 text-red-500" />
@@ -625,9 +625,6 @@ export default function Home() {
         )}
         
         <div className="bg-slate-900/50 border border-slate-700 rounded-lg shadow-lg">
-            <CardHeader className="p-2 border-b border-slate-700">
-                <CardTitle className="text-base text-center font-bold text-amber-300 tracking-widest">LATEST RESULTS</CardTitle>
-            </CardHeader>
             <CardContent className="p-2">
                 {gamesLoading ? (
                 <div className="h-9 flex items-center justify-center">
@@ -675,7 +672,6 @@ export default function Home() {
         )}
 
         <div className="space-y-4 mt-4">
-            <h2 className="text-xl text-center font-bold text-amber-300 tracking-widest">MATKA GAMES</h2>
             {gamesLoading ? (
                <div className="space-y-4">
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
