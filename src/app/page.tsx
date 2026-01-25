@@ -48,7 +48,6 @@ import { formatTime, cn, isBettingClosed, formatGameResult } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateProfile } from 'firebase/auth';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import {
   Carousel,
@@ -396,7 +395,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 flex flex-col gap-4">
+      <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
         <div className="flex items-center justify-between">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
@@ -404,7 +403,7 @@ export default function Home() {
                   <Menu className="h-8 w-8 text-green-500" strokeWidth={3} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="bg-card border-r-0 text-foreground flex flex-col p-0">
+              <SheetContent side="left" className="bg-background/80 border-r-0 text-foreground flex flex-col p-0">
                  <div className="flex-1 overflow-y-auto">
                     <SheetHeader className="p-6 flex flex-row justify-between items-center">
                         <SheetTitle className="text-primary text-2xl flex items-center gap-2">
@@ -671,7 +670,11 @@ export default function Home() {
             </Card>
         )}
 
-        <div className="p-2 pt-0">
+        <Card className="bg-card/80 border-white/10 shadow-lg">
+          <CardHeader className="p-4">
+            <CardTitle className="text-xl text-center font-bold">Matka Games</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2 pt-0">
             {gamesLoading ? (
                <div className="space-y-4">
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
@@ -701,7 +704,8 @@ export default function Home() {
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
             )}
-        </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
