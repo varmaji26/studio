@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from "react";
@@ -40,7 +39,7 @@ export function BottomNavbar({ settings }: BottomNavbarProps) {
 
   const handleNavigation = (path: string, id: string) => {
     setActive(id);
-    router.push(path);
+    router.replace(path);
   };
 
   return (
