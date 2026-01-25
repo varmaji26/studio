@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -799,231 +798,229 @@ export default function SettingsPage() {
 
   return (
     <div className="flex-1 space-y-6">
-      <Card className="bg-card/80 border-white/10 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl">Application Settings</CardTitle>
-          <CardDescription>Update application-wide settings here.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader className="h-8 w-8 text-primary" />
-            </div>
-          ) : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5']} className="w-full">
-                  {/* Golden Ank & Marquee Section */}
-                  <AccordionItem value="item-1">
-                    <AccordionTrigger className="text-lg font-semibold">Golden Ank & Marquee</AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-4">
-                       <FormField
-                        control={form.control}
-                        name="goldenAnk"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Golden Ank Numbers</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., 4-9-2-7" {...field} />
-                            </FormControl>
-                            <FormDescriptionComponent>
-                              Enter the lucky numbers separated by dashes.
-                            </FormDescriptionComponent>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Separator />
-                      {existingMarqueeLogoUrl && (
-                        <div className="flex flex-col items-center gap-4">
-                          <p className="text-sm text-muted-foreground">Current Logo:</p>
-                          <Image src={existingMarqueeLogoUrl} alt="Marquee Logo" width={48} height={48} className="rounded-md border p-1 bg-white" />
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Logo</Button></AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the logo.</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteMarqueeLogo}>Delete</AlertDialogAction></AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+      <div>
+        <h1 className="text-2xl font-bold">Application Settings</h1>
+        <p className="text-muted-foreground">Update application-wide settings here.</p>
+      </div>
+      <div>
+        {loading ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader className="h-8 w-8 text-primary" />
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5']} className="w-full">
+                {/* Golden Ank & Marquee Section */}
+                <AccordionItem value="item-1">
+                  <AccordionTrigger className="text-lg font-semibold">Golden Ank & Marquee</AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                     <FormField
+                      control={form.control}
+                      name="goldenAnk"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Golden Ank Numbers</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., 4-9-2-7" {...field} />
+                          </FormControl>
+                          <FormDescriptionComponent>
+                            Enter the lucky numbers separated by dashes.
+                          </FormDescriptionComponent>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                      <FormField
-                        control={form.control}
-                        name="marqueeLogo"
-                        render={() => (
-                          <FormItem>
-                            <FormLabel>{existingMarqueeLogoUrl ? 'New Logo' : 'Upload Logo'}</FormLabel>
-                            <FormControl><Input type="file" {...marqueeLogoRef} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField control={form.control} name="marqueeTitle" render={({ field }) => (<FormItem><FormLabel>Marquee Title</FormLabel><FormControl><Input placeholder="e.g., MATKA KING" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="marqueeText" render={({ field }) => (<FormItem><FormLabel>Marquee Text</FormLabel><FormControl><Input placeholder="Sub-line text" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="marqueeBackgroundColor" render={({ field }) => (<FormItem><FormLabel>BG Color</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="marqueeTextColor" render={({ field }) => (<FormItem><FormLabel>Text Color</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    />
+                    <Separator />
+                    {existingMarqueeLogoUrl && (
+                      <div className="flex flex-col items-center gap-4">
+                        <p className="text-sm text-muted-foreground">Current Logo:</p>
+                        <Image src={existingMarqueeLogoUrl} alt="Marquee Logo" width={48} height={48} className="rounded-md border p-1 bg-white" />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Logo</Button></AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the logo.</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteMarqueeLogo}>Delete</AlertDialogAction></AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <FormField control={form.control} name="marqueeLogoSize" render={({ field }) => (<FormItem><FormLabel>Logo Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="marqueeTitleSize" render={({ field }) => (<FormItem><FormLabel>Title Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="marqueeTextSize" render={({ field }) => (<FormItem><FormLabel>Text Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      </div>
-                       <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
-                    </AccordionContent>
-                  </AccordionItem>
-                  
-                  {/* Bonus Section */}
-                  <AccordionItem value="item-2">
-                    <AccordionTrigger className="text-lg font-semibold">Bonus Settings</AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-4">
-                      <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel><FormDescriptionComponent>Give users a bonus on deposits.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                      {form.watch('bonusEnabled') && (<FormField control={form.control} name="bonusPercentage" render={({ field }) => (<FormItem><FormLabel>Bonus Percentage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
-                      <Separator />
-                      <FormField control={form.control} name="welcomeBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Welcome Bonus</FormLabel><FormDescriptionComponent>Give new users a bonus on signup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                      {form.watch('welcomeBonusEnabled') && (<FormField control={form.control} name="welcomeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Welcome Bonus Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
-                      <Separator />
-                        <FormField control={form.control} name="referralBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Referral Bonus</FormLabel><FormDescriptionComponent>Reward users for referring new players.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                      {form.watch('referralBonusEnabled') && (
-                        <>
-                            <FormField control={form.control} name="referrerBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referrer Bonus (Old User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the person who referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="refereeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referee Bonus (New User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the new user who was referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        </>
+                    )}
+                    <FormField
+                      control={form.control}
+                      name="marqueeLogo"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>{existingMarqueeLogoUrl ? 'New Logo' : 'Upload Logo'}</FormLabel>
+                          <FormControl><Input type="file" {...marqueeLogoRef} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-
-                      <Separator />
-                      <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel><FormDescriptionComponent>Show a bonus offer popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                      {form.watch('bonusPopupEnabled') && (
-                        <div className="space-y-4">
-                            {existingBonusPopupUrl && (
-                                <div className="flex flex-col items-center gap-4">
-                                <p className="text-sm text-muted-foreground">Current Image:</p>
-                                <Image src={existingBonusPopupUrl} alt="Bonus Popup" width={200} height={200} className="rounded-md border p-1" />
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the image.</AlertDialogDescription></AlertDialogHeader>
-                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteBonusPopupImage}>Delete</AlertDialogAction></AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                                </div>
-                            )}
-                            <FormField control={form.control} name="bonusPopupImage" render={() => (<FormItem><FormLabel>{existingBonusPopupUrl ? 'New Image' : 'Upload Image'}</FormLabel><FormControl><Input type="file" {...bonusPopupImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="bonusPopupLink" render={({ field }) => (<FormItem><FormLabel>Popup Button Link</FormLabel><FormControl><Input placeholder="/add-fund" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        </div>
-                      )}
-                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  {/* Support & Notice Section */}
-                   <AccordionItem value="item-3">
-                    <AccordionTrigger className="text-lg font-semibold">Support & Amounts</AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-4">
-                        <FormField control={form.control} name="whatsappNumber" render={({ field }) => (<FormItem><FormLabel>WhatsApp Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="e.g., https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                         <Separator/>
-                         <FormField control={form.control} name="minimumDepositAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Deposit Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                         <FormField control={form.control} name="minimumWithdrawalAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Withdrawal Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 1000" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <Separator/>
-                        <FormField control={form.control} name="noticeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Enable Notice</FormLabel><FormDescriptionComponent>Show the notice board on the home page.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                        <FormField control={form.control} name="noticeText" render={({ field }) => (<FormItem><FormLabel>Notice Text</FormLabel><FormControl><Textarea placeholder="Enter notice text for home page." {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
-                    </AccordionContent>
-                  </AccordionItem>
-                  
-                   {/* App Images Section */}
-                   <AccordionItem value="item-4">
-                    <AccordionTrigger className="text-lg font-semibold">App Images</AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-4">
-                        {existingWelcomeBannerUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Welcome Banner:</p><Image src={existingWelcomeBannerUrl} alt="Welcome Banner" width={400} height={133} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Banner</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the banner.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteWelcomeBanner}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                        <FormField control={form.control} name="welcomeBannerImage" render={() => (<FormItem><FormLabel>{existingWelcomeBannerUrl ? 'New Welcome Banner' : 'Upload Welcome Banner'}</FormLabel><FormControl><Input type="file" {...welcomeBannerImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                        <Separator/>
-                        {existingDownloadImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Download Page Image:</p><Image src={existingDownloadImageUrl} alt="Download Page Image" width={200} height={266} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteDownloadImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                        <FormField control={form.control} name="downloadPageImage" render={() => (<FormItem><FormLabel>{existingDownloadImageUrl ? 'New Download Page Image' : 'Upload Download Page Image'}</FormLabel><FormControl><Input type="file" {...downloadPageImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                        <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  {/* Payment Details Section */}
-                  <AccordionItem value="item-5">
-                    <AccordionTrigger className="text-lg font-semibold">Payment Details</AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-4">
-                        <FormField control={form.control} name="upiId" render={({ field }) => (<FormItem><FormLabel>UPI ID</FormLabel><FormControl><Input placeholder="e.g., yourname@upi" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="bankDetails" render={({ field }) => (<FormItem><FormLabel>Bank Account Details</FormLabel><FormControl><Textarea placeholder="Enter full bank account details..." {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <Separator />
-                        <div className="p-4 border rounded-lg space-y-4">
-                            <FormField control={form.control} name="gpayEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable GPay</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                            {existingGpayImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current GPay Image:</p><Image src={existingGpayImageUrl} alt="GPay Image" width={100} height={100} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteGpayImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                            <FormField control={form.control} name="gpayImage" render={() => (<FormItem><FormLabel>{existingGpayImageUrl ? 'New GPay Image' : 'Upload GPay Image'}</FormLabel><FormControl><Input type="file" {...gpayImageRef} /></FormControl><FormMessage /></FormItem>)}/>
-                        </div>
-                         <div className="p-4 border rounded-lg space-y-4">
-                            <FormField control={form.control} name="paytmEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable Paytm</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                            {existingPaytmImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Paytm Image:</p><Image src={existingPaytmImageUrl} alt="Paytm Image" width={100} height={100} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePaytmImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                            <FormField control={form.control} name="paytmImage" render={() => (<FormItem><FormLabel>{existingPaytmImageUrl ? 'New Paytm Image' : 'Upload Paytm Image'}</FormLabel><FormControl><Input type="file" {...paytmImageRef} /></FormControl><FormMessage /></FormItem>)}/>
-                        </div>
-                        <div className="p-4 border rounded-lg space-y-4">
-                            <FormField control={form.control} name="phonepeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable PhonePe</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                            {existingPhonepeImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current PhonePe Image:</p><Image src={existingPhonepeImageUrl} alt="PhonePe Image" width={100} height={100} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePhonepeImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                            <FormField control={form.control} name="phonepeImage" render={() => (<FormItem><FormLabel>{existingPhonepeImageUrl ? 'New PhonePe Image' : 'Upload PhonePe Image'}</FormLabel><FormControl><Input type="file" {...phonepeImageRef} /></FormControl><FormMessage /></FormItem>)}/>
-                        </div>
-                        <Separator />
-                        {existingQrUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current QR Code:</p><Image src={existingQrUrl} alt="QR Code" width={150} height={150} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete QR</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteQrCode}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                        <FormField control={form.control} name="qrCodeImage" render={() => (<FormItem><FormLabel>{existingQrUrl ? 'New QR Code' : 'Upload QR Code'}</FormLabel><FormControl><Input type="file" {...qrCodeImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                        <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
-                    </AccordionContent>
-                  </AccordionItem>
-                  
-                  {/* Data Management Section */}
-                   <AccordionItem value="item-6">
-                        <AccordionTrigger className="text-lg font-semibold">Data Management</AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-4">
-                            <Card className="bg-destructive/10 border-destructive">
-                                <CardHeader>
-                                    <CardTitle className="text-destructive">Clean User Data</CardTitle>
-                                    <CardDescription className="text-destructive/80">
-                                        This will permanently delete all bids, deposits, and withdrawal records older than 10 days for ALL users. This action is irreversible and helps keep the app running smoothly.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" className="w-full" disabled={isCleaning}>
-                                                {isCleaning ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                                                Clean All User Data (Older than 10 Days)
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    You are about to delete all bids, deposits, and withdrawals older than 10 days for every user. This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleCleanUserData}>I understand, delete the data</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </CardContent>
-                            </Card>
-                        </AccordionContent>
-                   </AccordionItem>
-                </Accordion>
-
-                {isSubmitting && uploadProgress !== null && (
-                    <div className="space-y-2 mt-4">
-                        <Progress value={uploadProgress} className="w-full" />
-                        <p className="text-sm text-center text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
+                    />
+                    <FormField control={form.control} name="marqueeTitle" render={({ field }) => (<FormItem><FormLabel>Marquee Title</FormLabel><FormControl><Input placeholder="e.g., MATKA KING" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="marqueeText" render={({ field }) => (<FormItem><FormLabel>Marquee Text</FormLabel><FormControl><Input placeholder="Sub-line text" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="marqueeBackgroundColor" render={({ field }) => (<FormItem><FormLabel>BG Color</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="marqueeTextColor" render={({ field }) => (<FormItem><FormLabel>Text Color</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
-                )}
-              </form>
-            </Form>
-          )}
-        </CardContent>
-      </Card>
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField control={form.control} name="marqueeLogoSize" render={({ field }) => (<FormItem><FormLabel>Logo Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="marqueeTitleSize" render={({ field }) => (<FormItem><FormLabel>Title Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="marqueeTextSize" render={({ field }) => (<FormItem><FormLabel>Text Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                     <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                  </AccordionContent>
+                </AccordionItem>
+                
+                {/* Bonus Section */}
+                <AccordionItem value="item-2">
+                  <AccordionTrigger className="text-lg font-semibold">Bonus Settings</AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                    <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel><FormDescriptionComponent>Give users a bonus on deposits.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    {form.watch('bonusEnabled') && (<FormField control={form.control} name="bonusPercentage" render={({ field }) => (<FormItem><FormLabel>Bonus Percentage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                    <Separator />
+                    <FormField control={form.control} name="welcomeBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Welcome Bonus</FormLabel><FormDescriptionComponent>Give new users a bonus on signup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    {form.watch('welcomeBonusEnabled') && (<FormField control={form.control} name="welcomeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Welcome Bonus Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                    <Separator />
+                      <FormField control={form.control} name="referralBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Referral Bonus</FormLabel><FormDescriptionComponent>Reward users for referring new players.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    {form.watch('referralBonusEnabled') && (
+                      <>
+                          <FormField control={form.control} name="referrerBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referrer Bonus (Old User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the person who referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={form.control} name="refereeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referee Bonus (New User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the new user who was referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      </>
+                    )}
+
+                    <Separator />
+                    <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel><FormDescriptionComponent>Show a bonus offer popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    {form.watch('bonusPopupEnabled') && (
+                      <div className="space-y-4">
+                          {existingBonusPopupUrl && (
+                              <div className="flex flex-col items-center gap-4">
+                              <p className="text-sm text-muted-foreground">Current Image:</p>
+                              <Image src={existingBonusPopupUrl} alt="Bonus Popup" width={200} height={200} className="rounded-md border p-1" />
+                              <AlertDialog>
+                                  <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the image.</AlertDialogDescription></AlertDialogHeader>
+                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteBonusPopupImage}>Delete</AlertDialogAction></AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                              </div>
+                          )}
+                          <FormField control={form.control} name="bonusPopupImage" render={() => (<FormItem><FormLabel>{existingBonusPopupUrl ? 'New Image' : 'Upload Image'}</FormLabel><FormControl><Input type="file" {...bonusPopupImageRef} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={form.control} name="bonusPopupLink" render={({ field }) => (<FormItem><FormLabel>Popup Button Link</FormLabel><FormControl><Input placeholder="/add-fund" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      </div>
+                    )}
+                    <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Support & Notice Section */}
+                 <AccordionItem value="item-3">
+                  <AccordionTrigger className="text-lg font-semibold">Support & Amounts</AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                      <FormField control={form.control} name="whatsappNumber" render={({ field }) => (<FormItem><FormLabel>WhatsApp Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="e.g., https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <Separator/>
+                       <FormField control={form.control} name="minimumDepositAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Deposit Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name="minimumWithdrawalAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Withdrawal Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 1000" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <Separator/>
+                      <FormField control={form.control} name="noticeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Enable Notice</FormLabel><FormDescriptionComponent>Show the notice board on the home page.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="noticeText" render={({ field }) => (<FormItem><FormLabel>Notice Text</FormLabel><FormControl><Textarea placeholder="Enter notice text for home page." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                  </AccordionContent>
+                </AccordionItem>
+                
+                 {/* App Images Section */}
+                 <AccordionItem value="item-4">
+                  <AccordionTrigger className="text-lg font-semibold">App Images</AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                      {existingWelcomeBannerUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Welcome Banner:</p><Image src={existingWelcomeBannerUrl} alt="Welcome Banner" width={400} height={133} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Banner</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the banner.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteWelcomeBanner}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                      <FormField control={form.control} name="welcomeBannerImage" render={() => (<FormItem><FormLabel>{existingWelcomeBannerUrl ? 'New Welcome Banner' : 'Upload Welcome Banner'}</FormLabel><FormControl><Input type="file" {...welcomeBannerImageRef} /></FormControl><FormMessage /></FormItem>)} />
+                      <Separator/>
+                      {existingDownloadImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Download Page Image:</p><Image src={existingDownloadImageUrl} alt="Download Page Image" width={200} height={266} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteDownloadImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                      <FormField control={form.control} name="downloadPageImage" render={() => (<FormItem><FormLabel>{existingDownloadImageUrl ? 'New Download Page Image' : 'Upload Download Page Image'}</FormLabel><FormControl><Input type="file" {...downloadPageImageRef} /></FormControl><FormMessage /></FormItem>)} />
+                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Payment Details Section */}
+                <AccordionItem value="item-5">
+                  <AccordionTrigger className="text-lg font-semibold">Payment Details</AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                      <FormField control={form.control} name="upiId" render={({ field }) => (<FormItem><FormLabel>UPI ID</FormLabel><FormControl><Input placeholder="e.g., yourname@upi" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="bankDetails" render={({ field }) => (<FormItem><FormLabel>Bank Account Details</FormLabel><FormControl><Textarea placeholder="Enter full bank account details..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <Separator />
+                      <div className="p-4 border rounded-lg space-y-4">
+                          <FormField control={form.control} name="gpayEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable GPay</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                          {existingGpayImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current GPay Image:</p><Image src={existingGpayImageUrl} alt="GPay Image" width={100} height={100} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteGpayImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                          <FormField control={form.control} name="gpayImage" render={() => (<FormItem><FormLabel>{existingGpayImageUrl ? 'New GPay Image' : 'Upload GPay Image'}</FormLabel><FormControl><Input type="file" {...gpayImageRef} /></FormControl><FormMessage /></FormItem>)}/>
+                      </div>
+                       <div className="p-4 border rounded-lg space-y-4">
+                          <FormField control={form.control} name="paytmEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable Paytm</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                          {existingPaytmImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Paytm Image:</p><Image src={existingPaytmImageUrl} alt="Paytm Image" width={100} height={100} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePaytmImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                          <FormField control={form.control} name="paytmImage" render={() => (<FormItem><FormLabel>{existingPaytmImageUrl ? 'New Paytm Image' : 'Upload Paytm Image'}</FormLabel><FormControl><Input type="file" {...paytmImageRef} /></FormControl><FormMessage /></FormItem>)}/>
+                      </div>
+                      <div className="p-4 border rounded-lg space-y-4">
+                          <FormField control={form.control} name="phonepeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable PhonePe</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                          {existingPhonepeImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current PhonePe Image:</p><Image src={existingPhonepeImageUrl} alt="PhonePe Image" width={100} height={100} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePhonepeImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                          <FormField control={form.control} name="phonepeImage" render={() => (<FormItem><FormLabel>{existingPhonepeImageUrl ? 'New PhonePe Image' : 'Upload PhonePe Image'}</FormLabel><FormControl><Input type="file" {...phonepeImageRef} /></FormControl><FormMessage /></FormItem>)}/>
+                      </div>
+                      <Separator />
+                      {existingQrUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current QR Code:</p><Image src={existingQrUrl} alt="QR Code" width={150} height={150} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete QR</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteQrCode}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                      <FormField control={form.control} name="qrCodeImage" render={() => (<FormItem><FormLabel>{existingQrUrl ? 'New QR Code' : 'Upload QR Code'}</FormLabel><FormControl><Input type="file" {...qrCodeImageRef} /></FormControl><FormMessage /></FormItem>)} />
+                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                  </AccordionContent>
+                </AccordionItem>
+                
+                {/* Data Management Section */}
+                 <AccordionItem value="item-6">
+                      <AccordionTrigger className="text-lg font-semibold">Data Management</AccordionTrigger>
+                      <AccordionContent className="space-y-4 pt-4">
+                          <Card className="bg-destructive/10 border-destructive">
+                              <CardHeader>
+                                  <CardTitle className="text-destructive">Clean User Data</CardTitle>
+                                  <CardDescription className="text-destructive/80">
+                                      This will permanently delete all bids, deposits, and withdrawal records older than 10 days for ALL users. This action is irreversible and helps keep the app running smoothly.
+                                  </CardDescription>
+                              </CardHeader>
+                              <CardContent>
+                                  <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                          <Button variant="destructive" className="w-full" disabled={isCleaning}>
+                                              {isCleaning ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                              Clean All User Data (Older than 10 Days)
+                                          </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                  You are about to delete all bids, deposits, and withdrawals older than 10 days for every user. This action cannot be undone.
+                                              </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                              <AlertDialogAction onClick={handleCleanUserData}>I understand, delete the data</AlertDialogAction>
+                                          </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                  </AlertDialog>
+                              </CardContent>
+                          </Card>
+                      </AccordionContent>
+                 </AccordionItem>
+              </Accordion>
+
+              {isSubmitting && uploadProgress !== null && (
+                  <div className="space-y-2 mt-4">
+                      <Progress value={uploadProgress} className="w-full" />
+                      <p className="text-sm text-center text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
+                  </div>
+              )}
+            </form>
+          </Form>
+        )}
+      </div>
     </div>
   );
 }

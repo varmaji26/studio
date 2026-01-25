@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -180,103 +179,99 @@ export default function ViewGameTypeLoadPage() {
 
   return (
     <div className="flex-1 space-y-6">
-      <div className="grid gap-6">
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                 <div>
-                    <CardTitle className="text-3xl font-bold">View Game-Type wise Load</CardTitle>
-                    <CardDescription>Select a game and date range to see its live bidding details for each bet type.</CardDescription>
-                 </div>
-                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={!selectedGameId || betTypeLoadDetails.every(d => d.totalLoad === 0)}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                </Button>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+           <div>
+              <h1 className="text-3xl font-bold">View Game-Type wise Load</h1>
+              <p className="text-muted-foreground">Select a game and date range to see its live bidding details for each bet type.</p>
+           </div>
+           <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={!selectedGameId || betTypeLoadDetails.every(d => d.totalLoad === 0)}>
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+          </Button>
+        </div>
+        <div>
+          {loading ? (
+            <div className="flex justify-center items-center h-24">
+              <Loader className="h-8 w-8 text-primary" />
+            </div>
+          ) : (
+              <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="w-full sm:w-auto sm:max-w-xs">
+                      <Label>Select Game</Label>
+                      <Select
+                          value={selectedGameId || ''}
+                          onValueChange={(value) => setSelectedGameId(value)}
+                      >
+                          <SelectTrigger>
+                              <SelectValue placeholder="Select a game" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {games.map((game) => (
+                                  <SelectItem key={game.id} value={game.id}>
+                                      {game.name}
+                                  </SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                  </div>
+                   <div className="flex flex-col sm:flex-row items-end gap-2">
+                       <div>
+                          <Label htmlFor="from-date" className="text-sm">From Date</Label>
+                          <Popover>
+                              <PopoverTrigger asChild>
+                                  <Button
+                                  id="from-date"
+                                  variant={"outline"}
+                                  className={cn(
+                                      "w-full justify-start text-left font-normal",
+                                      !fromDate && "text-muted-foreground"
+                                  )}
+                                  >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {fromDate ? format(fromDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                                  </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                  <Calendar
+                                  mode="single"
+                                  selected={fromDate}
+                                  onSelect={setFromDate}
+                                  initialFocus
+                                  />
+                              </PopoverContent>
+                          </Popover>
+                       </div>
+                       <div>
+                          <Label htmlFor="to-date" className="text-sm">To Date</Label>
+                           <Popover>
+                              <PopoverTrigger asChild>
+                                  <Button
+                                  id="to-date"
+                                  variant={"outline"}
+                                  className={cn(
+                                      "w-full justify-start text-left font-normal",
+                                      !toDate && "text-muted-foreground"
+                                  )}
+                                  >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {toDate ? format(toDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                                  </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                  <Calendar
+                                  mode="single"
+                                  selected={toDate}
+                                  onSelect={setToDate}
+                                  initialFocus
+                                  />
+                              </PopoverContent>
+                          </Popover>
+                       </div>
+                  </div>
               </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex justify-center items-center h-24">
-                <Loader className="h-8 w-8 text-primary" />
-              </div>
-            ) : (
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="w-full sm:w-auto sm:max-w-xs">
-                        <Label>Select Game</Label>
-                        <Select
-                            value={selectedGameId || ''}
-                            onValueChange={(value) => setSelectedGameId(value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a game" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {games.map((game) => (
-                                    <SelectItem key={game.id} value={game.id}>
-                                        {game.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div className="flex flex-col sm:flex-row items-end gap-2">
-                         <div>
-                            <Label htmlFor="from-date" className="text-sm">From Date</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    id="from-date"
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !fromDate && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {fromDate ? format(fromDate, "dd MMM, yyyy") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                    mode="single"
-                                    selected={fromDate}
-                                    onSelect={setFromDate}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                         </div>
-                         <div>
-                            <Label htmlFor="to-date" className="text-sm">To Date</Label>
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    id="to-date"
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !toDate && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {toDate ? format(toDate, "dd MMM, yyyy") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                    mode="single"
-                                    selected={toDate}
-                                    onSelect={setToDate}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                         </div>
-                    </div>
-                </div>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </div>
 
         {betTypeLoadDetails.map((details) => (
             (details.totalLoad > 0) && (

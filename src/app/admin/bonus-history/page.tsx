@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -142,111 +141,109 @@ export default function AdminBonusHistoryPage() {
 
   return (
      <div className="flex-1 space-y-6">
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold flex items-center gap-2"><Gift />Bonus History</CardTitle>
-            <CardDescription>Track all bonus transactions given, used, or reset for all users.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h3 className="text-xl font-semibold">All Transactions</h3>
-                 <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full sm:w-[180px] justify-start text-left font-normal",
-                                !selectedDate && "text-muted-foreground"
-                            )}
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={setSelectedDate}
-                            initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                    <div className="relative w-full sm:w-auto sm:max-w-xs">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                            placeholder="Search by username or mobile..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-input h-10 rounded-lg pl-10"
+      <div>
+        <h1 className="text-3xl font-bold flex items-center gap-2"><Gift />Bonus History</h1>
+        <p className="text-muted-foreground">Track all bonus transactions given, used, or reset for all users.</p>
+      </div>
+      <div>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+            <h3 className="text-xl font-semibold">All Transactions</h3>
+             <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-full sm:w-[180px] justify-start text-left font-normal",
+                            !selectedDate && "text-muted-foreground"
+                        )}
+                        >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        initialFocus
                         />
-                    </div>
-                 </div>
-            </div>
-
-            {loading ? (
-                <div className="flex justify-center items-center h-48">
-                    <Loader className="h-8 w-8 text-primary" />
+                    </PopoverContent>
+                </Popover>
+                <div className="relative w-full sm:w-auto sm:max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by username or mobile..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-input h-10 rounded-lg pl-10"
+                    />
                 </div>
-            ) : (
-                <>
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Username</TableHead>
-                                <TableHead>Mobile</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Description</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedTransactions.map((t) => (
-                                <TableRow key={t.id}>
-                                    <TableCell>{formatDate(t.createdAt)}</TableCell>
-                                    <TableCell>{t.displayName}</TableCell>
-                                    <TableCell>{t.mobile}</TableCell>
-                                    <TableCell>
-                                        <Badge
-                                            variant={getTypeBadgeVariant(t.type)}
-                                            className={cn(
-                                                'flex items-center gap-1 w-fit',
-                                                t.type === 'Given' && 'bg-green-500/80 text-white',
-                                                t.type === 'Reset' && 'bg-red-500/80 text-white',
-                                                t.type === 'Used' && 'bg-blue-500/80 text-white'
-                                            )}
-                                        >
-                                            {t.type === 'Given' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-                                            {t.type}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell
+             </div>
+        </div>
+
+        {loading ? (
+            <div className="flex justify-center items-center h-48">
+                <Loader className="h-8 w-8 text-primary" />
+            </div>
+        ) : (
+            <>
+            <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Username</TableHead>
+                            <TableHead>Mobile</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Description</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {paginatedTransactions.map((t) => (
+                            <TableRow key={t.id}>
+                                <TableCell>{formatDate(t.createdAt)}</TableCell>
+                                <TableCell>{t.displayName}</TableCell>
+                                <TableCell>{t.mobile}</TableCell>
+                                <TableCell>
+                                    <Badge
+                                        variant={getTypeBadgeVariant(t.type)}
                                         className={cn(
-                                            'font-bold',
-                                            t.type === 'Given' ? 'text-green-400' : 'text-red-400'
+                                            'flex items-center gap-1 w-fit',
+                                            t.type === 'Given' && 'bg-green-500/80 text-white',
+                                            t.type === 'Reset' && 'bg-red-500/80 text-white',
+                                            t.type === 'Used' && 'bg-blue-500/80 text-white'
                                         )}
                                     >
-                                        ₹{t.amount}
-                                    </TableCell>
-                                    <TableCell>{t.description}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-                 {renderPagination()}
-                </>
-            )}
-            {paginatedTransactions.length === 0 && !loading && (
-                <p className="text-center text-muted-foreground mt-4">
-                  {searchTerm || selectedDate ? `No bonus transactions found for the selected criteria.` : "No bonus transactions found."}
-                </p>
-            )}
-          </CardContent>
-        </Card>
+                                        {t.type === 'Given' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                                        {t.type}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell
+                                    className={cn(
+                                        'font-bold',
+                                        t.type === 'Given' ? 'text-green-400' : 'text-red-400'
+                                    )}
+                                >
+                                    ₹{t.amount}
+                                </TableCell>
+                                <TableCell>{t.description}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+             {renderPagination()}
+            </>
+        )}
+        {paginatedTransactions.length === 0 && !loading && (
+            <p className="text-center text-muted-foreground mt-4">
+              {searchTerm || selectedDate ? `No bonus transactions found for the selected criteria.` : "No bonus transactions found."}
+            </p>
+        )}
       </div>
+    </div>
   );
 }

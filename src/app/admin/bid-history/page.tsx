@@ -260,42 +260,39 @@ export default function AdminBidHistoryPage() {
 
   return (
      <div className="flex-1 space-y-6">
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <CardTitle className="text-3xl font-bold">Bid History</CardTitle>
-                <CardDescription>View all bids placed by users across all games.</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" disabled={isCleaning}>
-                            {isCleaning ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                            Clean Bids (Older than 10 Days)
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete all bid records older than 10 days. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleCleanOldBids}>Confirm Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download PDF
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Bid History</h1>
+            <p className="text-muted-foreground">View all bids placed by users across all games.</p>
+          </div>
+          <div className="flex gap-2">
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={isCleaning}>
+                        {isCleaning ? <Loader className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        Clean Bids (Older than 10 Days)
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete all bid records older than 10 days. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleCleanOldBids}>Confirm Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <Button onClick={handleDownloadPDF} variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+            </Button>
+          </div>
+        </div>
+        <div>
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <h3 className="text-xl font-semibold">All Bids</h3>
                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
@@ -429,8 +426,7 @@ export default function AdminBidHistoryPage() {
                  {renderPagination()}
                 </>
             )}
-          </CardContent>
-        </Card>
+        </div>
       </div>
   );
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -135,69 +134,65 @@ export default function MonthlyReportPage() {
 
     return (
         <div className="flex-1 space-y-6">
-            <Card className="bg-card/80 border-white/10 shadow-lg">
-                <CardHeader>
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div>
-                            <CardTitle className="text-3xl font-bold">Monthly Report</CardTitle>
-                            <CardDescription>An overview of your app's performance for the selected month.</CardDescription>
-                        </div>
-                        <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-                            <Download className="mr-2 h-4 w-4" />
-                            Download PDF
-                        </Button>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold">Monthly Report</h1>
+                    <p className="text-muted-foreground">An overview of your app's performance for the selected month.</p>
+                </div>
+                <Button onClick={handleDownloadPDF} variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download PDF
+                </Button>
+            </div>
+            <div>
+                <div className="flex items-center gap-2 mb-6">
+                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {months.map(m => (
+                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                        <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {years.map(y => (
+                                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader />
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center gap-2 mb-6">
-                        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select Month" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {months.map(m => (
-                                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Select value={selectedYear} onValueChange={setSelectedYear}>
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="Select Year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {years.map(y => (
-                                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                         <StatCard 
+                            title="Monthly Net Balance" 
+                            value={`₹${monthlyStats.monthlyNetBalance.toLocaleString()}`} 
+                            icon={Landmark} 
+                            color={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
+                            textColor={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
+                        />
+                         <StatCard title="Total Deposit This Month" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
+                        <StatCard title="Total Withdrawals This Month" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
+                        <StatCard title="Total Bidding This Month" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
+                        <StatCard 
+                            title="Total Profit This Month" 
+                            value={`₹${monthlyStats.totalProfit.toLocaleString()}`} 
+                            icon={Scale} 
+                            color={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
+                            textColor={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
+                        />
                     </div>
-                    {loading ? (
-                        <div className="flex justify-center items-center h-64">
-                            <Loader />
-                        </div>
-                    ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                             <StatCard 
-                                title="Monthly Net Balance" 
-                                value={`₹${monthlyStats.monthlyNetBalance.toLocaleString()}`} 
-                                icon={Landmark} 
-                                color={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
-                                textColor={monthlyStats.monthlyNetBalance >= 0 ? "#22c55e" : "#ef4444"}
-                            />
-                             <StatCard title="Total Deposit This Month" value={`₹${monthlyStats.totalDeposit.toLocaleString()}`} icon={ArrowUpCircle} color="#3b82f6" />
-                            <StatCard title="Total Withdrawals This Month" value={`₹${monthlyStats.totalWithdrawal.toLocaleString()}`} icon={ArrowDownCircle} color="#f97316" />
-                            <StatCard title="Total Bidding This Month" value={`₹${monthlyStats.totalBidding.toLocaleString()}`} icon={BarChart} color="#a855f7" />
-                            <StatCard 
-                                title="Total Profit This Month" 
-                                value={`₹${monthlyStats.totalProfit.toLocaleString()}`} 
-                                icon={Scale} 
-                                color={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
-                                textColor={monthlyStats.totalProfit >= 0 ? "#22c55e" : "#ef4444"}
-                            />
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                )}
+            </div>
         </div>
     );
 }

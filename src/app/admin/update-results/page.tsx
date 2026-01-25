@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -245,113 +244,111 @@ export default function UpdateResultsPage() {
 
   return (
     <div className="flex-1 space-y-6">
-      <Card className="bg-card/80 border-white/10 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl">Update Game Results (Open)</CardTitle>
-          <CardDescription>Select a game and enter the Open Pana to update the results. The Jodi will be calculated automatically.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader className="h-8 w-8 text-primary" />
-            </div>
-          ) : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleUpdateResult)} className="space-y-6 max-w-md mx-auto">
-                <FormItem>
-                  <FormLabel>Select Game</FormLabel>
-                  <Select onValueChange={setSelectedGameId} value={selectedGameId ?? ''}>
-                    <FormControl>
-                      <SelectTrigger className="bg-green-500 text-white hover:bg-green-600">
-                        <SelectValue placeholder="Select a game to update" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {games.map((game) => (
-                        <SelectItem key={game.id} value={game.id}>
-                          {game.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
+      <div>
+        <h1 className="text-2xl font-bold">Update Game Results (Open)</h1>
+        <p className="text-muted-foreground">Select a game and enter the Open Pana to update the results. The Jodi will be calculated automatically.</p>
+      </div>
+      <div>
+        {loading ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader className="h-8 w-8 text-primary" />
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleUpdateResult)} className="space-y-6 max-w-md mx-auto">
+              <FormItem>
+                <FormLabel>Select Game</FormLabel>
+                <Select onValueChange={setSelectedGameId} value={selectedGameId ?? ''}>
+                  <FormControl>
+                    <SelectTrigger className="bg-green-500 text-white hover:bg-green-600">
+                      <SelectValue placeholder="Select a game to update" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {games.map((game) => (
+                      <SelectItem key={game.id} value={game.id}>
+                        {game.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
 
-                {selectedGame && (
-                    <>
-                    <p className="text-sm text-center text-muted-foreground">
-                        Current Result: <span className="font-bold text-foreground">{selectedGame.result || `${selectedGame.openResult || '***'}-**-${selectedGame.closeResult || '**'}`}</span>
-                    </p>
-                     <FormField
-                        control={form.control}
-                        name="newOpenPana"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>New Open Pana</FormLabel>
-                                <FormControl>
-                                    <Input 
-                                        placeholder="Enter 3-digit pana"
-                                        {...field} 
-                                        className="bg-input rounded-lg text-center text-lg"
-                                        maxLength={3}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <div className="flex flex-col items-center">
-                        <FormLabel className="text-sm mb-2">Auto Jodi (Open)</FormLabel>
-                         <Input
-                            readOnly
-                            value={autoJodi}
-                            className="bg-input border-none font-bold text-center text-lg w-1/2"
-                        />
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                         <Button 
-                            type="submit"
-                            className="w-full"
-                            disabled={isSubmitting || isReverting}
-                        >
-                          {isSubmitting ? <Loader className="h-4 w-4 mr-2" /> : null}
-                          {isSubmitting ? 'Updating...' : 'Update & Process Winners'}
-                        </Button>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    className="w-full"
-                                    disabled={isSubmitting || isReverting || !selectedGame.openResult || selectedGame.openResult === '***'}
-                                >
-                                    {isReverting ? <Loader className="h-4 w-4 mr-2" /> : <RotateCcw className="h-4 w-4 mr-2" />}
-                                    Revert Last Result
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure you want to revert the open result?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action will find all winning bets for this game's open session, deduct the winnings from users' wallets, and reset the bet status to 'running'. This cannot be undone.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleRevertResult}>Confirm Revert</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
-                    </>
-                )}
-              </form>
-            </Form>
-          )}
-          {games.length === 0 && !loading && (
-              <p className="text-center text-muted-foreground mt-4">No games found. Please add a game first.</p>
-          )}
-        </CardContent>
-      </Card>
+              {selectedGame && (
+                  <>
+                  <p className="text-sm text-center text-muted-foreground">
+                      Current Result: <span className="font-bold text-foreground">{selectedGame.result || `${selectedGame.openResult || '***'}-**-${selectedGame.closeResult || '**'}`}</span>
+                  </p>
+                   <FormField
+                      control={form.control}
+                      name="newOpenPana"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>New Open Pana</FormLabel>
+                              <FormControl>
+                                  <Input 
+                                      placeholder="Enter 3-digit pana"
+                                      {...field} 
+                                      className="bg-input rounded-lg text-center text-lg"
+                                      maxLength={3}
+                                  />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <div className="flex flex-col items-center">
+                      <FormLabel className="text-sm mb-2">Auto Jodi (Open)</FormLabel>
+                       <Input
+                          readOnly
+                          value={autoJodi}
+                          className="bg-input border-none font-bold text-center text-lg w-1/2"
+                      />
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                       <Button 
+                          type="submit"
+                          className="w-full"
+                          disabled={isSubmitting || isReverting}
+                      >
+                        {isSubmitting ? <Loader className="h-4 w-4 mr-2" /> : null}
+                        {isSubmitting ? 'Updating...' : 'Update & Process Winners'}
+                      </Button>
+                      <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                              <Button
+                                  type="button"
+                                  variant="destructive"
+                                  className="w-full"
+                                  disabled={isSubmitting || isReverting || !selectedGame.openResult || selectedGame.openResult === '***'}
+                              >
+                                  {isReverting ? <Loader className="h-4 w-4 mr-2" /> : <RotateCcw className="h-4 w-4 mr-2" />}
+                                  Revert Last Result
+                              </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure you want to revert the open result?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                      This action will find all winning bets for this game's open session, deduct the winnings from users' wallets, and reset the bet status to 'running'. This cannot be undone.
+                                  </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={handleRevertResult}>Confirm Revert</AlertDialogAction>
+                              </AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                  </div>
+                  </>
+              )}
+            </form>
+          </Form>
+        )}
+        {games.length === 0 && !loading && (
+            <p className="text-center text-muted-foreground mt-4">No games found. Please add a game first.</p>
+        )}
+      </div>
     </div>
   );
 }

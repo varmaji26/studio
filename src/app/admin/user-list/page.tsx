@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -135,51 +134,47 @@ export default function UserListPage() {
 
   return (
     <div className="flex-1 space-y-6">
-      <Card className="bg-card/80 border-white/10 shadow-lg">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                  <CardTitle className="text-3xl font-bold">User List</CardTitle>
-                  <CardDescription>A complete list of all registered users.</CardDescription>
-              </div>
-              <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={users.length === 0}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-              </Button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+              <h1 className="text-3xl font-bold">User List</h1>
+              <p className="text-muted-foreground">A complete list of all registered users.</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader className="h-8 w-8 text-primary" />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Mobile Number</TableHead>
+          <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={users.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+          </Button>
+      </div>
+      <div>
+        {loading ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader className="h-8 w-8 text-primary" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Mobile Number</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user, index) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{user.displayName}</TableCell>
+                    <TableCell>{user.mobile}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user, index) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{user.displayName}</TableCell>
-                      <TableCell>{user.mobile}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {users.length === 0 && !loading && (
-                <p className="text-center text-muted-foreground mt-4">No users found.</p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </TableBody>
+            </Table>
+            {users.length === 0 && !loading && (
+              <p className="text-center text-muted-foreground mt-4">No users found.</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

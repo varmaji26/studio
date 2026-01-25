@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -167,59 +166,52 @@ export default function ManageBannersPage() {
 
   return (
     <div className="flex-1 space-y-6">
-      <div className="grid gap-6">
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl">Add New Banner</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="bannerImage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Banner Image</FormLabel>
-                        <FormControl>
-                          <Input 
-                              type="file"
-                              className="bg-input h-12 rounded-lg" 
-                              accept={ACCEPTED_IMAGE_TYPES.join(",")}
-                              disabled={isSubmitting}
-                              {...bannerImageRef}
-                          />
-                        </FormControl>
-                        <FormDescriptionComponent>
-                          Upload an image from your computer (max 5MB).
-                        </FormDescriptionComponent>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+        <div>
+            <h1 className="text-2xl font-bold">Add New Banner</h1>
+            <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+              <FormField
+                control={form.control}
+                name="bannerImage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Banner Image</FormLabel>
+                    <FormControl>
+                      <Input 
+                          type="file"
+                          className="bg-input h-12 rounded-lg" 
+                          accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                          disabled={isSubmitting}
+                          {...bannerImageRef}
+                      />
+                    </FormControl>
+                    <FormDescriptionComponent>
+                      Upload an image from your computer (max 5MB).
+                    </FormDescriptionComponent>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  {isSubmitting && uploadProgress !== null && (
-                      <div className="space-y-2">
-                          <Progress value={uploadProgress} className="w-full" />
-                          <p className="text-sm text-center text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
-                      </div>
-                  )}
-                  
-                  <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting}>
-                    {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
-                    {isSubmitting ? 'Adding...' : 'Add Banner'}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-card/80 border-white/10 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl">All Banners</CardTitle>
-              <CardDescription>View and delete existing banners.</CardDescription>
-            </CardHeader>
-            <CardContent>
+              {isSubmitting && uploadProgress !== null && (
+                  <div className="space-y-2">
+                      <Progress value={uploadProgress} className="w-full" />
+                      <p className="text-sm text-center text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
+                  </div>
+              )}
+              
+              <Button type="submit" className="w-full sm:w-auto h-12 rounded-lg text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting}>
+                {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
+                {isSubmitting ? 'Adding...' : 'Add Banner'}
+              </Button>
+            </form>
+          </Form>
+        </div>
+        
+        <div className="mt-8">
+            <h2 className="text-2xl font-bold">All Banners</h2>
+            <p className="text-muted-foreground">View and delete existing banners.</p>
+            <div className="mt-4">
               {loading ? (
                   <div className="flex justify-center items-center h-48">
                       <Loader className="h-8 w-8 text-primary" />
@@ -254,9 +246,8 @@ export default function ManageBannersPage() {
               ) : (
                   <p className="text-center text-muted-foreground mt-4">No banners found. Add a new banner to get started.</p>
               )}
-            </CardContent>
-          </Card>
-      </div>
+            </div>
+        </div>
     </div>
   );
 }

@@ -103,7 +103,7 @@ export default function AdminWithdrawalHistoryPage() {
 
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const paginatedTransactions = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredTransactions, currentPage]);
 
@@ -170,108 +170,104 @@ export default function AdminWithdrawalHistoryPage() {
 
   return (
      <div className="flex-1 space-y-6">
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-                <div>
-                    <CardTitle className="text-3xl font-bold">Withdrawal History</CardTitle>
-                    <CardDescription>View all withdrawal history for all users.</CardDescription>
-                </div>
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={allTransactions.length === 0}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                </Button>
+        <div className="flex justify-between items-start">
+            <div>
+                <h1 className="text-3xl font-bold">Withdrawal History</h1>
+                <p className="text-muted-foreground">View all withdrawal history for all users.</p>
             </div>
-          </CardHeader>
-          <CardContent>
-             <Card className="mb-6">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
-                    <ArrowDownCircle className="h-4 w-4 text-red-500" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-red-500">₹{totalWithdrawals.toLocaleString('en-IN')}</div>
-                    <p className="text-xs text-muted-foreground">Based on selected filters (approved only)</p>
-                </CardContent>
-            </Card>
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h3 className="text-xl font-semibold">All Transactions</h3>
-                <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
-                    <div className="flex items-center gap-2">
-                        <Label htmlFor="from-date" className="text-sm shrink-0">From</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button id="from-date" variant={"outline"} className={cn("w-full sm:w-[180px] justify-start text-left font-normal", !fromDate && "text-muted-foreground")}>
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {fromDate ? format(fromDate, "dd MMM, yyyy") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={fromDate} onSelect={setFromDate} initialFocus /></PopoverContent>
-                        </Popover>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Label htmlFor="to-date" className="text-sm shrink-0">To</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button id="to-date" variant={"outline"} className={cn("w-full sm:w-[180px] justify-start text-left font-normal", !toDate && "text-muted-foreground")}>
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {toDate ? format(toDate, "dd MMM, yyyy") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={toDate} onSelect={setToDate} initialFocus /></PopoverContent>
-                        </Popover>
-                    </div>
-                    <div className="relative w-full sm:w-auto sm:max-w-xs">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input placeholder="Search by username or mobile..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-input h-10 rounded-lg pl-10" />
-                    </div>
-                </div>
-            </div>
-            {loading ? (
-                <div className="flex justify-center items-center h-48"><Loader className="h-8 w-8 text-primary" /></div>
-            ) : (
-                <div className="overflow-x-auto mt-4">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Username</TableHead>
-                                <TableHead>Mobile</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Method</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedTransactions.map((t) => (
-                                <TableRow key={t.id}>
-                                    <TableCell>{formatDate(t.createdAt)}</TableCell>
-                                    <TableCell>{t.displayName}</TableCell>
-                                    <TableCell>{t.mobile}</TableCell>
-                                    <TableCell>₹{t.amount}</TableCell>
-                                    <TableCell>{t.withdrawalMethod}</TableCell>
-                                    <TableCell>
-                                        <Badge 
-                                          variant={getStatusBadgeVariant(t.status)} 
-                                          className={cn(
-                                              t.status === 'approved' && 'bg-green-500 text-white', 
-                                              t.status === 'rejected' && 'bg-red-500 text-white',
-                                              t.status === 'reverted' && 'border-yellow-500 text-yellow-500',
-                                          )}
-                                        >
-                                          {t.status}
-                                        </Badge>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    {paginatedTransactions.length === 0 && !loading && (<p className="text-center text-muted-foreground mt-4">No transactions found.</p>)}
-                    {renderPagination()}
-                </div>
-            )}
-          </CardContent>
-        </Card>
+            <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={allTransactions.length === 0}>
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+            </Button>
+        </div>
+        <div>
+           <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
+                  <ArrowDownCircle className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                  <div className="text-2xl font-bold text-red-500">₹{totalWithdrawals.toLocaleString('en-IN')}</div>
+                  <p className="text-xs text-muted-foreground">Based on selected filters (approved only)</p>
+              </CardContent>
+          </Card>
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+              <h3 className="text-xl font-semibold">All Transactions</h3>
+              <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-2">
+                      <Label htmlFor="from-date" className="text-sm shrink-0">From</Label>
+                      <Popover>
+                          <PopoverTrigger asChild>
+                              <Button id="from-date" variant={"outline"} className={cn("w-full sm:w-[180px] justify-start text-left font-normal", !fromDate && "text-muted-foreground")}>
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {fromDate ? format(fromDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={fromDate} onSelect={setFromDate} initialFocus /></PopoverContent>
+                      </Popover>
+                  </div>
+                  <div className="flex items-center gap-2">
+                      <Label htmlFor="to-date" className="text-sm shrink-0">To</Label>
+                      <Popover>
+                          <PopoverTrigger asChild>
+                              <Button id="to-date" variant={"outline"} className={cn("w-full sm:w-[180px] justify-start text-left font-normal", !toDate && "text-muted-foreground")}>
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {toDate ? format(toDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={toDate} onSelect={setToDate} initialFocus /></PopoverContent>
+                      </Popover>
+                  </div>
+                  <div className="relative w-full sm:w-auto sm:max-w-xs">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input placeholder="Search by username or mobile..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-input h-10 rounded-lg pl-10" />
+                  </div>
+              </div>
+          </div>
+          {loading ? (
+              <div className="flex justify-center items-center h-48"><Loader className="h-8 w-8 text-primary" /></div>
+          ) : (
+              <div className="overflow-x-auto mt-4">
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Username</TableHead>
+                              <TableHead>Mobile</TableHead>
+                              <TableHead>Amount</TableHead>
+                              <TableHead>Method</TableHead>
+                              <TableHead>Status</TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                          {paginatedTransactions.map((t) => (
+                              <TableRow key={t.id}>
+                                  <TableCell>{formatDate(t.createdAt)}</TableCell>
+                                  <TableCell>{t.displayName}</TableCell>
+                                  <TableCell>{t.mobile}</TableCell>
+                                  <TableCell>₹{t.amount}</TableCell>
+                                  <TableCell>{t.withdrawalMethod}</TableCell>
+                                  <TableCell>
+                                      <Badge 
+                                        variant={getStatusBadgeVariant(t.status)} 
+                                        className={cn(
+                                            t.status === 'approved' && 'bg-green-500 text-white', 
+                                            t.status === 'rejected' && 'bg-red-500 text-white',
+                                            t.status === 'reverted' && 'border-yellow-500 text-yellow-500',
+                                        )}
+                                      >
+                                        {t.status}
+                                      </Badge>
+                                  </TableCell>
+                              </TableRow>
+                          ))}
+                      </TableBody>
+                  </Table>
+                  {paginatedTransactions.length === 0 && !loading && (<p className="text-center text-muted-foreground mt-4">No transactions found.</p>)}
+                  {renderPagination()}
+              </div>
+          )}
+        </div>
       </div>
   );
 }

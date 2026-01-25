@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -64,7 +63,7 @@ export default function ViewOpenLoadPage() {
     fetchGames();
   }, []);
 
-  // Listen for real-time bid updates for the selected date
+  // Listen for real-time bid updates for the selected day
   useEffect(() => {
     if (!selectedDate) {
         setAllOpenBids([]);
@@ -143,72 +142,70 @@ export default function ViewOpenLoadPage() {
 
   return (
     <div className="flex-1 space-y-6">
-      <div className="grid gap-6">
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader>
-              <CardTitle className="text-3xl font-bold">View Open Load</CardTitle>
-              <CardDescription>Click on a game to see its live bidding details for the selected date's Open session below.</CardDescription>
-              <div className="pt-4">
-                 <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                        variant={"outline"}
-                        className={cn(
-                            "w-full sm:w-[180px] justify-start text-left font-normal",
-                            !selectedDate && "text-muted-foreground"
-                        )}
-                        >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                        <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        initialFocus
-                        />
-                    </PopoverContent>
-                </Popover>
-              </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <Loader className="h-8 w-8 text-primary" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {gameLoads.map((game) => (
-                  <button 
-                      key={game.id} 
-                      onClick={() => setSelectedGame(game)}
+      <div className="space-y-6">
+        <div>
+            <h1 className="text-3xl font-bold">View Open Load</h1>
+            <p className="text-muted-foreground">Click on a game to see its live bidding details for the selected date's Open session below.</p>
+            <div className="pt-4">
+               <Popover>
+                  <PopoverTrigger asChild>
+                      <Button
+                      variant={"outline"}
                       className={cn(
-                          "text-left rounded-lg transform hover:scale-105 transition-transform duration-300 focus:outline-none focus:ring-2 focus:ring-primary",
-                          selectedGame?.id === game.id ? "ring-2 ring-primary" : ""
+                          "w-full sm:w-[180px] justify-start text-left font-normal",
+                          !selectedDate && "text-muted-foreground"
                       )}
-                  >
-                      <Card className="bg-slate-800/60 border-slate-700 shadow-md h-full">
-                          <CardContent className="p-4 text-center">
-                              <div className="flex justify-end">
-                                  <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
-                              </div>
-                              <h3 className="text-lg font-bold text-white truncate">{game.name.toUpperCase()}</h3>
-                              <p className="text-xl font-semibold text-primary mt-2">₹{game.totalLoad.toFixed(2)} /-</p>
-                              <div className="flex justify-center mt-3">
-                                  <div className="h-8 w-8 flex items-center justify-center rounded-full bg-primary/20 text-primary">
-                                      <Play className="h-5 w-5" />
-                                  </div>
-                              </div>
-                          </CardContent>
-                      </Card>
-                  </button>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                      </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                      <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                      />
+                  </PopoverContent>
+              </Popover>
+            </div>
+        </div>
+        <div>
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader className="h-8 w-8 text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {gameLoads.map((game) => (
+                <button 
+                    key={game.id} 
+                    onClick={() => setSelectedGame(game)}
+                    className={cn(
+                        "text-left rounded-lg transform hover:scale-105 transition-transform duration-300 focus:outline-none focus:ring-2 focus:ring-primary",
+                        selectedGame?.id === game.id ? "ring-2 ring-primary" : ""
+                    )}
+                >
+                    <Card className="bg-slate-800/60 border-slate-700 shadow-md h-full">
+                        <CardContent className="p-4 text-center">
+                            <div className="flex justify-end">
+                                <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+                            </div>
+                            <h3 className="text-lg font-bold text-white truncate">{game.name.toUpperCase()}</h3>
+                            <p className="text-xl font-semibold text-primary mt-2">₹{game.totalLoad.toFixed(2)} /-</p>
+                            <div className="flex justify-center mt-3">
+                                <div className="h-8 w-8 flex items-center justify-center rounded-full bg-primary/20 text-primary">
+                                    <Play className="h-5 w-5" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {selectedGame && liveBiddingDetails.map((details) => (
             (details.totalLoad > 0) && (

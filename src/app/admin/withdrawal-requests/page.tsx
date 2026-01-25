@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -195,11 +194,11 @@ export default function WithdrawalRequestsPage() {
                 </div>
             </CardContent>
         </Card>
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+            <div className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle className="text-2xl">Pending Withdrawal Requests</CardTitle>
-                    <CardDescription>Approve or reject user withdrawal requests.</CardDescription>
+                    <h1 className="text-2xl font-bold">Pending Withdrawal Requests</h1>
+                    <p className="text-muted-foreground">Approve or reject user withdrawal requests.</p>
                 </div>
                  {requests.length > 0 && (
                     <AlertDialog>
@@ -223,8 +222,8 @@ export default function WithdrawalRequestsPage() {
                         </AlertDialogContent>
                     </AlertDialog>
                 )}
-            </CardHeader>
-            <CardContent>
+            </div>
+            <div className="mt-4">
                  <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
                         <span>Show</span>
@@ -282,8 +281,8 @@ export default function WithdrawalRequestsPage() {
                     {renderPagination()}
                 </div>
                 )}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     </div>
   );
 }

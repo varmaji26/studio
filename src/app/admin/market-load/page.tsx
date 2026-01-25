@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -148,94 +147,90 @@ export default function MarketLoadPage() {
 
   return (
     <div className="flex-1 space-y-6">
-      <Card className="bg-card/80 border-white/10 shadow-lg">
-        <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <CardTitle className="text-3xl font-bold">Market-wise Load & Distribution</CardTitle>
-                    <CardDescription>
-                        An overview of the load, distribution, and profit/loss for each market for{' '}
-                        <span className="font-bold text-primary">{selectedDate ? format(selectedDate, "PPP") : 'all time'}</span>.
-                    </CardDescription>
-                </div>
-                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full sm:w-[180px] justify-start text-left font-normal",
-                                !selectedDate && "text-muted-foreground"
-                            )}
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={setSelectedDate}
-                            initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                    <Button onClick={handleDownloadPDF} variant="outline" className="w-full sm:w-auto" disabled={marketData.length === 0}>
-                        <Download className="h-4 w-4 mr-2" />
-                        PDF
-                    </Button>
-                </div>
-            </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader className="h-8 w-8 text-primary" />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>NAME</TableHead>
-                    <TableHead>LOAD</TableHead>
-                    <TableHead>DISTRIBUTION</TableHead>
-                    <TableHead>PROFIT/LOSS</TableHead>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+              <h1 className="text-3xl font-bold">Market-wise Load & Distribution</h1>
+              <p className="text-muted-foreground">
+                  An overview of the load, distribution, and profit/loss for each market for{' '}
+                  <span className="font-bold text-primary">{selectedDate ? format(selectedDate, "PPP") : 'all time'}</span>.
+              </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+               <Popover>
+                  <PopoverTrigger asChild>
+                      <Button
+                      variant={"outline"}
+                      className={cn(
+                          "w-full sm:w-[180px] justify-start text-left font-normal",
+                          !selectedDate && "text-muted-foreground"
+                      )}
+                      >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                      </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                      <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                      />
+                  </PopoverContent>
+              </Popover>
+              <Button onClick={handleDownloadPDF} variant="outline" className="w-full sm:w-auto" disabled={marketData.length === 0}>
+                  <Download className="h-4 w-4 mr-2" />
+                  PDF
+              </Button>
+          </div>
+      </div>
+      <div>
+        {loading ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader className="h-8 w-8 text-primary" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>NAME</TableHead>
+                  <TableHead>LOAD</TableHead>
+                  <TableHead>DISTRIBUTION</TableHead>
+                  <TableHead>PROFIT/LOSS</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {marketData.map((market) => (
+                  <TableRow key={market.gameName}>
+                    <TableCell>{market.gameName}</TableCell>
+                    <TableCell>₹{market.load.toFixed(2)}</TableCell>
+                    <TableCell>₹{market.distribution.toFixed(2)}</TableCell>
+                    <TableCell className={market.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
+                      ₹{market.profitLoss.toFixed(2)}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {marketData.map((market) => (
-                    <TableRow key={market.gameName}>
-                      <TableCell>{market.gameName}</TableCell>
-                      <TableCell>₹{market.load.toFixed(2)}</TableCell>
-                      <TableCell>₹{market.distribution.toFixed(2)}</TableCell>
-                      <TableCell className={market.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
-                        ₹{market.profitLoss.toFixed(2)}
+                ))}
+              </TableBody>
+              <TableFooter>
+                  <TableRow className="bg-muted/50 font-bold">
+                      <TableCell>Total</TableCell>
+                      <TableCell>₹{totalLoad.toFixed(2)}</TableCell>
+                      <TableCell>₹{totalDistribution.toFixed(2)}</TableCell>
+                      <TableCell className={totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
+                        ₹{totalProfitLoss.toFixed(2)}
                       </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableFooter>
-                    <TableRow className="bg-muted/50 font-bold">
-                        <TableCell>Total</TableCell>
-                        <TableCell>₹{totalLoad.toFixed(2)}</TableCell>
-                        <TableCell>₹{totalDistribution.toFixed(2)}</TableCell>
-                        <TableCell className={totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
-                          ₹{totalProfitLoss.toFixed(2)}
-                        </TableCell>
-                    </TableRow>
-                </TableFooter>
-              </Table>
-            </div>
-          )}
-          {marketData.length === 0 && !loading && (
-            <p className="text-center text-muted-foreground mt-4">
-              No market data available for the selected date.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+                  </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        )}
+        {marketData.length === 0 && !loading && (
+          <p className="text-center text-muted-foreground mt-4">
+            No market data available for the selected date.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

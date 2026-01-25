@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -234,12 +233,10 @@ export default function ManageGamesPage() {
 
   return (
     <div className="flex-1 space-y-6">
-      <div className="grid gap-6">
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl">Add New Game</CardTitle>
-            </CardHeader>
-            <CardContent>
+      <div className="space-y-6">
+        <div>
+            <h1 className="text-2xl font-bold">Add New Game</h1>
+            <div className="mt-4">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
@@ -349,39 +346,37 @@ export default function ManageGamesPage() {
                   </Button>
                 </form>
               </Form>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-card/80 border-white/10 shadow-lg">
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle className="text-2xl">All Games</CardTitle>
-                        <CardDescription>View, edit, or delete existing games. Today is {currentDay}.</CardDescription>
-                    </div>
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm" disabled={isResetting || games.length === 0}>
-                               {isResetting ? <Loader className="mr-2 h-4 w-4" /> : <RotateCcw className="mr-2 h-4 w-4" />}
-                               Reset All Results
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will reset all game results to "***-**-***". This action is useful for starting a new day but cannot be undone.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleResetAllResults}>Reset</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+            </div>
+        </div>
+        
+        <div className="mt-8">
+            <div className="flex justify-between items-start">
+                <div>
+                    <h2 className="text-2xl font-bold">All Games</h2>
+                    <p className="text-muted-foreground">View, edit, or delete existing games. Today is {currentDay}.</p>
                 </div>
-            </CardHeader>
-            <CardContent>
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" disabled={isResetting || games.length === 0}>
+                           {isResetting ? <Loader className="mr-2 h-4 w-4" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                           Reset All Results
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will reset all game results to "***-**-***". This action is useful for starting a new day but cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleResetAllResults}>Reset</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+            <div className="mt-4">
                <div className="mb-4">
                     <Select value={selectedGameId} onValueChange={setSelectedGameId}>
                         <SelectTrigger className="w-full sm:w-[280px]">
@@ -478,11 +473,9 @@ export default function ManageGamesPage() {
                       )}
                   </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+        </div>
       </div>
     </div>
   );
 }
-
-    
