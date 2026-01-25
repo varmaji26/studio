@@ -373,25 +373,13 @@ export default function Home() {
   const marqueeItems = Array(marqueeRepetitions).fill(settings.marquee);
 
   const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
-    const title = settings?.title || 'MATKA KING';
     const text = settings?.text || '';
     const textColor = settings?.textColor || '#FFFFFF';
-    const logoUrl = settings?.logo?.imageUrl;
-    const logoSize = settings?.logoSize || 24;
-    const titleSize = settings?.titleSize || 20;
     const textSize = settings?.textSize || 12;
 
     return (
         <div className="flex items-center mx-4" style={{ color: textColor }}>
-            {logoUrl ? (
-                <Image src={logoUrl} alt="Marquee Logo" width={logoSize} height={logoSize} className="mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} />
-            ) : (
-                <Trophy className="text-yellow-400 mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} />
-            )}
-            <div className="flex flex-col items-center">
-                <span className="font-bold tracking-wider" style={{ fontSize: `${titleSize}px` }}>{title}</span>
-                <span style={{ fontSize: `${textSize}px`}}>{text}</span>
-            </div>
+            <span style={{ fontSize: `${textSize}px`}}>{text}</span>
         </div>
     );
 };
@@ -527,10 +515,10 @@ export default function Home() {
       
       {settings.marquee?.text && (
         <div 
-            className="relative flex overflow-x-hidden text-white py-2" 
+            className="relative flex overflow-x-hidden text-white" 
             style={{ backgroundColor: settings.marquee?.backgroundColor || '#b91c1c' }}
         >
-            <div className="animate-marquee whitespace-nowrap flex">
+            <div className="animate-marquee whitespace-nowrap flex py-1">
                 <MarqueeContent />
                 <MarqueeContent />
             </div>
@@ -574,9 +562,9 @@ export default function Home() {
         {/* Betting Closed Dialog */}
          <Dialog open={!!closedGameInfo} onOpenChange={() => setClosedGameInfo(null)}>
             <DialogContent className="bg-white text-black p-0 max-w-xs rounded-lg">
-                <DialogHeader className="sr-only">
-                    <DialogTitle>Betting Closed</DialogTitle>
-                    <DialogDescription>The betting market for this game is currently closed.</DialogDescription>
+                <DialogHeader>
+                    <DialogTitle className="sr-only">Betting Closed</DialogTitle>
+                    <DialogDescription className="sr-only">The betting market for this game is currently closed.</DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col items-center text-center p-6 space-y-4">
                     <XCircle className="h-16 w-16 text-red-500" />
