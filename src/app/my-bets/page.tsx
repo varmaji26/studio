@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -232,85 +233,82 @@ export default function BidsHistoryPage() {
                 </Link>
                 <h1 className="text-xl font-bold">My Bets</h1>
             </header>
-            <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-0">
-                <Card className="bg-card/80 border-white/10 shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="text-2xl sm:text-3xl">Bids History</CardTitle>
-                        <CardDescription>View all your past and current bids here.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex justify-end items-center gap-2 mb-4">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    id="from-date"
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-[140px] justify-start text-left font-normal",
-                                        !fromDate && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {fromDate ? format(fromDate, "dd/MM/yy") : <span>From</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                    mode="single"
-                                    selected={fromDate}
-                                    onSelect={setFromDate}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                                </Popover>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    id="to-date"
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-[140px] justify-start text-left font-normal",
-                                        !toDate && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {toDate ? format(toDate, "dd/MM/yy") : <span>To</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="end">
-                                    <Calendar
-                                    mode="single"
-                                    selected={toDate}
-                                    onSelect={setToDate}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                                </Popover>
-                        </div>
+            <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-4">
+                <div className="mb-4">
+                    <h2 className="text-2xl sm:text-3xl font-bold">Bids History</h2>
+                    <p className="text-muted-foreground">View all your past and current bids here.</p>
+                </div>
 
-                        <Tabs defaultValue="all" onValueChange={setActiveTab}>
-                            <TabsList className="grid w-full grid-cols-4 bg-slate-900/80">
-                                <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All</TabsTrigger>
-                                <TabsTrigger value="running" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Running</TabsTrigger>
-                                <TabsTrigger value="won" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Won</TabsTrigger>
-                                <TabsTrigger value="lost" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Lost</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="all">
-                                {renderBidCards(paginatedBids)}
-                            </TabsContent>
-                            <TabsContent value="running">
-                                 {renderBidCards(paginatedBids)}
-                            </TabsContent>
-                             <TabsContent value="won">
-                                {renderBidCards(paginatedBids)}
-                            </TabsContent>
-                             <TabsContent value="lost">
-                                {renderBidCards(paginatedBids)}
-                            </TabsContent>
-                        </Tabs>
-                        {renderPagination()}
-                    </CardContent>
-                </Card>
+                <div className="flex justify-end items-center gap-2 mb-4">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            id="from-date"
+                            variant={"outline"}
+                            className={cn(
+                                "w-[140px] justify-start text-left font-normal",
+                                !fromDate && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {fromDate ? format(fromDate, "dd/MM/yy") : <span>From</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                            mode="single"
+                            selected={fromDate}
+                            onSelect={setFromDate}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                        </Popover>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            id="to-date"
+                            variant={"outline"}
+                            className={cn(
+                                "w-[140px] justify-start text-left font-normal",
+                                !toDate && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {toDate ? format(toDate, "dd/MM/yy") : <span>To</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                            <Calendar
+                            mode="single"
+                            selected={toDate}
+                            onSelect={setToDate}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                        </Popover>
+                </div>
+
+                <Tabs defaultValue="all" onValueChange={setActiveTab}>
+                    <TabsList className="grid w-full grid-cols-4 bg-slate-900/80">
+                        <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All</TabsTrigger>
+                        <TabsTrigger value="running" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Running</TabsTrigger>
+                        <TabsTrigger value="won" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Won</TabsTrigger>
+                        <TabsTrigger value="lost" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Lost</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="all">
+                        {renderBidCards(paginatedBids)}
+                    </TabsContent>
+                    <TabsContent value="running">
+                            {renderBidCards(paginatedBids)}
+                    </TabsContent>
+                        <TabsContent value="won">
+                        {renderBidCards(paginatedBids)}
+                    </TabsContent>
+                        <TabsContent value="lost">
+                        {renderBidCards(paginatedBids)}
+                    </TabsContent>
+                </Tabs>
+                {renderPagination()}
             </div>
         </div>
     )
