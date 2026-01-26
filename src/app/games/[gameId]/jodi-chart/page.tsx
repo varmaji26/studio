@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -96,19 +95,19 @@ export default function JodiChartPage() {
 
     if (loading) {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-white">
+            <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-white text-black">
-            <div className="bg-gray-100 p-4 text-center">
-                <h1 className="text-xl sm:text-2xl font-bold text-blue-800">
+        <div className="min-h-screen bg-background text-foreground">
+            <div className="bg-background/80 p-4 text-center">
+                <h1 className="text-xl sm:text-2xl font-bold text-primary">
                     {chartData?.title || `Jodi Chart`}
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                     Historical Jodi Records
                 </p>
             </div>
@@ -121,12 +120,12 @@ export default function JodiChartPage() {
                 </Button>
             </div>
             {chartData && parsedWeeklyData.length > 0 ? (
-                <div className="overflow-x-auto border-y-2 border-primary bg-white">
+                <div className="overflow-x-auto border-y-2 border-primary bg-card">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-blue-800 text-white font-bold text-center">
+                            <tr className="bg-primary/20 text-primary-foreground font-bold text-center">
                                 {activeDays.map(day => (
-                                    <th key={day} className="p-2 border border-gray-300">{dayAbbreviations[day] || day}</th>
+                                    <th key={day} className="p-2 border border-border">{dayAbbreviations[day] || day}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -135,15 +134,15 @@ export default function JodiChartPage() {
                                 <tr key={weekIndex}>
                                     {week.map((num, dayIndex) => (
                                         <td key={dayIndex} className={cn(
-                                            "p-2 border border-gray-300 font-bold text-center",
-                                            isRedNumber(num) ? 'text-red-600' : 'text-black'
+                                            "p-2 border border-border font-bold text-center",
+                                            isRedNumber(num) ? 'text-red-500' : 'text-foreground'
                                         )}>
                                             {num}
                                         </td>
                                     ))}
                                     {/* Pad row with empty cells if needed */}
                                     {Array.from({ length: Math.max(0, activeDays.length - week.length) }).map((_, i) => (
-                                        <td key={`pad-${i}`} className="p-2 border border-gray-300 font-bold text-black"></td>
+                                        <td key={`pad-${i}`} className="p-2 border border-border font-bold text-foreground"></td>
                                     ))}
                                 </tr>
                             ))}
@@ -152,7 +151,7 @@ export default function JodiChartPage() {
                 </div>
             ) : (
                  <div className="p-4">
-                    <p className="text-center text-gray-500 mt-8 py-10">
+                    <p className="text-center text-muted-foreground mt-8 py-10">
                         No Jodi chart data found for this game.
                      </p>
                  </div>

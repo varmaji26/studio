@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -35,7 +34,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     
     if (jodi === '**' || jodi === '*' || openPana === '***' ) {
       return (
-        <div className={cn("relative p-0 min-h-[30px] flex items-center justify-center font-bold text-base", isRed ? 'text-red-600' : 'text-black')}>
+        <div className={cn("relative p-0 min-h-[30px] flex items-center justify-center font-bold text-base", isRed ? 'text-red-500' : 'text-foreground')}>
             **
         </div>
       );
@@ -44,7 +43,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     return (
         <div className={cn(
             "flex items-center justify-center p-0 min-h-[30px] gap-0.5",
-            isRed ? 'text-red-600' : 'text-black'
+            isRed ? 'text-red-500' : 'text-foreground'
         )}>
             <div className="text-center text-xs font-semibold leading-tight flex flex-col">
                 {openPana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
@@ -146,19 +145,19 @@ export default function PanelChartPage() {
 
     if (!isClient || loading) {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-white">
+            <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
             </div>
         );
     }
     
     return (
-        <div className="min-h-screen bg-white text-black">
-             <div className="bg-gray-100 p-4 text-center">
-                <h1 className="text-xl sm:text-2xl font-bold text-blue-800">
+        <div className="min-h-screen bg-background text-foreground">
+             <div className="bg-background/80 p-4 text-center">
+                <h1 className="text-xl sm:text-2xl font-bold text-primary">
                     {chartData?.title || 'Panel Chart'}
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                     {chartData?.gameName.toUpperCase() || 'RECORD'}
                 </p>
             </div>
@@ -172,26 +171,26 @@ export default function PanelChartPage() {
             </div>
 
             {chartData && parsedRows.length > 0 ? (
-                <div className="overflow-x-auto border-y-2 border-yellow-600 bg-white">
+                <div className="overflow-x-auto border-y-2 border-primary bg-card">
                     <table className="w-full border-collapse">
                         <thead className="text-[9px] sm:text-[10px]">
-                            <tr className="bg-blue-800 text-white font-bold">
-                                <th className="p-0.5 border border-yellow-600">Date</th>
+                            <tr className="bg-primary/20 text-primary-foreground font-bold">
+                                <th className="p-0.5 border border-border">Date</th>
                                 {activeDays.map(day => (
-                                    <th key={day} className="p-0.5 border border-yellow-600">{dayAbbreviations[day]}</th>
+                                    <th key={day} className="p-0.5 border border-border">{dayAbbreviations[day]}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody className="text-center">
                            {parsedRows.map((row, rowIndex) => (
                                 <tr key={rowIndex}>
-                                    <td className="p-0.5 border border-gray-400 font-bold text-black text-[7px] text-center">
+                                    <td className="p-0.5 border border-border font-bold text-foreground text-[7px] text-center">
                                         <span>{row.dateRange.start}</span><br/>
                                         <span>To</span><br/>
                                         <span>{row.dateRange.end}</span>
                                     </td>
                                     {row.daysData.map((dayData, dayIndex) => (
-                                        <td key={dayIndex} className="p-0 border border-gray-400">
+                                        <td key={dayIndex} className="p-0 border border-border">
                                             <DayCell dayData={dayData} />
                                         </td>
                                     ))}
@@ -202,7 +201,7 @@ export default function PanelChartPage() {
                 </div>
             ) : (
                 <div className="p-4">
-                    <p className="text-center text-gray-500 mt-8 py-10">
+                    <p className="text-center text-muted-foreground mt-8 py-10">
                         No Panel chart data found for this game.
                     </p>
                 </div>
