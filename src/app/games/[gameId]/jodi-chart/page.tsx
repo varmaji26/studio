@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -95,19 +96,19 @@ export default function JodiChartPage() {
 
     if (loading) {
         return (
-            <div className="dark flex h-screen w-full items-center justify-center bg-background">
+            <div className="flex h-screen w-full items-center justify-center bg-white">
                 <Loader className="h-10 w-10 text-primary" />
             </div>
         );
     }
 
     return (
-        <div className="dark min-h-screen bg-background text-foreground">
-            <div className="bg-card/80 p-4 text-center">
-                <h1 className="text-xl sm:text-2xl font-bold text-primary">
+        <div className="min-h-screen bg-white text-black">
+            <div className="bg-gray-100 p-4 text-center">
+                <h1 className="text-xl sm:text-2xl font-bold text-blue-800">
                     {chartData?.title || `Jodi Chart`}
                 </h1>
-                <p className="text-muted-foreground">
+                <p className="text-gray-600">
                     Historical Jodi Records
                 </p>
             </div>
@@ -120,7 +121,7 @@ export default function JodiChartPage() {
                 </Button>
             </div>
             {chartData && parsedWeeklyData.length > 0 ? (
-                <div className="overflow-x-auto border-y-2 border-primary bg-orange-100">
+                <div className="overflow-x-auto border-y-2 border-primary bg-white">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-blue-800 text-white font-bold text-center">
@@ -151,7 +152,7 @@ export default function JodiChartPage() {
                 </div>
             ) : (
                  <div className="p-4">
-                    <p className="text-center text-muted-foreground mt-8 py-10">
+                    <p className="text-center text-gray-500 mt-8 py-10">
                         No Jodi chart data found for this game.
                      </p>
                  </div>

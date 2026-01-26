@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -145,19 +146,19 @@ export default function PanelChartPage() {
 
     if (!isClient || loading) {
         return (
-            <div className="dark flex h-screen w-full items-center justify-center bg-background">
+            <div className="flex h-screen w-full items-center justify-center bg-white">
                 <Loader className="h-10 w-10 text-primary" />
             </div>
         );
     }
     
     return (
-        <div className="dark min-h-screen bg-background text-foreground">
-             <div className="bg-card/80 p-4 text-center">
-                <h1 className="text-xl sm:text-2xl font-bold text-primary">
+        <div className="min-h-screen bg-white text-black">
+             <div className="bg-gray-100 p-4 text-center">
+                <h1 className="text-xl sm:text-2xl font-bold text-blue-800">
                     {chartData?.title || 'Panel Chart'}
                 </h1>
-                <p className="text-muted-foreground">
+                <p className="text-gray-600">
                     {chartData?.gameName.toUpperCase() || 'RECORD'}
                 </p>
             </div>
@@ -171,7 +172,7 @@ export default function PanelChartPage() {
             </div>
 
             {chartData && parsedRows.length > 0 ? (
-                <div className="overflow-x-auto border-y-2 border-yellow-600 bg-orange-100">
+                <div className="overflow-x-auto border-y-2 border-yellow-600 bg-white">
                     <table className="w-full border-collapse">
                         <thead className="text-[9px] sm:text-[10px]">
                             <tr className="bg-blue-800 text-white font-bold">
@@ -201,7 +202,7 @@ export default function PanelChartPage() {
                 </div>
             ) : (
                 <div className="p-4">
-                    <p className="text-center text-muted-foreground mt-8 py-10">
+                    <p className="text-center text-gray-500 mt-8 py-10">
                         No Panel chart data found for this game.
                     </p>
                 </div>
