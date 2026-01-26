@@ -185,35 +185,10 @@ export default function UpdateResultsPage() {
                 if (bid.status === 'won') {
                     const userRef = doc(db, 'users', bid.userId);
                     const winningAmount = bid.winningAmount || 0;
-                    
-                    // Deduct the winnings first
                     transaction.update(userRef, { balance: increment(-winningAmount) });
-                    
-                    // After deduction, check the balance
-                    const userDoc = await transaction.get(userRef);
-                    const currentBalance = userDoc.data()?.balance || 0;
-                    
-                    if (currentBalance < 0) {
-                        let balanceToRecover = Math.abs(currentBalance);
-                        const runningBetsQuery = query(collection(db, 'bids'), where('userId', '==', bid.userId), where('status', '==', 'running'), orderBy('createdAt', 'desc'));
-                        
-                        // We must get running bets within the transaction
-                        const runningBetsSnapshot = await getDocs(runningBetsQuery);
-
-                        for (const runningBetDoc of runningBetsSnapshot.docs) {
-                            if (balanceToRecover <= 0) break;
-                            const betToCancel = runningBetDoc.data();
-                            const cancelAmount = betToCancel.totalAmount;
-                            transaction.update(runningBetDoc.ref, { status: 'cancelled' });
-                            transaction.update(userRef, { balance: increment(cancelAmount) }); // Refund the bet amount
-                            balanceToRecover -= cancelAmount;
-                        }
-                    }
-
-                    transaction.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
-                } else if (bid.status === 'lost') {
-                    transaction.update(bidDoc.ref, { status: 'running' });
                 }
+                // Revert both 'won' and 'lost' bets to 'running'
+                transaction.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
             }
             
             const gameDoc = await transaction.get(gameDocRef);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, writeBatch, doc, where, getDocs, increment, getDoc, updateDoc, runTransaction, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -266,48 +266,52 @@ export default function UpdateResultsClosePage() {
     }
 
     setIsReverting(true);
+    const gameDocRef = doc(db, 'games', game.id);
+
     try {
-        const batch = writeBatch(db);
-        const gameDocRef = doc(db, 'games', game.id);
+        await runTransaction(db, async (transaction) => {
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-        const affectedBidsQuery = query(
-            collection(db, 'bids'),
-            where('gameId', '==', game.id)
-        );
+            // Query for all potentially affected bets for that game on that day
+            const affectedBidsQuery = query(
+                collection(db, 'bids'),
+                where('gameId', '==', game.id),
+                where('status', 'in', ['won', 'lost']),
+                where('createdAt', '>=', Timestamp.fromDate(startOfDay))
+            );
+            const bidsSnapshot = await getDocs(affectedBidsQuery);
 
-        const bidsSnapshot = await getDocs(affectedBidsQuery);
-
-        bidsSnapshot.forEach(bidDoc => {
-            const bid = bidDoc.data();
-            if (bid.status === 'won' && (bid.session === 'Close' || bid.betType === 'Jodi Digit')) {
-                const userDocRef = doc(db, 'users', bid.userId);
-                batch.update(userDocRef, { balance: increment(-bid.winningAmount) });
-                batch.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
-            } else if (bid.status === 'lost') {
-                // We also need to revert 'lost' bids that were not for the 'Open' session
-                if(bid.session !== 'Open') {
-                    batch.update(bidDoc.ref, { status: 'running' });
+            for (const bidDoc of bidsSnapshot.docs) {
+                const bid = bidDoc.data();
+                // Only revert 'Close' and 'Jodi' bets. 'Open' bets that were won/lost should remain so.
+                if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
+                    if (bid.status === 'won') {
+                        const userRef = doc(db, 'users', bid.userId);
+                        const winningAmount = bid.winningAmount || 0;
+                        transaction.update(userRef, { balance: increment(-winningAmount) });
+                    }
+                    transaction.update(bidDoc.ref, { status: 'running', winningAmount: 0 });
                 }
             }
+            
+            const gameDoc = await transaction.get(gameDocRef);
+            const openPana = gameDoc.data()?.openResult || '***';
+            
+            transaction.update(gameDocRef, {
+                closeResult: '**',
+                result: `${openPana}-**-**`,
+            });
         });
 
-        const gameDoc = await getDoc(gameDocRef);
-        const openPana = gameDoc.data()?.openResult || '***';
-        
-        batch.update(gameDocRef, {
-            closeResult: '**',
-            result: `${openPana}-**-**`,
-        });
-
-        await batch.commit();
         toast({
             title: 'Result Reverted!',
             description: `Close result for ${game.name} has been reverted. Incorrect winnings have been clawed back.`
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error reverting result: ', error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to revert result.' });
+        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to revert result.' });
     } finally {
         setIsReverting(false);
     }
