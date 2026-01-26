@@ -14,6 +14,7 @@ interface DownloadPageSettings extends DocumentData {
     downloadPageImage?: {
         imageUrl: string;
     };
+    appDownloadLink?: string;
 }
 
 export default function DownloadPage() {
@@ -77,7 +78,7 @@ export default function DownloadPage() {
 
         <div className="w-full max-w-md p-4 bg-background">
           <a
-            href="https://drive.usercontent.google.com/download?id=10kcuzCuNZkV7Mbv1IZVIanf-S1CZfYh-&export=download&authuser=0"
+            href={settings.appDownloadLink || "https://drive.usercontent.google.com/download?id=10kcuzCuNZkV7Mbv1IZVIanf-S1CZfYh-&export=download&authuser=0"}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full"

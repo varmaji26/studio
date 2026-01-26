@@ -31,6 +31,7 @@ const settingsSchema = z.object({
   whatsappNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
   callSupportNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
   telegramLink: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
+  appDownloadLink: z.string().url('Please enter a valid URL for the app download.').optional().or(z.literal('')),
   upiId: z.string().optional(),
   bankDetails: z.string().optional(),
   paytmNumber: z.string().optional(),
@@ -169,6 +170,7 @@ export default function SettingsPage() {
       whatsappNumber: '',
       callSupportNumber: '',
       telegramLink: '',
+      appDownloadLink: '',
       upiId: '',
       bankDetails: '',
       paytmNumber: '',
@@ -220,6 +222,7 @@ export default function SettingsPage() {
             whatsappNumber: data.whatsappNumber || '',
             callSupportNumber: data.callSupportNumber || '',
             telegramLink: data.telegramLink || '',
+            appDownloadLink: data.appDownloadLink || '',
             upiId: data.paymentDetails?.UPI?.details || '',
             bankDetails: data.paymentDetails?.['Bank Transfer']?.details || '',
             paytmNumber: data.paymentDetails?.['Paytm/PhonePe']?.details || '',
@@ -483,6 +486,7 @@ export default function SettingsPage() {
             whatsappNumber: values.whatsappNumber,
             callSupportNumber: values.callSupportNumber,
             telegramLink: values.telegramLink,
+            appDownloadLink: values.appDownloadLink,
             minimumDepositAmount: values.minimumDepositAmount,
             minimumWithdrawalAmount: values.minimumWithdrawalAmount,
             paymentDetails: {
@@ -916,11 +920,28 @@ export default function SettingsPage() {
 
                 {/* Support & Notice Section */}
                  <AccordionItem value="item-3">
-                  <AccordionTrigger className="text-lg font-semibold">Support & Amounts</AccordionTrigger>
+                  <AccordionTrigger className="text-lg font-semibold">Support, Links & Amounts</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
                       <FormField control={form.control} name="whatsappNumber" render={({ field }) => (<FormItem><FormLabel>WhatsApp Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="e.g., https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <Separator/>
+                        <FormField
+                            control={form.control}
+                            name="appDownloadLink"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>App Download Link</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="https://example.com/app.apk" {...field} />
+                                    </FormControl>
+                                     <FormDescriptionComponent>
+                                        This link will be used for the "Update Now" button on the download page.
+                                    </FormDescriptionComponent>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                        <Separator/>
                        <FormField control={form.control} name="minimumDepositAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Deposit Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>)} />
                        <FormField control={form.control} name="minimumWithdrawalAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Withdrawal Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 1000" {...field} /></FormControl><FormMessage /></FormItem>)} />
