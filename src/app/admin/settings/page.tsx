@@ -135,6 +135,7 @@ const settingsSchema = z.object({
     (val) => (String(val).trim() === '' ? 1000 : Number(val)),
     z.number().min(1, 'Minimum withdrawal must be at least 1.')
   ),
+  globalMarketOpenTime: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -197,6 +198,7 @@ export default function SettingsPage() {
       refereeBonusAmount: 0,
       minimumDepositAmount: 100,
       minimumWithdrawalAmount: 1000,
+      globalMarketOpenTime: '09:00',
     },
   });
 
@@ -249,6 +251,7 @@ export default function SettingsPage() {
             refereeBonusAmount: data.referralBonus?.refereeAmount || 0,
             minimumDepositAmount: data.minimumDepositAmount || 100,
             minimumWithdrawalAmount: data.minimumWithdrawalAmount || 1000,
+            globalMarketOpenTime: data.globalMarketOpenTime || '09:00',
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -489,6 +492,7 @@ export default function SettingsPage() {
             appDownloadLink: values.appDownloadLink,
             minimumDepositAmount: values.minimumDepositAmount,
             minimumWithdrawalAmount: values.minimumWithdrawalAmount,
+            globalMarketOpenTime: values.globalMarketOpenTime,
             paymentDetails: {
                 ...currentPaymentDetails,
                 'UPI': { title: "UPI Payment", details: values.upiId },
@@ -814,7 +818,7 @@ export default function SettingsPage() {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5']} className="w-full">
+              <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5', 'item-7']} className="w-full">
                 {/* Golden Ank & Marquee Section */}
                 <AccordionItem value="item-1">
                   <AccordionTrigger className="text-lg font-semibold">Golden Ank & Marquee</AccordionTrigger>
@@ -993,6 +997,30 @@ export default function SettingsPage() {
                       <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                   </AccordionContent>
                 </AccordionItem>
+                
+                {/* Market Time Settings Section */}
+                 <AccordionItem value="item-7">
+                      <AccordionTrigger className="text-lg font-semibold">Market Time Settings</AccordionTrigger>
+                      <AccordionContent className="space-y-4 pt-4">
+                            <FormField
+                                control={form.control}
+                                name="globalMarketOpenTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Global Market Open Time</FormLabel>
+                                        <FormControl>
+                                            <Input type="time" {...field} />
+                                        </FormControl>
+                                        <FormDescriptionComponent>
+                                            Set a global time for all markets to start. Bets can only be placed after this time.
+                                        </FormDescriptionComponent>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                      </AccordionContent>
+                 </AccordionItem>
                 
                 {/* Data Management Section */}
                  <AccordionItem value="item-6">

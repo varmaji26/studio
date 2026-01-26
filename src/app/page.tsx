@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/carousel"
 import Autoplay from "embla-carousel-autoplay"
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 interface Game extends DocumentData {
@@ -103,7 +104,8 @@ interface AppSettings extends DocumentData {
         enabled: boolean;
         imageUrl: string;
         link: string;
-    }
+    },
+    globalMarketOpenTime?: string;
 }
 
 interface UserProfile extends DocumentData {
@@ -116,14 +118,16 @@ interface UserProfile extends DocumentData {
 const GameCard = memo(function GameCard({
     game,
     onBettingClosedClick,
-    isActive
+    isActive,
+    isMarketOpenGlobally
 }: {
     game: Game;
     onBettingClosedClick: (game: Game) => void;
     isActive: boolean;
+    isMarketOpenGlobally: boolean;
 }) {
     const bettingClosed = isBettingClosed(game.closeTime);
-    const isPlayable = isActive && !bettingClosed;
+    const isPlayable = isActive && !bettingClosed && isMarketOpenGlobally;
 
     return (
         <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
@@ -140,7 +144,7 @@ const GameCard = memo(function GameCard({
                         "text-xs font-semibold",
                         !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                     )}>
-                        {!isActive ? 'Market is close' : !isPlayable ? 'Market is close' : game.status}
+                        {!isMarketOpenGlobally ? 'Market is close' : !isActive ? 'Market is close' : !isPlayable ? 'Market is close' : game.status}
                     </p>
                 </div>
             </div>
@@ -212,8 +216,15 @@ export default function Home() {
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   const [closedGameInfo, setClosedGameInfo] = useState<Game | null>(null);
+  const [isMarketOpenGlobally, setIsMarketOpenGlobally] = useState(true);
+  const [now, setNow] = useState(new Date());
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
+
+  useEffect(() => {
+    const timerId = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timerId);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -300,6 +311,17 @@ export default function Home() {
         settingsUnsubscribe?.();
     };
   }, [user?.uid, currentDay]);
+
+  useEffect(() => {
+    if (settings.globalMarketOpenTime) {
+      const [hours, minutes] = settings.globalMarketOpenTime.split(':').map(Number);
+      const marketOpenTime = new Date(now);
+      marketOpenTime.setHours(hours, minutes, 0, 0);
+      setIsMarketOpenGlobally(now >= marketOpenTime);
+    } else {
+      setIsMarketOpenGlobally(true);
+    }
+  }, [now, settings.globalMarketOpenTime]);
   
   useEffect(() => {
     if (!gamesLoading) {
@@ -524,6 +546,15 @@ export default function Home() {
       
       <main className="flex-1 flex flex-col gap-4 p-2 pb-28 overflow-y-auto">
         
+        {!isMarketOpenGlobally && settings.globalMarketOpenTime && (
+            <Alert variant="destructive" className="bg-yellow-600/20 border-yellow-500/30 text-yellow-300">
+                <AlertTitle className="font-bold text-yellow-200">Market Closed</AlertTitle>
+                <AlertDescription className="text-yellow-300/90">
+                   All markets are currently closed. Bidding will open at {formatTime(settings.globalMarketOpenTime)}.
+                </AlertDescription>
+            </Alert>
+        )}
+
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
             <DialogContent className="p-0 border-0 bg-transparent max-w-[280px] shadow-none" onInteractOutside={handleBonusPopupClose}>
@@ -691,6 +722,7 @@ export default function Home() {
                             game={game} 
                             onBettingClosedClick={setClosedGameInfo}
                             isActive={isActiveToday}
+                            isMarketOpenGlobally={isMarketOpenGlobally}
                         />
                       )
                     })}
