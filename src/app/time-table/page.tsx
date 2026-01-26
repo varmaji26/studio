@@ -57,8 +57,8 @@ export default function TimeTablePage() {
     }
 
     return (
-        <div className="dark min-h-screen bg-background text-foreground p-2 sm:p-4 pb-28">
-            <div className="max-w-4xl mx-auto">
+        <div className="dark min-h-screen bg-background text-foreground p-2 sm:p-4">
+            <div className="max-w-4xl mx-auto mb-28">
                 <Card className="bg-card/80 border-white/10 shadow-lg">
                     <CardHeader className="text-center relative">
                          <Link href="/" replace className="absolute left-4 top-1/2 -translate-y-1/2">
