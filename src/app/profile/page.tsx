@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -96,10 +97,10 @@ export default function ProfilePage() {
   
   return (
     <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-      <div className="max-w-md mx-auto">
+      <div className="max-w-xs mx-auto">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl sm:text-3xl">My Profile</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">My Profile</CardTitle>
             <CardDescription>
               View your profile, manage funds, and update your settings.
             </CardDescription>
@@ -118,20 +119,20 @@ export default function ProfilePage() {
                         <label className="text-sm font-medium text-muted-foreground">
                         Username
                         </label>
-                        <p className="text-lg font-semibold">{user.displayName}</p>
+                        <p className="text-base font-semibold">{user.displayName}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-muted-foreground">
                         Mobile Number
                         </label>
-                        <p className="text-lg font-semibold">{mobileNumber}</p>
+                        <p className="text-base font-semibold">{mobileNumber}</p>
                     </div>
                      <div>
                         <label className="text-sm font-medium text-muted-foreground">
                         Referral Code
                         </label>
                         <div className="flex items-center gap-2">
-                           <p className="text-lg font-semibold text-primary">{profile.referralCode || 'N/A'}</p>
+                           <p className="text-base font-semibold text-primary">{profile.referralCode || 'N/A'}</p>
                            {profile.referralCode && (
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleCopyToClipboard}>
                                     <Copy className="h-4 w-4" />
@@ -143,23 +144,23 @@ export default function ProfilePage() {
                         <label className="text-sm font-medium text-muted-foreground">
                         Joined
                         </label>
-                        <p className="text-lg font-semibold">{creationDate}</p>
+                        <p className="text-base font-semibold">{creationDate}</p>
                     </div>
                      <div className="md:col-span-2 grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-sm font-medium text-muted-foreground">
                                 Real Balance
                             </label>
-                            <p className="text-2xl font-bold text-green-400 flex items-center gap-2">
-                               <Wallet className="h-6 w-6" /> ₹{profile.balance?.toFixed(0) || '0'}
+                            <p className="text-xl font-bold text-green-400 flex items-center gap-2">
+                               <Wallet className="h-5 w-5" /> ₹{profile.balance?.toFixed(0) || '0'}
                             </p>
                         </div>
                          <div>
                             <label className="text-sm font-medium text-muted-foreground">
                                 Bonus Balance
                             </label>
-                            <p className="text-2xl font-bold text-amber-400 flex items-center gap-2">
-                               <Gift className="h-6 w-6" /> ₹{profile.bonusBalance?.toFixed(0) || '0'}
+                            <p className="text-xl font-bold text-amber-400 flex items-center gap-2">
+                               <Gift className="h-5 w-5" /> ₹{profile.bonusBalance?.toFixed(0) || '0'}
                             </p>
                         </div>
                     </div>
@@ -167,7 +168,7 @@ export default function ProfilePage() {
                         <label className="text-sm font-medium text-muted-foreground">
                             Total Balance
                         </label>
-                        <p className="text-3xl font-bold text-primary flex items-center gap-2">
+                        <p className="text-2xl font-bold text-primary flex items-center gap-2">
                            ₹{totalBalance.toFixed(0)}
                         </p>
                     </div>
@@ -176,8 +177,8 @@ export default function ProfilePage() {
     
             <div className="space-y-4">
                  <Link href="/add-fund">
-                    <Button className="w-full h-16 bg-green-500 hover:bg-green-600 text-white font-bold text-lg flex items-center gap-3">
-                        <Wallet className="h-7 w-7" />
+                    <Button className="w-full h-14 bg-green-500 hover:bg-green-600 text-white font-bold text-base flex items-center gap-3">
+                        <Wallet className="h-6 w-6" />
                         Add Points (Fund Wallet)
                     </Button>
                 </Link>
