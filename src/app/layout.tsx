@@ -85,6 +85,7 @@ export default function RootLayout({
 
 
   const isUserPanel = !pathname.startsWith('/admin');
+  const showBottomNav = isUserPanel && !pathname.includes('/jodi-chart') && !pathname.includes('/panel-chart');
 
   return (
     <html lang="en">
@@ -101,7 +102,7 @@ export default function RootLayout({
         <main>
             {children}
         </main>
-        {isUserPanel && <BottomNavbar settings={settings} />}
+        {showBottomNav && <BottomNavbar settings={settings} />}
         <Toaster />
       </body>
     </html>
