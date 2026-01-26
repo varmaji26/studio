@@ -360,11 +360,7 @@ export default function Home() {
 
   if (loading || !user) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-background space-y-4">
-        <div className="flex items-center gap-4 text-primary animate-pulse">
-            <Crown className="h-12 w-12" />
-            <h1 className="text-4xl font-bold">MATKA KING</h1>
-        </div>
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 text-primary" />
       </div>
     );
