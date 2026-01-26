@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -511,8 +512,7 @@ export default function Home() {
         </div>
         {settings.marquee?.text && (
             <div 
-                className="relative flex overflow-x-hidden text-white py-1 mt-4 rounded-md" 
-                style={{ backgroundColor: settings.marquee?.backgroundColor || '#b91c1c' }}
+                className="relative flex overflow-x-hidden text-white py-1 -mx-4" 
             >
                 <div className="animate-marquee whitespace-nowrap flex">
                     <MarqueeContent />
