@@ -671,7 +671,6 @@ export default function Home() {
         )}
 
         <div>
-          <h2 className="text-xl text-center font-bold p-4">Matka Games</h2>
             {gamesLoading ? (
                <div className="space-y-4">
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
