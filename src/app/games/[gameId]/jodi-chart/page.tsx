@@ -120,10 +120,10 @@ export default function JodiChartPage() {
                 </Button>
             </div>
             {chartData && parsedWeeklyData.length > 0 ? (
-                <div className="overflow-x-auto border-y-2 border-primary bg-card">
+                <div className="overflow-x-auto border-y-2 border-primary bg-white">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-primary/20 text-primary-foreground font-bold text-center">
+                            <tr className="bg-gray-200 text-black font-bold text-center">
                                 {activeDays.map(day => (
                                     <th key={day} className="p-2 border border-border">{dayAbbreviations[day] || day}</th>
                                 ))}
@@ -135,14 +135,14 @@ export default function JodiChartPage() {
                                     {week.map((num, dayIndex) => (
                                         <td key={dayIndex} className={cn(
                                             "p-2 border border-border font-bold text-center",
-                                            isRedNumber(num) ? 'text-red-500' : 'text-foreground'
+                                            isRedNumber(num) ? 'text-red-500' : 'text-black'
                                         )}>
                                             {num}
                                         </td>
                                     ))}
                                     {/* Pad row with empty cells if needed */}
                                     {Array.from({ length: Math.max(0, activeDays.length - week.length) }).map((_, i) => (
-                                        <td key={`pad-${i}`} className="p-2 border border-border font-bold text-foreground"></td>
+                                        <td key={`pad-${i}`} className="p-2 border border-border font-bold text-black"></td>
                                     ))}
                                 </tr>
                             ))}

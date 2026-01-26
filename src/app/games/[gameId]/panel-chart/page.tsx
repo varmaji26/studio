@@ -34,7 +34,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     
     if (jodi === '**' || jodi === '*' || openPana === '***' ) {
       return (
-        <div className={cn("relative p-0 min-h-[30px] flex items-center justify-center font-bold text-base", isRed ? 'text-red-500' : 'text-foreground')}>
+        <div className={cn("relative p-0 min-h-[30px] flex items-center justify-center font-bold text-base", isRed ? 'text-red-500' : 'text-black')}>
             **
         </div>
       );
@@ -43,7 +43,7 @@ const DayCell = ({ dayData }: { dayData: { openPana: string; jodi: string; close
     return (
         <div className={cn(
             "flex items-center justify-center p-0 min-h-[30px] gap-0.5",
-            isRed ? 'text-red-500' : 'text-foreground'
+            isRed ? 'text-red-500' : 'text-black'
         )}>
             <div className="text-center text-xs font-semibold leading-tight flex flex-col">
                 {openPana.split('').map((digit, i) => <span key={i}>{digit === '*' ? ' ' : digit}</span>)}
@@ -171,10 +171,10 @@ export default function PanelChartPage() {
             </div>
 
             {chartData && parsedRows.length > 0 ? (
-                <div className="overflow-x-auto border-y-2 border-primary bg-card">
+                <div className="overflow-x-auto border-y-2 border-primary bg-white">
                     <table className="w-full border-collapse">
                         <thead className="text-[9px] sm:text-[10px]">
-                            <tr className="bg-primary/20 text-primary-foreground font-bold">
+                            <tr className="bg-gray-200 text-black font-bold">
                                 <th className="p-0.5 border border-border">Date</th>
                                 {activeDays.map(day => (
                                     <th key={day} className="p-0.5 border border-border">{dayAbbreviations[day]}</th>
@@ -184,7 +184,7 @@ export default function PanelChartPage() {
                         <tbody className="text-center">
                            {parsedRows.map((row, rowIndex) => (
                                 <tr key={rowIndex}>
-                                    <td className="p-0.5 border border-border font-bold text-foreground text-[7px] text-center">
+                                    <td className="p-0.5 border border-border font-bold text-black text-[7px] text-center">
                                         <span>{row.dateRange.start}</span><br/>
                                         <span>To</span><br/>
                                         <span>{row.dateRange.end}</span>
