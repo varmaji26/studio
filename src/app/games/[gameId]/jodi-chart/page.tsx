@@ -86,11 +86,30 @@ export default function JodiChartPage() {
         return chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
     }, [chartData]);
     
+    const dayIndices = useMemo(() => {
+        return activeDays.map(day => allDays.indexOf(day));
+    }, [activeDays]);
+    
     const parsedWeeklyData = useMemo(() => {
         if (!chartData?.data) return [];
-        const rows = chartData.data.trim().split('\n');
-        return rows.map(row => row.trim().split(/\s+/).filter(Boolean));
-    }, [chartData]);
+        
+        const allNumbers = chartData.data.trim().split(/\s+/).filter(Boolean);
+        const weeklyData: string[][] = [];
+        
+        // Assume data is stored for 7 days per week, we chunk by 7
+        for (let i = 0; i < allNumbers.length; i += 7) {
+            const weekSlice = allNumbers.slice(i, i + 7);
+            // Pad the week if it's incomplete
+            while (weekSlice.length < 7) {
+                weekSlice.push('*');
+            }
+            // Filter the week to only include active days
+            const filteredWeek = dayIndices.map(index => weekSlice[index] || '*');
+            weeklyData.push(filteredWeek);
+        }
+        
+        return weeklyData;
+    }, [chartData, dayIndices]);
 
 
     if (loading) {
@@ -139,10 +158,6 @@ export default function JodiChartPage() {
                                         )}>
                                             {num}
                                         </td>
-                                    ))}
-                                    {/* Pad row with empty cells if needed */}
-                                    {Array.from({ length: Math.max(0, activeDays.length - week.length) }).map((_, i) => (
-                                        <td key={`pad-${i}`} className="p-2 border border-border font-bold text-black"></td>
                                     ))}
                                 </tr>
                             ))}

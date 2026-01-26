@@ -100,7 +100,7 @@ export default function PanelChartPage() {
     }, [gameId]);
 
     const activeDays = chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
-    const dayIndices = activeDays.map(day => allDays.indexOf(day));
+    const dayIndices = React.useMemo(() => activeDays.map(day => allDays.indexOf(day)), [activeDays]);
 
     const parsedRows = React.useMemo(() => {
         if (!chartData?.data) return [];
