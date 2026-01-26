@@ -96,7 +96,7 @@ export default function ProfilePage() {
   
   return (
     <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-6">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-md mx-auto">
         <Card className="bg-card/80 border-white/10 shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl sm:text-3xl">My Profile</CardTitle>
