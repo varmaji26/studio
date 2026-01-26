@@ -254,7 +254,7 @@ export default function UpdateResultsClosePage() {
     }
   };
 
-  const handleRevertResult = async () => {
+  const handleRevertCloseResult = async () => {
     if (!selectedGameId) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please select a game first.' });
         return;
@@ -425,7 +425,7 @@ export default function UpdateResultsClosePage() {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleRevertResult}>Confirm Revert</AlertDialogAction>
+                                  <AlertDialogAction onClick={handleRevertCloseResult}>Confirm Revert</AlertDialogAction>
                               </AlertDialogFooter>
                           </AlertDialogContent>
                       </AlertDialog>
