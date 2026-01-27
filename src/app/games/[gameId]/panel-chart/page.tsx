@@ -84,7 +84,20 @@ export default function PanelChartPage() {
                 if (chartDoc.exists()) {
                     setChartData({ id: chartDoc.id, ...chartDoc.data() } as PanelChartData);
                 } else {
-                    setChartData(null);
+                    const gameDocRef = doc(db, 'games', gameId);
+                    const gameDoc = await getDoc(gameDocRef);
+                    if (gameDoc.exists()) {
+                        const gameData = gameDoc.data();
+                        setChartData({
+                            id: gameId,
+                            gameName: gameData.name || 'Game',
+                            title: `PANEL CHART FOR ${gameData.name.toUpperCase()}`,
+                            data: '',
+                            activeDays: gameData.activeDays || allDays
+                        });
+                    } else {
+                        setChartData(null);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching Panel chart data:", error);
@@ -153,19 +166,20 @@ export default function PanelChartPage() {
     
     return (
         <div className="h-screen flex flex-col bg-background text-foreground">
-             <header className="p-4 text-center bg-background/80 backdrop-blur-sm z-30 border-b border-primary/20 shrink-0">
+             <header className="p-4 text-center bg-background/80 backdrop-blur-sm z-30 shrink-0 relative">
                 <h1 className="text-xl sm:text-2xl font-bold text-primary">
                     {chartData?.title || 'Panel Chart'}
                 </h1>
                 <p className="text-muted-foreground text-sm">
                     {chartData?.gameName.toUpperCase() || 'RECORD'}
                 </p>
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></div>
             </header>
 
             {chartData && parsedRows.length > 0 ? (
                 <div className="flex-1 overflow-auto">
                     <table className="w-full border-collapse bg-white">
-                        <thead className="sticky top-0 z-20 border-t-2 border-primary">
+                        <thead className="sticky top-0 z-20">
                             <tr className="text-black font-bold text-[9px] sm:text-[10px]">
                                 <th className="sticky left-0 p-0.5 border border-border bg-gray-300 z-30">Date</th>
                                 {activeDays.map(day => (
