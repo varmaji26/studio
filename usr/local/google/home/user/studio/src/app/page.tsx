@@ -38,6 +38,7 @@ import {
   IndianRupee,
   XCircle,
   Copy,
+  ArrowUpCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -47,8 +48,6 @@ import { formatTime, cn, isBettingClosed, formatGameResult } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateProfile } from 'firebase/auth';
-import { BottomNavbar } from '@/components/bottom-navbar';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import {
   Carousel,
@@ -57,6 +56,7 @@ import {
 } from "@/components/ui/carousel"
 import Autoplay from "embla-carousel-autoplay"
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 interface Game extends DocumentData {
@@ -104,7 +104,8 @@ interface AppSettings extends DocumentData {
         enabled: boolean;
         imageUrl: string;
         link: string;
-    }
+    },
+    globalMarketOpenTime?: string;
 }
 
 interface UserProfile extends DocumentData {
@@ -117,14 +118,16 @@ interface UserProfile extends DocumentData {
 const GameCard = memo(function GameCard({
     game,
     onBettingClosedClick,
-    isActive
+    isActive,
+    isMarketOpenGlobally
 }: {
     game: Game;
     onBettingClosedClick: (game: Game) => void;
     isActive: boolean;
+    isMarketOpenGlobally: boolean;
 }) {
     const bettingClosed = isBettingClosed(game.closeTime);
-    const isPlayable = isActive && !bettingClosed;
+    const isPlayable = isActive && !bettingClosed && isMarketOpenGlobally;
 
     return (
         <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
@@ -141,7 +144,7 @@ const GameCard = memo(function GameCard({
                         "text-xs font-semibold",
                         !isPlayable ? 'text-red-400' : (game.status.toLowerCase().includes('open') ? 'text-green-400' : 'text-red-400')
                     )}>
-                        {!isActive ? 'Market is close' : !isPlayable ? 'Market is close' : game.status}
+                        {!isMarketOpenGlobally ? 'Market is close' : !isActive ? 'Market is close' : !isPlayable ? 'Market is close' : game.status}
                     </p>
                 </div>
             </div>
@@ -213,8 +216,15 @@ export default function Home() {
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   const [closedGameInfo, setClosedGameInfo] = useState<Game | null>(null);
+  const [isMarketOpenGlobally, setIsMarketOpenGlobally] = useState(true);
+  const [now, setNow] = useState(new Date());
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
+
+  useEffect(() => {
+    const timerId = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timerId);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -301,6 +311,17 @@ export default function Home() {
         settingsUnsubscribe?.();
     };
   }, [user?.uid, currentDay]);
+
+  useEffect(() => {
+    if (settings.globalMarketOpenTime) {
+      const [hours, minutes] = settings.globalMarketOpenTime.split(':').map(Number);
+      const marketOpenTime = new Date(now);
+      marketOpenTime.setHours(hours, minutes, 0, 0);
+      setIsMarketOpenGlobally(now >= marketOpenTime);
+    } else {
+      setIsMarketOpenGlobally(true);
+    }
+  }, [now, settings.globalMarketOpenTime]);
   
   useEffect(() => {
     if (!gamesLoading) {
@@ -373,25 +394,13 @@ export default function Home() {
   const marqueeItems = Array(marqueeRepetitions).fill(settings.marquee);
 
   const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
-    const title = settings?.title || 'MATKA KING';
     const text = settings?.text || '';
     const textColor = settings?.textColor || '#FFFFFF';
-    const logoUrl = settings?.logo?.imageUrl;
-    const logoSize = settings?.logoSize || 24;
-    const titleSize = settings?.titleSize || 20;
     const textSize = settings?.textSize || 12;
 
     return (
         <div className="flex items-center mx-4" style={{ color: textColor }}>
-            {logoUrl ? (
-                <Image src={logoUrl} alt="Marquee Logo" width={logoSize} height={logoSize} className="mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} />
-            ) : (
-                <Trophy className="text-yellow-400 mr-2" style={{ width: `${logoSize}px`, height: `${logoSize}px`}} />
-            )}
-            <div className="flex flex-col items-center">
-                <span className="font-bold tracking-wider" style={{ fontSize: `${titleSize}px` }}>{title}</span>
-                <span style={{ fontSize: `${textSize}px`}}>{text}</span>
-            </div>
+            <span style={{ fontSize: `${textSize}px`}}>{text}</span>
         </div>
     );
 };
@@ -408,7 +417,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="bg-card/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
+      <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
         <div className="flex items-center justify-between">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
@@ -416,7 +425,7 @@ export default function Home() {
                   <Menu className="h-8 w-8 text-green-500" strokeWidth={3} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="bg-card border-r-0 text-foreground flex flex-col p-0">
+              <SheetContent side="left" className="bg-background/80 border-r-0 text-foreground flex flex-col p-0">
                  <div className="flex-1 overflow-y-auto">
                     <SheetHeader className="p-6 flex flex-row justify-between items-center">
                         <SheetTitle className="text-primary text-2xl flex items-center gap-2">
@@ -465,8 +474,8 @@ export default function Home() {
                             <span>Contact</span>
                         </Link>
                         <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
-                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Download className="h-5 w-5" /></div>
-                            <span>Download App</span>
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><ArrowUpCircle className="h-5 w-5" /></div>
+                            <span>Update App</span>
                         </Link>
                         <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Star className="h-5 w-5" /></div>
@@ -523,22 +532,29 @@ export default function Home() {
                 </Button>
             </Link>
         </div>
-      </header>
-      
-      {settings.marquee?.text && (
-        <div 
-            className="relative flex overflow-x-hidden text-white py-2" 
-            style={{ backgroundColor: settings.marquee?.backgroundColor || '#b91c1c' }}
-        >
-            <div className="animate-marquee whitespace-nowrap flex">
-                <MarqueeContent />
-                <MarqueeContent />
+        {settings.marquee?.text && (
+            <div 
+                className="relative flex overflow-x-hidden text-white py-1 -mx-4" 
+            >
+                <div className="animate-marquee whitespace-nowrap flex">
+                    <MarqueeContent />
+                    <MarqueeContent />
+                </div>
             </div>
-        </div>
-      )}
+        )}
+      </header>
       
       <main className="flex-1 flex flex-col gap-4 p-2 pb-28 overflow-y-auto">
         
+        {!isMarketOpenGlobally && settings.globalMarketOpenTime && (
+            <Alert variant="destructive" className="bg-yellow-600/20 border-yellow-500/30 text-yellow-300">
+                <AlertTitle className="font-bold text-yellow-200">Market Closed</AlertTitle>
+                <AlertDescription className="text-yellow-300/90 text-xs">
+                   All markets are currently closed. Bidding will open at {formatTime(settings.globalMarketOpenTime)}.
+                </AlertDescription>
+            </Alert>
+        )}
+
         {/* Bonus Popup Dialog */}
         <Dialog open={showBonusPopup} onOpenChange={(isOpen) => !isOpen && handleBonusPopupClose()}>
             <DialogContent className="p-0 border-0 bg-transparent max-w-[280px] shadow-none" onInteractOutside={handleBonusPopupClose}>
@@ -636,35 +652,35 @@ export default function Home() {
           </Card>
         )}
         
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader className="p-4">
-            <CardTitle className="text-xl text-center font-bold">Latest Results</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            {gamesLoading ? (
-              <div className="grid grid-cols-4 gap-1">
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-                <Skeleton className="h-9 w-full bg-slate-700/50" />
-              </div>
-            ) : games.length > 0 ? (
-              <div className="grid grid-cols-4 gap-1">
-                {games.map((game) => (
-                  <div key={game.id} className="flex flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-900 p-1 rounded-md border border-slate-700 text-center">
-                    <span className="text-[10px] font-medium text-white truncate w-full">{game.name}</span>
-                    <span className="text-[11px] font-bold text-yellow-400">{formatGameResult(game, true)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground">No results available right now.</p>
-            )}
-          </CardContent>
+        <Card className="bg-slate-900/50 border border-slate-700 rounded-lg shadow-lg">
+            <CardContent className="p-2">
+                {gamesLoading ? (
+                <div className="h-9 flex items-center justify-center">
+                    <Loader className="h-6 w-6" />
+                </div>
+                ) : games.length > 0 ? (
+                <div className="relative flex overflow-hidden group">
+                    <div className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
+                        {games.concat(games).map((game, index) => (
+                            <div key={`${game.id}-${index}`} className="flex items-center justify-center text-center mx-4 gap-2">
+                                <span className="text-sm font-medium text-white/80">{game.name}</span>
+                                <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div aria-hidden="true" className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
+                        {games.concat(games).map((game, index) => (
+                            <div key={`${game.id}-${index}-clone`} className="flex items-center justify-center text-center mx-4 gap-2">
+                                <span className="text-sm font-medium text-white/80">{game.name}</span>
+                                <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                ) : (
+                <p className="text-center text-muted-foreground py-2">No results available right now.</p>
+                )}
+            </CardContent>
         </Card>
         
         {settings.notice?.enabled && settings.notice.text && (
@@ -683,11 +699,7 @@ export default function Home() {
             </Card>
         )}
 
-        <Card className="bg-card/80 border-white/10 shadow-lg">
-          <CardHeader className="p-4">
-            <CardTitle className="text-xl text-center font-bold">Matka Games</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 pt-0">
+        <div>
             {gamesLoading ? (
                <div className="space-y-4">
                     <Skeleton className="h-28 w-full rounded-lg bg-slate-700/50" />
@@ -710,6 +722,7 @@ export default function Home() {
                             game={game} 
                             onBettingClosedClick={setClosedGameInfo}
                             isActive={isActiveToday}
+                            isMarketOpenGlobally={isMarketOpenGlobally}
                         />
                       )
                     })}
@@ -717,11 +730,8 @@ export default function Home() {
             ) : (
               <p className="text-center text-muted-foreground">No games available right now.</p>
             )}
-          </CardContent>
-        </Card>
+        </div>
       </main>
-      
-      <BottomNavbar settings={settings} />
     </div>
   );
 }
