@@ -176,13 +176,15 @@ export default function PanelChartPage() {
                         {chartData?.gameName.toUpperCase() || 'RECORD'}
                     </p>
                 </div>
-                <div className="h-0.5 bg-primary"></div>
             </header>
 
             {chartData && parsedRows.length > 0 ? (
                 <div className="flex-1 overflow-auto">
                     <table className="w-full border-collapse bg-white">
                         <thead className="sticky top-0 z-20">
+                             <tr className="bg-primary">
+                                <td colSpan={activeDays.length + 1} className="p-0" style={{ height: '2px' }}></td>
+                            </tr>
                             <tr className="text-black font-bold text-[9px] sm:text-[10px]">
                                 <th className="sticky left-0 p-0.5 border border-border bg-gray-300 z-30">Date</th>
                                 {activeDays.map(day => (
