@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -818,7 +819,7 @@ export default function SettingsPage() {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5', 'item-7']} className="w-full">
+              <Accordion type="single" collapsible className="w-full">
                 {/* Golden Ank & Marquee Section */}
                 <AccordionItem value="item-1">
                   <AccordionTrigger className="text-lg font-semibold">Golden Ank & Marquee</AccordionTrigger>
