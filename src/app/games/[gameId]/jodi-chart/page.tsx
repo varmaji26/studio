@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface JodiChartData extends DocumentData {
@@ -39,7 +37,6 @@ const dayAbbreviations: { [key: string]: string } = {
 
 export default function JodiChartPage() {
     const params = useParams();
-    const router = useRouter();
     const gameId = params.gameId;
     const [chartData, setChartData] = useState<JodiChartData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -123,9 +120,6 @@ export default function JodiChartPage() {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-                <Button variant="ghost" size="icon" onClick={() => router.replace(`/#${gameId}`)}>
-                    <ArrowLeft />
-                </Button>
                 <div className="text-center flex-1">
                     <h1 className="text-xl sm:text-2xl font-bold text-primary">
                         {chartData?.title || `Jodi Chart`}
@@ -134,7 +128,6 @@ export default function JodiChartPage() {
                         {chartData?.gameName.toUpperCase() || 'RECORD'}
                     </p>
                 </div>
-                <div className="w-10" />
             </header>
             
             {chartData && parsedWeeklyData.length > 0 ? (
