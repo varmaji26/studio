@@ -165,7 +165,7 @@ export default function PanelChartPage() {
             {chartData && parsedRows.length > 0 ? (
                 <div className="flex-1 overflow-auto">
                     <table className="w-full border-collapse bg-white">
-                        <thead className="sticky top-0 z-20">
+                        <thead className="sticky top-0 z-20 border-t-2 border-primary">
                             <tr className="text-black font-bold text-[9px] sm:text-[10px]">
                                 <th className="sticky left-0 p-0.5 border border-border bg-gray-300 z-30">Date</th>
                                 {activeDays.map(day => (
