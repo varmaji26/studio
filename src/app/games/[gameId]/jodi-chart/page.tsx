@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -112,22 +113,22 @@ export default function JodiChartPage() {
 
     return (
         <div className="h-screen flex flex-col bg-background text-foreground">
-            <header className="text-center bg-[#1A2C3D] p-4 shrink-0 z-30">
-                <h1 className="text-xl sm:text-2xl font-bold text-amber-400">
-                    {chartData?.title || `Jodi Chart`}
-                </h1>
-                <p className="text-muted-foreground text-sm">
-                    {chartData?.gameName.toUpperCase() || 'RECORD'}
-                </p>
+            <header className="text-center bg-background/80 backdrop-blur-sm z-30 shrink-0">
+                <div className="p-4 bg-[#1A2C3D]">
+                    <h1 className="text-xl sm:text-2xl font-bold text-amber-400">
+                        {chartData?.title || `Jodi Chart`}
+                    </h1>
+                    <p className="text-muted-foreground text-sm">
+                        {chartData?.gameName.toUpperCase() || 'RECORD'}
+                    </p>
+                </div>
+                <div className="bg-amber-400 p-0" style={{ height: '2px' }}></div>
             </header>
             
             {chartData && parsedWeeklyData.length > 0 ? (
                 <div className="flex-1 overflow-auto">
                     <table className="w-full border-collapse bg-white">
                         <thead className="sticky top-0 z-20">
-                             <tr className="bg-amber-400">
-                                <td colSpan={activeDays.length} className="p-0" style={{ height: '2px' }}></td>
-                            </tr>
                             <tr className="bg-gray-200 text-black font-bold text-center text-[10px]">
                                 {activeDays.map(day => (
                                     <th key={day} className="p-2 border border-border">{dayAbbreviations[day] || day}</th>
