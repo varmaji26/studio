@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -71,6 +71,8 @@ export default function PanelChartPage() {
     const [chartData, setChartData] = useState<PanelChartData | null>(null);
     const [loading, setLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);
+    const pageHeaderRef = useRef<HTMLElement>(null);
+    const [headerHeight, setHeaderHeight] = useState(0);
 
     useEffect(() => {
         setIsClient(true);
@@ -95,6 +97,13 @@ export default function PanelChartPage() {
 
         fetchChartData();
     }, [gameId]);
+
+    useEffect(() => {
+        if(pageHeaderRef.current) {
+            setHeaderHeight(pageHeaderRef.current.offsetHeight);
+        }
+    }, [isClient, chartData, loading]);
+
 
     const activeDays = chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
     const dayIndices = React.useMemo(() => activeDays.map(day => allDays.indexOf(day)), [activeDays]);
@@ -150,7 +159,7 @@ export default function PanelChartPage() {
     
     return (
         <div className="min-h-screen bg-background text-foreground">
-             <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-20">
+             <header ref={pageHeaderRef} className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-20">
                 <div className="text-center flex-1">
                     <h1 className="text-xl sm:text-2xl font-bold text-primary">
                         {chartData?.title || 'Panel Chart'}
@@ -164,11 +173,11 @@ export default function PanelChartPage() {
             {chartData && parsedRows.length > 0 ? (
                 <div className="overflow-x-auto border-y-2 border-primary bg-white">
                     <table className="w-full border-collapse">
-                        <thead className="sticky top-[85px] z-10">
-                            <tr className="bg-gray-200 text-black font-bold text-[9px] sm:text-[10px]">
-                                <th className="p-0.5 border border-border">Date</th>
+                        <thead className="sticky z-10" style={{ top: `${headerHeight}px` }}>
+                            <tr className="text-black font-bold text-[9px] sm:text-[10px]">
+                                <th className="p-0.5 border border-border bg-gray-200">Date</th>
                                 {activeDays.map(day => (
-                                    <th key={day} className="p-0.5 border border-border">{dayAbbreviations[day]}</th>
+                                    <th key={day} className="p-0.5 border border-border bg-gray-200">{dayAbbreviations[day]}</th>
                                 ))}
                             </tr>
                         </thead>
