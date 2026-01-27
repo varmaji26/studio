@@ -85,7 +85,14 @@ export default function RootLayout({
 
 
   const isUserPanel = !pathname.startsWith('/admin');
-  const showBottomNav = isUserPanel && !pathname.includes('/jodi-chart') && !pathname.includes('/panel-chart');
+  const showBottomNav = isUserPanel && 
+                        !pathname.startsWith('/login') && 
+                        !pathname.startsWith('/signup') && 
+                        !pathname.startsWith('/forgot-password') && 
+                        !pathname.startsWith('/download') && 
+                        !pathname.includes('/jodi-chart') && 
+                        !pathname.includes('/panel-chart');
+
 
   return (
     <html lang="en">
