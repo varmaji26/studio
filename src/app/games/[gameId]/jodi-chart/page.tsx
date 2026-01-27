@@ -83,30 +83,23 @@ export default function JodiChartPage() {
         return chartData?.activeDays && chartData.activeDays.length > 0 ? chartData.activeDays : allDays;
     }, [chartData]);
     
-    const dayIndices = useMemo(() => {
-        return activeDays.map(day => allDays.indexOf(day));
-    }, [activeDays]);
-    
     const parsedWeeklyData = useMemo(() => {
         if (!chartData?.data) return [];
         
-        const allNumbers = chartData.data.trim().split(/\s+/).filter(Boolean);
-        const weeklyData: string[][] = [];
+        const dataPerWeek = activeDays.length;
+        if(dataPerWeek === 0) return [];
         
-        // Assume data is stored for 7 days per week, we chunk by 7
-        for (let i = 0; i < allNumbers.length; i += 7) {
-            const weekSlice = allNumbers.slice(i, i + 7);
-            // Pad the week if it's incomplete
-            while (weekSlice.length < 7) {
-                weekSlice.push('*');
+        const allJodis = chartData.data.trim().split(/\s+/).filter(Boolean);
+        const weeks: string[][] = [];
+        for (let i = 0; i < allJodis.length; i += dataPerWeek) {
+            const week = allJodis.slice(i, i + dataPerWeek);
+            while (week.length < dataPerWeek) {
+                week.push('*');
             }
-            // Filter the week to only include active days
-            const filteredWeek = dayIndices.map(index => weekSlice[index] || '*');
-            weeklyData.push(filteredWeek);
+            weeks.push(week);
         }
-        
-        return weeklyData;
-    }, [chartData, dayIndices]);
+        return weeks;
+    }, [chartData, activeDays]);
 
 
     if (loading) {
@@ -118,23 +111,24 @@ export default function JodiChartPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
-            <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-                <div className="text-center flex-1">
-                    <h1 className="text-xl sm:text-2xl font-bold text-primary">
-                        {chartData?.title || `Jodi Chart`}
-                    </h1>
-                    <p className="text-muted-foreground text-sm">
-                        {chartData?.gameName.toUpperCase() || 'RECORD'}
-                    </p>
-                </div>
+        <div className="h-screen flex flex-col bg-background text-foreground">
+            <header className="text-center bg-[#1A2C3D] p-4 shrink-0 z-30">
+                <h1 className="text-xl sm:text-2xl font-bold text-amber-400">
+                    {chartData?.title || `Jodi Chart`}
+                </h1>
+                <p className="text-muted-foreground text-sm">
+                    {chartData?.gameName.toUpperCase() || 'RECORD'}
+                </p>
             </header>
             
             {chartData && parsedWeeklyData.length > 0 ? (
-                <div className="overflow-x-auto border-y-2 border-primary bg-white">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="bg-gray-200 text-black font-bold text-center">
+                <div className="flex-1 overflow-auto">
+                    <table className="w-full border-collapse bg-white">
+                        <thead className="sticky top-0 z-20">
+                             <tr className="bg-amber-400">
+                                <td colSpan={activeDays.length} className="p-0" style={{ height: '2px' }}></td>
+                            </tr>
+                            <tr className="bg-gray-200 text-black font-bold text-center text-[10px]">
                                 {activeDays.map(day => (
                                     <th key={day} className="p-2 border border-border">{dayAbbreviations[day] || day}</th>
                                 ))}
@@ -157,8 +151,8 @@ export default function JodiChartPage() {
                     </table>
                 </div>
             ) : (
-                 <div className="p-4">
-                    <p className="text-center text-muted-foreground mt-8 py-10">
+                 <div className="flex-1 flex items-center justify-center p-4">
+                    <p className="text-center text-muted-foreground">
                         No Jodi chart data found for this game.
                      </p>
                  </div>
