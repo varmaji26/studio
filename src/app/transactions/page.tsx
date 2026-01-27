@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -266,15 +267,8 @@ export default function TransactionDetailsPage() {
 
     return (
         <div className="dark min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-background text-foreground flex flex-col pb-28">
-            <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-                 <div className="flex items-center gap-4 text-white">
-                    <Link href="/">
-                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                            <ArrowLeft />
-                        </Button>
-                    </Link>
-                    <h1 className="text-xl font-bold">Passbook</h1>
-                </div>
+            <header className="p-4 flex items-center justify-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+                <h1 className="text-xl font-bold">Passbook</h1>
             </header>
             <main className="flex-1 flex flex-col p-4 space-y-4">
                 <div className="bg-teal-900/50 rounded-2xl p-6 text-center shadow-lg border border-teal-500/30">
