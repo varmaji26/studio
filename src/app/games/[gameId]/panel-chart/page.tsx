@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -166,14 +167,16 @@ export default function PanelChartPage() {
     
     return (
         <div className="h-screen flex flex-col bg-background text-foreground">
-             <header className="p-4 text-center bg-background/80 backdrop-blur-sm z-30 shrink-0 relative">
-                <h1 className="text-xl sm:text-2xl font-bold text-primary">
-                    {chartData?.title || 'Panel Chart'}
-                </h1>
-                <p className="text-muted-foreground text-sm">
-                    {chartData?.gameName.toUpperCase() || 'RECORD'}
-                </p>
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></div>
+             <header className="text-center bg-background/80 backdrop-blur-sm z-30 shrink-0">
+                <div className="p-4">
+                    <h1 className="text-xl sm:text-2xl font-bold text-primary">
+                        {chartData?.title || 'Panel Chart'}
+                    </h1>
+                    <p className="text-muted-foreground text-sm">
+                        {chartData?.gameName.toUpperCase() || 'RECORD'}
+                    </p>
+                </div>
+                <div className="h-0.5 bg-primary"></div>
             </header>
 
             {chartData && parsedRows.length > 0 ? (
