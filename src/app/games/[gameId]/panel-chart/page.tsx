@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -168,7 +167,7 @@ export default function PanelChartPage() {
     return (
         <div className="h-screen flex flex-col bg-background text-foreground">
              <header className="text-center bg-background/80 backdrop-blur-sm z-30 shrink-0">
-                <div className="p-4">
+                <div className="p-4 bg-background/80">
                     <h1 className="text-xl sm:text-2xl font-bold text-primary">
                         {chartData?.title || 'Panel Chart'}
                     </h1>
