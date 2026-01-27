@@ -115,14 +115,14 @@ export default function JodiChartPage() {
         <div className="h-screen flex flex-col bg-background text-foreground">
             <header className="text-center bg-background/80 backdrop-blur-sm z-30 shrink-0">
                 <div className="p-4 bg-[#1A2C3D]">
-                    <h1 className="text-xl sm:text-2xl font-bold text-amber-400">
+                    <h1 className="text-xl sm:text-2xl font-bold text-primary">
                         {chartData?.title || `Jodi Chart`}
                     </h1>
                     <p className="text-muted-foreground text-sm">
                         {chartData?.gameName.toUpperCase() || 'RECORD'}
                     </p>
                 </div>
-                <div className="bg-amber-400 p-0" style={{ height: '2px' }}></div>
+                <div className="bg-primary p-0" style={{ height: '2px' }}></div>
             </header>
             
             {chartData && parsedWeeklyData.length > 0 ? (
