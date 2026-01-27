@@ -51,21 +51,26 @@ export default function ForgotPasswordPage() {
     if (window.recaptchaVerifier) {
         window.recaptchaVerifier.clear();
     }
-    const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container-forgot-password', {
-      'size': 'invisible',
-      'callback': () => {
-        // reCAPTCHA solved
-      },
-      'expired-callback': () => {
-        // Response expired. Ask user to solve reCAPTCHA again.
-      }
-    });
-    window.recaptchaVerifier = recaptchaVerifier;
-
-    // Cleanup function to prevent memory leaks
-    return () => {
-      window.recaptchaVerifier?.clear();
-    };
+    
+    try {
+      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container-forgot-password', {
+        'size': 'invisible',
+        'callback': () => {
+          // reCAPTCHA solved
+        },
+        'expired-callback': () => {
+          // Response expired. Ask user to solve reCAPTCHA again.
+        }
+      });
+      window.recaptchaVerifier = recaptchaVerifier;
+    } catch (error) {
+      console.error("Error creating RecaptchaVerifier:", error);
+    }
+    
+    // We are intentionally not returning a cleanup function that calls .clear()
+    // because it can cause an error if the component unmounts and the reCAPTCHA
+    // container is no longer in the DOM. The clear() at the start of the effect
+    // handles re-initialization on subsequent mounts/re-renders.
   }, [auth]);
 
   // Step 1: Send OTP
