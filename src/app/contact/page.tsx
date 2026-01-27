@@ -91,7 +91,7 @@ export default function ContactPage() {
                             className="w-full h-16 bg-red-500 text-white hover:bg-red-600 flex items-center justify-center gap-3 text-lg"
                             onClick={() => handleAction(settings.callSupportNumber, 'tel')}
                         >
-                            <Phone /> Call Us: {settings.callSupportNumber}
+                            <Phone /> Call Us
                         </Button>
                     )}
                      {settings.whatsappNumber && (
