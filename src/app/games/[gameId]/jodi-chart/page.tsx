@@ -122,22 +122,21 @@ export default function JodiChartPage() {
 
     return (
         <div className="min-h-screen bg-background text-foreground">
-            <div className="bg-background/80 p-4 text-center">
-                <h1 className="text-xl sm:text-2xl font-bold text-primary">
-                    {chartData?.title || `Jodi Chart`}
-                </h1>
-                <p className="text-muted-foreground">
-                    Historical Jodi Records
-                </p>
-            </div>
-             <div className="p-4">
-                <Button className="w-full bg-green-500 text-white hover:bg-green-600" onClick={() => router.replace(`/#${gameId}`)}>
-                    <div className="inline-flex items-center gap-2">
-                        <ArrowLeft className="h-4 w-4" />
-                        <span>Back to Home</span>
-                    </div>
+            <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+                <Button variant="ghost" size="icon" onClick={() => router.replace(`/#${gameId}`)}>
+                    <ArrowLeft />
                 </Button>
-            </div>
+                <div className="text-center flex-1">
+                    <h1 className="text-xl sm:text-2xl font-bold text-primary">
+                        {chartData?.title || `Jodi Chart`}
+                    </h1>
+                    <p className="text-muted-foreground text-sm">
+                        {chartData?.gameName.toUpperCase() || 'RECORD'}
+                    </p>
+                </div>
+                <div className="w-10" />
+            </header>
+            
             {chartData && parsedWeeklyData.length > 0 ? (
                 <div className="overflow-x-auto border-y-2 border-primary bg-white">
                     <table className="w-full border-collapse">
