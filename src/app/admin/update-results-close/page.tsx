@@ -95,6 +95,12 @@ export default function UpdateResultsClosePage() {
     }
 
     setIsSubmitting(true);
+    toast({
+        title: 'Update in Progress...',
+        description: `Publishing close result for ${game.name}. Please wait.`,
+    });
+    form.reset();
+
     const newClosePana = values.newClosePana;
     const closeJodiDigit = calculateJodiDigit(newClosePana);
     
@@ -244,7 +250,6 @@ export default function UpdateResultsClosePage() {
         });
         
         await batch.commit();
-        form.reset();
         toast({ title: 'Result Published!', description: `Close result for ${game.name} updated. ${winnersFound} winner(s) found, and other running bids marked as lost.` });
     } catch (error) {
         console.error('Error updating result: ', error);

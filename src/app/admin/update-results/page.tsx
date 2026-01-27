@@ -83,6 +83,12 @@ export default function UpdateResultsPage() {
     }
 
     setIsSubmitting(true);
+    toast({
+        title: 'Update in Progress...',
+        description: `Publishing result for ${game.name}. Please wait.`,
+    });
+    form.reset();
+
     const newOpenPana = values.newOpenPana;
     const openJodiDigit = calculateJodiDigit(newOpenPana);
     
@@ -139,7 +145,7 @@ export default function UpdateResultsPage() {
       });
       
       await batch.commit();
-      form.reset();
+      
       toast({
         title: 'Result Published!',
         description: `Open result for ${game.name} updated. ${winnersFound} winner(s) paid out ₹${totalWinningAmount.toFixed(2)}.`,
