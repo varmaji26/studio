@@ -15,7 +15,7 @@ export function GameBettingLayout({ gameName, gameId, activeBetType, children }:
   const router = useRouter();
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground p-2">
+    <div className="dark min-h-screen bg-background text-foreground p-2 pb-28">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-2">
           <h1 className="text-base font-bold whitespace-nowrap">
