@@ -125,7 +125,7 @@ export default function JodiChartPage() {
             </header>
             
             {chartData && parsedWeeklyData.length > 0 ? (
-                <div className="flex-1 overflow-auto">
+                <div className="flex-1 overflow-auto overscroll-y-contain">
                     <table className="w-full border-collapse bg-white">
                         <thead className="sticky top-0 z-20">
                             <tr className="bg-gray-200 text-black font-bold text-center text-[10px]">
