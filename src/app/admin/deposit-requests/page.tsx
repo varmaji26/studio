@@ -94,6 +94,9 @@ export default function DepositRequestsPage() {
   }, [searchTerm, itemsPerPage]);
 
   const handleDepositRequest = async (request: Request, status: 'approved' | 'rejected') => {
+    // Optimistically update the UI for a faster perceived response
+    setRequests(prevRequests => prevRequests.filter(r => r.id !== request.id));
+
     const requestDocRef = doc(db, 'deposits', request.id);
     const userDocRef = doc(db, 'users', request.userId);
     const statsDocRef = doc(db, 'app-stats', 'dashboard');

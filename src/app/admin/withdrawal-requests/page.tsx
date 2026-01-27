@@ -94,6 +94,9 @@ export default function WithdrawalRequestsPage() {
   }, [searchTerm, itemsPerPage]);
 
   const handleWithdrawalRequest = async (request: Request, status: 'approved' | 'rejected') => {
+    // Optimistically update the UI for a faster perceived response
+    setRequests(prevRequests => prevRequests.filter(r => r.id !== request.id));
+
     const requestDocRef = doc(db, 'withdrawals', request.id);
     const userDocRef = doc(db, 'users', request.userId);
 
