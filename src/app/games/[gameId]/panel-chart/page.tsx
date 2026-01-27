@@ -150,7 +150,7 @@ export default function PanelChartPage() {
     
     return (
         <div className="min-h-screen bg-background text-foreground">
-             <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+             <header className="p-4 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-20">
                 <div className="text-center flex-1">
                     <h1 className="text-xl sm:text-2xl font-bold text-primary">
                         {chartData?.title || 'Panel Chart'}
@@ -164,8 +164,8 @@ export default function PanelChartPage() {
             {chartData && parsedRows.length > 0 ? (
                 <div className="overflow-x-auto border-y-2 border-primary bg-white">
                     <table className="w-full border-collapse">
-                        <thead className="text-[9px] sm:text-[10px]">
-                            <tr className="bg-gray-200 text-black font-bold">
+                        <thead className="sticky top-[85px] z-10">
+                            <tr className="bg-gray-200 text-black font-bold text-[9px] sm:text-[10px]">
                                 <th className="p-0.5 border border-border">Date</th>
                                 {activeDays.map(day => (
                                     <th key={day} className="p-0.5 border border-border">{dayAbbreviations[day]}</th>
