@@ -25,6 +25,11 @@ export default function RootLayout({
   const { user } = useAuth();
   const notificationTokenRequested = useRef(false);
   const [settings, setSettings] = useState<AppSettings>({});
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -109,7 +114,7 @@ export default function RootLayout({
         <main>
             {children}
         </main>
-        {showBottomNav && <BottomNavbar settings={settings} />}
+        {isClient && showBottomNav && <BottomNavbar settings={settings} />}
         <Toaster />
       </body>
     </html>
