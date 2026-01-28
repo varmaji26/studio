@@ -111,7 +111,7 @@ export default function JodiChartPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-background text-foreground overscroll-y-contain">
+        <div className="h-screen flex flex-col bg-background text-foreground" style={{ overscrollBehavior: 'contain' }}>
             <header className="text-center bg-background/80 backdrop-blur-sm z-30 shrink-0">
                 <div className="p-4 bg-background/80">
                     <h1 className="text-xl sm:text-2xl font-bold text-primary">
@@ -125,7 +125,7 @@ export default function JodiChartPage() {
             </header>
             
             {chartData && parsedWeeklyData.length > 0 ? (
-                <div className="flex-1 overflow-auto overscroll-y-contain">
+                <div className="flex-1 overflow-auto" style={{ overscrollBehavior: 'contain' }}>
                     <table className="w-full border-collapse bg-white">
                         <thead className="sticky top-0 z-20">
                             <tr className="bg-gray-200 text-black font-bold text-center text-[10px]">
