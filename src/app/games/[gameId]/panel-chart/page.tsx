@@ -165,7 +165,7 @@ export default function PanelChartPage() {
     }
     
     return (
-        <div className="h-screen flex flex-col bg-background text-foreground">
+        <div className="h-screen flex flex-col bg-background text-foreground overscroll-y-contain">
              <header className="text-center bg-background/80 backdrop-blur-sm z-30 shrink-0">
                 <div className="p-4 bg-background/80">
                     <h1 className="text-xl sm:text-2xl font-bold text-primary">
