@@ -615,10 +615,14 @@ export default function Home() {
         {settings.welcomeBanner?.imageUrl && (
             <Card className="bg-card/80 border-white/10 shadow-lg overflow-hidden">
                 <CardContent className="p-0">
-                    <img
+                     <Image
                         src={settings.welcomeBanner.imageUrl}
                         alt="Welcome Banner"
+                        width={1200}
+                        height={300}
                         className="w-full h-auto max-h-[250px] object-cover"
+                        priority
+                        data-ai-hint="crown casino"
                     />
                 </CardContent>
             </Card>
