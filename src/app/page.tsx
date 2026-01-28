@@ -330,7 +330,7 @@ export default function Home() {
         if (hash) {
           const element = document.getElementById(hash);
           if (element) {
-            element.scrollIntoView({ behavior: "instant", block: "center" });
+            element.scrollIntoView({ behavior: "instant", block: "nearest" });
           }
         }
       }, 300); // Small delay to ensure elements are rendered
