@@ -549,7 +549,7 @@ export default function Home() {
         {!isMarketOpenGlobally && settings.globalMarketOpenTime && (
             <Alert variant="destructive" className="bg-yellow-600/20 border-yellow-500/30 text-yellow-300">
                 <AlertTitle className="font-bold text-yellow-200">Market Closed</AlertTitle>
-                <AlertDescription className="text-yellow-300/90 text-[10px]">
+                <AlertDescription className="text-yellow-300/90 text-xs">
                    All markets are currently closed. Bidding will open at {formatTime(settings.globalMarketOpenTime)}.
                 </AlertDescription>
             </Alert>
@@ -569,11 +569,11 @@ export default function Home() {
                         <Image 
                             src={settings.bonusPopup?.imageUrl || ''} 
                             alt="Bonus Offer" 
-                            width={400} 
-                            height={400} 
+                            width={280} 
+                            height={350} 
                             className="w-full h-auto"
                             data-ai-hint="casino bonus"
-                            
+                            priority
                         />
                         <div className="p-4 bg-background">
                             <div>
@@ -659,7 +659,7 @@ export default function Home() {
                     <Loader className="h-6 w-6" />
                 </div>
                 ) : games.length > 0 ? (
-                <div className="relative flex overflow-x-hidden group">
+                <div className="relative flex overflow-hidden group">
                     <div className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
                         {games.concat(games).map((game, index) => (
                             <div key={`${game.id}-${index}`} className="flex items-center justify-center text-center mx-4 gap-2">
