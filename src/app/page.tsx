@@ -569,9 +569,9 @@ export default function Home() {
                         <Image
                             src={settings.bonusPopup?.imageUrl || ''}
                             alt="Bonus Offer"
-                            width={280}
-                            height={350}
-                            className="w-full h-auto"
+                            width={400}
+                            height={400}
+                            className="w-full"
                             priority
                             sizes="(max-width: 768px) 100vw, 280px"
                             data-ai-hint="casino bonus"
