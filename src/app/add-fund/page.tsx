@@ -134,7 +134,7 @@ export default function AddFundPage() {
         if (settings.whatsappNumber) {
             const whatsappNumber = settings.whatsappNumber.replace(/\+/g, '');
             const a = document.createElement('a');
-            a.href = `https://wa.me/${whatsappNumber}`;
+            a.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hello, I need help with my deposit.')}`;
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
             a.click();

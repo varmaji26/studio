@@ -50,7 +50,7 @@ export default function ContactPage() {
                 finalUrl = `tel:${url.replace(/\s/g, '')}`;
                 break;
             case 'whatsapp':
-                finalUrl = `https://wa.me/${url.replace(/\+/g, '')}`;
+                finalUrl = `https://wa.me/${url.replace(/\+/g, '')}?text=${encodeURIComponent('Hello, I need help regarding my account.')}`;
                 break;
             case 'telegram':
                 finalUrl = url;
