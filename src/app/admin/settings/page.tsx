@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -137,6 +136,10 @@ const settingsSchema = z.object({
     z.number().min(1, 'Minimum withdrawal must be at least 1.')
   ),
   globalMarketOpenTime: z.string().optional(),
+  depositStartTime: z.string().optional(),
+  depositEndTime: z.string().optional(),
+  withdrawalStartTime: z.string().optional(),
+  withdrawalEndTime: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -200,6 +203,10 @@ export default function SettingsPage() {
       minimumDepositAmount: 100,
       minimumWithdrawalAmount: 1000,
       globalMarketOpenTime: '09:00',
+      depositStartTime: '09:00',
+      depositEndTime: '22:00',
+      withdrawalStartTime: '09:00',
+      withdrawalEndTime: '17:00',
     },
   });
 
@@ -253,6 +260,10 @@ export default function SettingsPage() {
             minimumDepositAmount: data.minimumDepositAmount || 100,
             minimumWithdrawalAmount: data.minimumWithdrawalAmount || 1000,
             globalMarketOpenTime: data.globalMarketOpenTime || '09:00',
+            depositStartTime: data.transactionTimes?.depositStartTime || '09:00',
+            depositEndTime: data.transactionTimes?.depositEndTime || '22:00',
+            withdrawalStartTime: data.transactionTimes?.withdrawalStartTime || '09:00',
+            withdrawalEndTime: data.transactionTimes?.withdrawalEndTime || '17:00',
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -532,6 +543,12 @@ export default function SettingsPage() {
                 enabled: values.referralBonusEnabled,
                 referrerAmount: values.referrerBonusAmount,
                 refereeAmount: values.refereeBonusAmount,
+            },
+            transactionTimes: {
+              depositStartTime: values.depositStartTime,
+              depositEndTime: values.depositEndTime,
+              withdrawalStartTime: values.withdrawalStartTime,
+              withdrawalEndTime: values.withdrawalEndTime,
             }
         };
 
@@ -819,7 +836,7 @@ export default function SettingsPage() {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Accordion type="single" collapsible className="w-full">
+              <Accordion type="single" collapsible className="w-full" defaultValue='item-1'>
                 {/* Golden Ank & Marquee Section */}
                 <AccordionItem value="item-1">
                   <AccordionTrigger className="text-lg font-semibold">Golden Ank & Marquee</AccordionTrigger>
@@ -999,7 +1016,7 @@ export default function SettingsPage() {
                   </AccordionContent>
                 </AccordionItem>
                 
-                {/* Market Time Settings Section */}
+                 {/* Market Time Settings Section */}
                  <AccordionItem value="item-7">
                       <AccordionTrigger className="text-lg font-semibold">Market Time Settings</AccordionTrigger>
                       <AccordionContent className="space-y-4 pt-4">
@@ -1019,6 +1036,70 @@ export default function SettingsPage() {
                                     </FormItem>
                                 )}
                             />
+                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                      </AccordionContent>
+                 </AccordionItem>
+
+                 {/* Transaction Time Settings Section */}
+                 <AccordionItem value="item-8">
+                      <AccordionTrigger className="text-lg font-semibold">Transaction Time Settings</AccordionTrigger>
+                      <AccordionContent className="space-y-4 pt-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="depositStartTime"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Deposit Start Time</FormLabel>
+                                            <FormControl>
+                                                <Input type="time" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="depositEndTime"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Deposit End Time</FormLabel>
+                                            <FormControl>
+                                                <Input type="time" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="withdrawalStartTime"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Withdrawal Start Time</FormLabel>
+                                            <FormControl>
+                                                <Input type="time" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="withdrawalEndTime"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Withdrawal End Time</FormLabel>
+                                            <FormControl>
+                                                <Input type="time" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                            <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                       </AccordionContent>
                  </AccordionItem>

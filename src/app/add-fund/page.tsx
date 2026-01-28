@@ -12,6 +12,7 @@ import { doc, onSnapshot, DocumentData, collection, query, where } from 'firebas
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { formatTime } from '@/lib/utils';
 
 interface UserProfile extends DocumentData {
   balance?: number;
@@ -21,6 +22,10 @@ interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
     minimumDepositAmount?: number;
+    transactionTimes?: {
+        depositStartTime?: string;
+        depositEndTime?: string;
+    };
 }
 
 export default function AddFundPage() {
@@ -32,6 +37,13 @@ export default function AddFundPage() {
     const [amount, setAmount] = useState('');
     const [hasPendingDeposit, setHasPendingDeposit] = useState(false);
     const [isMobileVisible, setIsMobileVisible] = useState(false);
+    const [isDepositOpen, setIsDepositOpen] = useState(true);
+    const [now, setNow] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 60000); // update every minute
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -71,6 +83,25 @@ export default function AddFundPage() {
             unsubscribePendingDeposits();
         };
     }, [user?.uid]);
+
+    useEffect(() => {
+        if (settings.transactionTimes) {
+            const startTime = settings.transactionTimes.depositStartTime; // "HH:mm"
+            const endTime = settings.transactionTimes.depositEndTime; // "HH:mm"
+
+            if (startTime && endTime) {
+                const [startHours, startMinutes] = startTime.split(':').map(Number);
+                const [endHours, endMinutes] = endTime.split(':').map(Number);
+
+                const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHours, startMinutes);
+                const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHours, endMinutes);
+
+                setIsDepositOpen(now >= startDate && now <= endDate);
+            } else {
+                setIsDepositOpen(true); // If not set, it's always open
+            }
+        }
+    }, [settings, now]);
 
     const handleQuickAmount = (value: string) => {
         setAmount(value);
@@ -174,6 +205,14 @@ export default function AddFundPage() {
                             You already have a pending deposit request. Please wait for it to be processed before making a new one.
                         </AlertDescription>
                     </Alert>
+                ) : !isDepositOpen ? (
+                     <Alert className="my-4 bg-red-900/50 border-red-500/30 text-red-300">
+                        <Info className="h-4 w-4 text-red-300" />
+                        <AlertTitle>Deposits Closed</AlertTitle>
+                        <AlertDescription>
+                            Deposits are only accepted between {formatTime(settings.transactionTimes?.depositStartTime)} and {formatTime(settings.transactionTimes?.depositEndTime)}.
+                        </AlertDescription>
+                    </Alert>
                 ) : (
                 <div className="my-4">
                     <p className="text-center text-muted-foreground mb-2">Enter Amount (Min: ₹{minDeposit})</p>
@@ -200,9 +239,9 @@ export default function AddFundPage() {
                     <Button 
                         className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full" 
                         onClick={handlePayNow}
-                        disabled={hasPendingDeposit}
+                        disabled={hasPendingDeposit || !isDepositOpen}
                     >
-                        {hasPendingDeposit ? 'Pending Request' : 'Pay Now'}
+                        {hasPendingDeposit ? 'Pending Request' : !isDepositOpen ? 'Deposits Closed' : 'Pay Now'}
                     </Button>
                 </div>
             </main>

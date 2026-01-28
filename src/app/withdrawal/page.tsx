@@ -13,6 +13,7 @@ import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { formatTime } from '@/lib/utils';
 
 
 interface UserProfile extends DocumentData {
@@ -24,6 +25,10 @@ interface AppSettings extends DocumentData {
     whatsappNumber?: string;
     callSupportNumber?: string;
     minimumWithdrawalAmount?: number;
+    transactionTimes?: {
+        withdrawalStartTime?: string;
+        withdrawalEndTime?: string;
+    };
 }
 
 export default function WithdrawalPage() {
@@ -36,6 +41,13 @@ export default function WithdrawalPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasPendingWithdrawal, setHasPendingWithdrawal] = useState(false);
     const [isMobileVisible, setIsMobileVisible] = useState(false);
+    const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(true);
+    const [now, setNow] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 60000); // update every minute
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -74,6 +86,25 @@ export default function WithdrawalPage() {
             unsubscribePendingWithdrawals();
         };
     }, [user?.uid]);
+
+    useEffect(() => {
+        if (settings.transactionTimes) {
+            const startTime = settings.transactionTimes.withdrawalStartTime;
+            const endTime = settings.transactionTimes.withdrawalEndTime;
+
+            if (startTime && endTime) {
+                const [startHours, startMinutes] = startTime.split(':').map(Number);
+                const [endHours, endMinutes] = endTime.split(':').map(Number);
+
+                const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHours, startMinutes);
+                const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHours, endMinutes);
+
+                setIsWithdrawalOpen(now >= startDate && now <= endDate);
+            } else {
+                setIsWithdrawalOpen(true);
+            }
+        }
+    }, [settings, now]);
 
     const handleQuickAmount = (value: string) => {
         setAmount(value);
@@ -272,6 +303,14 @@ export default function WithdrawalPage() {
                             आपका पिछला भुगतान अनुरोध लंबित है। आपका भुगतान 24 घंटे के भीतर आपके खाते में जमा कर दिया जाएगा। कृपया प्रतीक्षा करें।
                         </AlertDescription>
                     </Alert>
+                ) : !isWithdrawalOpen ? (
+                    <Alert className="my-4 bg-red-900/50 border-red-500/30 text-red-300">
+                        <Info className="h-4 w-4 text-red-300" />
+                        <AlertTitle>Withdrawals Closed</AlertTitle>
+                        <AlertDescription>
+                           Withdrawals are only processed between {formatTime(settings.transactionTimes?.withdrawalStartTime)} and {formatTime(settings.transactionTimes?.withdrawalEndTime)}.
+                        </AlertDescription>
+                    </Alert>
                 ) : (
                 <div className="my-4">
                     <p className="text-center text-muted-foreground mb-2">Enter Amount (Min: ₹{minWithdrawal})</p>
@@ -297,10 +336,10 @@ export default function WithdrawalPage() {
                     <AlertDialogTrigger asChild>
                          <Button 
                             className="w-full h-14 bg-[#112a45] hover:bg-[#0b1c2e] text-white font-bold text-lg rounded-full mt-6"
-                            disabled={isSubmitting || hasPendingWithdrawal || !amount || parseInt(amount, 10) < minWithdrawal || parseInt(amount, 10) > (profile.balance || 0)}
+                            disabled={isSubmitting || hasPendingWithdrawal || !amount || parseInt(amount, 10) < minWithdrawal || parseInt(amount, 10) > (profile.balance || 0) || !isWithdrawalOpen}
                         >
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5"/> : null}
-                            {isSubmitting ? 'Sending...' : hasPendingWithdrawal ? 'Request Pending' : 'Send Request'}
+                            {isSubmitting ? 'Sending...' : hasPendingWithdrawal ? 'Request Pending' : !isWithdrawalOpen ? 'Withdrawals Closed' : 'Send Request'}
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
