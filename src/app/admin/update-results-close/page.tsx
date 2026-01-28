@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -31,14 +32,6 @@ interface Game extends DocumentData {
     openTime: string;
     closeTime: string;
 }
-
-const WIN_RATES = {
-  'Single Digit': 10,
-  'Jodi Digit': 100,
-  'Single Pana': 150,
-  'Double Pana': 300,
-  'Triple Pana': 600,
-};
 
 const calculateJodiDigit = (pana: string): string => {
     if (!pana || pana.length !== 3 || !/^\d+$/.test(pana)) return '';
@@ -105,6 +98,19 @@ export default function UpdateResultsClosePage() {
     const closeJodiDigit = calculateJodiDigit(newClosePana);
     
     try {
+        // Fetch settings for WIN_RATES
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const settingsDoc = await getDoc(settingsDocRef);
+        const gameRates = settingsDoc.exists() ? settingsDoc.data().gameRates : null;
+
+        const WIN_RATES = {
+            'Single Digit': gameRates?.singleDigitPrize ? gameRates.singleDigitPrize / 10 : 10,
+            'Jodi Digit': gameRates?.jodiDigitPrize ? gameRates.jodiDigitPrize / 10 : 100,
+            'Single Pana': gameRates?.singlePanaPrize ? gameRates.singlePanaPrize / 10 : 150,
+            'Double Pana': gameRates?.doublePanaPrize ? gameRates.doublePanaPrize / 10 : 300,
+            'Triple Pana': gameRates?.triplePanaPrize ? gameRates.triplePanaPrize / 10 : 600,
+        };
+
         const batch = writeBatch(db);
         const gameDocRef = doc(db, 'games', game.id);
         const gameDocSnap = await getDoc(gameDocRef);
@@ -447,3 +453,5 @@ export default function UpdateResultsClosePage() {
     </div>
   );
 }
+
+    

@@ -141,6 +141,13 @@ const settingsSchema = z.object({
   depositEndTime: z.string().optional(),
   withdrawalStartTime: z.string().optional(),
   withdrawalEndTime: z.string().optional(),
+  singleDigitPrize: z.preprocess((val) => (String(val).trim() === '' ? 100 : Number(val)), z.number().min(0)),
+  jodiDigitPrize: z.preprocess((val) => (String(val).trim() === '' ? 1000 : Number(val)), z.number().min(0)),
+  singlePanaPrize: z.preprocess((val) => (String(val).trim() === '' ? 1500 : Number(val)), z.number().min(0)),
+  doublePanaPrize: z.preprocess((val) => (String(val).trim() === '' ? 3000 : Number(val)), z.number().min(0)),
+  triplePanaPrize: z.preprocess((val) => (String(val).trim() === '' ? 6000 : Number(val)), z.number().min(0)),
+  halfSangamPrize: z.preprocess((val) => (String(val).trim() === '' ? 5000 : Number(val)), z.number().min(0)),
+  fullSangamPrize: z.preprocess((val) => (String(val).trim() === '' ? 10000 : Number(val)), z.number().min(0)),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -208,6 +215,13 @@ export default function SettingsPage() {
       depositEndTime: '22:00',
       withdrawalStartTime: '09:00',
       withdrawalEndTime: '17:00',
+      singleDigitPrize: 100,
+      jodiDigitPrize: 1000,
+      singlePanaPrize: 1500,
+      doublePanaPrize: 3000,
+      triplePanaPrize: 6000,
+      halfSangamPrize: 5000,
+      fullSangamPrize: 10000,
     },
   });
 
@@ -256,8 +270,8 @@ export default function SettingsPage() {
             welcomeBonusEnabled: data.welcomeBonus?.enabled || false,
             welcomeBonusAmount: data.welcomeBonus?.amount || 0,
             referralBonusEnabled: data.referralBonus?.enabled || false,
-            referrerBonusAmount: data.referralBonus?.referrerAmount || 0,
-            refereeBonusAmount: data.referralBonus?.refereeAmount || 0,
+            referrerBonusAmount: data.referralBonus?.referrerBonusAmount || 0,
+            refereeBonusAmount: data.referralBonus?.refereeBonusAmount || 0,
             minimumDepositAmount: data.minimumDepositAmount || 100,
             minimumWithdrawalAmount: data.minimumWithdrawalAmount || 1000,
             globalMarketOpenTime: data.globalMarketOpenTime || '09:00',
@@ -265,6 +279,13 @@ export default function SettingsPage() {
             depositEndTime: data.transactionTimes?.depositEndTime || '22:00',
             withdrawalStartTime: data.transactionTimes?.withdrawalStartTime || '09:00',
             withdrawalEndTime: data.transactionTimes?.withdrawalEndTime || '17:00',
+            singleDigitPrize: data.gameRates?.singleDigitPrize ?? 100,
+            jodiDigitPrize: data.gameRates?.jodiDigitPrize ?? 1000,
+            singlePanaPrize: data.gameRates?.singlePanaPrize ?? 1500,
+            doublePanaPrize: data.gameRates?.doublePanaPrize ?? 3000,
+            triplePanaPrize: data.gameRates?.triplePanaPrize ?? 6000,
+            halfSangamPrize: data.gameRates?.halfSangamPrize ?? 5000,
+            fullSangamPrize: data.gameRates?.fullSangamPrize ?? 10000,
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -550,6 +571,15 @@ export default function SettingsPage() {
               depositEndTime: values.depositEndTime,
               withdrawalStartTime: values.withdrawalStartTime,
               withdrawalEndTime: values.withdrawalEndTime,
+            },
+            gameRates: {
+                singleDigitPrize: values.singleDigitPrize,
+                jodiDigitPrize: values.jodiDigitPrize,
+                singlePanaPrize: values.singlePanaPrize,
+                doublePanaPrize: values.doublePanaPrize,
+                triplePanaPrize: values.triplePanaPrize,
+                halfSangamPrize: values.halfSangamPrize,
+                fullSangamPrize: values.fullSangamPrize,
             }
         };
 
@@ -947,7 +977,7 @@ export default function SettingsPage() {
                   <AccordionContent className="space-y-4 pt-4">
                       <FormField control={form.control} name="whatsappNumber" render={({ field }) => (<FormItem><FormLabel>WhatsApp Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="e.g., https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
                        <Separator/>
                         <FormField
                             control={form.control}
@@ -1104,6 +1134,24 @@ export default function SettingsPage() {
                            <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                       </AccordionContent>
                  </AccordionItem>
+
+                 {/* Game Rate Settings Section */}
+                 <AccordionItem value="item-9">
+                      <AccordionTrigger className="text-lg font-semibold">Game Rate Settings</AccordionTrigger>
+                      <AccordionContent className="space-y-4 pt-4">
+                            <p className="text-sm text-muted-foreground">Set the winning prize for a ₹10 bet for each game type.</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField control={form.control} name="singleDigitPrize" render={({ field }) => (<FormItem><FormLabel>Single Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="jodiDigitPrize" render={({ field }) => (<FormItem><FormLabel>Jodi Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="singlePanaPrize" render={({ field }) => (<FormItem><FormLabel>Single Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="doublePanaPrize" render={({ field }) => (<FormItem><FormLabel>Double Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="triplePanaPrize" render={({ field }) => (<FormItem><FormLabel>Triple Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="halfSangamPrize" render={({ field }) => (<FormItem><FormLabel>Half Sangam Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="fullSangamPrize" render={({ field }) => (<FormItem><FormLabel>Full Sangam Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            </div>
+                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                      </AccordionContent>
+                 </AccordionItem>
                 
                 {/* Data Management Section */}
                  <AccordionItem value="item-6">
@@ -1156,3 +1204,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

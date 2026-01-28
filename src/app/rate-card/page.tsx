@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,16 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-
-const standardGameRates = [
-    { name: 'SINGLE DIGIT', rate: '₹10 Ka - ₹100' },
-    { name: 'JODI DIGIT', rate: '₹10 Ka - ₹1000' },
-    { name: 'SINGLE PANNA', rate: '₹10 Ka - ₹1500' },
-    { name: 'DOUBLE PANNA', rate: '₹10 Ka - ₹3000' },
-    { name: 'TRIPLE PANNA', rate: '₹10 Ka - ₹6000' },
-    { name: 'HALF SANGAM', rate: '₹10 Ka - ₹5000' },
-    { name: 'FULL SANGAM', rate: '₹10 Ka - ₹10000' },
-];
+import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const RateItem = ({ name, rate }: { name: string; rate: string }) => (
     <div className="bg-indigo-600 text-white flex justify-between items-center p-3 rounded-lg shadow-md">
@@ -30,6 +24,8 @@ const RateItem = ({ name, rate }: { name: string; rate: string }) => (
 export default function RateCardPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const [gameRates, setGameRates] = useState<any>(null);
+    const [ratesLoading, setRatesLoading] = useState(true);
 
     useEffect(() => {
         if (authLoading) return;
@@ -37,7 +33,42 @@ export default function RateCardPage() {
             router.replace('/login');
             return;
         }
+
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.gameRates) {
+                    setGameRates(data.gameRates);
+                } else {
+                    // Set default rates if not found in db
+                    setGameRates({
+                        singleDigitPrize: 100,
+                        jodiDigitPrize: 1000,
+                        singlePanaPrize: 1500,
+                        doublePanaPrize: 3000,
+                        triplePanaPrize: 6000,
+                        halfSangamPrize: 5000,
+                        fullSangamPrize: 10000,
+                    });
+                }
+            }
+            setRatesLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [user, authLoading, router]);
+
+    const standardGameRates = gameRates ? [
+        { name: 'SINGLE DIGIT', rate: `₹10 Ka - ₹${gameRates.singleDigitPrize}` },
+        { name: 'JODI DIGIT', rate: `₹10 Ka - ₹${gameRates.jodiDigitPrize}` },
+        { name: 'SINGLE PANNA', rate: `₹10 Ka - ₹${gameRates.singlePanaPrize}` },
+        { name: 'DOUBLE PANNA', rate: `₹10 Ka - ₹${gameRates.doublePanaPrize}` },
+        { name: 'TRIPLE PANNA', rate: `₹10 Ka - ₹${gameRates.triplePanaPrize}` },
+        { name: 'HALF SANGAM', rate: `₹10 Ka - ₹${gameRates.halfSangamPrize}` },
+        { name: 'FULL SANGAM', rate: `₹10 Ka - ₹${gameRates.fullSangamPrize}` },
+    ] : [];
+
 
     if (authLoading || !user) {
         return (
@@ -66,11 +97,17 @@ export default function RateCardPage() {
                     <CardContent className="space-y-6">
                         <div>
                             <h2 className="text-xl font-bold mb-4 text-primary">STANDARD GAMES</h2>
-                            <div className="space-y-3">
-                                {standardGameRates.map((item) => (
-                                    <RateItem key={item.name} name={item.name} rate={item.rate} />
-                                ))}
-                            </div>
+                             {ratesLoading ? (
+                                <div className="space-y-3">
+                                    {Array(7).fill(0).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {standardGameRates.map((item) => (
+                                        <RateItem key={item.name} name={item.name} rate={item.rate} />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                          <div>
                             <h2 className="text-xl font-bold mb-4 text-primary">STARLINES GAMES</h2>
@@ -82,3 +119,5 @@ export default function RateCardPage() {
         </div>
     )
 }
+
+    
