@@ -572,9 +572,9 @@ export default function Home() {
                             width={280} 
                             height={350} 
                             className="w-full h-auto"
-                            data-ai-hint="casino bonus"
                             priority
                             sizes="280px"
+                            
                         />
                         <div className="p-4 bg-background">
                             <div>
@@ -622,6 +622,7 @@ export default function Home() {
                         height={300}
                         className="w-full h-auto max-h-[250px] object-cover"
                         priority
+                        sizes="100vw"
                         data-ai-hint="crown casino"
                     />
                 </CardContent>
