@@ -9,6 +9,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
 import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'] });
 
 interface AppSettings extends DocumentData {
     whatsappNumber?: string;
@@ -104,12 +107,9 @@ export default function RootLayout({
         <title>Auth Canvas</title>
         <meta name="description" content="Authentication with Firebase and Canvas" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></link>
         <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@latest/dist/dotlottie-wc.js" type="module"></script>
       </head>
-      <body className="font-body antialiased">
+      <body className={`${inter.className} font-body antialiased`}>
         <main>
             {children}
         </main>

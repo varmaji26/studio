@@ -46,7 +46,7 @@ export default function DownloadPage() {
         <header className="w-full p-4 bg-black text-white flex justify-between items-center">
              <h1 className="text-2xl font-bold">Matka King</h1>
              <div className="flex flex-col items-center">
-                 <Image src="https://placehold.co/40x40.png" alt="Matka King Logo" width={32} height={32} data-ai-hint="crown logo" />
+                 <Image src="https://placehold.co/40x40.png" alt="Matka King Logo" width={32} height={32} data-ai-hint="crown logo" priority />
                  <span className="text-xs">MATKA KING</span>
              </div>
         </header>
@@ -71,7 +71,8 @@ export default function DownloadPage() {
                     height={800}
                     className="w-full h-auto"
                     data-ai-hint="woman orange sari cards"
-                    
+                    priority
+                    sizes="(max-width: 768px) 100vw, 600px"
                 />
             )}
         </div>

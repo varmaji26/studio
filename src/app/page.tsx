@@ -566,15 +566,15 @@ export default function Home() {
                     <div
                         className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden"
                     >
-                        <Image 
-                            src={settings.bonusPopup?.imageUrl || ''} 
-                            alt="Bonus Offer" 
-                            width={280} 
-                            height={350} 
+                        <Image
+                            src={settings.bonusPopup?.imageUrl || ''}
+                            alt="Bonus Offer"
+                            width={280}
+                            height={350}
                             className="w-full h-auto"
                             priority
-                            sizes="280px"
-                            
+                            sizes="(max-width: 768px) 100vw, 280px"
+                            data-ai-hint="casino bonus"
                         />
                         <div className="p-4 bg-background">
                             <div>
@@ -623,7 +623,6 @@ export default function Home() {
                         className="w-full h-auto max-h-[250px] object-cover"
                         priority
                         sizes="100vw"
-                        data-ai-hint="crown casino"
                     />
                 </CardContent>
             </Card>
@@ -643,12 +642,16 @@ export default function Home() {
                 ]}
               >
                 <CarouselContent>
-                  {banners.map((banner) => (
+                  {banners.map((banner, index) => (
                     <CarouselItem key={banner.id}>
-                      <img
+                      <Image
                         src={banner.imageUrl}
                         alt="Banner"
+                        width={1200}
+                        height={300}
                         className="w-full h-auto max-h-[250px] object-cover"
+                        priority={index === 0}
+                        sizes="100vw"
                       />
                     </CarouselItem>
                   ))}
