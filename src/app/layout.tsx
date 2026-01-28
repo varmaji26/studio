@@ -94,9 +94,8 @@ export default function RootLayout({
                         !pathname.startsWith('/login') && 
                         !pathname.startsWith('/signup') && 
                         !pathname.startsWith('/forgot-password') && 
-                        !pathname.startsWith('/download') && 
-                        !pathname.includes('/jodi-chart') && 
-                        !pathname.includes('/panel-chart');
+                        !pathname.startsWith('/download') &&
+                        !pathname.startsWith('/games');
 
 
   return (
