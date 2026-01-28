@@ -574,6 +574,7 @@ export default function Home() {
                             className="w-full h-auto"
                             data-ai-hint="casino bonus"
                             priority
+                            sizes="280px"
                         />
                         <div className="p-4 bg-background">
                             <div>
