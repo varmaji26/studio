@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 html {
-  
+  overscroll-behavior-y: contain;
 }
 
 body {
@@ -11,7 +11,6 @@ body {
   touch-action: manipulation;
   scrollbar-width: none; /* For Firefox */
   -ms-overflow-style: none;  /* For Internet Explorer and Edge */
-  overscroll-behavior-y: contain;
 }
 
 /* For Webkit-based browsers (Chrome, Safari, etc.) */
