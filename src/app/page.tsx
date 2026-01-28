@@ -330,7 +330,7 @@ export default function Home() {
         if (hash) {
           const element = document.getElementById(hash);
           if (element) {
-            element.scrollIntoView({ behavior: "instant", block: "nearest" });
+            element.scrollIntoView({ behavior: "instant", block: "center" });
           }
         }
       }, 300); // Small delay to ensure elements are rendered
@@ -566,16 +566,18 @@ export default function Home() {
                     <div
                         className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden"
                     >
-                        <Image
-                            src={settings.bonusPopup?.imageUrl || ''}
-                            alt="Bonus Offer"
-                            width={400}
-                            height={400}
-                            className="w-full"
-                            priority
-                            sizes="(max-width: 768px) 100vw, 280px"
-                            data-ai-hint="casino bonus"
-                        />
+                        <div className="aspect-square w-full bg-background/10">
+                            <Image
+                                src={settings.bonusPopup?.imageUrl || ''}
+                                alt="Bonus Offer"
+                                width={400}
+                                height={400}
+                                className="w-full h-full object-cover"
+                                priority
+                                sizes="(max-width: 768px) 100vw, 280px"
+                                data-ai-hint="casino bonus"
+                            />
+                        </div>
                         <div className="p-4 bg-background">
                             <div>
                                 <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handleClaimBonus}>
@@ -744,3 +746,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
