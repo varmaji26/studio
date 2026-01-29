@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, getDocs, runTransaction, doc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,6 +17,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface Transaction extends DocumentData {
     id: string;
@@ -24,7 +26,7 @@ interface Transaction extends DocumentData {
     displayName: string;
     mobile?: string;
     amount: number;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'approved' | 'rejected' | 'reverted';
     createdAt: Timestamp;
     paymentMethod?: string;
 }
@@ -45,6 +47,7 @@ export default function AdminDepositHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
+  const { toast } = useToast();
   
   const fetchTransactions = useCallback(() => {
     setLoading(true);
@@ -120,9 +123,39 @@ export default function AdminDepositHistoryPage() {
     switch (status) {
         case 'approved': return 'secondary';
         case 'rejected': return 'destructive';
+        case 'reverted': return 'outline';
         case 'pending':
         default:
             return 'default';
+    }
+  };
+
+  const handleCancelDeposit = async (transaction: Transaction) => {
+    const depositDocRef = doc(db, 'deposits', transaction.id);
+    const userDocRef = doc(db, 'users', transaction.userId);
+
+    try {
+        await runTransaction(db, async (tx) => {
+            const depositDoc = await tx.get(depositDocRef);
+            if (!depositDoc.exists() || depositDoc.data().status !== 'approved') {
+                throw new Error("This deposit is no longer approved and cannot be cancelled.");
+            }
+            // Revert amount from user's balance
+            tx.update(userDocRef, { balance: increment(-transaction.amount) });
+            // Update deposit status
+            tx.update(depositDocRef, { status: 'reverted' });
+        });
+        toast({
+            title: 'Success!',
+            description: `Deposit #${transaction.id} has been reverted. ₹${transaction.amount} deducted from ${transaction.displayName}.`
+        });
+    } catch (error: any) {
+        console.error('Error reverting deposit:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error Reverting Deposit',
+            description: error.message || 'An unexpected error occurred.',
+        });
     }
   };
 
@@ -241,6 +274,7 @@ export default function AdminDepositHistoryPage() {
                               <TableHead>Amount</TableHead>
                               <TableHead>Method</TableHead>
                               <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -252,8 +286,38 @@ export default function AdminDepositHistoryPage() {
                                   <TableCell>₹{t.amount}</TableCell>
                                   <TableCell>{t.paymentMethod}</TableCell>
                                   <TableCell>
-                                      <Badge variant={getStatusBadgeVariant(t.status)} className={t.status === 'approved' ? 'bg-green-500 text-white' : t.status === 'rejected' ? 'bg-red-500 text-white' : ''}>{t.status}</Badge>
+                                    <Badge 
+                                        variant={getStatusBadgeVariant(t.status)} 
+                                        className={cn(
+                                            t.status === 'approved' && 'bg-green-500 text-white', 
+                                            t.status === 'rejected' && 'bg-red-500 text-white',
+                                            t.status === 'reverted' && 'border-yellow-500 text-yellow-500'
+                                        )}
+                                      >
+                                        {t.status}
+                                      </Badge>
                                   </TableCell>
+                                  <TableCell className="text-right">
+                                    {t.status === 'approved' && (
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="sm">Cancel</Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will cancel the approved deposit and deduct ₹{t.amount} from {t.displayName}'s wallet. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Close</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleCancelDeposit(t)}>Confirm Cancel</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )}
+                                </TableCell>
                               </TableRow>
                           ))}
                       </TableBody>

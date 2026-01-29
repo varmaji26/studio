@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, runTransaction, doc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,6 +17,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface Transaction extends DocumentData {
     id: string;
@@ -27,6 +29,7 @@ interface Transaction extends DocumentData {
     status: 'pending' | 'approved' | 'rejected' | 'reverted';
     createdAt: Timestamp;
     withdrawalMethod?: string;
+    bonusResetAmount?: number;
 }
 
 // Extend jsPDF with autoTable
@@ -45,6 +48,7 @@ export default function AdminWithdrawalHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
+  const { toast } = useToast();
 
   const fetchTransactions = useCallback(() => {
     setLoading(true);
@@ -124,6 +128,48 @@ export default function AdminWithdrawalHistoryPage() {
         case 'pending':
         default:
             return 'default';
+    }
+  };
+
+  const handleCancelWithdrawal = async (transaction: Transaction) => {
+    const withdrawalDocRef = doc(db, 'withdrawals', transaction.id);
+    const userDocRef = doc(db, 'users', transaction.userId);
+
+    try {
+        await runTransaction(db, async (tx) => {
+            const withdrawalDoc = await tx.get(withdrawalDocRef);
+            if (!withdrawalDoc.exists() || withdrawalDoc.data().status !== 'approved') {
+                throw new Error("This withdrawal is no longer approved and cannot be cancelled.");
+            }
+
+            const userDoc = await tx.get(userDocRef);
+            if (!userDoc.exists()) {
+                throw new Error("User not found.");
+            }
+
+            // Refund the amount to the user's real balance
+            tx.update(userDocRef, { balance: increment(transaction.amount) });
+            
+            // If a bonus was reset with this withdrawal, restore it.
+            const bonusToRestore = withdrawalDoc.data().bonusResetAmount || 0;
+            if (bonusToRestore > 0) {
+                tx.update(userDocRef, { bonusBalance: increment(bonusToRestore) });
+            }
+
+            // Update withdrawal status to 'reverted'
+            tx.update(withdrawalDocRef, { status: 'reverted' });
+        });
+        toast({
+            title: 'Success!',
+            description: `Withdrawal for ₹${transaction.amount} has been reverted for ${transaction.displayName}.`
+        });
+    } catch (error: any) {
+        console.error('Error reverting withdrawal:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error Reverting Withdrawal',
+            description: error.message || 'An unexpected error occurred.',
+        });
     }
   };
 
@@ -237,6 +283,7 @@ export default function AdminWithdrawalHistoryPage() {
                               <TableHead>Amount</TableHead>
                               <TableHead>Method</TableHead>
                               <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -259,6 +306,27 @@ export default function AdminWithdrawalHistoryPage() {
                                         {t.status}
                                       </Badge>
                                   </TableCell>
+                                  <TableCell className="text-right">
+                                    {t.status === 'approved' && (
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="sm">Cancel</Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will cancel the approved withdrawal, refund ₹{t.amount} to {t.displayName}'s wallet, and restore any bonus that was reset. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Close</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleCancelWithdrawal(t)}>Confirm Cancel</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )}
+                                </TableCell>
                               </TableRow>
                           ))}
                       </TableBody>
