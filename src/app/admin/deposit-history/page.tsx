@@ -130,7 +130,7 @@ export default function AdminDepositHistoryPage() {
     }
   };
 
-  const handleCancelDeposit = async (transaction: Transaction) => {
+  const handleRevertDeposit = async (transaction: Transaction) => {
     const depositDocRef = doc(db, 'deposits', transaction.id);
     const userDocRef = doc(db, 'users', transaction.userId);
 
@@ -138,16 +138,16 @@ export default function AdminDepositHistoryPage() {
         await runTransaction(db, async (tx) => {
             const depositDoc = await tx.get(depositDocRef);
             if (!depositDoc.exists() || depositDoc.data().status !== 'approved') {
-                throw new Error("This deposit is no longer approved and cannot be cancelled.");
+                throw new Error("This deposit is no longer approved and cannot be reverted.");
             }
             // Revert amount from user's balance
             tx.update(userDocRef, { balance: increment(-transaction.amount) });
-            // Update deposit status
-            tx.update(depositDocRef, { status: 'reverted' });
+            // Update deposit status to move it back to pending queue
+            tx.update(depositDocRef, { status: 'pending' });
         });
         toast({
             title: 'Success!',
-            description: `Deposit #${transaction.id} has been reverted. ₹${transaction.amount} deducted from ${transaction.displayName}.`
+            description: `Deposit #${transaction.id} has been reverted to pending. ₹${transaction.amount} deducted from ${transaction.displayName}.`
         });
     } catch (error: any) {
         console.error('Error reverting deposit:', error);
@@ -301,18 +301,18 @@ export default function AdminDepositHistoryPage() {
                                     {t.status === 'approved' && (
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="destructive" size="sm">Cancel</Button>
+                                                <Button variant="destructive" size="sm">Revert</Button>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        This will cancel the approved deposit and deduct ₹{t.amount} from {t.displayName}'s wallet. This action cannot be undone.
+                                                        This will revert the approved deposit, deduct ₹{t.amount} from {t.displayName}'s wallet, and move it back to the pending requests queue. This action cannot be undone.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Close</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleCancelDeposit(t)}>Confirm Cancel</AlertDialogAction>
+                                                    <AlertDialogAction onClick={() => handleRevertDeposit(t)}>Confirm Revert</AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>

@@ -131,37 +131,24 @@ export default function AdminWithdrawalHistoryPage() {
     }
   };
 
-  const handleCancelWithdrawal = async (transaction: Transaction) => {
+  const handleRevertWithdrawal = async (transaction: Transaction) => {
     const withdrawalDocRef = doc(db, 'withdrawals', transaction.id);
-    const userDocRef = doc(db, 'users', transaction.userId);
 
     try {
         await runTransaction(db, async (tx) => {
             const withdrawalDoc = await tx.get(withdrawalDocRef);
             if (!withdrawalDoc.exists() || withdrawalDoc.data().status !== 'approved') {
-                throw new Error("This withdrawal is no longer approved and cannot be cancelled.");
+                throw new Error("This withdrawal is not in an 'approved' state and cannot be reverted.");
             }
-
-            const userDoc = await tx.get(userDocRef);
-            if (!userDoc.exists()) {
-                throw new Error("User not found.");
-            }
-
-            // Refund the amount to the user's real balance
-            tx.update(userDocRef, { balance: increment(transaction.amount) });
             
-            // If a bonus was reset with this withdrawal, restore it.
-            const bonusToRestore = withdrawalDoc.data().bonusResetAmount || 0;
-            if (bonusToRestore > 0) {
-                tx.update(userDocRef, { bonusBalance: increment(bonusToRestore) });
-            }
-
-            // Update withdrawal status to 'reverted'
-            tx.update(withdrawalDocRef, { status: 'reverted' });
+            // Simply move the request back to pending.
+            // The user's balance was already debited when they made the request.
+            // It will be refunded only if the request is 'rejected' from the pending queue.
+            tx.update(withdrawalDocRef, { status: 'pending' });
         });
         toast({
             title: 'Success!',
-            description: `Withdrawal for ₹${transaction.amount} has been reverted for ${transaction.displayName}.`
+            description: `Withdrawal for ₹${transaction.amount} has been moved back to the pending queue for ${transaction.displayName}.`
         });
     } catch (error: any) {
         console.error('Error reverting withdrawal:', error);
@@ -310,18 +297,18 @@ export default function AdminWithdrawalHistoryPage() {
                                     {t.status === 'approved' && (
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="destructive" size="sm">Cancel</Button>
+                                                <Button variant="destructive" size="sm">Revert</Button>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        This will cancel the approved withdrawal, refund ₹{t.amount} to {t.displayName}'s wallet, and restore any bonus that was reset. This action cannot be undone.
+                                                       This will move the approved withdrawal request back to the pending queue. The user's balance will NOT be refunded at this stage. It will only be refunded if the request is rejected from the pending queue.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Close</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleCancelWithdrawal(t)}>Confirm Cancel</AlertDialogAction>
+                                                    <AlertDialogAction onClick={() => handleRevertWithdrawal(t)}>Confirm Revert</AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
