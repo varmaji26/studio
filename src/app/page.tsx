@@ -105,6 +105,11 @@ interface AppSettings extends DocumentData {
         imageUrl: string;
         link: string;
     },
+    promoPopup?: {
+        enabled: boolean;
+        imageUrl: string;
+        link: string;
+    },
     globalMarketOpenTime?: string;
 }
 
@@ -215,6 +220,7 @@ export default function Home() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [showBonusPopup, setShowBonusPopup] = useState(false);
+  const [showPromoPopup, setShowPromoPopup] = useState(false);
   const [closedGameInfo, setClosedGameInfo] = useState<Game | null>(null);
   const [isMarketOpenGlobally, setIsMarketOpenGlobally] = useState(true);
   const [now, setNow] = useState(new Date());
@@ -301,6 +307,9 @@ export default function Home() {
             if (appSettings.bonusPopup?.enabled && appSettings.bonusPopup.imageUrl) {
                 setShowBonusPopup(true);
             }
+            if (appSettings.promoPopup?.enabled && appSettings.promoPopup.imageUrl) {
+                setShowPromoPopup(true);
+            }
         }
     });
 
@@ -322,20 +331,6 @@ export default function Home() {
       setIsMarketOpenGlobally(true);
     }
   }, [now, settings.globalMarketOpenTime]);
-  
-  useEffect(() => {
-    if (!gamesLoading) {
-      setTimeout(() => {
-        const hash = decodeURIComponent(window.location.hash.substring(1));
-        if (hash) {
-          const element = document.getElementById(hash);
-          if (element) {
-            element.scrollIntoView({ behavior: "instant", block: "center" });
-          }
-        }
-      }, 300); // Small delay to ensure elements are rendered
-    }
-  }, [gamesLoading]);
   
   const handleCopyToClipboard = () => {
     if (userProfile.referralCode) {
@@ -363,6 +358,17 @@ export default function Home() {
     if (settings.bonusPopup?.link) {
         router.replace(settings.bonusPopup.link);
         handleBonusPopupClose();
+    }
+  };
+
+  const handlePromoPopupClose = () => {
+    setShowPromoPopup(false);
+  };
+
+  const handlePromoAction = () => {
+    if (settings.promoPopup?.link) {
+        router.push(settings.promoPopup.link);
+        handlePromoPopupClose();
     }
   };
 
@@ -563,6 +569,11 @@ export default function Home() {
                     <DialogDescription className="sr-only">A special bonus offer is available. Click the button to claim it.</DialogDescription>
                 </DialogHeader>
                 <div className="relative">
+                    <DialogClose asChild>
+                        <button className="absolute -top-2 -right-2 z-10 bg-background/50 backdrop-blur-sm rounded-full p-1 text-white">
+                            <X className="h-4 w-4" />
+                        </button>
+                    </DialogClose>
                     <div
                         className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden"
                     >
@@ -589,6 +600,46 @@ export default function Home() {
                 </div>
             </DialogContent>
         </Dialog>
+
+        {/* Promotional Popup Dialog */}
+        <Dialog open={showPromoPopup} onOpenChange={(isOpen) => !isOpen && handlePromoPopupClose()}>
+            <DialogContent className="p-0 border-0 bg-transparent max-w-[280px] shadow-none" onInteractOutside={handlePromoPopupClose}>
+                <DialogHeader>
+                    <DialogTitle className="sr-only">Promotion</DialogTitle>
+                    <DialogDescription className="sr-only">A special promotion is available.</DialogDescription>
+                </DialogHeader>
+                <div className="relative">
+                    <DialogClose asChild>
+                        <button className="absolute -top-2 -right-2 z-10 bg-background/50 backdrop-blur-sm rounded-full p-1 text-white">
+                            <X className="h-4 w-4" />
+                        </button>
+                    </DialogClose>
+                    <div className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden">
+                        <div className="aspect-square w-full bg-background/10">
+                            <Image
+                                src={settings.promoPopup?.imageUrl || ''}
+                                alt="Promotional Offer"
+                                width={400}
+                                height={400}
+                                className="w-full h-full object-cover"
+                                priority
+                                sizes="(max-width: 768px) 100vw, 280px"
+                            />
+                        </div>
+                        {settings.promoPopup?.link && (
+                            <div className="p-4 bg-background">
+                                <div>
+                                    <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handlePromoAction}>
+                                        Check it out!
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+
 
         {/* Betting Closed Dialog */}
          <Dialog open={!!closedGameInfo} onOpenChange={() => setClosedGameInfo(null)}>
@@ -746,5 +797,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

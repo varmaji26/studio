@@ -114,6 +114,9 @@ const settingsSchema = z.object({
   bonusPopupEnabled: z.boolean().default(false),
   bonusPopupImage: z.any().optional(),
   bonusPopupLink: z.string().optional(),
+  promoPopupEnabled: z.boolean().default(false),
+  promoPopupImage: z.any().optional(),
+  promoPopupLink: z.string().optional(),
   welcomeBonusEnabled: z.boolean().default(false),
   welcomeBonusAmount: z.preprocess(
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
@@ -175,6 +178,8 @@ export default function SettingsPage() {
   const [existingMarqueeLogoStoragePath, setExistingMarqueeLogoStoragePath] = useState<string | null>(null);
   const [existingBonusPopupUrl, setExistingBonusPopupUrl] = useState<string | null>(null);
   const [existingBonusPopupStoragePath, setExistingBonusPopupStoragePath] = useState<string | null>(null);
+  const [existingPromoPopupUrl, setExistingPromoPopupUrl] = useState<string | null>(null);
+  const [existingPromoPopupStoragePath, setExistingPromoPopupStoragePath] = useState<string | null>(null);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -203,6 +208,8 @@ export default function SettingsPage() {
       bonusPercentage: 0,
       bonusPopupEnabled: false,
       bonusPopupLink: '/add-fund',
+      promoPopupEnabled: false,
+      promoPopupLink: '/',
       welcomeBonusEnabled: false,
       welcomeBonusAmount: 0,
       referralBonusEnabled: false,
@@ -233,6 +240,7 @@ export default function SettingsPage() {
   const downloadPageImageRef = form.register("downloadPageImage");
   const marqueeLogoRef = form.register("marqueeLogo");
   const bonusPopupImageRef = form.register("bonusPopupImage");
+  const promoPopupImageRef = form.register("promoPopupImage");
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -267,6 +275,8 @@ export default function SettingsPage() {
             bonusPercentage: data.bonus?.percentage || 0,
             bonusPopupEnabled: data.bonusPopup?.enabled || false,
             bonusPopupLink: data.bonusPopup?.link || '/add-fund',
+            promoPopupEnabled: data.promoPopup?.enabled || false,
+            promoPopupLink: data.promoPopup?.link || '/',
             welcomeBonusEnabled: data.welcomeBonus?.enabled || false,
             welcomeBonusAmount: data.welcomeBonus?.amount || 0,
             referralBonusEnabled: data.referralBonus?.enabled || false,
@@ -318,6 +328,10 @@ export default function SettingsPage() {
            if (data.bonusPopup) {
             setExistingBonusPopupUrl(data.bonusPopup.imageUrl);
             setExistingBonusPopupStoragePath(data.bonusPopup.storagePath);
+          }
+          if (data.promoPopup) {
+            setExistingPromoPopupUrl(data.promoPopup.imageUrl);
+            setExistingPromoPopupStoragePath(data.promoPopup.storagePath);
           }
         }
       } catch (error) {
@@ -429,6 +443,13 @@ export default function SettingsPage() {
             storagePath: existingBonusPopupStoragePath,
             link: values.bonusPopupLink,
         } : null;
+
+        let promoPopupData = (existingPromoPopupUrl || values.promoPopupEnabled) ? {
+            enabled: values.promoPopupEnabled,
+            imageUrl: existingPromoPopupUrl,
+            storagePath: existingPromoPopupStoragePath,
+            link: values.promoPopupLink,
+        } : null;
         
         const qrFile = values.qrCodeImage?.[0];
         if (qrFile) {
@@ -514,6 +535,24 @@ export default function SettingsPage() {
             setExistingBonusPopupStoragePath(storagePath);
         }
 
+        const promoPopupFile = values.promoPopupImage?.[0];
+        if (promoPopupFile) {
+             const { downloadURL, storagePath } = await uploadFile(promoPopupFile, 'promo-popups', existingPromoPopupStoragePath);
+             if (promoPopupData) {
+                promoPopupData.imageUrl = downloadURL;
+                promoPopupData.storagePath = storagePath;
+             } else {
+                 promoPopupData = {
+                     enabled: values.promoPopupEnabled,
+                     imageUrl: downloadURL,
+                     storagePath: storagePath,
+                     link: values.promoPopupLink || '/',
+                 }
+             }
+            setExistingPromoPopupUrl(downloadURL);
+            setExistingPromoPopupStoragePath(storagePath);
+        }
+
         const settingsDoc = await getDoc(settingsDocRef);
         const currentData = settingsDoc.exists() ? settingsDoc.data() : {};
         const currentPaymentDetails = currentData.paymentDetails || {};
@@ -557,6 +596,7 @@ export default function SettingsPage() {
               percentage: values.bonusPercentage,
             },
             bonusPopup: bonusPopupData,
+            promoPopup: promoPopupData,
             welcomeBonus: {
               enabled: values.welcomeBonusEnabled,
               amount: values.welcomeBonusAmount,
@@ -601,7 +641,7 @@ export default function SettingsPage() {
             description: 'Settings have been saved.',
         });
 
-        form.reset({ ...values, qrCodeImage: undefined, gpayImage: undefined, paytmImage: undefined, phonepeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined, bonusPopupImage: undefined });
+        form.reset({ ...values, qrCodeImage: undefined, gpayImage: undefined, paytmImage: undefined, phonepeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined, bonusPopupImage: undefined, promoPopupImage: undefined });
         
     } catch (error: any) {
       console.error('Error updating settings: ', error);
@@ -829,6 +869,26 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeletePromoPopupImage = async () => {
+    if (!existingPromoPopupStoragePath) return;
+    try {
+      const storageRef = ref(storage, existingPromoPopupStoragePath);
+      await deleteObject(storageRef);
+      const settingsDocRef = doc(db, 'settings', 'app-settings');
+      await updateDoc(settingsDocRef, { 
+          'promoPopup.imageUrl': null,
+          'promoPopup.storagePath': null,
+       });
+      setExistingPromoPopupUrl(null);
+      setExistingPromoPopupStoragePath(null);
+      toast({ title: 'Success!', description: 'Promotional popup image deleted.' });
+    } catch (error) {
+       console.error("Error deleting promo popup image: ", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete promo popup image.' });
+    }
+  };
+
+
   const handleCleanUserData = async () => {
     setIsCleaning(true);
     try {
@@ -930,7 +990,7 @@ export default function SettingsPage() {
                 
                 {/* Bonus Section */}
                 <AccordionItem value="item-2">
-                  <AccordionTrigger className="text-lg font-semibold">Bonus Settings</AccordionTrigger>
+                  <AccordionTrigger className="text-lg font-semibold">Bonus & Promotion Settings</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
                     <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel><FormDescriptionComponent>Give users a bonus on deposits.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     {form.watch('bonusEnabled') && (<FormField control={form.control} name="bonusPercentage" render={({ field }) => (<FormItem><FormLabel>Bonus Percentage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
@@ -967,9 +1027,31 @@ export default function SettingsPage() {
                           <FormField control={form.control} name="bonusPopupLink" render={({ field }) => (<FormItem><FormLabel>Popup Button Link</FormLabel><FormControl><Input placeholder="/add-fund" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       </div>
                     )}
+                    <Separator />
+                     <FormField control={form.control} name="promoPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Promotional Popup</FormLabel><FormDescriptionComponent>Show a general promotional popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    {form.watch('promoPopupEnabled') && (
+                      <div className="space-y-4">
+                          {existingPromoPopupUrl && (
+                              <div className="flex flex-col items-center gap-4">
+                              <p className="text-sm text-muted-foreground">Current Image:</p>
+                              <Image src={existingPromoPopupUrl} alt="Promotional Popup" width={200} height={200} className="rounded-md border p-1" />
+                              <AlertDialog>
+                                  <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the image.</AlertDialogDescription></AlertDialogHeader>
+                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePromoPopupImage}>Delete</AlertDialogAction></AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                              </div>
+                          )}
+                          <FormField control={form.control} name="promoPopupImage" render={() => (<FormItem><FormLabel>{existingPromoPopupUrl ? 'New Image' : 'Upload Image'}</FormLabel><FormControl><Input type="file" {...promoPopupImageRef} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={form.control} name="promoPopupLink" render={({ field }) => (<FormItem><FormLabel>Popup Button Link</FormLabel><FormControl><Input placeholder="/" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      </div>
+                    )}
                     <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                   </AccordionContent>
                 </AccordionItem>
+
 
                 {/* Support & Notice Section */}
                  <AccordionItem value="item-3">
@@ -1204,5 +1286,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
