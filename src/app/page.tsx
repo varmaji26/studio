@@ -578,15 +578,10 @@ export default function Home() {
                         className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden"
                     >
                         <div className="aspect-square w-full bg-background/10">
-                            <Image
+                            <img
                                 src={settings.bonusPopup?.imageUrl || ''}
                                 alt="Bonus Offer"
-                                width={400}
-                                height={400}
                                 className="w-full h-full object-cover"
-                                priority
-                                sizes="(max-width: 768px) 100vw, 280px"
-                                data-ai-hint="casino bonus"
                             />
                         </div>
                         <div className="p-4 bg-background">
@@ -616,19 +611,15 @@ export default function Home() {
                     </DialogClose>
                     <div className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden">
                         <div className="aspect-square w-full bg-background/10">
-                            <Image
+                            <img
                                 src={settings.promoPopup?.imageUrl || ''}
                                 alt="Promotional Offer"
-                                width={400}
-                                height={400}
                                 className="w-full h-full object-cover"
-                                priority
-                                sizes="(max-width: 768px) 100vw, 280px"
                             />
                         </div>
                         {settings.promoPopup?.link && (
                             <div>
-                                <Button className="w-full h-20 rounded-none text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handlePromoAction}>
+                                <Button className="w-full h-14 rounded-none text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handlePromoAction}>
                                     Check it out!
                                 </Button>
                             </div>
