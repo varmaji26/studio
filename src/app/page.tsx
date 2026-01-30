@@ -574,9 +574,7 @@ export default function Home() {
                             <X className="h-4 w-4" />
                         </button>
                     </DialogClose>
-                    <div
-                        className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden"
-                    >
+                    <div className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden">
                         <div className="aspect-square w-full bg-background/10">
                             <img
                                 src={settings.bonusPopup?.imageUrl || ''}
@@ -598,7 +596,7 @@ export default function Home() {
 
         {/* Promotional Popup Dialog */}
         <Dialog open={showPromoPopup} onOpenChange={(isOpen) => !isOpen && handlePromoPopupClose()}>
-            <DialogContent className="p-0 border-0 bg-transparent max-w-[280px] shadow-none" onInteractOutside={handlePromoPopupClose}>
+            <DialogContent className="p-0 border-0 bg-transparent max-w-[250px] shadow-none" onInteractOutside={handlePromoPopupClose}>
                 <DialogHeader>
                     <DialogTitle className="sr-only">Promotion</DialogTitle>
                     <DialogDescription className="sr-only">A special promotion is available.</DialogDescription>
@@ -619,7 +617,7 @@ export default function Home() {
                         </div>
                         {settings.promoPopup?.link && (
                             <div>
-                                <Button className="w-full h-14 rounded-none text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handlePromoAction}>
+                                <Button className="w-full h-12 rounded-none text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handlePromoAction}>
                                     Check it out!
                                 </Button>
                             </div>
