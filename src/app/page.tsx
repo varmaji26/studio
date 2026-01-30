@@ -627,12 +627,10 @@ export default function Home() {
                             />
                         </div>
                         {settings.promoPopup?.link && (
-                            <div className="p-4 bg-background">
-                                <div>
-                                    <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handlePromoAction}>
-                                        Check it out!
-                                    </Button>
-                                </div>
+                            <div>
+                                <Button className="w-full h-20 rounded-none text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handlePromoAction}>
+                                    Check it out!
+                                </Button>
                             </div>
                         )}
                     </div>
