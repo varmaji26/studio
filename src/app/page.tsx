@@ -554,7 +554,7 @@ export default function Home() {
         
         {!isMarketOpenGlobally && settings.globalMarketOpenTime && (
             <Alert variant="destructive" className="bg-yellow-600/20 border-yellow-500/30 text-yellow-300">
-                <AlertTitle className="font-bold text-yellow-200">Market Closed</AlertTitle>
+                <AlertTitle className="font-bold text-yellow-200 text-sm">Market Closed</AlertTitle>
                 <AlertDescription className="text-yellow-300/90 text-xs">
                    All markets are currently closed. Bidding will open at {formatTime(settings.globalMarketOpenTime)}.
                 </AlertDescription>
@@ -617,7 +617,7 @@ export default function Home() {
                         </div>
                         {settings.promoPopup?.link && (
                             <div>
-                                <Button className="w-full h-12 rounded-none text-lg font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handlePromoAction}>
+                                <Button className="w-full h-10 rounded-none text-base font-bold bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg" onClick={handlePromoAction}>
                                     Check it out!
                                 </Button>
                             </div>
