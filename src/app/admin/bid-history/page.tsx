@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, onSnapshot, where } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs, runTransaction, doc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,7 +19,6 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { runTransaction, doc, increment } from 'firebase/firestore';
 import { cleanOldBids } from '@/actions/clean-old-bids';
 
 
@@ -47,7 +46,7 @@ declare module 'jspdf' {
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminBidHistoryPage() {
-  const [allBids, setAllBids] = useState<Bid[]>([]);
+  const [bidsForDay, setBidsForDay] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -56,6 +55,7 @@ export default function AdminBidHistoryPage() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [isCleaning, setIsCleaning] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -63,43 +63,48 @@ export default function AdminBidHistoryPage() {
     }
   }, [searchParams]);
   
-  const fetchBids = useCallback(() => {
+  const fetchBidsForDate = useCallback(async () => {
+    if (!selectedDate) {
+      setBidsForDay([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    const q = query(collection(db, "bids"), orderBy("createdAt", "desc"));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
-        setAllBids(bidsData);
-        setLoading(false);
-    }, (error) => {
-        console.error("Error fetching bids: ", error);
-        setLoading(false);
-    });
+    try {
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-    return unsubscribe;
-  }, []);
+      const q = query(
+        collection(db, "bids"),
+        orderBy("createdAt", "desc"),
+        where('createdAt', '>=', Timestamp.fromDate(startOfDay)),
+        where('createdAt', '<=', Timestamp.fromDate(endOfDay))
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const bidsData = querySnapshot.docs.map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Bid));
+      setBidsForDay(bidsData);
+    } catch (error) {
+      console.error("Error fetching bids for date: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error fetching bids",
+        description: "Could not fetch bid data for the selected date."
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedDate, toast]);
 
   useEffect(() => {
-    const unsubscribe = fetchBids();
-    return () => unsubscribe();
-  }, [fetchBids]);
+    fetchBidsForDate();
+  }, [fetchBidsForDate, refreshTrigger]);
 
   const filteredBids = useMemo(() => {
-    let filtered = allBids;
+    let filtered = bidsForDay;
     
-    if (selectedDate) {
-        const startOfDay = new Date(selectedDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(selectedDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        
-        filtered = filtered.filter(bid => {
-            if (!bid.createdAt?.seconds) return false;
-            const bidDate = new Date(bid.createdAt.seconds * 1000);
-            return bidDate >= startOfDay && bidDate <= endOfDay;
-        });
-    }
-
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (lowercasedFilter) {
       filtered = filtered.filter((bid) => {
@@ -112,7 +117,7 @@ export default function AdminBidHistoryPage() {
     }
     
     return filtered;
-  }, [searchTerm, allBids, selectedDate]);
+  }, [searchTerm, bidsForDay]);
   
   const totalBiddingAmount = useMemo(() => {
     return filteredBids.reduce((acc, bid) => acc + (bid.totalAmount || 0), 0);
@@ -186,6 +191,7 @@ export default function AdminBidHistoryPage() {
             title: 'Success!',
             description: `Bid #${bid.id} has been cancelled and ₹${bid.totalAmount} refunded to ${bid.displayName}.`
         });
+        setRefreshTrigger(t => t + 1);
     } catch (error: any) {
         console.error('Error cancelling bid:', error);
         toast({
@@ -205,6 +211,7 @@ export default function AdminBidHistoryPage() {
                 title: "Success!",
                 description: `${result.deletedCount} old bids have been deleted.`,
             });
+            setRefreshTrigger(t => t + 1);
         } else {
             throw new Error(result.message);
         }
@@ -286,7 +293,7 @@ export default function AdminBidHistoryPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            <Button onClick={handleDownloadPDF} variant="outline" size="sm">
+            <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={filteredBids.length === 0}>
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
             </Button>
@@ -333,7 +340,7 @@ export default function AdminBidHistoryPage() {
             <Card className="bg-primary/10 border-primary/20 mb-4">
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                        <p className="text-lg font-semibold">Total Bidding Amount</p>
+                        <p className="text-lg font-semibold">Total Bidding Amount (for selected day & search)</p>
                         <p className="text-2xl font-bold text-primary">
                             ₹{totalBiddingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
@@ -416,7 +423,7 @@ export default function AdminBidHistoryPage() {
                            ) : (
                                 <TableRow>
                                     <TableCell colSpan={8} className="h-24 text-center">
-                                      {searchTerm || selectedDate ? "No bids found for the selected criteria." : "No bids found."}
+                                      {searchTerm || selectedDate ? "No bids found for the selected criteria." : "No bids found for this date."}
                                     </TableCell>
                                 </TableRow>
                            )}
