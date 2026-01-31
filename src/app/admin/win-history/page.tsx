@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -53,12 +53,13 @@ export default function AdminWinHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [isCleaning, setIsCleaning] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [fromDate, setFromDate] = useState<Date | undefined>();
-  const [toDate, setToDate] = useState<Date | undefined>();
+  const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
+  const [toDate, setToDate] = useState<Date | undefined>(new Date());
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
   const [currentPage, setCurrentPage] = useState(1);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -66,50 +67,53 @@ export default function AdminWinHistoryPage() {
     }
   }, [searchParams]);
 
-  const fetchWins = useCallback(() => {
+  const fetchWins = useCallback(async () => {
+      if (!fromDate) {
+          setAllWins([]);
+          setLoading(false);
+          return;
+      }
       setLoading(true);
       
-      const q = query(
-          collection(db, "bids"), 
-          where("status", "in", ["won", "cancelled"]),
-          orderBy("createdAt", "desc")
-      );
-      
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      try {
+          const startOfDay = new Date(fromDate);
+          startOfDay.setHours(0, 0, 0, 0);
+          
+          const endOfDay = toDate ? new Date(toDate) : new Date(fromDate);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          const q = query(
+              collection(db, "bids"), 
+              where("status", "in", ["won", "cancelled"]),
+              where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
+              where("createdAt", "<=", Timestamp.fromDate(endOfDay)),
+              orderBy("createdAt", "desc")
+          );
+          
+          const querySnapshot = await getDocs(q);
           const winsData = querySnapshot.docs
             .filter(doc => doc.data().status === 'won' || (doc.data().status === 'cancelled' && doc.data().winningAmount > 0))
             .map(bidDoc => ({ id: bidDoc.id, ...bidDoc.data() } as Win));
           
           setAllWins(winsData);
-          setLoading(false);
-      }, (error) => {
+      } catch (error) {
           console.error("Error fetching wins: ", error);
+          toast({
+              variant: 'destructive',
+              title: "Error Fetching Data",
+              description: "Could not fetch win history for the selected date range."
+          })
+      } finally {
           setLoading(false);
-      });
-      
-      return () => unsubscribe();
-  }, []);
+      }
+  }, [fromDate, toDate, toast]);
 
   useEffect(() => {
     fetchWins();
-  }, [fetchWins]);
+  }, [fetchWins, refreshTrigger]);
 
   const filteredWins = useMemo(() => {
     let filtered = allWins;
-    
-    if (fromDate) {
-        const startOfDay = new Date(fromDate);
-        startOfDay.setHours(0, 0, 0, 0);
-
-        const endOfDay = toDate ? new Date(toDate) : new Date(fromDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        
-        filtered = filtered.filter(win => {
-            if (!win.createdAt?.seconds) return false;
-            const winDate = new Date(win.createdAt.seconds * 1000);
-            return winDate >= startOfDay && winDate <= endOfDay;
-        });
-    }
 
     const lowercasedFilter = searchTerm.toLowerCase().trim();
     if (lowercasedFilter) {
@@ -122,7 +126,7 @@ export default function AdminWinHistoryPage() {
       });
     }
     return filtered;
-  }, [searchTerm, allWins, fromDate, toDate]);
+  }, [searchTerm, allWins]);
   
   const totalWinningAmount = useMemo(() => {
     return filteredWins
@@ -193,6 +197,7 @@ export default function AdminWinHistoryPage() {
                 title: "Success!",
                 description: `${result.deletedCount} old winning bids have been deleted.`,
             });
+            setRefreshTrigger(t => t + 1);
         } else {
             throw new Error(result.message);
         }
@@ -228,6 +233,7 @@ export default function AdminWinHistoryPage() {
             title: 'Success!',
             description: `Win for bid #${win.id} has been cancelled and ₹${win.winningAmount} deducted from ${win.displayName}.`
         });
+        setRefreshTrigger(t => t + 1);
     } catch (error: any) {
         console.error('Error cancelling win:', error);
         toast({
@@ -469,7 +475,7 @@ export default function AdminWinHistoryPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={9} className="h-24 text-center">
-                                      {searchTerm || fromDate ? "No wins found for the selected criteria." : "No wins found."}
+                                      {searchTerm || fromDate ? "No wins found for the selected criteria." : "No wins found for the selected dates."}
                                     </TableCell>
                                 </TableRow>
                             )}
