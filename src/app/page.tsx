@@ -553,11 +553,10 @@ export default function Home() {
       <main className="flex-1 flex flex-col gap-4 p-2 pb-28 overflow-y-auto">
         
         {!isMarketOpenGlobally && settings.globalMarketOpenTime && (
-            <Alert variant="destructive" className="bg-yellow-600/20 border-yellow-500/30 text-yellow-300">
-                <AlertTitle className="font-bold text-yellow-200 text-sm">Market Closed</AlertTitle>
-                <AlertDescription className="text-yellow-300/90 text-xs">
-                   All markets are currently closed. Bidding will open at {formatTime(settings.globalMarketOpenTime)}.
-                </AlertDescription>
+            <Alert variant="destructive" className="bg-yellow-600/20 border-yellow-500/30 text-yellow-300 p-2">
+                <p className="text-yellow-300/90 text-xs text-center">
+                   Markets are closed. Bidding opens at {formatTime(settings.globalMarketOpenTime)}.
+                </p>
             </Alert>
         )}
 
@@ -609,10 +608,12 @@ export default function Home() {
                     </DialogClose>
                     <div className="shadow-2xl shadow-primary/30 rounded-lg overflow-hidden">
                         <div className="aspect-square w-full bg-background/10">
-                            <img
+                            <Image
                                 src={settings.promoPopup?.imageUrl || ''}
                                 alt="Promotional Offer"
-                                className="w-full h-full object-cover"
+                                width={250}
+                                height={250}
+                                className="w-full h-auto object-contain"
                             />
                         </div>
                         {settings.promoPopup?.link && (
