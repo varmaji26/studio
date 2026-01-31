@@ -54,8 +54,6 @@ export default function AdminLayout({
   const [pendingDepositsCount, setPendingDepositsCount] = React.useState(0);
   const [pendingWithdrawalsCount, setPendingWithdrawalsCount] = React.useState(0);
   const [newUsersCount, setNewUsersCount] = React.useState(0);
-  const [todaysBidsCount, setTodaysBidsCount] = React.useState(0);
-  const [todaysWinsCount, setTodaysWinsCount] = React.useState(0);
   const [theme, setTheme] = React.useState('light');
   
   const isActive = (path: string) => pathname === path;
@@ -133,31 +131,10 @@ export default function AdminLayout({
         setNewUsersCount(snapshot.size);
     });
     
-    // Listener for today's bids and wins
-    const lastViewedBidsTimestamp = localStorage.getItem('lastViewedBidsTimestamp');
-    const lastViewedBidsDate = lastViewedBidsTimestamp ? new Date(parseInt(lastViewedBidsTimestamp, 10)) : new Date(0);
-    const lastViewedWinsTimestamp = localStorage.getItem('lastViewedWinsTimestamp');
-    const lastViewedWinsDate = lastViewedWinsTimestamp ? new Date(parseInt(lastViewedWinsTimestamp, 10)) : new Date(0);
-
-
-    const todaysBidsQuery = query(collection(db, "bids"), where("createdAt", ">=", Timestamp.fromDate(lastViewedBidsDate)));
-    const unsubTodaysBids = onSnapshot(todaysBidsQuery, (snapshot) => {
-        setTodaysBidsCount(snapshot.size);
-    });
-
-    const todaysWinsQuery = query(collection(db, "bids"), where("createdAt", ">=", Timestamp.fromDate(lastViewedWinsDate)));
-    const unsubTodaysWins = onSnapshot(todaysWinsQuery, (snapshot) => {
-        const winningBids = snapshot.docs.filter(doc => doc.data().status === 'won');
-        setTodaysWinsCount(winningBids.length);
-    });
-
-
     return () => {
         unsubDeposits();
         unsubWithdrawals();
         unsubNewUsers();
-        unsubTodaysBids();
-        unsubTodaysWins();
     };
   }, []);
 
@@ -165,11 +142,6 @@ export default function AdminLayout({
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  };
-  
-  const handleBadgeClick = (setter: React.Dispatch<React.SetStateAction<number>>) => {
-    handleLinkClick();
-    setter(0);
   };
 
   const handleLogout = async () => {
@@ -250,7 +222,7 @@ export default function AdminLayout({
                   </CollapsibleContent>
                </Collapsible>
               <SidebarMenuItem>
-                 <Link href="/admin/manage-users?viewed=true" passHref onClick={() => handleBadgeClick(setNewUsersCount)}>
+                 <Link href="/admin/manage-users?viewed=true" passHref onClick={() => { handleLinkClick(); setNewUsersCount(0); }}>
                     <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Registered Users"}}>
                       <div className="flex items-center gap-2">
                         <Users />
@@ -305,7 +277,7 @@ export default function AdminLayout({
                   </SidebarMenuItem>
                   <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
                      <SidebarMenuItem>
-                        <Link href="/admin/deposit-requests" passHref onClick={() => handleBadgeClick(setPendingDepositsCount)}>
+                        <Link href="/admin/deposit-requests" passHref onClick={() => { handleLinkClick(); setPendingDepositsCount(0); }}>
                         <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/deposit-requests')}>                        
                             <div className="flex items-center justify-between w-full">
                                 <span>Deposit Requests</span>
@@ -319,7 +291,7 @@ export default function AdminLayout({
                         </Link>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                        <Link href="/admin/withdrawal-requests" passHref onClick={() => handleBadgeClick(setPendingWithdrawalsCount)}>
+                        <Link href="/admin/withdrawal-requests" passHref onClick={() => { handleLinkClick(); setPendingWithdrawalsCount(0); }}>
                         <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/withdrawal-requests')}>                        
                              <div className="flex items-center justify-between w-full">
                                 <span>Withdrawal Requests</span>
@@ -359,32 +331,22 @@ export default function AdminLayout({
                 </Link>
               </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <Link href="/admin/bid-history?viewed=true" passHref onClick={() => handleBadgeClick(setTodaysBidsCount)}>
+                  <Link href="/admin/bid-history?viewed=true" passHref onClick={handleLinkClick}>
                     <SidebarMenuButton isActive={isActive('/admin/bid-history')} tooltip={{children: "Bid History"}}>
                       <div className="flex items-center gap-2">
                         <History />
                         <span>Bid History</span>
                       </div>
-                       {todaysBidsCount > 0 && (
-                        <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                            {todaysBidsCount}
-                        </span>
-                     )}
                     </SidebarMenuButton>
                   </Link>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                  <Link href="/admin/win-history?viewed=true" passHref onClick={() => handleBadgeClick(setTodaysWinsCount)}>
+                  <Link href="/admin/win-history?viewed=true" passHref onClick={handleLinkClick}>
                     <SidebarMenuButton isActive={isActive('/admin/win-history')} tooltip={{children: "Win History"}}>
                       <div className="flex items-center gap-2">
                         <Trophy />
                         <span>Win History</span>
                       </div>
-                      {todaysWinsCount > 0 && (
-                        <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                            {todaysWinsCount}
-                        </span>
-                     )}
                     </SidebarMenuButton>
                   </Link>
               </SidebarMenuItem>
