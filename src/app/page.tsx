@@ -233,93 +233,81 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login');
+    if (!loading && user?.uid) {
+        let userUnsubscribe: () => void;
+        let gamesUnsubscribe: () => void;
+        let bannersUnsubscribe: () => void;
+        let settingsUnsubscribe: () => void;
+
+        const userDocRef = doc(db, 'users', user.uid);
+        userUnsubscribe = onSnapshot(userDocRef, (doc) => {
+            if (doc.exists()) {
+                setUserProfile(doc.data() as UserProfile);
+            }
+        });
+
+        const gamesQuery = query(collection(db, 'games'));
+        gamesUnsubscribe = onSnapshot(gamesQuery, (querySnapshot) => {
+          const gamesData: Game[] = [];
+          querySnapshot.forEach((doc) => {
+            gamesData.push({ id: doc.id, ...doc.data() } as Game);
+          });
+          
+            gamesData.sort((a, b) => {
+                const isAActiveToday = a.active && (!a.activeDays || a.activeDays.length === 0 || a.activeDays.includes(currentDay));
+                const isBActiveToday = b.active && (!b.activeDays || b.activeDays.length === 0 || b.activeDays.includes(currentDay));
+
+                const isAClosed = isBettingClosed(a.closeTime);
+                const isBClosed = isBettingClosed(b.closeTime);
+                
+                const isAPlayable = isAActiveToday && !isAClosed;
+                const isBPlayable = isBActiveToday && !isBClosed;
+
+                if (isAPlayable && !isBPlayable) return -1;
+                if (!isAPlayable && isBPlayable) return 1;
+
+                return a.openTime.localeCompare(b.openTime);
+            });
+
+          setGames(gamesData);
+          setGamesLoading(false);
+        }, (error) => {
+            console.error("Error fetching games:", error);
+            setGamesLoading(false);
+        });
+
+        const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"));
+        bannersUnsubscribe = onSnapshot(bannersQuery, (querySnapshot) => {
+            const bannersData: Banner[] = [];
+            querySnapshot.forEach((doc) => {
+                bannersData.push({ id: doc.id, ...doc.data() } as Banner);
+            });
+            setBanners(bannersData);
+        });
+        
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        settingsUnsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const appSettings = docSnap.data() as AppSettings;
+                setSettings(appSettings);
+                
+                if (appSettings.bonusPopup?.enabled && appSettings.bonusPopup.imageUrl) {
+                    setShowBonusPopup(true);
+                }
+                if (appSettings.promoPopup?.enabled && appSettings.promoPopup.imageUrl) {
+                    setShowPromoPopup(true);
+                }
+            }
+        });
+
+        return () => {
+            userUnsubscribe?.();
+            gamesUnsubscribe?.();
+            bannersUnsubscribe?.();
+            settingsUnsubscribe?.();
+        };
     }
-  }, [user, loading, router]);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    let userUnsubscribe: () => void;
-    let gamesUnsubscribe: () => void;
-    let bannersUnsubscribe: () => void;
-    let settingsUnsubscribe: () => void;
-
-    const userDocRef = doc(db, 'users', user.uid);
-    userUnsubscribe = onSnapshot(userDocRef, (doc) => {
-        if (doc.exists()) {
-            setUserProfile(doc.data() as UserProfile);
-        }
-    });
-
-    const gamesQuery = query(collection(db, 'games'));
-    gamesUnsubscribe = onSnapshot(gamesQuery, (querySnapshot) => {
-      const gamesData: Game[] = [];
-      querySnapshot.forEach((doc) => {
-        gamesData.push({ id: doc.id, ...doc.data() } as Game);
-      });
-      
-      // Sort games: active & open games on top, inactive/closed at the bottom
-        gamesData.sort((a, b) => {
-            const isAActiveToday = a.active && (!a.activeDays || a.activeDays.length === 0 || a.activeDays.includes(currentDay));
-            const isBActiveToday = b.active && (!b.activeDays || b.activeDays.length === 0 || b.activeDays.includes(currentDay));
-
-            const isAClosed = isBettingClosed(a.closeTime);
-            const isBClosed = isBettingClosed(b.closeTime);
-            
-            const isAPlayable = isAActiveToday && !isAClosed;
-            const isBPlayable = isBActiveToday && !isBClosed;
-
-            if (isAPlayable && !isBPlayable) {
-                return -1; // a (playable) comes before b (not playable)
-            }
-            if (!isAPlayable && isBPlayable) {
-                return 1; // b (playable) comes after a (not playable)
-            }
-
-            // If both have the same playability, sort by openTime
-            return a.openTime.localeCompare(b.openTime);
-        });
-
-      setGames(gamesData);
-      setGamesLoading(false);
-    }, (error) => {
-        console.error("Error fetching games:", error);
-        setGamesLoading(false);
-    });
-
-    const bannersQuery = query(collection(db, "banners"), orderBy("createdAt", "desc"));
-    bannersUnsubscribe = onSnapshot(bannersQuery, (querySnapshot) => {
-        const bannersData: Banner[] = [];
-        querySnapshot.forEach((doc) => {
-            bannersData.push({ id: doc.id, ...doc.data() } as Banner);
-        });
-        setBanners(bannersData);
-    });
-    
-    const settingsDocRef = doc(db, 'settings', 'app-settings');
-    settingsUnsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const appSettings = docSnap.data() as AppSettings;
-            setSettings(appSettings);
-            
-            if (appSettings.bonusPopup?.enabled && appSettings.bonusPopup.imageUrl) {
-                setShowBonusPopup(true);
-            }
-            if (appSettings.promoPopup?.enabled && appSettings.promoPopup.imageUrl) {
-                setShowPromoPopup(true);
-            }
-        }
-    });
-
-    return () => {
-        userUnsubscribe?.();
-        gamesUnsubscribe?.();
-        bannersUnsubscribe?.();
-        settingsUnsubscribe?.();
-    };
-  }, [user?.uid, currentDay]);
+  }, [user, loading, currentDay]);
 
   useEffect(() => {
     if (settings.globalMarketOpenTime) {
@@ -386,7 +374,16 @@ export default function Home() {
     }
   };
 
-  if (loading || !user) {
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader className="h-10 w-10 text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    router.replace('/login');
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 text-primary" />

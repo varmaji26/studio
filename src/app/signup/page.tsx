@@ -1,23 +1,24 @@
-
 'use client';
 
 import { AuthForm } from '@/components/auth-form';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { Loader } from '@/components/loader';
 
 export default function SignupPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (user) {
-      router.replace('/');
-    }
-  }, [user, router]);
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader className="h-10 w-10 text-primary" />
+      </div>
+    );
+  }
 
-  if (loading || user) {
+  if (user) {
+    router.replace('/');
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 text-primary" />
