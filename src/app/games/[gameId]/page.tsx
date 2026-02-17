@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
@@ -129,9 +130,29 @@ const betTypes = [
 export default function GamePage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const gameId = params.gameId as string;
-  const [game, setGame] = useState<Game | null>(null);
-  const [loading, setLoading] = useState(true);
+  
+  const initialName = searchParams.get('name');
+  const initialOpenTime = searchParams.get('openTime');
+  const initialCloseTime = searchParams.get('closeTime');
+
+  const [game, setGame] = useState<Game | null>(() => {
+    if (initialName && initialOpenTime && initialCloseTime) {
+      return {
+        id: gameId,
+        name: initialName,
+        openTime: initialOpenTime,
+        closeTime: initialCloseTime,
+        result: '***-**-***',
+        status: 'Loading...',
+        active: true,
+      } as Game;
+    }
+    return null;
+  });
+
+  const [loading, setLoading] = useState(!game);
   const [animatingBetType, setAnimatingBetType] = useState<string | null>(null);
 
   useEffect(() => {

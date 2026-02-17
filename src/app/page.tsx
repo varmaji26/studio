@@ -133,6 +133,7 @@ const GameCard = memo(function GameCard({
 }) {
     const bettingClosed = isBettingClosed(game.closeTime);
     const isPlayable = isActive && !bettingClosed && isMarketOpenGlobally;
+    const gamePageHref = `/games/${game.id}?name=${encodeURIComponent(game.name)}&openTime=${encodeURIComponent(game.openTime)}&closeTime=${encodeURIComponent(game.closeTime)}`;
 
     return (
         <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
@@ -158,7 +159,7 @@ const GameCard = memo(function GameCard({
                     {/* Main Playable Button or Disabled Button */}
                     {isPlayable ? (
                         <Link 
-                            href={`/games/${game.id}`} 
+                            href={gamePageHref} 
                             className="block h-full transition-transform active:scale-95"
                             onContextMenu={(e) => e.preventDefault()}
                         >
