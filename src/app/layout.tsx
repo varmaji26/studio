@@ -4,7 +4,6 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { requestForToken } from '@/lib/firebase-messaging';
 import { AuthProvider } from '@/components/auth-provider';
 import { useAuth } from '@/hooks/use-auth';
 import { BottomNavbar } from '@/components/bottom-navbar';
@@ -19,33 +18,12 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const { user, loading } = useAuth();
-    const notificationTokenRequested = useRef(false);
     const [settings, setSettings] = useState<any>({});
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
       setIsClient(true);
     }, []);
-
-    useEffect(() => {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker
-          .register('/firebase-messaging-sw.js')
-          .then((registration) => {
-            console.log('Service Worker registration successful, scope is:', registration.scope);
-          })
-          .catch((err) => {
-            console.log('Service Worker registration failed, error:', err);
-          });
-      }
-    }, []);
-
-    useEffect(() => {
-      if (typeof window !== 'undefined' && 'Notification' in window && user && !notificationTokenRequested.current) {
-          requestForToken(user.uid);
-          notificationTokenRequested.current = true;
-      }
-    }, [user]);
 
     useEffect(() => {
       const preventZoom = (e: TouchEvent) => {

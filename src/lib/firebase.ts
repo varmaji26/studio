@@ -3,7 +3,6 @@ import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/a
 import { getAuth, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyCTncE_u2wUR8W3ptwlRuDG4wmCjI6bF-w",
@@ -22,13 +21,4 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Conditionally initialize messaging
-const messaging = (async () => {
-    if (typeof window !== 'undefined' && (await isSupported())) {
-        return getMessaging(app);
-    }
-    return undefined;
-})();
-
-
-export { app, auth, db, storage, messaging, signInWithCustomToken };
+export { app, auth, db, storage, signInWithCustomToken };
