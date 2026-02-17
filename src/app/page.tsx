@@ -109,7 +109,7 @@ interface AppSettings extends DocumentData {
         enabled: boolean;
         imageUrl: string;
         link: string;
-    },
+    };
     globalMarketOpenTime?: string;
 }
 
@@ -374,20 +374,11 @@ export default function Home() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader className="h-10 w-10 text-primary" />
-      </div>
-    );
-  }
-
   if (!user) {
-    router.replace('/login');
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader className="h-10 w-10 text-primary" />
-      </div>
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+            <Loader className="h-10 w-10 text-primary" />
+        </div>
     );
   }
 

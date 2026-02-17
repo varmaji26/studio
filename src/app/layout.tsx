@@ -3,7 +3,7 @@
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { requestForToken } from '@/lib/firebase-messaging';
 import { AuthProvider } from '@/components/auth-provider';
 import { useAuth } from '@/hooks/use-auth';
@@ -11,12 +11,14 @@ import { BottomNavbar } from '@/components/bottom-navbar';
 import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Inter } from 'next/font/google';
+import { Loader } from '@/components/loader';
 
 const inter = Inter({ subsets: ['latin'] });
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const { user } = useAuth();
+    const router = useRouter();
+    const { user, loading } = useAuth();
     const notificationTokenRequested = useRef(false);
     const [settings, setSettings] = useState<any>({});
     const [isClient, setIsClient] = useState(false);
@@ -46,22 +48,18 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     }, [user]);
 
     useEffect(() => {
-      // Prevent zoom
       const preventZoom = (e: TouchEvent) => {
         if (e.touches.length > 1) {
           e.preventDefault();
         }
       };
-
       document.addEventListener('touchmove', preventZoom, { passive: false });
-
       return () => {
         document.removeEventListener('touchmove', preventZoom);
       };
     }, []);
 
     useEffect(() => {
-      // Set default theme to dark for the user panel
       if (!pathname.startsWith('/admin')) {
         document.documentElement.classList.add('dark');
       } else {
@@ -76,20 +74,48 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               setSettings(docSnap.data() as DocumentData);
           }
       });
-
       return () => {
           unsubscribeSettings();
       };
     }, []);
 
+    const isPublicPage = 
+      pathname === '/login' || 
+      pathname === '/signup' || 
+      pathname === '/forgot-password' ||
+      pathname === '/download';
+      
+    const isAdminPage = pathname.startsWith('/admin');
 
-    const isUserPanel = !pathname.startsWith('/admin');
-    const showBottomNav = isUserPanel && 
-                          !pathname.startsWith('/login') && 
-                          !pathname.startsWith('/signup') && 
-                          !pathname.startsWith('/forgot-password') && 
-                          !pathname.startsWith('/download') &&
-                          !pathname.startsWith('/games');
+    if (loading) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <Loader className="h-10 w-10 text-primary" />
+            </div>
+        );
+    }
+
+    if (!isAdminPage) {
+        if (!user && !isPublicPage) {
+            router.replace('/login');
+            return (
+                <div className="flex h-screen w-full items-center justify-center bg-background">
+                    <Loader className="h-10 w-10 text-primary" />
+                </div>
+            );
+        }
+
+        if (user && isPublicPage) {
+            router.replace('/');
+            return (
+                <div className="flex h-screen w-full items-center justify-center bg-background">
+                    <Loader className="h-10 w-10 text-primary" />
+                </div>
+            );
+        }
+    }
+    
+    const showBottomNav = !isAdminPage && !isPublicPage && !pathname.startsWith('/games');
 
     return (
       <>
