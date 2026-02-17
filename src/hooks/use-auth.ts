@@ -15,35 +15,37 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
-      setLoading(true); // Start loading whenever auth state might change
+    let unsubscribeProfile: (() => void) | undefined;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+      // Unsubscribe from the previous user's profile listener if it exists
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+      }
+
       if (authUser) {
         const userDocRef = doc(db, 'users', authUser.uid);
-        const unsubProfile = onSnapshot(userDocRef, (doc) => {
-          if (doc.exists()) {
-            const userData = doc.data() as DocumentData;
-            setUser({ ...authUser, isAdmin: userData.isAdmin || false });
-          } else {
-            // User exists in Auth, but not in Firestore yet (e.g., during signup).
-            setUser({ ...authUser, isAdmin: false });
-          }
-          // Only set loading to false after we have the user and their Firestore data.
+        unsubscribeProfile = onSnapshot(userDocRef, (doc) => {
+          const userData = doc.exists() ? doc.data() as DocumentData : {};
+          setUser({ ...authUser, isAdmin: userData.isAdmin || false });
           setLoading(false); 
         }, (error) => {
             console.error("Error fetching user profile:", error);
             setUser({ ...authUser, isAdmin: false }); // Default to non-admin on error
             setLoading(false);
         });
-        
-        return () => unsubProfile(); // Cleanup Firestore listener
-
       } else {
         setUser(null);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+      }
+    };
   }, []);
 
   return { user, loading };
