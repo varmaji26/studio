@@ -65,6 +65,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       
     const isAdminPage = pathname.startsWith('/admin');
 
+    const showBottomNav = 
+      !isAdminPage && 
+      !isPublicPage && 
+      !pathname.startsWith('/games') &&
+      !pathname.startsWith('/jodi-chart') &&
+      !pathname.startsWith('/panel-chart');
+
     if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -93,8 +100,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         }
     }
     
-    const showBottomNav = !isAdminPage && !isPublicPage && !pathname.startsWith('/games');
-
     return (
       <>
         <main>
