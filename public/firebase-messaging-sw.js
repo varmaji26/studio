@@ -1,8 +1,6 @@
-
-// Import and initialize the Firebase SDK
-// This is required to handle messages when your web app is in the background.
-importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+// Import the Firebase app and messaging services
+import { initializeApp } from "firebase/app";
+import { getMessaging } from "firebase/messaging/sw";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -16,18 +14,7 @@ const firebaseConfig = {
   measurementId: "G-GFZW681BYB"
 };
 
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
-firebase.initializeApp(firebaseConfig);
-
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: payload.notification.icon || '/icon-192x192.png',
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
+// You can add background message handling here if needed.

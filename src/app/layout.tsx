@@ -139,7 +139,6 @@ export default function RootLayout({
         <title>Auth Canvas</title>
         <meta name="description" content="Authentication with Firebase and Canvas" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@latest/dist/dotlottie-wc.js" type="module"></script>
       </head>
       <body className={`${inter.className} font-body antialiased`}>
         <AuthProvider>
