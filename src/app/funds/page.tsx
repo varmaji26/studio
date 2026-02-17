@@ -16,12 +16,6 @@ const FundsPage = () => {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
 
-    useEffect(() => {
-        if (!authLoading && !user) {
-            router.replace('/login');
-        }
-    }, [user, authLoading, router]);
-
     if (authLoading || !user) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">

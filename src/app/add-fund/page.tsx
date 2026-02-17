@@ -29,7 +29,7 @@ interface AppSettings extends DocumentData {
 }
 
 export default function AddFundPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [profile, setProfile] = useState<UserProfile>({});
@@ -44,12 +44,6 @@ export default function AddFundPage() {
         const timer = setInterval(() => setNow(new Date()), 60000); // update every minute
         return () => clearInterval(timer);
     }, []);
-
-    useEffect(() => {
-        if (!authLoading && !user) {
-            router.replace('/login');
-        }
-    }, [user, authLoading, router]);
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -141,8 +135,7 @@ export default function AddFundPage() {
         }
     };
 
-
-    if (authLoading || !user) {
+    if (!user) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
@@ -202,7 +195,7 @@ export default function AddFundPage() {
                         <Info className="h-4 w-4 text-amber-300" />
                         <AlertTitle>Pending Request</AlertTitle>
                         <AlertDescription>
-                            You already have a pending deposit request. Please wait for it to be processed before making a new one.
+                            You already have a pending deposit request. Please wait for it to be processed.
                         </AlertDescription>
                     </Alert>
                 ) : !isDepositOpen ? (

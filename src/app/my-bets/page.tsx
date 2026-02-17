@@ -102,8 +102,7 @@ const BidCard = ({ bid }: { bid: Bid }) => {
 };
 
 export default function BidsHistoryPage() {
-    const { user, loading: authLoading } = useAuth();
-    const router = useRouter();
+    const { user } = useAuth();
     const [bids, setBids] = useState<Bid[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('all');
@@ -112,9 +111,8 @@ export default function BidsHistoryPage() {
     const [toDate, setToDate] = useState<Date | undefined>(new Date());
 
     useEffect(() => {
-        if (authLoading) return;
         if (!user) {
-            router.replace('/login');
+            setLoading(false);
             return;
         }
         setLoading(true);
@@ -140,7 +138,7 @@ export default function BidsHistoryPage() {
         return () => {
             unsubscribeBids();
         };
-    }, [user, authLoading, router]);
+    }, [user]);
 
     const filteredBids = useMemo(() => {
         let filtered = bids;
@@ -215,7 +213,7 @@ export default function BidsHistoryPage() {
         </div>
     );
 
-    if (authLoading || loading) {
+    if (loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />

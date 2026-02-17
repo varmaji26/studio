@@ -21,19 +21,16 @@ interface Game extends DocumentData {
 }
 
 export default function TimeTablePage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
     const [games, setGames] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!authLoading && !user) {
-            router.replace('/login');
-        }
-    }, [user, authLoading, router]);
-
-    useEffect(() => {
-        if (!user) return;
+        if (!user) {
+            setLoading(false);
+            return;
+        };
 
         const gamesQuery = query(collection(db, 'games'), orderBy('openTime', 'asc'));
         const unsubscribe = onSnapshot(gamesQuery, (querySnapshot) => {
@@ -48,7 +45,7 @@ export default function TimeTablePage() {
         return () => unsubscribe();
     }, [user]);
 
-    if (authLoading || loading) {
+    if (loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />

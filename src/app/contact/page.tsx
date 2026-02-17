@@ -18,15 +18,14 @@ interface AppSettings extends DocumentData {
 }
 
 export default function ContactPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
     const [settings, setSettings] = useState<AppSettings>({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (authLoading) return;
         if (!user) {
-            router.replace('/login');
+            setLoading(false);
             return;
         }
 
@@ -39,7 +38,7 @@ export default function ContactPage() {
         });
         
         return () => unsubscribe();
-    }, [user, authLoading, router]);
+    }, [user, router]);
     
     const handleAction = (url: string | undefined, type: 'tel' | 'whatsapp' | 'telegram') => {
         if (!url) return;
@@ -66,7 +65,7 @@ export default function ContactPage() {
         a.click();
     };
 
-    if (authLoading || loading) {
+    if (loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />

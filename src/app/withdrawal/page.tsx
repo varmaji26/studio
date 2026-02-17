@@ -32,7 +32,7 @@ interface AppSettings extends DocumentData {
 }
 
 export default function WithdrawalPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [profile, setProfile] = useState<UserProfile>({});
@@ -48,12 +48,6 @@ export default function WithdrawalPage() {
         const timer = setInterval(() => setNow(new Date()), 60000); // update every minute
         return () => clearInterval(timer);
     }, []);
-
-    useEffect(() => {
-        if (!authLoading && !user) {
-            router.replace('/login');
-        }
-    }, [user, authLoading, router]);
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -231,8 +225,7 @@ export default function WithdrawalPage() {
         }
     };
 
-
-    if (authLoading || !user) {
+    if (!user) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />

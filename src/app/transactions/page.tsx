@@ -88,7 +88,7 @@ const TransactionItem = ({ transaction }: { transaction: Transaction; }) => {
 };
 
 export default function TransactionDetailsPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [profile, setProfile] = useState<UserProfile>({});
@@ -97,9 +97,8 @@ export default function TransactionDetailsPage() {
     const { toast } = useToast();
 
     useEffect(() => {
-        if (authLoading) return;
         if (!user) {
-            router.replace('/login');
+            setLoading(false);
             return;
         }
 
@@ -175,7 +174,7 @@ export default function TransactionDetailsPage() {
             unsubProfile();
         };
 
-    }, [user, authLoading, router]);
+    }, [user, router]);
 
      const handleCancelWithdrawal = async (transactionToCancel: Transaction) => {
         if (!user) return;
@@ -257,7 +256,7 @@ export default function TransactionDetailsPage() {
         )
     }
     
-    if (authLoading || loading) {
+    if (loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-20 w-20 text-primary" />

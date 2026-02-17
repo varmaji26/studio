@@ -29,20 +29,17 @@ interface UserProfile extends DocumentData {
 }
 
 export default function ProfilePage() {
-  const { user: authUser, loading } = useAuth();
+  const { user: authUser } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [user, setUser] = useState<FirebaseAuthUser | null>(null);
   const [profile, setProfile] = useState<UserProfile>({});
 
   useEffect(() => {
-    if (loading) return;
-    if (!authUser) {
-      router.replace('/login');
-    } else {
+    if (authUser) {
       setUser(authUser);
     }
-  }, [authUser, loading, router]);
+  }, [authUser, router]);
 
   useEffect(() => {
     if (!user) return;
@@ -75,8 +72,7 @@ export default function ProfilePage() {
     }
   };
 
-
-  if (loading || !user) {
+  if (!user) {
     return (
       <div className="dark flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-10 w-10 text-primary" />

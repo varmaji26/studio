@@ -22,15 +22,13 @@ const RateItem = ({ name, rate }: { name: string; rate: string }) => (
 
 
 export default function RateCardPage() {
-    const { user, loading: authLoading } = useAuth();
-    const router = useRouter();
+    const { user } = useAuth();
     const [gameRates, setGameRates] = useState<any>(null);
     const [ratesLoading, setRatesLoading] = useState(true);
 
     useEffect(() => {
-        if (authLoading) return;
         if (!user) {
-            router.replace('/login');
+            setRatesLoading(false);
             return;
         }
 
@@ -57,7 +55,7 @@ export default function RateCardPage() {
         });
 
         return () => unsubscribe();
-    }, [user, authLoading, router]);
+    }, [user]);
 
     const standardGameRates = gameRates ? [
         { name: 'SINGLE DIGIT', rate: `₹10 Ka - ₹${gameRates.singleDigitPrize}` },
@@ -70,7 +68,7 @@ export default function RateCardPage() {
     ] : [];
 
 
-    if (authLoading || !user) {
+    if (!user) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
@@ -119,5 +117,3 @@ export default function RateCardPage() {
         </div>
     )
 }
-
-    
