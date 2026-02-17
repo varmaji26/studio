@@ -1,39 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, DocumentData, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
+import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { GameBettingLayout } from '@/components/game-betting-layout';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-
-interface Game extends DocumentData {
-  id: string;
-  name: string;
-  openTime: string;
-  closeTime: string;
-}
+import { useGame } from '../layout';
 
 const panaSchema = /^\d{3}$/;
 
 export default function TriplePanaPage() {
-  const router = useRouter();
-  const params = useParams();
-  const gameId = params.gameId;
   const { toast } = useToast();
   const { user } = useAuth();
-
-  const [game, setGame] = useState<Game | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { game, now } = useGame();
 
   const [currentPana, setCurrentPana] = useState('');
   const [selectedPana, setSelectedPana] = useState<string[]>([]);
@@ -45,37 +32,12 @@ export default function TriplePanaPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isMounted, setIsMounted] = useState(false);
-  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     setIsMounted(true);
-    const timer = setInterval(() => setNow(new Date()), 60000); // Update time every minute
-    return () => clearInterval(timer);
   }, []);
 
 
-  useEffect(() => {
-    if (typeof gameId !== 'string') return;
-
-    const fetchGame = async () => {
-      try {
-        const gameDocRef = doc(db, 'games', gameId);
-        const gameDoc = await getDoc(gameDocRef);
-        if (gameDoc.exists()) {
-          const gameData = { id: gameDoc.id, ...gameDoc.data() } as Game;
-          setGame(gameData);
-        } else {
-          router.push('/404');
-        }
-      } catch (error) {
-        console.error('Error fetching game data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGame();
-  }, [gameId, router]);
-  
   const getTimeParts = (timeStr: string) => {
     if (!timeStr) return { hours: 0, minutes: 0 };
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -144,8 +106,8 @@ export default function TriplePanaPage() {
   };
 
   const handlePlaceBet = async () => {
-    if (!user) {
-        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to place a bet.' });
+    if (!user || !game) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Authentication or game data missing.' });
         return;
     }
     if (selectedPana.length === 0) {
@@ -200,7 +162,7 @@ export default function TriplePanaPage() {
                 userId: user.uid,
                 displayName: user.displayName,
                 mobile: userData.mobile,
-                gameId,
+                gameId: game.id,
                 gameName: game?.name,
                 betType: 'Triple Pana',
                 session,
@@ -232,137 +194,131 @@ export default function TriplePanaPage() {
     }
   };
   
-  if (loading || !isMounted) {
+  if (!isMounted) {
     return (
-      <div className="dark flex h-screen w-full items-center justify-center bg-background">
+      <div className="flex h-full w-full items-center justify-center">
         <Loader className="h-10 w-10 text-primary" />
       </div>
     );
   }
   
   if (!game) {
-    return (
-      <div className="dark flex h-screen w-full items-center justify-center bg-background">
-        <p>Game not found.</p>
-      </div>
-    );
+    return null;
   }
 
   const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || isCloseDisabled;
 
   return (
-    <GameBettingLayout gameName={game.name} gameId={gameId as string} activeBetType="Triple Pana">
-        <div className="space-y-4">
-            <Card className="bg-background/80 border-white/10">
-                <CardHeader className="p-4">
-                    <CardTitle className="text-base">Enter Pana Number(s):</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                    <div className="flex items-center gap-2">
-                        <Input 
-                            type="tel"
-                            maxLength={3}
-                            placeholder="Enter 3 digits (e.g., 222)"
-                            className="h-9 text-sm"
-                            value={currentPana}
-                            onChange={(e) => {
-                                if (/^\d{0,3}$/.test(e.target.value)) {
-                                    setCurrentPana(e.target.value)
-                                }
-                            }}
-                        />
-                         <Button onClick={handleAddPana} size="sm">Add</Button>
-                    </div>
-                    {selectedPana.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {selectedPana.map((pana) => (
-                                <Badge key={pana} className="text-sm py-1 px-2 bg-green-500 text-white">
-                                    {pana}
-                                    <button onClick={() => handleRemovePana(pana)} className="ml-2 rounded-full hover:bg-destructive/80 p-0.5">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            <div className="space-y-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="bet-amount" className="text-sm">Bet Amount (₹):</Label>
+    <div className="space-y-4">
+        <Card className="bg-background/80 border-white/10">
+            <CardHeader className="p-4">
+                <CardTitle className="text-base">Enter Pana Number(s):</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+                <div className="flex items-center gap-2">
                     <Input 
-                        id="bet-amount"
-                        type="number"
-                        placeholder="Enter amount" 
+                        type="tel"
+                        maxLength={3}
+                        placeholder="Enter 3 digits (e.g., 222)"
                         className="h-9 text-sm"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        value={currentPana}
+                        onChange={(e) => {
+                            if (/^\d{0,3}$/.test(e.target.value)) {
+                                setCurrentPana(e.target.value)
+                            }
+                        }}
                     />
+                     <Button onClick={handleAddPana} size="sm">Add</Button>
                 </div>
-                <div className="space-y-2">
-                    <Label className="text-sm">Select Session:</Label>
-                     <RadioGroup 
-                        value={session} 
-                        onValueChange={(value) => setSession(value as 'Open' | 'Close')}
-                        className="grid grid-cols-2 gap-2"
-                    >
-                        <Label 
-                            className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : ''} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                        >
-                            <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
-                            Open
-                        </Label>
-                         <Label 
-                            className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : ''} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                        >
-                            <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
-                            Close
-                        </Label>
-                    </RadioGroup>
-                </div>
+                {selectedPana.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {selectedPana.map((pana) => (
+                            <Badge key={pana} className="text-sm py-1 px-2 bg-green-500 text-white">
+                                {pana}
+                                <button onClick={() => handleRemovePana(pana)} className="ml-2 rounded-full hover:bg-destructive/80 p-0.5">
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </Badge>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+             <div className="space-y-2">
+                <Label htmlFor="bet-amount" className="text-sm">Bet Amount (₹):</Label>
+                <Input 
+                    id="bet-amount"
+                    type="number"
+                    placeholder="Enter amount" 
+                    className="h-9 text-sm"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                />
             </div>
-        
-            <Card className="bg-background/80 border-white/10">
-                <CardHeader className="p-4">
-                    <CardTitle className="text-base">Bet Summary:</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-1 text-xs p-4 pt-0">
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Game:</span>
-                        <span className="font-semibold">{game.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Type:</span>
-                        <span className="font-semibold">Triple Pana</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Numbers:</span>
-                        <span className="font-semibold">{selectedPana.join(', ') || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold">₹{totalAmount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Session:</span>
-                        <span className="font-semibold">{session || 'Closed'}</span>
-                    </div>
-                    <div className="flex justify-between text-primary">
-                        <span className="text-primary/80">Potential Win:</span>
-                        <span className="font-bold">₹{potentialWin.toFixed(2)}</span>
-                    </div>
-                </CardContent>
-            </Card>
-            
-            <div className="mt-4">
-                <p className="text-center text-muted-foreground mb-2 text-xs">Total Bids: {selectedPana.length}</p>
-                <Button className="w-full h-10 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
-                    {isSubmitting ? <Loader className="mr-2" /> : null}
-                     {isBettingDisabled ? 'Betting Closed' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
-                </Button>
+            <div className="space-y-2">
+                <Label className="text-sm">Select Session:</Label>
+                 <RadioGroup 
+                    value={session} 
+                    onValueChange={(value) => setSession(value as 'Open' | 'Close')}
+                    className="grid grid-cols-2 gap-2"
+                >
+                    <Label 
+                        className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : ''} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                    >
+                        <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
+                        Open
+                    </Label>
+                     <Label 
+                        className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : ''} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                    >
+                        <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
+                        Close
+                    </Label>
+                </RadioGroup>
             </div>
         </div>
-    </GameBettingLayout>
+    
+        <Card className="bg-background/80 border-white/10">
+            <CardHeader className="p-4">
+                <CardTitle className="text-base">Bet Summary:</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1 text-xs p-4 pt-0">
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Game:</span>
+                    <span className="font-semibold">{game.name}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Type:</span>
+                    <span className="font-semibold">Triple Pana</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Numbers:</span>
+                    <span className="font-semibold">{selectedPana.join(', ') || '-'}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount:</span>
+                    <span className="font-semibold">₹{totalAmount}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Session:</span>
+                    <span className="font-semibold">{session || 'Closed'}</span>
+                </div>
+                <div className="flex justify-between text-primary">
+                    <span className="text-primary/80">Potential Win:</span>
+                    <span className="font-bold">₹{potentialWin.toFixed(2)}</span>
+                </div>
+            </CardContent>
+        </Card>
+        
+        <div className="mt-4">
+            <p className="text-center text-muted-foreground mb-2 text-xs">Total Bids: {selectedPana.length}</p>
+            <Button className="w-full h-10 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
+                {isSubmitting ? <Loader className="mr-2" /> : null}
+                 {isBettingDisabled ? 'Betting Closed' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
+            </Button>
+        </div>
+    </div>
   );
 }

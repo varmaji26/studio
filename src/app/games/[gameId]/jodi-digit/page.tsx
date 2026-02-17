@@ -1,40 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, DocumentData, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
+import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { GameBettingLayout } from '@/components/game-betting-layout';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
-interface Game extends DocumentData {
-  id: string;
-  name: string;
-  openTime: string;
-  closeTime: string;
-  openResult: string;
-}
+import { useGame } from '../layout';
 
 const jodiSchema = /^\d{2}$/;
 
 export default function JodiDigitPage() {
-  const router = useRouter();
-  const params = useParams();
-  const gameId = params.gameId;
   const { toast } = useToast();
   const { user } = useAuth();
-
-  const [game, setGame] = useState<Game | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { game, now } = useGame();
 
   const [currentJodi, setCurrentJodi] = useState('');
   const [selectedJodi, setSelectedJodi] = useState<string[]>([]);
@@ -46,35 +32,10 @@ export default function JodiDigitPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isMounted, setIsMounted] = useState(false);
-  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     setIsMounted(true);
-    const timer = setInterval(() => setNow(new Date()), 60000); // Update time every minute
-    return () => clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    if (typeof gameId !== 'string') return;
-
-    const fetchGame = async () => {
-      try {
-        const gameDocRef = doc(db, 'games', gameId);
-        const gameDoc = await getDoc(gameDocRef);
-        if (gameDoc.exists()) {
-          const gameData = { id: gameDoc.id, ...gameDoc.data() } as Game;
-          setGame(gameData);
-        } else {
-          router.push('/404');
-        }
-      } catch (error) {
-        console.error('Error fetching game data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGame();
-  }, [gameId, router]);
   
   const getTimeParts = (timeStr: string) => {
     if (!timeStr) return { hours: 0, minutes: 0 };
@@ -130,8 +91,8 @@ export default function JodiDigitPage() {
   };
 
   const handlePlaceBet = async () => {
-    if (!user) {
-        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to place a bet.' });
+    if (!user || !game) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Authentication or game data missing.' });
         return;
     }
     if (selectedJodi.length === 0) {
@@ -186,7 +147,7 @@ export default function JodiDigitPage() {
                 userId: user.uid,
                 displayName: user.displayName,
                 mobile: userData.mobile,
-                gameId,
+                gameId: game.id,
                 gameName: game?.name,
                 betType: 'Jodi Digit',
                 session: 'Open', // Jodi is always considered for the full game based on open time
@@ -218,127 +179,121 @@ export default function JodiDigitPage() {
     }
   };
   
-  if (loading || !isMounted) {
+  if (!isMounted) {
     return (
-      <div className="dark flex h-screen w-full items-center justify-center bg-background">
+      <div className="flex h-full w-full items-center justify-center">
         <Loader className="h-10 w-10 text-primary" />
       </div>
     );
   }
   
   if (!game) {
-    return (
-      <div className="dark flex h-screen w-full items-center justify-center bg-background">
-        <p>Game not found.</p>
-      </div>
-    );
+    return null;
   }
   
   const isBettingDisabled = isTimeOver;
 
   return (
-    <GameBettingLayout gameName={game.name} gameId={gameId as string} activeBetType="Jodi Digit">
-        <div className="space-y-4">
-            {isTimeOver && (
-                 <Alert variant="destructive" className="bg-red-600 border-red-700 text-white">
-                    <AlertTitle className="font-bold">JODI TIME OVER</AlertTitle>
-                    <AlertDescription className="text-white/90">
-                       Jodi betting for this game is now closed.
-                    </AlertDescription>
-                </Alert>
-            )}
-            
-            <Card className="bg-background/80 border-white/10">
-                <CardHeader className="p-4">
-                    <CardTitle className="text-base">Enter Jodi Number(s):</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                    <div className="flex items-center gap-2">
-                        <Input 
-                            type="tel"
-                            maxLength={2}
-                            placeholder="Enter 2 digits (e.g., 23)"
-                            className="h-9 text-sm"
-                            value={currentJodi}
-                            onChange={(e) => {
-                                if (/^\d{0,2}$/.test(e.target.value)) {
-                                    setCurrentJodi(e.target.value)
-                                }
-                            }}
-                            disabled={isBettingDisabled}
-                        />
-                         <Button onClick={handleAddJodi} size="sm" disabled={isBettingDisabled}>Add</Button>
-                    </div>
-                    {selectedJodi.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {selectedJodi.map((jodi) => (
-                                <Badge key={jodi} className="text-sm py-1 px-2 bg-green-500 text-white">
-                                    {jodi}
-                                    <button onClick={() => handleRemoveJodi(jodi)} className="ml-2 rounded-full hover:bg-destructive/80 p-0.5">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            <div className="space-y-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="bet-amount" className="text-sm">Bet Amount (₹):</Label>
+    <div className="space-y-4">
+        {isTimeOver && (
+             <Alert variant="destructive" className="bg-red-600 border-red-700 text-white">
+                <AlertTitle className="font-bold">JODI TIME OVER</AlertTitle>
+                <AlertDescription className="text-white/90">
+                   Jodi betting for this game is now closed.
+                </AlertDescription>
+            </Alert>
+        )}
+        
+        <Card className="bg-background/80 border-white/10">
+            <CardHeader className="p-4">
+                <CardTitle className="text-base">Enter Jodi Number(s):</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+                <div className="flex items-center gap-2">
                     <Input 
-                        id="bet-amount"
-                        type="number"
-                        placeholder="Enter amount" 
+                        type="tel"
+                        maxLength={2}
+                        placeholder="Enter 2 digits (e.g., 23)"
                         className="h-9 text-sm"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        value={currentJodi}
+                        onChange={(e) => {
+                            if (/^\d{0,2}$/.test(e.target.value)) {
+                                setCurrentJodi(e.target.value)
+                            }
+                        }}
                         disabled={isBettingDisabled}
                     />
+                     <Button onClick={handleAddJodi} size="sm" disabled={isBettingDisabled}>Add</Button>
                 </div>
-            </div>
-        
-            <Card className="bg-background/80 border-white/10">
-                <CardHeader className="p-4">
-                    <CardTitle className="text-base">Bet Summary:</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-1 text-xs p-4 pt-0">
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Game:</span>
-                        <span className="font-semibold">{game.name}</span>
+                {selectedJodi.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {selectedJodi.map((jodi) => (
+                            <Badge key={jodi} className="text-sm py-1 px-2 bg-green-500 text-white">
+                                {jodi}
+                                <button onClick={() => handleRemoveJodi(jodi)} className="ml-2 rounded-full hover:bg-destructive/80 p-0.5">
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </Badge>
+                        ))}
                     </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Type:</span>
-                        <span className="font-semibold">Jodi Digit</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Numbers:</span>
-                        <span className="font-semibold">{selectedJodi.join(', ') || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold">₹{totalAmount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Session:</span>
-                        <span className="font-semibold">{session || 'Closed'}</span>
-                    </div>
-                    <div className="flex justify-between text-primary">
-                        <span className="text-primary/80">Potential Win:</span>
-                        <span className="font-bold">₹{potentialWin.toFixed(2)}</span>
-                    </div>
-                </CardContent>
-            </Card>
-            
-            <div className="mt-4">
-                <p className="text-center text-muted-foreground mb-2 text-xs">Total Bids: {selectedJodi.length}</p>
-                 <Button className="w-full h-10 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
-                    {isSubmitting ? <Loader className="mr-2" /> : null}
-                    {isBettingDisabled ? 'JODI TIME OVER' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
-                </Button>
+                )}
+            </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+             <div className="space-y-2">
+                <Label htmlFor="bet-amount" className="text-sm">Bet Amount (₹):</Label>
+                <Input 
+                    id="bet-amount"
+                    type="number"
+                    placeholder="Enter amount" 
+                    className="h-9 text-sm"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    disabled={isBettingDisabled}
+                />
             </div>
         </div>
-    </GameBettingLayout>
+    
+        <Card className="bg-background/80 border-white/10">
+            <CardHeader className="p-4">
+                <CardTitle className="text-base">Bet Summary:</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1 text-xs p-4 pt-0">
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Game:</span>
+                    <span className="font-semibold">{game.name}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Type:</span>
+                    <span className="font-semibold">Jodi Digit</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Numbers:</span>
+                    <span className="font-semibold">{selectedJodi.join(', ') || '-'}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount:</span>
+                    <span className="font-semibold">₹{totalAmount}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Session:</span>
+                    <span className="font-semibold">{session || 'Closed'}</span>
+                </div>
+                <div className="flex justify-between text-primary">
+                    <span className="text-primary/80">Potential Win:</span>
+                    <span className="font-bold">₹{potentialWin.toFixed(2)}</span>
+                </div>
+            </CardContent>
+        </Card>
+        
+        <div className="mt-4">
+            <p className="text-center text-muted-foreground mb-2 text-xs">Total Bids: {selectedJodi.length}</p>
+             <Button className="w-full h-10 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
+                {isSubmitting ? <Loader className="mr-2" /> : null}
+                {isBettingDisabled ? 'JODI TIME OVER' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
+            </Button>
+        </div>
+    </div>
   );
 }

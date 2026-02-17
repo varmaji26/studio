@@ -1,26 +1,11 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { doc, getDoc, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Loader } from '@/components/loader';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatTime, cn } from '@/lib/utils';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import React from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
-
-
-interface Game extends DocumentData {
-  id: string;
-  name: string;
-  openTime: string;
-  closeTime: string;
-}
+import Link from 'next/link';
+import { useGame } from './layout';
 
 const SingleDigitIcon = () => (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -118,119 +103,27 @@ const TriplePanaIcon = () => (
     </svg>
 );
 
-
-const betTypes = [
-    { title: 'Single Digit', href: (gameId: string) => `/games/${gameId}/single-digit`, icon: <SingleDigitIcon />, gradient: 'bg-gradient-to-br from-blue-400 to-blue-600' },
-    { title: 'Jodi Digit', href: (gameId: string) => `/games/${gameId}/jodi-digit`, icon: <JodiDigitIcon />, gradient: 'bg-gradient-to-br from-purple-500 to-indigo-600' },
-    { title: 'Single Pana', href: (gameId: string) => `/games/${gameId}/single-pana`, icon: <SinglePanaIcon />, gradient: 'bg-gradient-to-br from-slate-700 to-slate-900' },
-    { title: 'Double Pana', href: (gameId: string) => `/games/${gameId}/double-pana`, icon: <DoublePanaIcon />, gradient: 'bg-gradient-to-br from-teal-500 to-cyan-600' },
-    { title: 'Triple Pana', href: (gameId: string) => `/games/${gameId}/triple-pana`, icon: <TriplePanaIcon />, gradient: 'bg-gradient-to-br from-rose-500 to-red-600' },
-];
-
 export default function GamePage() {
-  const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
-  const gameId = params.gameId as string;
-  
-  const initialName = searchParams.get('name');
-  const initialOpenTime = searchParams.get('openTime');
-  const initialCloseTime = searchParams.get('closeTime');
-
-  const [game, setGame] = useState<Game | null>(() => {
-    if (initialName && initialOpenTime && initialCloseTime) {
-      return {
-        id: gameId,
-        name: initialName,
-        openTime: initialOpenTime,
-        closeTime: initialCloseTime,
-        result: '***-**-***',
-        status: 'Loading...',
-        active: true,
-      } as Game;
-    }
-    return null;
-  });
-
-  const [loading, setLoading] = useState(!game);
   const [animatingBetType, setAnimatingBetType] = useState<string | null>(null);
+  const { game } = useGame();
 
-  useEffect(() => {
-    if (typeof gameId !== 'string') {
-        setLoading(false);
-        return;
-    };
+  if (!game) {
+    return null;
+  }
+  
+  const betTypes = [
+    { title: 'Single Digit', href: `/games/${game.id}/single-digit`, icon: <SingleDigitIcon />, gradient: 'bg-gradient-to-br from-blue-400 to-blue-600' },
+    { title: 'Jodi Digit', href: `/games/${game.id}/jodi-digit`, icon: <JodiDigitIcon />, gradient: 'bg-gradient-to-br from-purple-500 to-indigo-600' },
+    { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <SinglePanaIcon />, gradient: 'bg-gradient-to-br from-slate-700 to-slate-900' },
+    { title: 'Double Pana', href: `/games/${game.id}/double-pana`, icon: <DoublePanaIcon />, gradient: 'bg-gradient-to-br from-teal-500 to-cyan-600' },
+    { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon />, gradient: 'bg-gradient-to-br from-rose-500 to-red-600' },
+  ];
 
-    const fetchGame = async () => {
-      try {
-        const gameDocRef = doc(db, 'games', gameId);
-        const gameDoc = await getDoc(gameDocRef);
-
-        if (gameDoc.exists()) {
-          setGame({ id: gameDoc.id, ...gameDoc.data() } as Game);
-        } else {
-          console.error('No such document!');
-        }
-      } catch (error) {
-        console.error('Error fetching game data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGame();
-  }, [gameId]);
 
   const handleBetTypeClick = (betTypeTitle: string) => {
     setAnimatingBetType(betTypeTitle);
-    setTimeout(() => {
-        setAnimatingBetType(null);
-    }, 500); // Duration of the animation
   };
 
-  if (loading) {
-    return (
-        <div className="dark min-h-screen bg-background text-foreground p-2">
-            <div className="max-w-2xl mx-auto">
-                <div className="text-center mb-2">
-                    <h1 className="text-xl font-bold">
-                        Place Your Bet - <Skeleton className="h-6 w-32 inline-block bg-slate-700/50" />
-                    </h1>
-                    <p className="text-muted-foreground mt-1 text-sm">
-                        <Skeleton className="h-4 w-48 mx-auto bg-slate-700/50" />
-                    </p>
-                    <p className="text-muted-foreground mt-1 text-xs">
-                        Choose a bet type to start placing your bids.
-                    </p>
-                </div>
-                
-                <div className="my-2">
-                    <Skeleton className="h-9 w-full bg-slate-700/50" />
-                </div>
-
-                <Card className="bg-background/80 border-white/10 shadow-lg">
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-2 gap-2 p-2">
-                       {Array(5).fill(0).map((_, index) => (
-                           <Skeleton key={index} className="h-32 w-full bg-slate-700/50" />
-                       ))}
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
-  }
-
-  if (!game) {
-    return (
-      <div className="dark flex h-screen w-full items-center justify-center bg-background">
-        <p>Game not found.</p>
-      </div>
-    );
-  }
-  
   const BetTypeItem = ({ betType }: { betType: (typeof betTypes)[0] }) => (
     <div
       onClick={() => handleBetTypeClick(betType.title)}
@@ -249,51 +142,17 @@ export default function GamePage() {
   );
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground p-2">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-2">
-          <h1 className="text-xl font-bold">
-            Place Your Bet - <span className="text-primary bg-primary/20 px-2 rounded-md">{game.name}</span>
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Open: {formatTime(game.openTime)} | Close: {formatTime(game.closeTime)}
-          </p>
-           <p className="text-muted-foreground mt-1 text-xs">
-            Choose a bet type to start placing your bids.
-          </p>
-        </div>
-        
-        <div className="my-2">
-            <Button variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white h-9" onClick={() => router.replace(`/#${gameId}`)}>
-                <div className="flex items-center gap-2">
-                    <ArrowLeft className="h-4 w-4"/>
-                    <span className="text-sm">Back to Home</span>
-                </div>
-            </Button>
-        </div>
-
-        <Card className="bg-background/80 border-white/10 shadow-lg">
-            <CardHeader className="p-4">
-                <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2 p-2">
-               {betTypes.map((betType) => {
-                  if (betType.href) {
-                    return (
-                      <Link key={betType.title} href={betType.href(game.id as string)}>
-                        <BetTypeItem betType={betType} />
-                      </Link>
-                    );
-                  }
-                  return (
-                    <div key={betType.title}>
-                      <BetTypeItem betType={betType} />
-                    </div>
-                  );
-               })}
-            </CardContent>
-        </Card>
-      </div>
-    </div>
+      <Card className="bg-background/80 border-white/10 shadow-lg">
+          <CardHeader className="p-4">
+              <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-2 p-2">
+             {betTypes.map((betType) => (
+                <Link key={betType.title} href={betType.href} passHref>
+                  <BetTypeItem betType={betType} />
+                </Link>
+             ))}
+          </CardContent>
+      </Card>
   );
 }
