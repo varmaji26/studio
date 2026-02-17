@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -42,7 +42,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const [loading, setLoading] = useState(true);
     const [now, setNow] = useState(new Date());
 
-    const activeBetType = React.useMemo(() => {
+    const activeBetType = useMemo(() => {
         const pathSegments = pathname.split('/');
         const lastSegment = pathSegments[pathSegments.length - 1];
         switch (lastSegment) {
