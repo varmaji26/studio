@@ -179,7 +179,7 @@ const GameCard = memo(function GameCard({
 
                     {/* Jodi Button positioned over the main button */}
                     <Link 
-                        href={`/games/${game.id}/jodi-chart`} 
+                        href={`/jodi-chart/${game.id}`} 
                         className="absolute top-1/2 left-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
                         onContextMenu={(e) => e.preventDefault()}
                     >
@@ -192,7 +192,7 @@ const GameCard = memo(function GameCard({
 
                     {/* Panel Button positioned over the main button */}
                     <Link 
-                        href={`/games/${game.id}/panel-chart`} 
+                        href={`/panel-chart/${game.id}`} 
                         className="absolute top-1/2 right-1 -translate-y-1/2 z-10 transition-transform hover:scale-105 active:scale-95"
                         onContextMenu={(e) => e.preventDefault()}
                     >
