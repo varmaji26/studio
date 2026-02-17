@@ -11,6 +11,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatTime, cn } from '@/lib/utils';
 import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 interface Game extends DocumentData {
@@ -168,9 +169,36 @@ export default function GamePage() {
 
   if (loading) {
     return (
-      <div className="dark flex h-screen w-full items-center justify-center bg-background">
-        <Loader className="h-10 w-10 text-primary" />
-      </div>
+        <div className="dark min-h-screen bg-background text-foreground p-2">
+            <div className="max-w-2xl mx-auto">
+                <div className="text-center mb-2">
+                    <h1 className="text-xl font-bold">
+                        Place Your Bet - <Skeleton className="h-6 w-32 inline-block bg-slate-700/50" />
+                    </h1>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                        <Skeleton className="h-4 w-48 mx-auto bg-slate-700/50" />
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                        Choose a bet type to start placing your bids.
+                    </p>
+                </div>
+                
+                <div className="my-2">
+                    <Skeleton className="h-9 w-full bg-slate-700/50" />
+                </div>
+
+                <Card className="bg-background/80 border-white/10 shadow-lg">
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-2 p-2">
+                       {Array(5).fill(0).map((_, index) => (
+                           <Skeleton key={index} className="h-32 w-full bg-slate-700/50" />
+                       ))}
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     );
   }
 
