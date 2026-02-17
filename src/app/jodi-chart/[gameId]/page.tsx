@@ -117,11 +117,6 @@ export default function JodiChartPage() {
     return (
         <div className="dark h-screen flex flex-col bg-background text-foreground" style={{ overscrollBehavior: 'contain' }}>
             <header className="p-4 flex items-center justify-center sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-white/10">
-                <Link href="/" replace className="absolute left-4">
-                    <Button variant="ghost" size="icon">
-                        <ArrowLeft />
-                    </Button>
-                </Link>
                 <div className="text-center">
                     <h1 className="text-lg font-bold text-primary">
                         {chartData?.title || `Jodi Chart`}
