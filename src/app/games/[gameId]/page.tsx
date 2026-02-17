@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { useGame } from './layout';
+import { useGame } from '@/hooks/use-game';
 
 const SingleDigitIcon = () => (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useGame } from '../layout';
+import { useGame } from '@/hooks/use-game';
 
 const numbers = Array.from({ length: 10 }, (_, i) => i.toString());
 

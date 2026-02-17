@@ -1,38 +1,16 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
-import { doc, getDoc, DocumentData } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatTime } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-
-interface Game extends DocumentData {
-  id: string;
-  name: string;
-  openTime: string;
-  closeTime: string;
-}
-
-interface GameContextType {
-    game: Game | null;
-    loading: boolean;
-    now: Date;
-}
-
-const GameContext = createContext<GameContextType | null>(null);
-
-export const useGame = () => {
-    const context = useContext(GameContext);
-    if (!context) {
-        throw new Error('useGame must be used within a GameLayout');
-    }
-    return context;
-};
+import { GameContext, type Game } from '@/hooks/use-game';
 
 export default function GameLayout({ children }: { children: React.ReactNode }) {
     const params = useParams();

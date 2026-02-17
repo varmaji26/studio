@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useGame } from '../layout';
+import { useGame } from '@/hooks/use-game';
 
 const panaSchema = /^\d{3}$/;
 
