@@ -1,6 +1,7 @@
+
 'use client';
 
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';

@@ -1,9 +1,9 @@
+
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import React from 'react';
 import Link from 'next/link';
 import { useGame } from './layout';
 

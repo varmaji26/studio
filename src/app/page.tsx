@@ -133,7 +133,7 @@ const GameCard = memo(function GameCard({
 }) {
     const bettingClosed = isBettingClosed(game.closeTime);
     const isPlayable = isActive && !bettingClosed && isMarketOpenGlobally;
-    const gamePageHref = `/games/${game.id}?name=${encodeURIComponent(game.name)}&openTime=${encodeURIComponent(game.openTime)}&closeTime=${encodeURIComponent(game.closeTime)}`;
+    const gamePageHref = `/games/${game.id}`;
 
     return (
         <div id={game.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg shadow-black/30">
