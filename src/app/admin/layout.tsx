@@ -28,6 +28,7 @@ import {
   Moon,
   PieChart,
   List,
+  BellRing,
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, Sidebar, SidebarTrigger } from '@/components/ui/sidebar';
@@ -306,6 +307,14 @@ export default function AdminLayout({
                       </SidebarMenuItem>
                   </CollapsibleContent>
                </Collapsible>
+               <SidebarMenuItem>
+                <Link href="/admin/notifications" passHref onClick={handleLinkClick}>
+                  <SidebarMenuButton isActive={isActive('/admin/notifications')} tooltip={{children: "Send Notifications"}}>
+                    <BellRing />
+                    <span>Notifications</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <Link href="/admin/update-results" passHref onClick={handleLinkClick}>
                   <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result (Open)"}}>

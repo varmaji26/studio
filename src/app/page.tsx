@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/loader';
 import { auth, db, storage } from '@/lib/firebase';
-import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc, getDocs, limit } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, DocumentData, where, doc, getDoc, updateDoc, getDocs, limit, Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Menu,
@@ -56,6 +56,7 @@ import {
 import Autoplay from "embla-carousel-autoplay"
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { format } from 'date-fns';
 
 
 interface Game extends DocumentData {
@@ -74,6 +75,13 @@ interface Game extends DocumentData {
 interface Banner extends DocumentData {
     id: string;
     imageUrl: string;
+}
+
+interface Notification extends DocumentData {
+    id: string;
+    title: string;
+    body: string;
+    createdAt: Timestamp;
 }
 
 interface AppSettings extends DocumentData {
@@ -224,6 +232,10 @@ export default function Home() {
   const [closedGameInfo, setClosedGameInfo] = useState<Game | null>(null);
   const [isMarketOpenGlobally, setIsMarketOpenGlobally] = useState(true);
   const [now, setNow] = useState(new Date());
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
 
@@ -238,6 +250,8 @@ export default function Home() {
         let gamesUnsubscribe: () => void;
         let bannersUnsubscribe: () => void;
         let settingsUnsubscribe: () => void;
+        let notificationsUnsubscribe: () => void;
+
 
         const userDocRef = doc(db, 'users', user.uid);
         userUnsubscribe = onSnapshot(userDocRef, (doc) => {
@@ -299,12 +313,29 @@ export default function Home() {
                 }
             }
         });
+        
+        const notificationsQuery = query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(20));
+        notificationsUnsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+            const fetchedNotifications: Notification[] = [];
+            snapshot.forEach((doc) => {
+                fetchedNotifications.push({ id: doc.id, ...doc.data() } as Notification);
+            });
+            setNotifications(fetchedNotifications);
+
+            const lastReadTimestamp = localStorage.getItem('lastReadTimestamp') || '0';
+            const newUnreadCount = fetchedNotifications.filter(
+                (n) => n.createdAt && n.createdAt.toMillis() > parseInt(lastReadTimestamp, 10)
+            ).length;
+            setUnreadCount(newUnreadCount);
+        });
+
 
         return () => {
             userUnsubscribe?.();
             gamesUnsubscribe?.();
             bannersUnsubscribe?.();
             settingsUnsubscribe?.();
+            notificationsUnsubscribe?.();
         };
     }
   }, [user, loading, currentDay]);
@@ -502,6 +533,46 @@ export default function Home() {
                 </div>
             </div>
             <div className="flex items-center gap-2">
+                 <Sheet open={isNotificationSheetOpen} onOpenChange={(open) => {
+                    setIsNotificationSheetOpen(open);
+                    if (open) {
+                        localStorage.setItem('lastReadTimestamp', Date.now().toString());
+                        setUnreadCount(0);
+                    }
+                }}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="relative">
+                            <BellRing className="h-6 w-6 text-yellow-400" />
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="bg-background/80 border-l-0 text-foreground flex flex-col p-0">
+                        <SheetHeader className="p-4 border-b border-white/10">
+                            <SheetTitle className="text-lg">Notifications</SheetTitle>
+                        </SheetHeader>
+                        <div className="py-4 px-2 flex-1 overflow-y-auto">
+                            {notifications.length > 0 ? (
+                                <div className="space-y-3">
+                                    {notifications.map((n) => (
+                                        <div key={n.id} className="p-3 rounded-lg bg-slate-800 border border-slate-700">
+                                            <h4 className="font-bold">{n.title}</h4>
+                                            <p className="text-sm text-muted-foreground mt-1">{n.body}</p>
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                                {n.createdAt ? format(n.createdAt.toDate(), "PPP p") : ''}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center text-muted-foreground mt-10">No notifications yet.</p>
+                            )}
+                        </div>
+                    </SheetContent>
+                </Sheet>
                 <div className="flex flex-col items-end">
                     <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
                         <Wallet className="h-5 w-5 text-green-400" />
