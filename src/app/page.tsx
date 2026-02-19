@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -235,7 +236,6 @@ export default function Home() {
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   
   const currentDay = useMemo(() => new Date().toLocaleString('en-US', { weekday: 'long' }), []);
 
@@ -339,6 +339,22 @@ export default function Home() {
         };
     }
   }, [user, loading, currentDay]);
+  
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const lastReadTimestamp = localStorage.getItem('lastReadTimestamp') || '0';
+      const newUnreadCount = notifications.filter(
+        (n) => n.createdAt && n.createdAt.toMillis() > parseInt(lastReadTimestamp, 10)
+      ).length;
+      setUnreadCount(newUnreadCount);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [notifications]);
 
   useEffect(() => {
     if (settings.globalMarketOpenTime) {
@@ -533,46 +549,16 @@ export default function Home() {
                 </div>
             </div>
             <div className="flex items-center gap-2">
-                 <Sheet open={isNotificationSheetOpen} onOpenChange={(open) => {
-                    setIsNotificationSheetOpen(open);
-                    if (open) {
-                        localStorage.setItem('lastReadTimestamp', Date.now().toString());
-                        setUnreadCount(0);
-                    }
-                }}>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="relative">
-                            <BellRing className="h-6 w-6 text-yellow-400" />
-                            {unreadCount > 0 && (
-                                <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                                    {unreadCount}
-                                </span>
-                            )}
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right" className="bg-background/80 border-l-0 text-foreground flex flex-col p-0">
-                        <SheetHeader className="p-4 border-b border-white/10">
-                            <SheetTitle className="text-lg">Notifications</SheetTitle>
-                        </SheetHeader>
-                        <div className="py-4 px-2 flex-1 overflow-y-auto">
-                            {notifications.length > 0 ? (
-                                <div className="space-y-3">
-                                    {notifications.map((n) => (
-                                        <div key={n.id} className="p-3 rounded-lg bg-slate-800 border border-slate-700">
-                                            <h4 className="font-bold">{n.title}</h4>
-                                            <p className="text-sm text-muted-foreground mt-1">{n.body}</p>
-                                            <p className="text-xs text-muted-foreground mt-2">
-                                                {n.createdAt ? format(n.createdAt.toDate(), "PPP p") : ''}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-center text-muted-foreground mt-10">No notifications yet.</p>
-                            )}
-                        </div>
-                    </SheetContent>
-                </Sheet>
+                <Link href="/notifications">
+                    <Button variant="ghost" size="icon" className="relative">
+                        <BellRing className="h-6 w-6 text-yellow-400" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </Button>
+                </Link>
                 <div className="flex flex-col items-end">
                     <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
                         <Wallet className="h-5 w-5 text-green-400" />
