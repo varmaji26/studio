@@ -38,6 +38,7 @@ export default function NotificationsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   const form = useForm<NotificationFormValues>({
     resolver: zodResolver(notificationSchema),
@@ -101,6 +102,30 @@ export default function NotificationsPage() {
     }
   };
 
+  const handleResend = async (notification: Notification) => {
+    setResendingId(notification.id);
+    try {
+      await addDoc(collection(db, 'notifications'), {
+        title: notification.title,
+        body: notification.body,
+        createdAt: serverTimestamp(),
+      });
+      toast({
+        title: 'Success!',
+        description: 'Notification has been resent.',
+      });
+    } catch (error) {
+      console.error('Error resending notification: ', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to resend notification. Please try again.',
+      });
+    } finally {
+      setResendingId(null);
+    }
+  };
+
   return (
     <div className="flex-1 space-y-6">
       <Card>
@@ -160,28 +185,39 @@ export default function NotificationsPage() {
                 <div key={notification.id} className="flex items-center justify-between rounded-lg border p-4">
                   <div>
                     <h4 className="font-bold">{notification.title}</h4>
-                    <p className="text-sm text-muted-foreground">{notification.body}</p>
+                    <p className="text-sm text-muted-foreground" style={{ whiteSpace: 'pre-wrap' }}>{notification.body}</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {notification.createdAt ? format(notification.createdAt.seconds * 1000, 'PPpp') : '...'}
                     </p>
                   </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">Delete</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the notification.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(notification.id)}>Delete</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex flex-col sm:flex-row items-center gap-2">
+                    <Button 
+                        variant="secondary" 
+                        size="sm"
+                        onClick={() => handleResend(notification)}
+                        disabled={!!resendingId}
+                    >
+                        {resendingId === notification.id && <Loader className="mr-2 h-4 w-4" />}
+                        Resend
+                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">Delete</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the notification.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(notification.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               ))}
             </div>
