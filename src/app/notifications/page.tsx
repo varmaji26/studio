@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -87,7 +88,7 @@ export default function NotificationsPage() {
             <main className="p-4 space-y-4">
                 {visibleNotifications.length > 0 ? (
                     visibleNotifications.map((n, index) => (
-                        <div key={n.id} className="bg-slate-800 border border-slate-700 rounded-lg p-4 relative">
+                        <div key={n.id} className="bg-slate-800 border border-slate-700 rounded-lg p-4 relative animate-won-glow">
                              <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:bg-red-500/20 hover:text-red-400" onClick={() => handleDelete(n.id)}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
