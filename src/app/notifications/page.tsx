@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -98,7 +97,7 @@ export default function NotificationsPage() {
                             <p className="text-sm text-muted-foreground mt-2" style={{ whiteSpace: 'pre-wrap' }}>
                                 {n.body}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-4 text-right">
+                            <p className="text-[10px] text-muted-foreground mt-4 text-right">
                                 {n.createdAt ? format(n.createdAt.toDate(), "PPP p") : ''}
                             </p>
                         </div>
