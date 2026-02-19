@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -91,7 +92,7 @@ export default function NotificationsPage() {
                              <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:bg-red-500/20 hover:text-red-400" onClick={() => handleDelete(n.id)}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
-                            <h2 className="text-lg font-bold text-primary flex items-center gap-2 pr-8">
+                            <h2 className="text-base font-bold text-primary flex items-center gap-2 pr-8">
                                 {index + 1}. {n.title}
                             </h2>
                             <p className="text-sm text-white mt-2" style={{ whiteSpace: 'pre-wrap' }}>
