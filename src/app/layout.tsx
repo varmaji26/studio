@@ -60,8 +60,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     const isPublicPage = 
       pathname === '/login' || 
       pathname === '/signup' || 
-      pathname === '/forgot-password' ||
-      pathname === '/download';
+      pathname === '/forgot-password';
       
     const isAdminPage = pathname.startsWith('/admin');
 
@@ -70,7 +69,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       !isPublicPage && 
       !pathname.startsWith('/games') &&
       !pathname.startsWith('/jodi-chart') &&
-      !pathname.startsWith('/panel-chart');
+      !pathname.startsWith('/panel-chart') &&
+      pathname !== '/download';
 
     if (loading) {
         return (
@@ -81,7 +81,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     }
 
     if (!isAdminPage) {
-        if (!user && !isPublicPage) {
+        if (!user && !isPublicPage && pathname !== '/download') {
             router.replace('/login');
             return (
                 <div className="flex h-screen w-full items-center justify-center bg-background">
