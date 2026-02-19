@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -414,94 +413,94 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-white/10 p-4 space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-8 w-8 text-green-500" strokeWidth={3} />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="bg-background/80 border-r-0 text-foreground flex flex-col p-0">
-                 <div className="flex-1 overflow-y-auto">
-                    <SheetHeader className="p-6 flex flex-row justify-between items-center">
-                        <SheetTitle className="text-primary text-2xl flex items-center gap-2">
-                            <Crown className="h-7 w-7" />
-                            MATKA KING
-                        </SheetTitle>
-                    </SheetHeader>
-                    <div className="py-4">
-                    <div className="flex flex-col items-center space-y-2">
-                         <Avatar className="h-20 w-20">
-                            <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                            <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
-                        </Avatar>
-                        <p className="font-bold text-lg">{user.displayName}</p>
-                        <p className="text-muted-foreground">+91 {mobileNumber}</p>
-                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <span>Referral: {userProfile.referralCode || 'N/A'}</span>
-                            {userProfile.referralCode && (
-                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleCopyToClipboard}>
-                                    <Copy className="h-3 w-3" />
-                                </Button>
-                            )}
+            <div className="flex items-center gap-2">
+                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                    <Menu className="h-8 w-8 text-green-500" strokeWidth={3} />
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="bg-background/80 border-r-0 text-foreground flex flex-col p-0">
+                    <div className="flex-1 overflow-y-auto">
+                        <SheetHeader className="p-6 flex flex-row justify-between items-center">
+                            <SheetTitle className="text-primary text-2xl flex items-center gap-2">
+                                <Crown className="h-7 w-7" />
+                                MATKA KING
+                            </SheetTitle>
+                        </SheetHeader>
+                        <div className="py-4">
+                        <div className="flex flex-col items-center space-y-2">
+                            <Avatar className="h-20 w-20">
+                                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                                <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
+                            </Avatar>
+                            <p className="font-bold text-lg">{user.displayName}</p>
+                            <p className="text-muted-foreground">+91 {mobileNumber}</p>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <span>Referral: {userProfile.referralCode || 'N/A'}</span>
+                                {userProfile.referralCode && (
+                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleCopyToClipboard}>
+                                        <Copy className="h-3 w-3" />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
+                        </div>
+                        <Separator className="bg-white/10 my-2" />
+                        <nav className="flex flex-col gap-2 p-4">
+                            <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
+                                <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><LogOut className="h-5 w-5" /></div>
+                                <span>Logout</span>
+                            </button>
+                            <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
+                                <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><HomeIcon className="h-5 w-5" /></div>
+                                <span>Home</span>
+                            </Link>
+                            <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
+                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><UserIcon className="h-5 w-5" /></div>
+                                <span>Profile</span>
+                            </Link>
+                            <Link href="/time-table" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
+                                <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Clock className="h-5 w-5" /></div>
+                                <span>Time Table</span>
+                            </Link>
+                            <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
+                                <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><BookUser className="h-5 w-5" /></div>
+                                <span>Contact</span>
+                            </Link>
+                            <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
+                                <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><ArrowUpCircle className="h-5 w-5" /></div>
+                                <span>Update App</span>
+                            </Link>
+                            <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
+                                <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Star className="h-5 w-5" /></div>
+                                <span>Rate Card</span>
+                            </Link>
+                            <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
+                                <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><BarChart2 className="h-5 w-5" /></div>
+                                <span>Chart</span>
+                            </Link>
+                        </nav>
                     </div>
+                    <div className="p-4 border-t border-white/10">
+                        {user.isAdmin && (
+                            <Link href="/admin" onContextMenu={(e) => e.preventDefault()}>
+                                <Button className="w-full bg-[#34a387] hover:bg-[#34a387]/90 text-white">
+                                    <ShieldCheck className="mr-2 h-5 w-5" />
+                                    Admin Panel
+                                </Button>
+                            </Link>
+                        )}
                     </div>
-                    <Separator className="bg-white/10 my-2" />
-                    <nav className="flex flex-col gap-2 p-4">
-                        <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors text-left w-full">
-                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><LogOut className="h-5 w-5" /></div>
-                            <span>Logout</span>
-                        </button>
-                        <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
-                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><HomeIcon className="h-5 w-5" /></div>
-                            <span>Home</span>
-                        </Link>
-                        <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
-                           <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><UserIcon className="h-5 w-5" /></div>
-                            <span>Profile</span>
-                        </Link>
-                        <Link href="/time-table" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
-                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Clock className="h-5 w-5" /></div>
-                            <span>Time Table</span>
-                        </Link>
-                        <Link href="/contact" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
-                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><BookUser className="h-5 w-5" /></div>
-                            <span>Contact</span>
-                        </Link>
-                        <Link href="/download" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
-                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><ArrowUpCircle className="h-5 w-5" /></div>
-                            <span>Update App</span>
-                        </Link>
-                        <Link href="/rate-card" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
-                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Star className="h-5 w-5" /></div>
-                            <span>Rate Card</span>
-                        </Link>
-                        <Link href="#" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
-                            <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><BarChart2 className="h-5 w-5" /></div>
-                            <span>Chart</span>
-                        </Link>
-                    </nav>
+                </SheetContent>
+                </Sheet>
+                <div className="flex items-center gap-1">
+                    <Crown className="h-4 w-4 text-primary" />
+                    <span className="font-bold text-base text-foreground">
+                        MATKA KING
+                    </span>
                 </div>
-                <div className="p-4 border-t border-white/10">
-                     {user.isAdmin && (
-                        <Link href="/admin" onContextMenu={(e) => e.preventDefault()}>
-                            <Button className="w-full bg-[#34a387] hover:bg-[#34a387]/90 text-white">
-                                <ShieldCheck className="mr-2 h-5 w-5" />
-                                Admin Panel
-                            </Button>
-                        </Link>
-                     )}
-                </div>
-              </SheetContent>
-            </Sheet>
-            <div className="flex items-center gap-2 rounded-lg bg-black/30 px-2 py-1 border border-white/10">
-              <Crown className="h-4 w-4 text-primary" />
-              <span className="font-bold text-md text-foreground">
-                MATKA KING
-              </span>
             </div>
-          </div>
             <div className="flex items-center gap-2">
                 <div className="flex flex-col items-end">
                     <div className="flex items-center gap-2 bg-card/90 border border-white/10 rounded-full px-3 py-1">
