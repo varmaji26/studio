@@ -94,7 +94,7 @@ export default function NotificationsPage() {
                             <h2 className="text-lg font-bold text-primary flex items-center gap-2 pr-8">
                                 {index + 1}. {n.title}
                             </h2>
-                            <p className="text-sm text-muted-foreground mt-2" style={{ whiteSpace: 'pre-wrap' }}>
+                            <p className="text-sm text-white mt-2" style={{ whiteSpace: 'pre-wrap' }}>
                                 {n.body}
                             </p>
                             <p className="text-[10px] text-muted-foreground mt-4 text-right">
