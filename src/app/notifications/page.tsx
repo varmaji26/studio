@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { collection, query, onSnapshot, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -90,7 +90,7 @@ export default function NotificationsPage() {
                     visibleNotifications.map((n, index) => (
                         <div key={n.id} className="bg-slate-800 border border-slate-700 rounded-lg p-4 relative">
                              <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:bg-red-500/20 hover:text-red-400" onClick={() => handleDelete(n.id)}>
-                                <X className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4" />
                             </Button>
                             <h2 className="text-lg font-bold text-primary flex items-center gap-2 pr-8">
                                 {index + 1}. {n.title}
