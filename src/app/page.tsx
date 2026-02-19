@@ -57,7 +57,6 @@ import {
 import Autoplay from "embla-carousel-autoplay"
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format } from 'date-fns';
 
 
 interface Game extends DocumentData {
@@ -547,7 +546,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
                 <Link href="/notifications">
                     <Button variant="ghost" size="icon" className="relative">
-                        <BellRing className="h-6 w-6 text-yellow-400" />
+                        <BellRing className="h-8 w-8 text-yellow-400" />
                         {unreadCount > 0 && (
                             <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
                                 {unreadCount}
