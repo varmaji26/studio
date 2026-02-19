@@ -314,7 +314,7 @@ export default function Home() {
             }
         });
         
-        const notificationsQuery = query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(20));
+        const notificationsQuery = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
         notificationsUnsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
             const fetchedNotifications: Notification[] = [];
             snapshot.forEach((doc) => {
@@ -322,10 +322,8 @@ export default function Home() {
             });
             setNotifications(fetchedNotifications);
 
-            const lastReadTimestamp = localStorage.getItem('lastReadTimestamp') || '0';
-            const newUnreadCount = fetchedNotifications.filter(
-                (n) => n.createdAt && n.createdAt.toMillis() > parseInt(lastReadTimestamp, 10)
-            ).length;
+            const deletedIds = JSON.parse(localStorage.getItem('deletedNotificationIds') || '[]');
+            const newUnreadCount = fetchedNotifications.filter(n => !deletedIds.includes(n.id)).length;
             setUnreadCount(newUnreadCount);
         });
 
@@ -342,10 +340,8 @@ export default function Home() {
   
   useEffect(() => {
     const handleStorageChange = () => {
-      const lastReadTimestamp = localStorage.getItem('lastReadTimestamp') || '0';
-      const newUnreadCount = notifications.filter(
-        (n) => n.createdAt && n.createdAt.toMillis() > parseInt(lastReadTimestamp, 10)
-      ).length;
+      const deletedIds = JSON.parse(localStorage.getItem('deletedNotificationIds') || '[]');
+      const newUnreadCount = notifications.filter(n => !deletedIds.includes(n.id)).length;
       setUnreadCount(newUnreadCount);
     };
 

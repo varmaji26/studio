@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { collection, query, onSnapshot, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -22,12 +22,16 @@ export default function NotificationsPage() {
     const { user, loading: authLoading } = useAuth();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
     useEffect(() => {
-        // Mark as read when the page is opened
-        localStorage.setItem('lastReadTimestamp', Date.now().toString());
-        // Dispatch a storage event to notify other components (like the home page bell)
-        window.dispatchEvent(new Event('storage'));
+        try {
+            const storedDeletedIds = JSON.parse(localStorage.getItem('deletedNotificationIds') || '[]');
+            setDeletedIds(storedDeletedIds);
+        } catch (e) {
+            console.error("Failed to parse deletedNotificationIds from localStorage", e);
+            setDeletedIds([]);
+        }
     }, []);
 
     useEffect(() => {
@@ -53,6 +57,13 @@ export default function NotificationsPage() {
         return () => unsubscribe();
     }, [user, authLoading]);
 
+    const handleDelete = (idToDelete: string) => {
+        const newDeletedIds = [...deletedIds, idToDelete];
+        setDeletedIds(newDeletedIds);
+        localStorage.setItem('deletedNotificationIds', JSON.stringify(newDeletedIds));
+        window.dispatchEvent(new Event('storage')); // Notify other tabs/components to update unread count
+    };
+
     if (authLoading || loading) {
         return (
             <div className="dark flex h-screen w-full items-center justify-center bg-background">
@@ -60,6 +71,8 @@ export default function NotificationsPage() {
             </div>
         );
     }
+    
+    const visibleNotifications = notifications.filter(n => !deletedIds.includes(n.id));
 
     return (
         <div className="dark min-h-screen bg-background text-foreground">
@@ -73,10 +86,13 @@ export default function NotificationsPage() {
             </header>
 
             <main className="p-4 space-y-4">
-                {notifications.length > 0 ? (
-                    notifications.map((n, index) => (
-                        <div key={n.id} className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-                            <h2 className="text-lg font-bold text-primary flex items-center gap-2">
+                {visibleNotifications.length > 0 ? (
+                    visibleNotifications.map((n, index) => (
+                        <div key={n.id} className="bg-slate-800 border border-slate-700 rounded-lg p-4 relative">
+                             <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:bg-red-500/20 hover:text-red-400" onClick={() => handleDelete(n.id)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                            <h2 className="text-lg font-bold text-primary flex items-center gap-2 pr-8">
                                 {index + 1}. {n.title}
                             </h2>
                             <p className="text-sm text-muted-foreground mt-2" style={{ whiteSpace: 'pre-wrap' }}>
