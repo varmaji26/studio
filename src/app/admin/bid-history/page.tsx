@@ -22,7 +22,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { cleanOldBids } from '@/actions/clean-old-bids';
 import { EditBidDialog } from '@/components/edit-bid-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 interface Bid extends DocumentData {
@@ -62,6 +61,12 @@ export default function AdminBidHistoryPage() {
 
   const [bidToEdit, setBidToEdit] = useState<Bid | null>(null);
   const [bidToCancel, setBidToCancel] = useState<Bid | null>(null);
+  
+  // New states for password protection
+  const [bidForAction, setBidForAction] = useState<Bid | null>(null);
+  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [isActionDialogVisible, setIsActionDialogVisible] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -139,6 +144,24 @@ export default function AdminBidHistoryPage() {
       setCurrentPage(1);
   }, [searchTerm, selectedDate]);
 
+  const handleActionClick = (bid: Bid) => {
+    setBidForAction(bid);
+    setIsPasswordVerified(false);
+    setPasswordInput('');
+    setIsActionDialogVisible(true);
+  };
+
+  const handlePasswordCheck = () => {
+      if (passwordInput === '2626') {
+          setIsPasswordVerified(true);
+      } else {
+          toast({
+              variant: 'destructive',
+              title: 'Incorrect Password',
+          });
+          setPasswordInput('');
+      }
+  };
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -402,24 +425,14 @@ export default function AdminBidHistoryPage() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {bid.status === 'running' && (
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                        <span className="sr-only">Open menu</span>
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onSelect={() => setBidToEdit(bid)}>
-                                                        <Edit className="mr-2 h-4 w-4" />
-                                                        <span>Edit</span>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onSelect={() => setBidToCancel(bid)} className="text-red-500 focus:text-red-500">
-                                                        <XCircle className="mr-2 h-4 w-4" />
-                                                        <span>Cancel</span>
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0"
+                                                onClick={() => handleActionClick(bid)}
+                                            >
+                                                <span className="sr-only">Open menu</span>
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -438,6 +451,71 @@ export default function AdminBidHistoryPage() {
                 </>
             )}
         </div>
+
+        <AlertDialog open={isActionDialogVisible} onOpenChange={setIsActionDialogVisible}>
+            <AlertDialogContent>
+                {!isPasswordVerified ? (
+                    <>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Enter Password</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Please enter the password to access bid actions.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <Input
+                            type="password"
+                            placeholder="Password"
+                            value={passwordInput}
+                            onChange={(e) => setPasswordInput(e.target.value)}
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handlePasswordCheck();
+                                }
+                            }}
+                        />
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handlePasswordCheck}>Submit</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </>
+                ) : (
+                    <>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Actions for Bid</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Select an action for the bid placed by {bidForAction?.displayName}.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="flex flex-col gap-2 py-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    if (bidForAction) setBidToEdit(bidForAction);
+                                    setIsActionDialogVisible(false);
+                                }}
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Bid
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    if (bidForAction) setBidToCancel(bidForAction);
+                                    setIsActionDialogVisible(false);
+                                }}
+                            >
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Cancel Bid
+                            </Button>
+                        </div>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Close</AlertDialogCancel>
+                        </AlertDialogFooter>
+                    </>
+                )}
+            </AlertDialogContent>
+        </AlertDialog>
 
         {bidToEdit && (
             <EditBidDialog
