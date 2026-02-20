@@ -122,7 +122,7 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-xs">
         <DialogHeader>
           <DialogTitle>Edit Bid for {bid.displayName}</DialogTitle>
           <DialogDescription>
