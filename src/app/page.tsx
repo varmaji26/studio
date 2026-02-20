@@ -57,6 +57,7 @@ import {
 import Autoplay from "embla-carousel-autoplay"
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import React from 'react';
 
 
 interface Game extends DocumentData {
@@ -102,6 +103,7 @@ interface AppSettings extends DocumentData {
         logoSize?: number;
         titleSize?: number;
         textSize?: number;
+        speed?: number;
     };
     notice?: {
         text: string;
@@ -426,29 +428,36 @@ export default function Home() {
 
   const mobileNumber = user.email?.split('@')[0];
   
-  const marqueeRepetitions = settings.marquee?.text ? 3 : 0;
-  const marqueeItems = Array(marqueeRepetitions).fill(settings.marquee);
+  const MarqueeContent = React.memo(() => {
+    if (!settings.marquee?.text) return null;
 
-  const MarqueeItem = ({ settings }: { settings: AppSettings['marquee'] }) => {
-    const text = settings?.text || '';
-    const textColor = settings?.textColor || '#FFFFFF';
-    const textSize = settings?.textSize || 12;
+    const marqueeRepetitions = 3;
+    const marqueeItems = Array(marqueeRepetitions).fill(settings.marquee);
 
     return (
-        <div className="flex items-center mx-4" style={{ color: textColor }}>
-            <span style={{ fontSize: `${textSize}px`}}>{text}</span>
-        </div>
-    );
-};
-
-  const MarqueeContent = () => (
-    <div className="flex">
+      <div
+        className="flex animate-marquee-slow"
+        style={{
+          '--marquee-duration': `${settings.marquee.speed || 40}s`,
+        } as React.CSSProperties}
+      >
         {marqueeItems.map((item, index) => (
-            <MarqueeItem key={index} settings={item} />
+          <div
+            key={index}
+            className="flex items-center mx-4"
+            style={{ color: item.textColor || '#FFFFFF' }}
+          >
+            <span style={{ fontSize: `${item.textSize || 12}px` }}>
+              {item.text}
+            </span>
+          </div>
         ))}
-    </div>
-  );
-  
+      </div>
+    );
+  });
+
+MarqueeContent.displayName = 'MarqueeContent';
+
   const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
 
   return (
@@ -564,7 +573,7 @@ export default function Home() {
         </div>
          <div className="flex justify-center items-center gap-4">
             <Link href="/add-fund" className="flex-1" onContextMenu={(e) => e.preventDefault()}>
-                <Button className="w-full h-10 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-lg">
+                <Button className="w-full h-9 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-lg shadow-lg">
                     <div className="bg-white/90 rounded-full p-1 mr-2">
                         <IndianRupee className="h-4 w-4 text-green-600" />
                     </div>
@@ -572,7 +581,7 @@ export default function Home() {
                 </Button>
             </Link>
              <Link href="/withdrawal" className="flex-1" onContextMenu={(e) => e.preventDefault()}>
-                <Button className="w-full h-10 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow-lg">
+                <Button className="w-full h-9 bg-red-500 hover:bg-red-600 text-white font-bold text-sm rounded-lg shadow-lg">
                      <div className="bg-white/90 rounded-full p-1 mr-2">
                         <Landmark className="h-4 w-4 text-red-600" />
                     </div>
@@ -581,14 +590,9 @@ export default function Home() {
             </Link>
         </div>
         {settings.marquee?.text && (
-            <div 
-                className="relative flex overflow-x-hidden text-white py-1 -mx-4" 
-            >
-                <div className="animate-marquee whitespace-nowrap flex">
-                    <MarqueeContent />
-                    <MarqueeContent />
-                </div>
-            </div>
+             <div className="relative flex overflow-x-hidden text-white py-1 -mx-4">
+                <MarqueeContent />
+             </div>
         )}
       </header>
       
