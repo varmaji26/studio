@@ -62,7 +62,7 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
   });
 
   useEffect(() => {
-    if (open) {
+    if (bid && open) {
         form.reset({
             numbers: bid.numbers.join(', '),
             totalAmount: bid.totalAmount,
@@ -122,7 +122,7 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent>
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Edit Bid for {bid.displayName}</DialogTitle>
           <DialogDescription>
