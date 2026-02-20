@@ -94,7 +94,7 @@ export default {
           '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-2px)' },
           '20%, 40%, 60%, 80%': { transform: 'translateX(2px)' },
         },
-        'marquee-slow': {
+        marquee: {
           from: { transform: 'translateX(0)' },
           to: { transform: 'translateX(-50%)' },
         },
@@ -104,7 +104,7 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'shake': 'shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite',
         'won-glow': 'won-glow 2s ease-in-out infinite',
-        'marquee-slow': 'marquee-slow var(--marquee-duration, 40s) linear infinite',
+        'marquee-slow': 'marquee var(--marquee-duration, 40s) linear infinite',
       },
     },
   },

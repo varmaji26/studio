@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
+import React, { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -57,7 +57,6 @@ import {
 import Autoplay from "embla-carousel-autoplay"
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import React from 'react';
 
 
 interface Game extends DocumentData {
@@ -431,32 +430,15 @@ export default function Home() {
   const MarqueeContent = React.memo(() => {
     if (!settings.marquee?.text) return null;
 
-    const marqueeRepetitions = 3;
-    const marqueeItems = Array(marqueeRepetitions).fill(settings.marquee);
-
     return (
-      <div
-        className="flex animate-marquee-slow"
-        style={{
-          '--marquee-duration': `${settings.marquee.speed || 40}s`,
-        } as React.CSSProperties}
-      >
-        {marqueeItems.map((item, index) => (
-          <div
-            key={index}
-            className="flex items-center mx-4"
-            style={{ color: item.textColor || '#FFFFFF' }}
-          >
-            <span style={{ fontSize: `${item.textSize || 12}px` }}>
-              {item.text}
+        <div className="flex items-center mx-4" style={{ color: settings.marquee.textColor || '#FFFFFF' }}>
+            <span className="inline-block" style={{ fontSize: `${settings.marquee.textSize || 12}px` }}>
+              {settings.marquee.text}
             </span>
-          </div>
-        ))}
-      </div>
+        </div>
     );
   });
-
-MarqueeContent.displayName = 'MarqueeContent';
+  MarqueeContent.displayName = 'MarqueeContent';
 
   const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
 
@@ -591,7 +573,13 @@ MarqueeContent.displayName = 'MarqueeContent';
         </div>
         {settings.marquee?.text && (
              <div className="relative flex overflow-x-hidden text-white py-1 -mx-4">
-                <MarqueeContent />
+                <div 
+                    className="flex animate-marquee-slow whitespace-nowrap"
+                    style={{ '--marquee-duration': `${settings.marquee.speed || 40}s` } as React.CSSProperties}
+                >
+                    <MarqueeContent />
+                    <MarqueeContent />
+                </div>
              </div>
         )}
       </header>
