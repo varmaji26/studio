@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,13 +39,18 @@ type EditBidFormValues = z.infer<typeof editBidSchema>;
 
 interface EditBidDialogProps {
   bid: DocumentData;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onBidUpdate: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function EditBidDialog({ bid, children, onBidUpdate }: EditBidDialogProps) {
+export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOpenChange: setOpenProp }: EditBidDialogProps) {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = setOpenProp ?? setInternalOpen;
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<EditBidFormValues>({
@@ -55,6 +60,15 @@ export function EditBidDialog({ bid, children, onBidUpdate }: EditBidDialogProps
       totalAmount: bid.totalAmount,
     },
   });
+
+  useEffect(() => {
+    if (open) {
+        form.reset({
+            numbers: bid.numbers.join(', '),
+            totalAmount: bid.totalAmount,
+        });
+    }
+  }, [open, bid, form]);
 
   const onSubmit = async (values: EditBidFormValues) => {
     setIsSubmitting(true);
@@ -91,7 +105,7 @@ export function EditBidDialog({ bid, children, onBidUpdate }: EditBidDialogProps
         title: 'Success!',
         description: `Bid for ${bid.displayName} has been updated.`,
       });
-      onBidUpdate(); // To refresh the list
+      onBidUpdate();
       setOpen(false);
     } catch (error: any) {
       console.error('Error updating bid: ', error);
@@ -107,7 +121,7 @@ export function EditBidDialog({ bid, children, onBidUpdate }: EditBidDialogProps
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Bid for {bid.displayName}</DialogTitle>

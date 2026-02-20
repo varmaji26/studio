@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, Calendar as CalendarIcon, Download, XCircle, Trash2, Edit } from 'lucide-react';
+import { Search, Calendar as CalendarIcon, Download, XCircle, Trash2, Edit, MoreVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { cleanOldBids } from '@/actions/clean-old-bids';
 import { EditBidDialog } from '@/components/edit-bid-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 interface Bid extends DocumentData {
@@ -57,6 +59,9 @@ export default function AdminBidHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isCleaning, setIsCleaning] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const [bidToEdit, setBidToEdit] = useState<Bid | null>(null);
+  const [bidToCancel, setBidToCancel] = useState<Bid | null>(null);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -397,34 +402,24 @@ export default function AdminBidHistoryPage() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {bid.status === 'running' && (
-                                            <div className="flex gap-2 justify-end">
-                                                <EditBidDialog bid={bid} onBidUpdate={() => setRefreshTrigger(t => t + 1)}>
-                                                    <Button variant="outline" size="sm">
-                                                        <Edit className="h-4 w-4 mr-1" />
-                                                        Edit
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreVertical className="h-4 w-4" />
                                                     </Button>
-                                                </EditBidDialog>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="destructive" size="sm">
-                                                            <XCircle className="h-4 w-4 mr-1" />
-                                                            Cancel
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure you want to cancel this bid?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This action cannot be undone. This will cancel the bid and refund ₹{bid.totalAmount} to ${bid.displayName}'s wallet.
-                                                        </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                        <AlertDialogCancel>Close</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleCancelBid(bid)}>Confirm Cancel</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </div>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onSelect={() => setBidToEdit(bid)}>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        <span>Edit</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onSelect={() => setBidToCancel(bid)} className="text-red-500 focus:text-red-500">
+                                                        <XCircle className="mr-2 h-4 w-4" />
+                                                        <span>Cancel</span>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -443,6 +438,35 @@ export default function AdminBidHistoryPage() {
                 </>
             )}
         </div>
+
+        {bidToEdit && (
+            <EditBidDialog
+                open={!!bidToEdit}
+                onOpenChange={(open) => !open && setBidToEdit(null)}
+                bid={bidToEdit}
+                onBidUpdate={() => {
+                    setBidToEdit(null);
+                    setRefreshTrigger(t => t + 1);
+                }}
+            />
+        )}
+
+        {bidToCancel && (
+            <AlertDialog open={!!bidToCancel} onOpenChange={(open) => !open && setBidToCancel(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to cancel this bid?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will cancel the bid and refund ₹{bidToCancel.totalAmount} to {bidToCancel.displayName}'s wallet.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Close</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => { handleCancelBid(bidToCancel); setBidToCancel(null); }}>Confirm Cancel</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
       </div>
   );
 }
