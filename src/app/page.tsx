@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useRef, Suspense, memo, useMemo } from 'react';
@@ -440,6 +439,20 @@ export default function Home() {
   });
   MarqueeContent.displayName = 'MarqueeContent';
 
+  const GameMarqueeContent = React.memo(() => {
+    return (
+      <div className="flex flex-shrink-0 items-center justify-around">
+        {games.map((game) => (
+          <div key={game.id} className="flex items-center justify-center text-center mx-4 gap-2">
+            <span className="text-sm font-medium text-white/80">{game.name}</span>
+            <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
+          </div>
+        ))}
+      </div>
+    );
+  });
+  GameMarqueeContent.displayName = 'GameMarqueeContent';
+
   const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
 
   return (
@@ -744,21 +757,9 @@ export default function Home() {
                 </div>
                 ) : games.length > 0 ? (
                 <div className="relative flex overflow-hidden group">
-                    <div className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
-                        {games.concat(games).map((game, index) => (
-                            <div key={`${game.id}-${index}`} className="flex items-center justify-center text-center mx-4 gap-2">
-                                <span className="text-sm font-medium text-white/80">{game.name}</span>
-                                <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
-                            </div>
-                        ))}
-                    </div>
-                    <div aria-hidden="true" className="animate-marquee flex min-w-full shrink-0 items-center justify-around group-hover:[animation-play-state:paused]">
-                        {games.concat(games).map((game, index) => (
-                            <div key={`${game.id}-${index}-clone`} className="flex items-center justify-center text-center mx-4 gap-2">
-                                <span className="text-sm font-medium text-white/80">{game.name}</span>
-                                <span className="text-base font-bold text-amber-400 tracking-wider">{formatGameResult(game, true)}</span>
-                            </div>
-                        ))}
+                    <div className="animate-marquee-slow flex whitespace-nowrap group-hover:[animation-play-state:paused]">
+                        <GameMarqueeContent />
+                        <GameMarqueeContent />
                     </div>
                 </div>
                 ) : (
