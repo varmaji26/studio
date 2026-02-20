@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, Calendar as CalendarIcon, Download, XCircle, Trash2 } from 'lucide-react';
+import { Search, Calendar as CalendarIcon, Download, XCircle, Trash2, Edit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,6 +20,7 @@ import 'jspdf-autotable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cleanOldBids } from '@/actions/clean-old-bids';
+import { EditBidDialog } from '@/components/edit-bid-dialog';
 
 
 interface Bid extends DocumentData {
@@ -396,26 +397,34 @@ export default function AdminBidHistoryPage() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {bid.status === 'running' && (
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="destructive" size="sm">
-                                                        <XCircle className="h-4 w-4 mr-1" />
-                                                        Cancel
+                                            <div className="flex gap-2 justify-end">
+                                                <EditBidDialog bid={bid} onBidUpdate={() => setRefreshTrigger(t => t + 1)}>
+                                                    <Button variant="outline" size="sm">
+                                                        <Edit className="h-4 w-4 mr-1" />
+                                                        Edit
                                                     </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure you want to cancel this bid?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This action cannot be undone. This will cancel the bid and refund ₹{bid.totalAmount} to ${bid.displayName}'s wallet.
-                                                    </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                    <AlertDialogCancel>Close</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleCancelBid(bid)}>Confirm Cancel</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                                </EditBidDialog>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="destructive" size="sm">
+                                                            <XCircle className="h-4 w-4 mr-1" />
+                                                            Cancel
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure you want to cancel this bid?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will cancel the bid and refund ₹{bid.totalAmount} to ${bid.displayName}'s wallet.
+                                                        </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                        <AlertDialogCancel>Close</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleCancelBid(bid)}>Confirm Cancel</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
                                         )}
                                     </TableCell>
                                 </TableRow>
