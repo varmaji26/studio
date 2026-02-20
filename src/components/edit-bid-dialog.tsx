@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -31,10 +32,7 @@ import { Loader } from '@/components/loader';
 
 const editBidSchema = z.object({
   numbers: z.string().min(1, 'Bid numbers are required.'),
-  totalAmount: z.preprocess(
-    (a) => parseInt(z.string().parse(a), 10),
-    z.number().min(1, 'Amount must be at least ₹1.')
-  ),
+  totalAmount: z.coerce.number().min(1, 'Amount must be at least ₹1.'),
 });
 
 type EditBidFormValues = z.infer<typeof editBidSchema>;
