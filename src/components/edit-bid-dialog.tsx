@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -29,6 +28,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
+import { Textarea } from './ui/textarea';
 
 const editBidSchema = z.object({
   numbers: z.string().min(1, 'Bid numbers are required.'),
@@ -138,7 +138,7 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
                 <FormItem>
                   <FormLabel>Bid Numbers</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="e.g., 123, 456" />
+                    <Textarea {...field} placeholder="e.g., 123, 456" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
