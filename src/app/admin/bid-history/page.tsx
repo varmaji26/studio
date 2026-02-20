@@ -476,7 +476,7 @@ export default function AdminBidHistoryPage() {
                         />
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handlePasswordCheck}>Submit</AlertDialogAction>
+                            <Button type="button" onClick={handlePasswordCheck}>Submit</Button>
                         </AlertDialogFooter>
                     </>
                 ) : (
