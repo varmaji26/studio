@@ -169,22 +169,14 @@ const FullSangamIcon = () => (
 );
 
 const AllPanaBulkIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_all_pana_bulk)"/>
-        <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_all_pana_bulk)"/>
-        <rect x="9" y="26" width="30" height="2" rx="1" fill="white" fillOpacity="0.8"/>
-        <rect x="9" y="30" width="30" height="2" rx="1" fill="white" fillOpacity="0.8"/>
-        <rect x="9" y="34" width="30" height="2" rx="1" fill="white" fillOpacity="0.8"/>
-        <defs>
-            <linearGradient id="paint0_linear_all_pana_bulk" x1="24" y1="4" x2="24" y2="37" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#F59E0B"/>
-                <stop offset="1" stopColor="#D97706"/>
-            </linearGradient>
-            <linearGradient id="paint1_linear_all_pana_bulk" x1="24" y1="36" x2="24" y2="44" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#F59E0B"/>
-                <stop offset="1" stopColor="#D97706"/>
-            </linearGradient>
-        </defs>
+    <svg width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" fill="#3B82F6"/>
+        <circle cx="12" cy="6" r="1.5" fill="white"/>
+        <circle cx="17" cy="9" r="1.5" fill="white"/>
+        <circle cx="17" cy="15" r="1.5" fill="white"/>
+        <circle cx="12" cy="18" r="1.5" fill="white"/>
+        <circle cx="7" cy="15" r="1.5" fill="white"/>
+        <circle cx="7" cy="9" r="1.5" fill="white"/>
     </svg>
 );
 
@@ -205,7 +197,7 @@ export default function GamePage() {
     { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon />, gradient: 'bg-gradient-to-br from-rose-500 to-red-600' },
     { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <SinglePanaBulkIcon />, gradient: 'bg-gradient-to-br from-violet-500 to-purple-600' },
     { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <DoublePanaBulkIcon />, gradient: 'bg-gradient-to-br from-indigo-500 to-blue-600' },
-    { title: 'SP/DP/TP Bulk', href: `/games/${game.id}/all-pana-bulk`, icon: <AllPanaBulkIcon />, gradient: 'bg-gradient-to-br from-amber-500 to-orange-600' },
+    { title: 'SP DP TP', href: `/games/${game.id}/all-pana-bulk`, icon: <AllPanaBulkIcon />, gradient: 'bg-white text-gray-800 shadow-md' },
     { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon />, gradient: 'bg-gradient-to-br from-emerald-500 to-green-600' },
     { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon />, gradient: 'bg-gradient-to-br from-red-500 to-orange-600' },
   ];
