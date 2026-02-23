@@ -14,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGame } from '@/hooks/use-game';
 import { format } from 'date-fns';
 import { Calendar, Trash2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const numbers = Array.from({ length: 10 }, (_, i) => i.toString());
 
@@ -216,7 +217,7 @@ export default function SingleDigitPage() {
             </div>
         </Card>
 
-        <Card className="bg-background/80 border-white/10">
+        <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
             <CardHeader className="p-0 mb-4 pt-4 px-4">
                 <CardTitle className="text-sm font-semibold text-foreground">Choose Session</CardTitle>
             </CardHeader>
@@ -254,7 +255,7 @@ export default function SingleDigitPage() {
                         </div>
                     ))}
                 </div>
-                <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-primary/20 border-primary text-primary hover:bg-primary/30 hover:text-primary">
+                <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-orange-600 text-white border-orange-500 hover:bg-orange-700">
                     Add All Bids
                 </Button>
             </CardContent>
@@ -263,17 +264,19 @@ export default function SingleDigitPage() {
         {bidList.length > 0 && (
             <div className="mt-6">
                 <h3 className="font-semibold mb-2">Your Bids List</h3>
-                <div className="space-y-2 rounded-lg bg-slate-800 p-2">
-                    {bidList.map((bid, index) => (
-                        <div key={index} className="flex justify-between items-center bg-slate-700 p-2 rounded-md">
-                            <p>Number: <span className="font-bold">{bid.number}</span></p>
-                            <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
-                            <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                </div>
+                <ScrollArea className="h-52 rounded-lg bg-slate-800 p-2">
+                    <div className="space-y-2">
+                        {bidList.map((bid, index) => (
+                            <div key={index} className="flex justify-between items-center bg-slate-700 p-2 rounded-md">
+                                <p>Number: <span className="font-bold">{bid.number}</span></p>
+                                <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
+                                <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </ScrollArea>
             </div>
         )}
 
@@ -282,7 +285,7 @@ export default function SingleDigitPage() {
                 <p className="text-sm text-muted-foreground">Total Amount</p>
                 <p className="font-bold text-xl text-white">₹{totalAmount}</p>
             </div>
-            <Button className="h-12 px-8 font-bold text-base" onClick={handlePlaceBet} disabled={isSubmitting || totalAmount === 0 || isBettingDisabled}>
+            <Button className="h-12 px-8 font-bold text-base bg-orange-600 hover:bg-orange-700" onClick={handlePlaceBet} disabled={isSubmitting || totalAmount === 0 || isBettingDisabled}>
                 {isSubmitting ? <Loader className="mr-2" /> : null}
                 {isBettingDisabled ? 'Betting Closed' : 'Continue'}
             </Button>
