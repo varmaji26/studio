@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -13,6 +12,9 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGame } from '@/hooks/use-game';
+import { format } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar } from 'lucide-react';
 
 const numbers = Array.from({ length: 10 }, (_, i) => i.toString());
 
@@ -21,14 +23,10 @@ export default function SingleDigitPage() {
   const { user } = useAuth();
   const { game, now } = useGame();
 
-  const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
-  const [amount, setAmount] = useState<string>('');
+  const [bids, setBids] = useState<Record<string, string>>({});
   const [session, setSession] = useState<'Open' | 'Close'>('Open');
-  
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [potentialWin, setPotentialWin] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -52,7 +50,7 @@ export default function SingleDigitPage() {
 
   const isOpenDisabled = now >= openDateTime;
   const isCloseDisabled = now >= closeDateTime;
-  
+
    useEffect(() => {
     if (isOpenDisabled && !isCloseDisabled) {
       setSession('Close');
@@ -60,26 +58,24 @@ export default function SingleDigitPage() {
       setSession('Open');
     }
   }, [isOpenDisabled, isCloseDisabled]);
-
-  useEffect(() => {
-    const parsedAmount = parseInt(amount, 10);
-    const numSelected = selectedNumbers.length;
-    
-    if (!isNaN(parsedAmount) && parsedAmount > 0 && numSelected > 0) {
-      const total = parsedAmount * numSelected;
-      setTotalAmount(total);
-      setPotentialWin(parsedAmount * 10);
+  
+  const handleBidChange = (number: string, amount: string) => {
+    const newBids = { ...bids };
+    if (amount === '' || parseInt(amount, 10) === 0) {
+        delete newBids[number];
     } else {
-      setTotalAmount(0);
-      setPotentialWin(0);
+        newBids[number] = amount;
     }
-  }, [amount, selectedNumbers]);
+    setBids(newBids);
+  };
+
+  const totalAmount = useMemo(() => {
+    return Object.values(bids).reduce((sum, amount) => sum + (parseInt(amount, 10) || 0), 0);
+  }, [bids]);
 
 
-  const toggleNumber = (num: string) => {
-    setSelectedNumbers((prev) =>
-      prev.includes(num) ? prev.filter((n) => n !== num) : [...prev, num]
-    );
+  const handleAddAllBids = () => {
+     toast({ title: "Action Needed", description: "Functionality for 'Add All Bids' needs to be clarified." });
   };
 
   const handlePlaceBet = async () => {
@@ -87,12 +83,8 @@ export default function SingleDigitPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Authentication or game data missing.' });
         return;
     }
-    if (selectedNumbers.length === 0) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please select at least one number.' });
-      return;
-    }
-    if (!amount || parseInt(amount) <= 0) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please enter a valid bet amount.' });
+    if (Object.keys(bids).length === 0) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please place at least one bet.' });
       return;
     }
     if (!session) {
@@ -102,6 +94,15 @@ export default function SingleDigitPage() {
 
     setIsSubmitting(true);
     const userDocRef = doc(db, 'users', user.uid);
+
+    const betsByAmount: Record<string, string[]> = {};
+    for(const number in bids) {
+        const amount = bids[number];
+        if(!betsByAmount[amount]) {
+            betsByAmount[amount] = [];
+        }
+        betsByAmount[amount].push(number);
+    }
 
     try {
         await runTransaction(db, async (transaction) => {
@@ -135,30 +136,36 @@ export default function SingleDigitPage() {
             });
             
             const bidsCollectionRef = collection(db, 'bids');
-            transaction.set(doc(bidsCollectionRef), {
-                userId: user.uid,
-                displayName: user.displayName,
-                mobile: userData.mobile,
-                gameId: game.id,
-                gameName: game?.name,
-                betType: 'Single Digit',
-                session,
-                numbers: selectedNumbers,
-                amountPerBet: parseInt(amount),
-                totalAmount: totalAmount,
-                status: 'running',
-                createdAt: serverTimestamp(),
-            });
+
+            for (const amount in betsByAmount) {
+                const numbersForAmount = betsByAmount[amount];
+                const amountPerBet = parseInt(amount, 10);
+                const totalAmountForThisGroup = amountPerBet * numbersForAmount.length;
+
+                transaction.set(doc(bidsCollectionRef), {
+                    userId: user.uid,
+                    displayName: user.displayName,
+                    mobile: userData.mobile,
+                    gameId: game.id,
+                    gameName: game?.name,
+                    betType: 'Single Digit',
+                    session,
+                    numbers: numbersForAmount,
+                    amountPerBet: amountPerBet,
+                    totalAmount: totalAmountForThisGroup,
+                    status: 'running',
+                    createdAt: serverTimestamp(),
+                });
+            }
         });
 
         toast({
             title: 'Bet Placed Successfully!',
-            description: `Your bet of ₹${totalAmount} has been placed for ${game?.name}.`,
+            description: `Your bets totaling ₹${totalAmount} have been placed for ${game?.name}.`,
             className: 'bg-green-600 text-white border-green-700',
         });
 
-        setSelectedNumbers([]);
-        setAmount('');
+        setBids({});
     } catch (error: any) {
         console.error('Error placing bet:', error);
         toast({
@@ -171,112 +178,87 @@ export default function SingleDigitPage() {
     }
   };
   
-  if (!isMounted) {
+  if (!isMounted || !game) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader className="h-10 w-10 text-primary" />
       </div>
     );
   }
-  
-  if (!game) {
-    return null;
-  }
-  
-  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || isCloseDisabled;
 
+  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || isCloseDisabled;
+  
   return (
     <div className="space-y-4">
-        <Card className="bg-background/80 border-white/10">
-            <CardHeader className="p-4">
-                <CardTitle className="text-base">Select Number(s):</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-5 gap-2 p-4 pt-0">
-                {numbers.map((num) => (
-                    <Button 
-                        key={num}
-                        variant={selectedNumbers.includes(num) ? 'default' : 'outline'}
-                        className="aspect-square text-base font-bold h-9 w-9"
-                        onClick={() => toggleNumber(num)}
-                    >
-                        {num}
-                    </Button>
-                ))}
+        <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-slate-700 text-white">
+            <CardContent className="p-4 space-y-4">
+                <div className="text-center">
+                    <h2 className="font-bold text-lg">{game.name}</h2>
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>{format(now, "EEEE, d MMMM yyyy")}</span>
+                    </div>
+                </div>
+                
+                <Tabs defaultValue="classic">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="classic">Classic</TabsTrigger>
+                        <TabsTrigger value="advanced" disabled>Advanced</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="classic" className="mt-4">
+                        <div className="space-y-4">
+                            <div>
+                                <Label className="text-sm font-semibold">Choose Session</Label>
+                                <RadioGroup 
+                                    value={session} 
+                                    onValueChange={(value) => setSession(value as 'Open' | 'Close')}
+                                    className="grid grid-cols-2 gap-2 mt-2"
+                                    disabled={isBettingDisabled}
+                                >
+                                    <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                                        <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
+                                        Open
+                                    </Label>
+                                    <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                                        <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
+                                        Close
+                                    </Label>
+                                </RadioGroup>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                                {numbers.map(num => (
+                                    <div key={num} className="flex items-center gap-2">
+                                        <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-primary rounded-md font-bold text-primary-foreground">
+                                            {num}
+                                        </div>
+                                        <Input
+                                            type="number"
+                                            placeholder="Amount"
+                                            className="bg-slate-700 border-slate-600 h-8 text-center text-white"
+                                            value={bids[num] || ''}
+                                            onChange={(e) => handleBidChange(num, e.target.value)}
+                                            disabled={isBettingDisabled}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-primary/20 border-primary text-primary hover:bg-primary/30 hover:text-primary">
+                                Add All Bids
+                            </Button>
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </CardContent>
         </Card>
 
-        <div className="space-y-4">
-             <div className="space-y-2">
-                <Label htmlFor="bet-amount" className="text-sm">Bet Amount (₹):</Label>
-                <Input 
-                    id="bet-amount"
-                    type="number"
-                    placeholder="Enter amount" 
-                    className="h-9 text-sm"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                />
+        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border p-3 flex items-center justify-between z-10 max-w-2xl mx-auto">
+            <div>
+                <p className="text-sm text-muted-foreground">Total Amount</p>
+                <p className="font-bold text-xl text-white">₹{totalAmount}</p>
             </div>
-            <div className="space-y-2">
-                <Label className="text-sm">Select Session:</Label>
-                 <RadioGroup 
-                    value={session} 
-                    onValueChange={(value) => setSession(value as 'Open' | 'Close')}
-                    className="grid grid-cols-2 gap-2"
-                >
-                    <Label 
-                        className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : ''} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                    >
-                        <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
-                        Open
-                    </Label>
-                     <Label 
-                        className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : ''} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                    >
-                        <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
-                        Close
-                    </Label>
-                </RadioGroup>
-            </div>
-        </div>
-    
-        <Card className="bg-background/80 border-white/10">
-            <CardHeader className="p-4">
-                <CardTitle className="text-base">Bet Summary:</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1 text-xs p-4 pt-0">
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Game:</span>
-                    <span className="font-semibold">{game.name}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Type:</span>
-                    <span className="font-semibold">Single Digit</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Numbers:</span>
-                    <span className="font-semibold">{selectedNumbers.join(', ') || '-'}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Amount:</span>
-                    <span className="font-semibold">₹{totalAmount}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Session:</span>
-                    <span className="font-semibold">{session || 'Closed'}</span>
-                </div>
-                <div className="flex justify-between text-primary">
-                    <span className="text-primary/80">Potential Win:</span>
-                    <span className="font-bold">₹{potentialWin.toFixed(2)}</span>
-                </div>
-            </CardContent>
-        </Card>
-        
-        <div className="mt-4">
-            <p className="text-center text-muted-foreground mb-2 text-xs">Total Bids: {selectedNumbers.length}</p>
-            <Button className="w-full h-10 text-base font-bold" onClick={handlePlaceBet} disabled={totalAmount <= 0 || isSubmitting || isBettingDisabled}>
+            <Button className="h-12 px-8 font-bold text-base" onClick={handlePlaceBet} disabled={isSubmitting || totalAmount === 0 || isBettingDisabled}>
                 {isSubmitting ? <Loader className="mr-2" /> : null}
-                {isBettingDisabled ? 'Betting Closed' : isSubmitting ? 'Placing Bet...' : `Place Bet - ₹${totalAmount}`}
+                {isBettingDisabled ? 'Betting Closed' : 'Continue'}
             </Button>
         </div>
     </div>
