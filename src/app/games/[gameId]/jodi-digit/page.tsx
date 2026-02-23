@@ -40,7 +40,7 @@ export default function JodiDigitPage() {
     const { game, now } = useGame();
     
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedDigit, setSelectedDigit] = useState<string>('0');
+    const [selectedDigit, setSelectedDigit] = useState<string | null>(null);
     const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
     const [bidsInput, setBidsInput] = useState<Record<string, string>>({});
     const [isMounted, setIsMounted] = useState(false);
@@ -62,8 +62,17 @@ export default function JodiDigitPage() {
         };
     }, [game, now, isMounted]);
 
-    const jodisForSelectedDigit = useMemo(() => {
-      return allJodis[selectedDigit] || [];
+    const handleFilterClick = (digit: string) => {
+        if (selectedDigit === digit) {
+            setSelectedDigit(null); // Unselect if clicked again
+        } else {
+            setSelectedDigit(digit);
+        }
+    };
+    
+    const filteredJodis = useMemo(() => {
+        if (selectedDigit === null) return [];
+        return Object.values(allJodis).flat().filter(jodi => jodi.includes(selectedDigit));
     }, [selectedDigit]);
     
     const handleInputChange = (digit: string, value: string) => {
@@ -201,14 +210,14 @@ export default function JodiDigitPage() {
                     
                     <div className="space-y-4">
                         <div className="p-2 rounded-lg bg-slate-800">
-                            <div className="grid grid-cols-5 gap-1">
+                           <div className="grid grid-cols-5 gap-1">
                                 {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map(digit => (
                                     <Button
                                         key={digit}
                                         type="button"
-                                        variant={selectedDigit === digit ? 'secondary' : 'ghost'}
-                                        onClick={() => setSelectedDigit(digit)}
-                                        className={cn("rounded-md text-sm h-8", selectedDigit === digit ? 'bg-primary text-primary-foreground' : 'text-white hover:bg-white/10')}
+                                        variant={selectedDigit === digit ? 'default' : 'ghost'}
+                                        onClick={() => handleFilterClick(digit)}
+                                        className={cn("rounded-md text-sm h-8", selectedDigit !== digit && 'text-white hover:bg-white/10')}
                                     >
                                         {digit}
                                     </Button>
@@ -217,7 +226,7 @@ export default function JodiDigitPage() {
                         </div>
                         <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
                             <CardContent className="p-4 grid grid-cols-2 gap-x-4 gap-y-3">
-                                {jodisForSelectedDigit.map(jodi => (
+                                {filteredJodis.map(jodi => (
                                     <div key={jodi} className="flex items-center h-8 bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary shadow-md">
                                         <label className="flex items-center justify-center h-full w-9 bg-primary text-primary-foreground border-r text-xs font-bold">
                                             {jodi}
