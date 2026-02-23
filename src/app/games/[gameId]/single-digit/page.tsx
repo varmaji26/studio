@@ -13,25 +13,31 @@ import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGame } from '@/hooks/use-game';
 import { format } from 'date-fns';
-import { Calendar } from 'lucide-react';
+import { Calendar, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const numbers = Array.from({ length: 10 }, (_, i) => i.toString());
+
+interface Bid {
+  number: string;
+  amount: number;
+}
 
 export default function SingleDigitPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { game, now } = useGame();
 
-  const [bids, setBids] = useState<Record<string, string>>({});
+  const [inputAmounts, setInputAmounts] = useState<Record<string, string>>({});
+  const [bidList, setBidList] = useState<Bid[]>([]);
   const [session, setSession] = useState<'Open' | 'Close'>('Open');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
-  
+
   const getTimeParts = (timeStr: string) => {
     if (!timeStr) return { hours: 0, minutes: 0 };
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -50,40 +56,66 @@ export default function SingleDigitPage() {
   const isOpenDisabled = now >= openDateTime;
   const isCloseDisabled = now >= closeDateTime;
 
-   useEffect(() => {
+  useEffect(() => {
     if (isOpenDisabled && !isCloseDisabled) {
       setSession('Close');
     } else {
       setSession('Open');
     }
   }, [isOpenDisabled, isCloseDisabled]);
-  
-  const handleBidChange = (number: string, amount: string) => {
-    const newBids = { ...bids };
-    if (amount === '' || parseInt(amount, 10) === 0) {
-        delete newBids[number];
+
+  const handleInputChange = (number: string, amount: string) => {
+    const newAmounts = { ...inputAmounts };
+    if (amount === '' || parseInt(amount, 10) < 0) {
+        delete newAmounts[number];
     } else {
-        newBids[number] = amount;
+        newAmounts[number] = amount;
     }
-    setBids(newBids);
+    setInputAmounts(newAmounts);
+  };
+
+  const handleAddAllBids = () => {
+    const newBids: Bid[] = Object.entries(inputAmounts)
+      .map(([number, amountStr]) => ({
+        number,
+        amount: parseInt(amountStr, 10),
+      }))
+      .filter(bid => bid.amount > 0);
+
+    if (newBids.length === 0) {
+      toast({ variant: 'destructive', title: 'No Bids', description: 'Please enter an amount for at least one digit.' });
+      return;
+    }
+
+    const updatedBidsMap: Map<string, Bid> = new Map(bidList.map(b => [b.number, b]));
+    newBids.forEach(newBid => {
+        const existingBid = updatedBidsMap.get(newBid.number);
+        if (existingBid) {
+            existingBid.amount += newBid.amount;
+        } else {
+            updatedBidsMap.set(newBid.number, newBid);
+        }
+    });
+
+    setBidList(Array.from(updatedBidsMap.values()).sort((a, b) => parseInt(a.number) - parseInt(b.number)));
+    setInputAmounts({});
+  };
+
+  const handleRemoveBid = (numberToRemove: string) => {
+    setBidList(currentList => currentList.filter(bid => bid.number !== numberToRemove));
   };
 
   const totalAmount = useMemo(() => {
-    return Object.values(bids).reduce((sum, amount) => sum + (parseInt(amount, 10) || 0), 0);
-  }, [bids]);
-
-
-  const handleAddAllBids = () => {
-     toast({ title: "Action Needed", description: "Functionality for 'Add All Bids' needs to be clarified." });
-  };
+    return bidList.reduce((sum, bid) => sum + bid.amount, 0);
+  }, [bidList]);
 
   const handlePlaceBet = async () => {
     if (!user || !game) {
         toast({ variant: 'destructive', title: 'Error', description: 'Authentication or game data missing.' });
         return;
     }
-    if (Object.keys(bids).length === 0) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please place at least one bet.' });
+    if (bidList.length === 0) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Your bid list is empty.' });
       return;
     }
     if (!session) {
@@ -94,40 +126,20 @@ export default function SingleDigitPage() {
     setIsSubmitting(true);
     const userDocRef = doc(db, 'users', user.uid);
 
-    const betsByAmount: Record<string, string[]> = {};
-    for(const number in bids) {
-        const amount = bids[number];
-        if(!betsByAmount[amount]) {
-            betsByAmount[amount] = [];
-        }
-        betsByAmount[amount].push(number);
-    }
-
     try {
         await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userDocRef);
-            if (!userDoc.exists()) {
-                throw new Error("User document does not exist!");
-            }
+            if (!userDoc.exists()) throw new Error("User document does not exist!");
             
             const userData = userDoc.data();
             const currentBalance = userData.balance || 0;
             const currentBonusBalance = userData.bonusBalance || 0;
             const totalUserBalance = currentBalance + currentBonusBalance;
 
-            if (totalUserBalance < totalAmount) {
-                throw new Error("Insufficient total balance.");
-            }
+            if (totalUserBalance < totalAmount) throw new Error("Insufficient total balance.");
             
-            let amountFromReal = 0;
-            let amountFromBonus = 0;
-
-            if (currentBalance >= totalAmount) {
-                amountFromReal = totalAmount;
-            } else {
-                amountFromReal = currentBalance;
-                amountFromBonus = totalAmount - currentBalance;
-            }
+            let amountFromReal = Math.min(totalAmount, currentBalance);
+            let amountFromBonus = totalAmount - amountFromReal;
 
             transaction.update(userDocRef, { 
                 balance: increment(-amountFromReal),
@@ -135,48 +147,56 @@ export default function SingleDigitPage() {
             });
             
             const bidsCollectionRef = collection(db, 'bids');
+            
+            const groupedByAmount = bidList.reduce((acc, bid) => {
+              const amountKey = bid.amount.toString();
+              if (!acc[amountKey]) {
+                acc[amountKey] = [];
+              }
+              acc[amountKey].push(bid.number);
+              return acc;
+            }, {} as Record<string, string[]>);
 
-            for (const amount in betsByAmount) {
-                const numbersForAmount = betsByAmount[amount];
-                const amountPerBet = parseInt(amount, 10);
-                const totalAmountForThisGroup = amountPerBet * numbersForAmount.length;
+            for (const amountStr in groupedByAmount) {
+              const numbersForAmount = groupedByAmount[amountStr];
+              const amountPerBet = parseInt(amountStr, 10);
+              const totalAmountForGroup = amountPerBet * numbersForAmount.length;
 
-                transaction.set(doc(bidsCollectionRef), {
-                    userId: user.uid,
-                    displayName: user.displayName,
-                    mobile: userData.mobile,
-                    gameId: game.id,
-                    gameName: game?.name,
-                    betType: 'Single Digit',
-                    session,
-                    numbers: numbersForAmount,
-                    amountPerBet: amountPerBet,
-                    totalAmount: totalAmountForThisGroup,
-                    status: 'running',
-                    createdAt: serverTimestamp(),
-                });
+              transaction.set(doc(bidsCollectionRef), {
+                  userId: user.uid,
+                  displayName: user.displayName,
+                  mobile: userData.mobile,
+                  gameId: game.id,
+                  gameName: game?.name,
+                  betType: 'Single Digit',
+                  session,
+                  numbers: numbersForAmount,
+                  amountPerBet: amountPerBet,
+                  totalAmount: totalAmountForGroup,
+                  status: 'running',
+                  createdAt: serverTimestamp(),
+              });
             }
         });
 
         toast({
             title: 'Bet Placed Successfully!',
-            description: `Your bets totaling ₹${totalAmount} have been placed for ${game?.name}.`,
+            description: `Your bets totaling ₹${totalAmount} have been placed.`,
             className: 'bg-green-600 text-white border-green-700',
         });
-
-        setBids({});
+        setBidList([]);
     } catch (error: any) {
         console.error('Error placing bet:', error);
         toast({
             variant: 'destructive',
             title: 'Bet Failed',
-            description: error.message || 'Could not place your bet. Please try again.',
+            description: error.message || 'Could not place your bet.',
         });
     } finally {
         setIsSubmitting(false);
     }
   };
-  
+
   if (!isMounted || !game) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -184,41 +204,42 @@ export default function SingleDigitPage() {
       </div>
     );
   }
-
-  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || isCloseDisabled;
   
+  const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || isCloseDisabled;
+
   return (
     <div className="space-y-4">
-        <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-slate-700 text-white">
-            <CardContent className="p-4 space-y-4">
-                <div className="text-center">
-                    <h2 className="font-bold text-lg">{game.name}</h2>
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{format(now, "EEEE, d MMMM yyyy")}</span>
-                    </div>
-                </div>
-                
-                <div className="mt-4">
-                    <div className="space-y-4">
-                        <div>
-                            <Label className="text-sm font-semibold">Choose Session</Label>
-                            <RadioGroup 
-                                value={session} 
-                                onValueChange={(value) => setSession(value as 'Open' | 'Close')}
-                                className="grid grid-cols-2 gap-2 mt-2"
-                                disabled={isBettingDisabled}
-                            >
-                                <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-                                    <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
-                                    Open
-                                </Label>
-                                <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-                                    <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
-                                    Close
-                                </Label>
-                            </RadioGroup>
-                        </div>
+        <div className="flex items-center justify-center bg-white text-black p-2 rounded-md">
+            <Calendar className="h-4 w-4 mr-2" />
+            <span className="text-sm font-semibold">{format(now, "EEEE, d MMMM yyyy")}</span>
+        </div>
+        <Tabs defaultValue="classic">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="classic">Classic</TabsTrigger>
+                <TabsTrigger value="advanced" disabled>Advanced</TabsTrigger>
+            </TabsList>
+            <TabsContent value="classic" className="mt-4">
+                <Card className="bg-transparent border-none shadow-none">
+                    <CardHeader className="p-0 mb-4">
+                        <CardTitle className="text-sm font-semibold text-foreground">Choose Session</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0 space-y-4">
+                        <RadioGroup 
+                            value={session} 
+                            onValueChange={(value) => setSession(value as 'Open' | 'Close')}
+                            className="grid grid-cols-2 gap-2"
+                            disabled={isBettingDisabled}
+                        >
+                            <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                                <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
+                                Open
+                            </Label>
+                            <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                                <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
+                                Close
+                            </Label>
+                        </RadioGroup>
+
                         <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                             {numbers.map(num => (
                                 <div key={num} className="flex items-center gap-2">
@@ -229,8 +250,8 @@ export default function SingleDigitPage() {
                                         type="number"
                                         placeholder="Amount"
                                         className="bg-slate-700 border-slate-600 h-8 text-center text-white"
-                                        value={bids[num] || ''}
-                                        onChange={(e) => handleBidChange(num, e.target.value)}
+                                        value={inputAmounts[num] || ''}
+                                        onChange={(e) => handleInputChange(num, e.target.value)}
                                         disabled={isBettingDisabled}
                                     />
                                 </div>
@@ -239,10 +260,27 @@ export default function SingleDigitPage() {
                         <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-primary/20 border-primary text-primary hover:bg-primary/30 hover:text-primary">
                             Add All Bids
                         </Button>
+                    </CardContent>
+                </Card>
+
+                {bidList.length > 0 && (
+                    <div className="mt-6">
+                        <h3 className="font-semibold mb-2">Your Bids List</h3>
+                        <div className="space-y-2 rounded-lg bg-slate-800 p-2">
+                            {bidList.map((bid, index) => (
+                                <div key={index} className="flex justify-between items-center bg-slate-700 p-2 rounded-md">
+                                    <p>Number: <span className="font-bold">{bid.number}</span></p>
+                                    <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </CardContent>
-        </Card>
+                )}
+            </TabsContent>
+        </Tabs>
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border p-3 flex items-center justify-between z-10 max-w-2xl mx-auto">
             <div>
