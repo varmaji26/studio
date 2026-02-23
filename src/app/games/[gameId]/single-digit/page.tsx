@@ -14,7 +14,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGame } from '@/hooks/use-game';
 import { format } from 'date-fns';
 import { Calendar, Trash2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const numbers = Array.from({ length: 10 }, (_, i) => i.toString());
 
@@ -208,79 +207,75 @@ export default function SingleDigitPage() {
   const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || isCloseDisabled;
 
   return (
-    <div className="space-y-4">
-        <div className="flex items-center justify-center bg-white text-black p-2 rounded-md">
-            <Calendar className="h-4 w-4 mr-2" />
-            <span className="text-sm font-semibold">{format(now, "EEEE, d MMMM yyyy")}</span>
-        </div>
-        <Tabs defaultValue="classic">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="classic">Classic</TabsTrigger>
-                <TabsTrigger value="advanced" disabled>Advanced</TabsTrigger>
-            </TabsList>
-            <TabsContent value="classic" className="mt-4">
-                <Card className="bg-transparent border-none shadow-none">
-                    <CardHeader className="p-0 mb-4">
-                        <CardTitle className="text-sm font-semibold text-foreground">Choose Session</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 space-y-4">
-                        <RadioGroup 
-                            value={session} 
-                            onValueChange={(value) => setSession(value as 'Open' | 'Close')}
-                            className="grid grid-cols-2 gap-2"
-                            disabled={isBettingDisabled}
-                        >
-                            <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-                                <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
-                                Open
-                            </Label>
-                            <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-                                <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
-                                Close
-                            </Label>
-                        </RadioGroup>
+    <div className="space-y-4 mt-4">
+        <Card className="bg-white text-black p-4 text-center rounded-lg shadow-md">
+            <p className="font-bold text-lg">{game?.name}</p>
+            <div className="flex items-center justify-center text-sm text-gray-600 mt-1">
+                <Calendar className="h-4 w-4 mr-2" />
+                <span>{format(now, "EEEE, d MMMM yyyy")}</span>
+            </div>
+        </Card>
 
-                        <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-                            {numbers.map(num => (
-                                <div key={num} className="flex items-center gap-2">
-                                    <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-primary rounded-md font-bold text-primary-foreground">
-                                        {num}
-                                    </div>
-                                    <Input
-                                        type="number"
-                                        placeholder="Amount"
-                                        className="bg-slate-700 border-slate-600 h-8 text-center text-white"
-                                        value={inputAmounts[num] || ''}
-                                        onChange={(e) => handleInputChange(num, e.target.value)}
-                                        disabled={isBettingDisabled}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                        <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-primary/20 border-primary text-primary hover:bg-primary/30 hover:text-primary">
-                            Add All Bids
-                        </Button>
-                    </CardContent>
-                </Card>
+        <Card className="bg-background/80 border-white/10">
+            <CardHeader className="p-0 mb-4 pt-4 px-4">
+                <CardTitle className="text-sm font-semibold text-foreground">Choose Session</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-4">
+                <RadioGroup 
+                    value={session} 
+                    onValueChange={(value) => setSession(value as 'Open' | 'Close')}
+                    className="grid grid-cols-2 gap-2"
+                    disabled={isBettingDisabled}
+                >
+                    <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                        <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
+                        Open
+                    </Label>
+                    <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                        <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
+                        Close
+                    </Label>
+                </RadioGroup>
 
-                {bidList.length > 0 && (
-                    <div className="mt-6">
-                        <h3 className="font-semibold mb-2">Your Bids List</h3>
-                        <div className="space-y-2 rounded-lg bg-slate-800 p-2">
-                            {bidList.map((bid, index) => (
-                                <div key={index} className="flex justify-between items-center bg-slate-700 p-2 rounded-md">
-                                    <p>Number: <span className="font-bold">{bid.number}</span></p>
-                                    <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
-                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            ))}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                    {numbers.map(num => (
+                        <div key={num} className="flex items-center gap-2">
+                            <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-primary rounded-md font-bold text-primary-foreground">
+                                {num}
+                            </div>
+                            <Input
+                                type="number"
+                                placeholder="Amount"
+                                className="bg-slate-700 border-slate-600 h-8 text-center text-white"
+                                value={inputAmounts[num] || ''}
+                                onChange={(e) => handleInputChange(num, e.target.value)}
+                                disabled={isBettingDisabled}
+                            />
                         </div>
-                    </div>
-                )}
-            </TabsContent>
-        </Tabs>
+                    ))}
+                </div>
+                <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-primary/20 border-primary text-primary hover:bg-primary/30 hover:text-primary">
+                    Add All Bids
+                </Button>
+            </CardContent>
+        </Card>
+
+        {bidList.length > 0 && (
+            <div className="mt-6">
+                <h3 className="font-semibold mb-2">Your Bids List</h3>
+                <div className="space-y-2 rounded-lg bg-slate-800 p-2">
+                    {bidList.map((bid, index) => (
+                        <div key={index} className="flex justify-between items-center bg-slate-700 p-2 rounded-md">
+                            <p>Number: <span className="font-bold">{bid.number}</span></p>
+                            <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
+                            <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border p-3 flex items-center justify-between z-10 max-w-2xl mx-auto">
             <div>

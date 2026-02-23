@@ -1,16 +1,20 @@
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatTime } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GameContext, type Game } from '@/hooks/use-game';
+import { useAuth } from '@/hooks/use-auth';
+
+interface UserProfile extends DocumentData {
+  balance?: number;
+  bonusBalance?: number;
+}
 
 export default function GameLayout({ children }: { children: React.ReactNode }) {
     const params = useParams();
@@ -20,6 +24,8 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const [game, setGame] = useState<Game | null>(null);
     const [loading, setLoading] = useState(true);
     const [now, setNow] = useState(new Date());
+    const { user } = useAuth();
+    const [userProfile, setUserProfile] = useState<UserProfile>({});
 
     const activeBetType = useMemo(() => {
         const pathSegments = pathname.split('/');
@@ -30,9 +36,28 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             case 'single-pana': return 'Single Pana';
             case 'double-pana': return 'Double Pana';
             case 'triple-pana': return 'Triple Pana';
-            default: return 'Choose Bet Type';
+            case 'all-pana-bulk': return 'SP DP TP';
+            case 'sp-motor': return 'SP Motor';
+            case 'dp-motor': return 'DP Motor';
+            case 'half-sangam': return 'Half Sangam';
+            case 'full-sangam': return 'Full Sangam';
+            case 'single-pana-bulk': return 'Single Pana Bulk';
+            case 'double-pana-bulk': return 'Double Pana Bulk';
+            default: return gameId ? 'Choose Bet Type' : '';
         }
-    }, [pathname]);
+    }, [pathname, gameId]);
+
+    useEffect(() => {
+        if (user?.uid) {
+            const userDocRef = doc(db, 'users', user.uid);
+            const unsubscribe = onSnapshot(userDocRef, (doc) => {
+                if (doc.exists()) {
+                    setUserProfile(doc.data() as UserProfile);
+                }
+            });
+            return () => unsubscribe();
+        }
+    }, [user?.uid]);
 
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 60000); // update time every minute
@@ -61,20 +86,15 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
         fetchGame();
     }, [gameId, router]);
     
+    const totalBalance = (userProfile?.balance || 0) + (userProfile?.bonusBalance || 0);
+
     if (loading) {
          return (
             <div className="dark min-h-screen bg-background text-foreground p-2">
-                <div className="max-w-2xl mx-auto">
-                    <div className="text-center mb-2">
-                        <Skeleton className="h-5 w-3/4 mx-auto bg-slate-700/50" />
-                        <Skeleton className="h-4 w-1/2 mx-auto mt-2 bg-slate-700/50" />
-                    </div>
-                    <div className="my-2">
-                        <Skeleton className="h-9 w-full bg-slate-700/50" />
-                    </div>
-                    <div className="w-full mt-4">
-                        <Skeleton className="h-64 w-full bg-slate-700/50" />
-                    </div>
+                <div className="max-w-2xl mx-auto space-y-4">
+                    <Skeleton className="h-14 w-full bg-slate-700/50" />
+                    <Skeleton className="h-20 w-full bg-slate-700/50" />
+                    <Skeleton className="h-64 w-full bg-slate-700/50" />
                 </div>
             </div>
         );
@@ -90,29 +110,24 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
     return (
         <GameContext.Provider value={{ game, loading, now }}>
-            <div className="dark min-h-screen bg-background text-foreground p-2 pb-28">
-              <div className="max-w-2xl mx-auto">
-                <div className="text-center mb-2">
-                  <h1 className="text-base font-bold whitespace-nowrap">
-                    Place Your Bet - <span className="text-primary">{game.name}</span>
-                  </h1>
-                   <p className="text-xs text-muted-foreground mt-1">{activeBetType}</p>
-                </div>
-
-                <div className="my-2">
-                     <Button variant="default" className="w-full bg-green-500 hover:bg-green-600 text-white h-9" onClick={() => router.replace(`/#${gameId}`)}>
-                        <div className="flex items-center gap-2">
-                            <ArrowLeft className="h-4 w-4"/>
-                            <span className="text-sm">Back to Home</span>
-                        </div>
-                    </Button>
-                </div>
-                
-                <div className="w-full">
-                    {children}
-                </div>
-
-              </div>
+            <div className="dark min-h-screen bg-background text-foreground flex flex-col">
+                <header className="bg-[#112a45] text-white p-2.5 flex items-center justify-between sticky top-0 z-10 shadow-md">
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="text-white h-8 w-8" onClick={() => router.back()}>
+                            <ArrowLeft />
+                        </Button>
+                        <h1 className="text-lg font-bold uppercase">{activeBetType}</h1>
+                    </div>
+                    <div className="flex items-center gap-2 bg-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg">
+                        <Wallet className="h-5 w-5" />
+                        <span className="font-bold text-sm">{totalBalance.toFixed(0)}</span>
+                    </div>
+                </header>
+                <main className="flex-1 p-2 pb-28">
+                    <div className="max-w-2xl mx-auto">
+                        {children}
+                    </div>
+                </main>
             </div>
         </GameContext.Provider>
     );
