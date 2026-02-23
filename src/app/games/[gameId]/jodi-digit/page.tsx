@@ -6,7 +6,7 @@ import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } f
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -85,7 +85,7 @@ export default function JodiDigitPage() {
     };
     
     const filteredJodis = useMemo(() => {
-      if (selectedDigit === null) return [];
+      if (selectedDigit === null) return Object.values(allJodis).flat();
       return allJodis[selectedDigit] || [];
     }, [selectedDigit]);
     
@@ -275,7 +275,7 @@ export default function JodiDigitPage() {
                                             name={`classicBids.${index}.points`}
                                             render={({ field: inputField }) => (
                                                 <FormItem>
-                                                    <div className="flex items-center h-8 bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary shadow-md">
+                                                    <div className="flex items-center h-8 bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary shadow-md border border-primary">
                                                         <Label className="flex items-center justify-center h-full w-9 bg-primary text-primary-foreground border-r text-xs font-bold">
                                                             {field.digit}
                                                         </Label>
@@ -340,4 +340,3 @@ export default function JodiDigitPage() {
         </div>
     );
 }
-    
