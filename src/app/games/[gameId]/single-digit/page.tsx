@@ -220,11 +220,11 @@ export default function SingleDigitPage() {
                     className="grid grid-cols-2 gap-2"
                     disabled={isBettingDisabled}
                 >
-                    <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                    <Label className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
                         <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
                         Open
                     </Label>
-                    <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                    <Label className={`flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
                         <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
                         Close
                     </Label>
@@ -259,11 +259,11 @@ export default function SingleDigitPage() {
                 <ScrollArea className="h-32 rounded-lg bg-slate-800 p-2">
                     <div className="space-y-1">
                         {bidList.map((bid, index) => (
-                            <div key={index} className="flex justify-between items-center bg-slate-700 px-3 py-1.5 rounded-md text-sm">
+                            <div key={index} className="flex justify-between items-center bg-slate-700 px-2 py-1 rounded-md text-xs">
                                 <p>Number: <span className="font-bold">{bid.number}</span></p>
                                 <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
-                                <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
-                                    <Trash2 className="h-4 w-4" />
+                                <Button size="icon" variant="ghost" className="h-5 w-5 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
+                                    <Trash2 className="h-3 w-3" />
                                 </Button>
                             </div>
                         ))}
@@ -285,3 +285,4 @@ export default function SingleDigitPage() {
     </div>
   );
 }
+    
