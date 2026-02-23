@@ -41,11 +41,8 @@ export default function JodiDigitPage() {
     
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedDigit, setSelectedDigit] = useState<string>('0');
-    const [mode, setMode] = useState<'Classic' | 'Advanced'>('Classic');
     const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
-    const [classicBidsInput, setClassicBidsInput] = useState<Record<string, string>>({});
-    const [advancedBidNumber, setAdvancedBidNumber] = useState('');
-    const [advancedAmount, setAdvancedAmount] = useState('');
+    const [bidsInput, setBidsInput] = useState<Record<string, string>>({});
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -65,23 +62,25 @@ export default function JodiDigitPage() {
         };
     }, [game, now, isMounted]);
 
-    const jodisForSelectedDigit = useMemo(() => allJodis[selectedDigit] || [], [selectedDigit]);
+    const jodisForSelectedDigit = useMemo(() => {
+      return allJodis[selectedDigit] || [];
+    }, [selectedDigit]);
     
-    const handleClassicInputChange = (digit: string, value: string) => {
-        setClassicBidsInput(prev => ({...prev, [digit]: value}));
+    const handleInputChange = (digit: string, value: string) => {
+        setBidsInput(prev => ({...prev, [digit]: value}));
     };
 
     const totalAmount = useMemo(() => {
         return submittedBids.reduce((acc, bid) => acc + Number(bid.amount), 0);
     }, [submittedBids]);
 
-    const handleAddClassicBids = () => {
-        const newBids = Object.entries(classicBidsInput)
+    const handleAddAllBids = () => {
+        const newBids = Object.entries(bidsInput)
             .filter(([_, amount]) => amount && parseInt(amount) >= 10)
             .map(([digit, amount]) => ({ number: digit, amount: Number(amount) }));
 
         if (newBids.length === 0) {
-            toast({ title: 'No Bids to Add', description: 'Please enter points (minimum 10) for at least one digit.', variant: 'destructive' });
+            toast({ title: 'No Bids to Add', description: 'Please enter points (minimum 10) for at least one jodi.', variant: 'destructive' });
             return;
         }
         
@@ -92,29 +91,8 @@ export default function JodiDigitPage() {
             });
             return Array.from(bidsMap, ([number, amount]) => ({ number, amount })).sort((a,b) => a.number.localeCompare(b.number));
         });
-        setClassicBidsInput({});
+        setBidsInput({});
         toast({ title: 'Bids Added', description: `${newBids.length} bid(s) have been added/updated in your list.` });
-    };
-
-    const handleAddAdvancedBid = () => {
-        const number = advancedBidNumber;
-        const amount = parseInt(advancedAmount, 10);
-
-        if (!number || !/^\d{2}$/.test(number)) {
-            toast({ title: 'Invalid Number', description: 'Please enter a valid 2-digit number.', variant: 'destructive' });
-            return;
-        }
-        if (!amount || amount < 10) {
-            toast({ title: 'Invalid Amount', description: 'Minimum bid amount is 10.', variant: 'destructive' });
-            return;
-        }
-        setSubmittedBids(prev => {
-            const bidsMap = new Map(prev.map(b => [b.number, b.amount]));
-            bidsMap.set(number, (bidsMap.get(number) || 0) + amount);
-            return Array.from(bidsMap, ([number, amount]) => ({ number, amount })).sort((a,b) => a.number.localeCompare(b.number));
-        });
-        setAdvancedBidNumber('');
-        setAdvancedAmount('');
     };
 
     const removeBid = (number: string) => {
@@ -153,7 +131,20 @@ export default function JodiDigitPage() {
                 
                 const bidsCollectionRef = collection(db, 'bids');
                 
-                for (const bid of submittedBids) {
+                const groupedByAmount = submittedBids.reduce((acc, bid) => {
+                    const amountKey = bid.amount.toString();
+                    if (!acc[amountKey]) {
+                        acc[amountKey] = [];
+                    }
+                    acc[amountKey].push(bid.number);
+                    return acc;
+                }, {} as Record<string, string[]>);
+                
+                for (const amountStr in groupedByAmount) {
+                    const numbersForAmount = groupedByAmount[amountStr];
+                    const amountPerBet = parseInt(amountStr, 10);
+                    const totalAmountForGroup = amountPerBet * numbersForAmount.length;
+
                     transaction.set(doc(bidsCollectionRef), {
                         userId: user.uid,
                         displayName: user.displayName,
@@ -162,9 +153,9 @@ export default function JodiDigitPage() {
                         gameName: game.name,
                         betType: 'Jodi Digit',
                         session: 'Open',
-                        numbers: [bid.number],
-                        amountPerBet: bid.amount,
-                        totalAmount: bid.amount,
+                        numbers: numbersForAmount,
+                        amountPerBet: amountPerBet,
+                        totalAmount: totalAmountForGroup,
                         status: 'running',
                         createdAt: serverTimestamp(),
                     });
@@ -204,71 +195,48 @@ export default function JodiDigitPage() {
                         <p className="text-sm font-medium">{format(new Date(), "EEEE, dd MMMM yyyy")}</p>
                     </div>
 
-                    <div className="p-1 rounded-full grid grid-cols-2 gap-1 bg-slate-800">
-                        <Button type="button" onClick={() => setMode('Classic')} variant={mode === 'Classic' ? 'default' : 'ghost'} className={cn("rounded-full shadow-md text-sm", mode === 'Classic' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-slate-700')}>Classic</Button>
-                        <Button type="button" onClick={() => setMode('Advanced')} variant={mode === 'Advanced' ? 'default' : 'ghost'} className={cn("rounded-full shadow-md text-sm", mode === 'Advanced' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-slate-700')}>Advanced</Button>
-                    </div>
-
                     {isBettingDisabled && (
                         <p className="text-center text-red-500 text-sm font-bold p-2 bg-red-100/10 rounded-md">Bidding is closed for Jodi Digit in this market.</p>
                     )}
                     
-                    {mode === 'Classic' ? (
-                        <div className="space-y-4">
-                            <div className="p-2 rounded-lg bg-slate-800">
-                                <div className="grid grid-cols-5 gap-1">
-                                    {Object.keys(allJodis).map(digit => (
-                                        <Button
-                                            key={digit}
-                                            type="button"
-                                            variant={selectedDigit === digit ? 'secondary' : 'ghost'}
-                                            onClick={() => setSelectedDigit(digit)}
-                                            className={cn("rounded-md text-sm h-8", selectedDigit === digit ? 'bg-primary text-primary-foreground' : 'text-white hover:bg-white/10')}
-                                        >
-                                            {digit}
-                                        </Button>
-                                    ))}
-                                </div>
+                    <div className="space-y-4">
+                        <div className="p-2 rounded-lg bg-slate-800">
+                            <div className="grid grid-cols-5 gap-1">
+                                {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map(digit => (
+                                    <Button
+                                        key={digit}
+                                        type="button"
+                                        variant={selectedDigit === digit ? 'secondary' : 'ghost'}
+                                        onClick={() => setSelectedDigit(digit)}
+                                        className={cn("rounded-md text-sm h-8", selectedDigit === digit ? 'bg-primary text-primary-foreground' : 'text-white hover:bg-white/10')}
+                                    >
+                                        {digit}
+                                    </Button>
+                                ))}
                             </div>
-                            <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
-                                <CardContent className="p-4 grid grid-cols-2 gap-x-4 gap-y-3">
-                                    {jodisForSelectedDigit.map(jodi => (
-                                        <div key={jodi} className="flex items-center h-8 bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary shadow-md">
-                                            <label className="flex items-center justify-center h-full w-9 bg-primary text-primary-foreground border-r text-xs font-bold">
-                                                {jodi}
-                                            </label>
-                                            <Input
-                                                type="number"
-                                                value={classicBidsInput[jodi] || ''}
-                                                onChange={(e) => handleClassicInputChange(jodi, e.target.value)}
-                                                className="h-full bg-background border-none text-center text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
-                                                disabled={isBettingDisabled}
-                                            />
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-                            <Button type="button" onClick={handleAddClassicBids} className="w-full bg-orange-600 hover:bg-orange-700" size="sm" disabled={isBettingDisabled}>
-                               <PlusCircle className="mr-2 h-4 w-4" /> Add All Bids
-                            </Button>
                         </div>
-                    ) : (
                         <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
-                            <CardContent className="p-4 space-y-4">
-                                <div>
-                                    <Label className="text-xs">Add Bid Number</Label>
-                                    <Input placeholder="Enter 2-digit number" value={advancedBidNumber} onChange={e => setAdvancedBidNumber(e.target.value)} maxLength={2} className="text-center text-sm h-9 bg-slate-700 border-slate-600" disabled={isBettingDisabled} />
-                                </div>
-                                <div>
-                                    <Label className="text-xs">Add Amount</Label>
-                                    <Input type="number" placeholder="Enter amount (min 10)" value={advancedAmount} onChange={e => setAdvancedAmount(e.target.value)} className="text-center text-sm h-9 bg-slate-700 border-slate-600" disabled={isBettingDisabled} />
-                                </div>
-                                <Button type="button" onClick={handleAddAdvancedBid} className="w-full text-sm bg-orange-600 hover:bg-orange-700" size="sm" disabled={isBettingDisabled}>
-                                    <Send className="mr-2 h-4 w-4" /> Add Bid
-                                </Button>
+                            <CardContent className="p-4 grid grid-cols-2 gap-x-4 gap-y-3">
+                                {jodisForSelectedDigit.map(jodi => (
+                                    <div key={jodi} className="flex items-center h-8 bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary shadow-md">
+                                        <label className="flex items-center justify-center h-full w-9 bg-primary text-primary-foreground border-r text-xs font-bold">
+                                            {jodi}
+                                        </label>
+                                        <Input
+                                            type="number"
+                                            value={bidsInput[jodi] || ''}
+                                            onChange={(e) => handleInputChange(jodi, e.target.value)}
+                                            className="h-full bg-background border-none text-center text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
+                                            disabled={isBettingDisabled}
+                                        />
+                                    </div>
+                                ))}
                             </CardContent>
                         </Card>
-                    )}
+                        <Button type="button" onClick={handleAddAllBids} className="w-full bg-orange-600 hover:bg-orange-700" size="sm" disabled={isBettingDisabled}>
+                           <PlusCircle className="mr-2 h-4 w-4" /> Add All Bids
+                        </Button>
+                    </div>
                     
                     {submittedBids.length > 0 && (
                         <div className="space-y-2 pt-4">
@@ -298,7 +266,6 @@ export default function JodiDigitPage() {
                     </Button>
                 </CardFooter>
             </Card>
-        </form>
-    </Form>
-  );
+        </div>
+    );
 }
