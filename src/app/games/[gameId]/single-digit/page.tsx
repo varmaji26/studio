@@ -248,7 +248,7 @@ export default function SingleDigitPage() {
                         </div>
                     ))}
                 </div>
-                <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-orange-600 text-white border-orange-500 hover:bg-orange-700">
+                <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-slate-800 border-slate-700 hover:bg-slate-700">
                     Add All Bids
                 </Button>
             </CardContent>
@@ -257,10 +257,10 @@ export default function SingleDigitPage() {
         {bidList.length > 0 && (
             <div className="mt-6">
                 <h3 className="font-semibold mb-2">Your Bids List</h3>
-                <ScrollArea className="h-32 rounded-lg bg-slate-800 p-2">
+                <ScrollArea className="h-40 rounded-lg bg-slate-900 p-2">
                     <div className="space-y-1">
                         {bidList.map((bid, index) => (
-                            <div key={index} className="flex justify-between items-center bg-slate-700 px-2 py-1 rounded-md text-xs">
+                            <div key={index} className="flex justify-between items-center bg-slate-800 px-2 py-1 rounded-md text-xs">
                                 <p>Number: <span className="font-bold">{bid.number}</span></p>
                                 <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
                                 <Button size="icon" variant="ghost" className="h-4 w-4 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
@@ -278,7 +278,7 @@ export default function SingleDigitPage() {
                 <p className="text-sm text-muted-foreground">Total Amount</p>
                 <p className="font-bold text-xl text-white">₹{totalAmount}</p>
             </div>
-            <Button className="h-12 px-8 font-bold text-base bg-orange-600 hover:bg-orange-700" onClick={handlePlaceBet} disabled={isSubmitting || totalAmount === 0 || isBettingDisabled}>
+            <Button className="h-12 px-8 font-bold text-base bg-green-600 hover:bg-green-700" onClick={handlePlaceBet} disabled={isSubmitting || totalAmount === 0 || isBettingDisabled}>
                 {isSubmitting ? <Loader className="mr-2" /> : null}
                 {isBettingDisabled ? 'Betting Closed' : 'Continue'}
             </Button>
