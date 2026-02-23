@@ -54,7 +54,7 @@ export default function JodiDigitPage() {
     const { game, now } = useGame();
     
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedDigit, setSelectedDigit] = useState<string | null>(null);
+    const [selectedDigit, setSelectedDigit] = useState<string | null>('0');
     const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
     const [bidsInput, setBidsInput] = useState<Record<string, string>>({});
     const [isMounted, setIsMounted] = useState(false);
@@ -103,8 +103,12 @@ export default function JodiDigitPage() {
     });
 
     useEffect(() => {
-        replace(filteredJodis.map(digit => ({ digit, points: undefined })));
-    }, [selectedDigit, filteredJodis, replace]);
+        const newFields = filteredJodis.map(digit => ({
+            digit,
+            points: form.getValues('classicBids').find(b => b.digit === digit)?.points
+        }));
+        replace(newFields);
+    }, [selectedDigit, filteredJodis, replace, form]);
 
     
     const handleInputChange = (digit: string, value: string) => {
@@ -134,10 +138,10 @@ export default function JodiDigitPage() {
             });
             return Array.from(bidsMap, ([number, amount]) => ({ number, amount })).sort((a,b) => a.number.localeCompare(b.number));
         });
-        form.reset({
-            ...form.getValues(),
-            classicBids: filteredJodis.map(digit => ({ digit, points: undefined })),
-        });
+        
+        const resetData = filteredJodis.map(digit => ({ digit, points: undefined }));
+        replace(resetData);
+
         toast({ title: 'Bids Added', description: `${newBids.length} bid(s) have been added/updated in your list.` });
     };
 
@@ -306,16 +310,18 @@ export default function JodiDigitPage() {
                     {submittedBids.length > 0 && (
                         <div className="space-y-2 pt-4">
                             <h4 className="text-xs font-medium text-center text-muted-foreground">YOUR BIDS LIST</h4>
-                            <ScrollArea className="h-32 rounded-lg bg-slate-900 border border-slate-700 p-1 space-y-1">
-                                {submittedBids.map((bid, index) => (
-                                    <div key={index} className="flex justify-between items-center bg-slate-800 p-1 px-2 rounded-md animate-in fade-in-0">
-                                        <p className="text-xs">Number: <span className="font-bold">{bid.number}</span></p>
-                                        <p className="text-xs">Amount: <span className="font-bold">₹{bid.amount}</span></p>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeBid(bid.number)}>
-                                            <Trash2 className="h-3 w-3 text-destructive"/>
-                                        </Button>
-                                    </div>
-                                ))}
+                            <ScrollArea className="h-32 rounded-lg bg-slate-900 border border-slate-700 p-1">
+                                <div className="space-y-2 p-1">
+                                    {submittedBids.map((bid, index) => (
+                                        <div key={index} className="flex justify-between items-center bg-slate-800 p-1 px-2 rounded-md animate-in fade-in-0">
+                                            <p className="text-xs">Number: <span className="font-bold">{bid.number}</span></p>
+                                            <p className="text-xs">Amount: <span className="font-bold">₹{bid.amount}</span></p>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeBid(bid.number)}>
+                                                <Trash2 className="h-3 w-3 text-destructive"/>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
                             </ScrollArea>
                         </div>
                     )}
@@ -334,3 +340,4 @@ export default function JodiDigitPage() {
         </div>
     );
 }
+    
