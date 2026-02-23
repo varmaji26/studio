@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGame } from '@/hooks/use-game';
 import { format } from 'date-fns';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from 'lucide-react';
 
 const numbers = Array.from({ length: 10 }, (_, i) => i.toString());
@@ -200,54 +199,48 @@ export default function SingleDigitPage() {
                     </div>
                 </div>
                 
-                <Tabs defaultValue="classic">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="classic">Classic</TabsTrigger>
-                        <TabsTrigger value="advanced" disabled>Advanced</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="classic" className="mt-4">
-                        <div className="space-y-4">
-                            <div>
-                                <Label className="text-sm font-semibold">Choose Session</Label>
-                                <RadioGroup 
-                                    value={session} 
-                                    onValueChange={(value) => setSession(value as 'Open' | 'Close')}
-                                    className="grid grid-cols-2 gap-2 mt-2"
-                                    disabled={isBettingDisabled}
-                                >
-                                    <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-                                        <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
-                                        Open
-                                    </Label>
-                                    <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-                                        <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
-                                        Close
-                                    </Label>
-                                </RadioGroup>
-                            </div>
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-                                {numbers.map(num => (
-                                    <div key={num} className="flex items-center gap-2">
-                                        <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-primary rounded-md font-bold text-primary-foreground">
-                                            {num}
-                                        </div>
-                                        <Input
-                                            type="number"
-                                            placeholder="Amount"
-                                            className="bg-slate-700 border-slate-600 h-8 text-center text-white"
-                                            value={bids[num] || ''}
-                                            onChange={(e) => handleBidChange(num, e.target.value)}
-                                            disabled={isBettingDisabled}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                            <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-primary/20 border-primary text-primary hover:bg-primary/30 hover:text-primary">
-                                Add All Bids
-                            </Button>
+                <div className="mt-4">
+                    <div className="space-y-4">
+                        <div>
+                            <Label className="text-sm font-semibold">Choose Session</Label>
+                            <RadioGroup 
+                                value={session} 
+                                onValueChange={(value) => setSession(value as 'Open' | 'Close')}
+                                className="grid grid-cols-2 gap-2 mt-2"
+                                disabled={isBettingDisabled}
+                            >
+                                <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isOpenDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                                    <RadioGroupItem value="Open" id="open" className="sr-only" disabled={isOpenDisabled} />
+                                    Open
+                                </Label>
+                                <Label className={`flex items-center justify-center rounded-md border p-3 text-center text-sm font-semibold cursor-pointer ${session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20'} ${isCloseDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                                    <RadioGroupItem value="Close" id="close" className="sr-only" disabled={isCloseDisabled} />
+                                    Close
+                                </Label>
+                            </RadioGroup>
                         </div>
-                    </TabsContent>
-                </Tabs>
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                            {numbers.map(num => (
+                                <div key={num} className="flex items-center gap-2">
+                                    <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-primary rounded-md font-bold text-primary-foreground">
+                                        {num}
+                                    </div>
+                                    <Input
+                                        type="number"
+                                        placeholder="Amount"
+                                        className="bg-slate-700 border-slate-600 h-8 text-center text-white"
+                                        value={bids[num] || ''}
+                                        onChange={(e) => handleBidChange(num, e.target.value)}
+                                        disabled={isBettingDisabled}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <Button onClick={handleAddAllBids} variant="outline" className="w-full bg-primary/20 border-primary text-primary hover:bg-primary/30 hover:text-primary">
+                            Add All Bids
+                        </Button>
+                    </div>
+                </div>
             </CardContent>
         </Card>
 
