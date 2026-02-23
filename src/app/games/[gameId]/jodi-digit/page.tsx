@@ -13,8 +13,12 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon, Send, Trash2, PlusCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useGame } from '@/hooks/use-game';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 
 const allJodis: Record<string, string[]> = {
     '0': ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09'],
@@ -33,6 +37,16 @@ interface BidItem {
     number: string;
     amount: number;
 };
+
+const formSchema = z.object({
+  classicBids: z.array(z.object({
+      digit: z.string(),
+      points: z.coerce.number().optional(),
+  })),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
 
 export default function JodiDigitPage() {
     const { toast } = useToast();
@@ -71,9 +85,27 @@ export default function JodiDigitPage() {
     };
     
     const filteredJodis = useMemo(() => {
-        if (selectedDigit === null) return [];
-        return Object.values(allJodis).flat().filter(jodi => jodi.includes(selectedDigit));
+      if (selectedDigit === null) return [];
+      return allJodis[selectedDigit] || [];
     }, [selectedDigit]);
+    
+    const form = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            classicBids: filteredJodis.map(digit => ({ digit, points: undefined })),
+        },
+        mode: "onChange"
+    });
+
+    const { fields, replace } = useFieldArray({
+        control: form.control,
+        name: "classicBids"
+    });
+
+    useEffect(() => {
+        replace(filteredJodis.map(digit => ({ digit, points: undefined })));
+    }, [selectedDigit, filteredJodis, replace]);
+
     
     const handleInputChange = (digit: string, value: string) => {
         setBidsInput(prev => ({...prev, [digit]: value}));
@@ -84,9 +116,11 @@ export default function JodiDigitPage() {
     }, [submittedBids]);
 
     const handleAddAllBids = () => {
-        const newBids = Object.entries(bidsInput)
-            .filter(([_, amount]) => amount && parseInt(amount) >= 10)
-            .map(([digit, amount]) => ({ number: digit, amount: Number(amount) }));
+        const classicBidsData = form.getValues('classicBids');
+        const newBids = classicBidsData
+            .filter(bid => bid.points && bid.points >= 10)
+            .map(bid => ({ number: bid.digit, amount: Number(bid.points!) }));
+
 
         if (newBids.length === 0) {
             toast({ title: 'No Bids to Add', description: 'Please enter points (minimum 10) for at least one jodi.', variant: 'destructive' });
@@ -100,7 +134,10 @@ export default function JodiDigitPage() {
             });
             return Array.from(bidsMap, ([number, amount]) => ({ number, amount })).sort((a,b) => a.number.localeCompare(b.number));
         });
-        setBidsInput({});
+        form.reset({
+            ...form.getValues(),
+            classicBids: filteredJodis.map(digit => ({ digit, points: undefined })),
+        });
         toast({ title: 'Bids Added', description: `${newBids.length} bid(s) have been added/updated in your list.` });
     };
 
@@ -217,32 +254,51 @@ export default function JodiDigitPage() {
                                         type="button"
                                         variant={selectedDigit === digit ? 'default' : 'ghost'}
                                         onClick={() => handleFilterClick(digit)}
-                                        className={cn("rounded-md text-sm h-8", selectedDigit !== digit && 'text-white hover:bg-white/10')}
+                                        className={cn("rounded-md text-sm h-8", selectedDigit === digit ? 'bg-orange-500' : 'text-white hover:bg-white/10')}
                                     >
                                         {digit}
                                     </Button>
                                 ))}
                             </div>
                         </div>
-                        <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
-                            <CardContent className="p-4 grid grid-cols-2 gap-x-4 gap-y-3">
-                                {filteredJodis.map(jodi => (
-                                    <div key={jodi} className="flex items-center h-8 bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary shadow-md">
-                                        <label className="flex items-center justify-center h-full w-9 bg-primary text-primary-foreground border-r text-xs font-bold">
-                                            {jodi}
-                                        </label>
-                                        <Input
-                                            type="number"
-                                            value={bidsInput[jodi] || ''}
-                                            onChange={(e) => handleInputChange(jodi, e.target.value)}
-                                            className="h-full bg-background border-none text-center text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
-                                            disabled={isBettingDisabled}
+                        <Form {...form}>
+                            <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
+                                <CardContent className="p-4 grid grid-cols-2 gap-x-4 gap-y-3">
+                                    {fields.map((field, index) => (
+                                        <FormField
+                                            key={field.id}
+                                            control={form.control}
+                                            name={`classicBids.${index}.points`}
+                                            render={({ field: inputField }) => (
+                                                <FormItem>
+                                                    <div className="flex items-center h-8 bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary shadow-md">
+                                                        <Label className="flex items-center justify-center h-full w-9 bg-primary text-primary-foreground border-r text-xs font-bold">
+                                                            {field.digit}
+                                                        </Label>
+                                                        <FormControl>
+                                                            <Input
+                                                                type="number"
+                                                                {...inputField}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (value === '' || parseInt(value) >= 0) {
+                                                                        inputField.onChange(e);
+                                                                    }
+                                                                }}
+                                                                value={inputField.value ?? ''}
+                                                                className="h-full bg-background border-none text-center text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
+                                                                disabled={isBettingDisabled}
+                                                            />
+                                                        </FormControl>
+                                                    </div>
+                                                </FormItem>
+                                            )}
                                         />
-                                    </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-                        <Button type="button" onClick={handleAddAllBids} className="w-full bg-orange-600 hover:bg-orange-700" size="sm" disabled={isBettingDisabled}>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        </Form>
+                        <Button type="button" onClick={handleAddAllBids} className="w-full bg-slate-700 hover:bg-slate-600" size="sm" disabled={isBettingDisabled}>
                            <PlusCircle className="mr-2 h-4 w-4" /> Add All Bids
                         </Button>
                     </div>
