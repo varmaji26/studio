@@ -209,14 +209,6 @@ export default function SingleDigitPage() {
 
   return (
     <div className="space-y-4 mt-4">
-        <Card className="bg-white text-black p-4 text-center rounded-lg shadow-md">
-            <p className="font-bold text-lg">{game?.name}</p>
-            <div className="flex items-center justify-center text-sm text-gray-600 mt-1">
-                <Calendar className="h-4 w-4 mr-2" />
-                <span>{format(now, "EEEE, d MMMM yyyy")}</span>
-            </div>
-        </Card>
-
         <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
             <CardHeader className="p-0 mb-4 pt-4 px-4">
                 <CardTitle className="text-sm font-semibold text-foreground">Choose Session</CardTitle>
@@ -264,10 +256,10 @@ export default function SingleDigitPage() {
         {bidList.length > 0 && (
             <div className="mt-6">
                 <h3 className="font-semibold mb-2">Your Bids List</h3>
-                <ScrollArea className="h-52 rounded-lg bg-slate-800 p-2">
-                    <div className="space-y-2">
+                <ScrollArea className="h-32 rounded-lg bg-slate-800 p-2">
+                    <div className="space-y-1">
                         {bidList.map((bid, index) => (
-                            <div key={index} className="flex justify-between items-center bg-slate-700 p-2 rounded-md">
+                            <div key={index} className="flex justify-between items-center bg-slate-700 px-3 py-1.5 rounded-md text-sm">
                                 <p>Number: <span className="font-bold">{bid.number}</span></p>
                                 <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
                                 <Button size="icon" variant="ghost" className="h-6 w-6 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
