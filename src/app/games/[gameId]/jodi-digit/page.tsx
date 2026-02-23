@@ -6,284 +6,299 @@ import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } f
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
-import { X, Calendar, Trash2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useGame } from '@/hooks/use-game';
-import { format } from 'date-fns';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { CalendarIcon, Send, Trash2, PlusCircle } from 'lucide-react';
+import { format } from 'date-fns';
+import { useGame } from '@/hooks/use-game';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Label } from '@/components/ui/label';
 
-const jodis = Array.from({ length: 100 }, (_, i) => i.toString().padStart(2, '0'));
+const allJodis: Record<string, string[]> = {
+    '0': ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09'],
+    '1': ['10', '11', '12', '13', '14', '15', '16', '17', '18', '19'],
+    '2': ['20', '21', '22', '23', '24', '25', '26', '27', '28', '29'],
+    '3': ['30', '31', '32', '33', '34', '35', '36', '37', '38', '39'],
+    '4': ['40', '41', '42', '43', '44', '45', '46', '47', '48', '49'],
+    '5': ['50', '51', '52', '53', '54', '55', '56', '57', '58', '59'],
+    '6': ['60', '61', '62', '63', '64', '65', '66', '67', '68', '69'],
+    '7': ['70', '71', '72', '73', '74', '75', '76', '77', '78', '79'],
+    '8': ['80', '81', '82', '83', '84', '85', '86', '87', '88', '89'],
+    '9': ['90', '91', '92', '93', '94', '95', '96', '97', '98', '99'],
+};
 
-interface Bid {
-  number: string;
-  amount: number;
-}
+interface BidItem {
+    number: string;
+    amount: number;
+};
 
 export default function JodiDigitPage() {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const { game, now } = useGame();
-
-  const [inputAmounts, setInputAmounts] = useState<Record<string, string>>({});
-  const [bidList, setBidList] = useState<Bid[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [selectedDigitFilter, setSelectedDigitFilter] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-  
-  const getTimeParts = (timeStr: string) => {
-    if (!timeStr) return { hours: 0, minutes: 0 };
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return { hours, minutes };
-  }
-
-  const openTime = game ? getTimeParts(game.openTime) : { hours: 0, minutes: 0 };
-  
-  const openDateTime = new Date(now);
-  openDateTime.setHours(openTime.hours, openTime.minutes, 0, 0);
-
-  const isTimeOver = isMounted && now >= openDateTime;
-
-  const handleInputChange = (number: string, amount: string) => {
-    const newAmounts = { ...inputAmounts };
-    if (amount === '' || parseInt(amount, 10) < 0) {
-        delete newAmounts[number];
-    } else {
-        newAmounts[number] = amount;
-    }
-    setInputAmounts(newAmounts);
-  };
-
-  const handleAddAllBids = () => {
-    const newBids: Bid[] = Object.entries(inputAmounts)
-      .map(([number, amountStr]) => ({
-        number,
-        amount: parseInt(amountStr, 10),
-      }))
-      .filter(bid => bid.amount > 0);
-
-    if (newBids.length === 0) {
-      toast({ variant: 'destructive', title: 'No Bids', description: 'Please enter an amount for at least one jodi.' });
-      return;
-    }
-
-    const updatedBidsMap: Map<string, Bid> = new Map(bidList.map(b => [b.number, b]));
-    newBids.forEach(newBid => {
-        const existingBid = updatedBidsMap.get(newBid.number);
-        if (existingBid) {
-            existingBid.amount += newBid.amount;
-        } else {
-            updatedBidsMap.set(newBid.number, newBid);
-        }
-    });
-
-    setBidList(Array.from(updatedBidsMap.values()).sort((a, b) => parseInt(a.number) - parseInt(b.number)));
-    setInputAmounts({});
-  };
-
-  const handleRemoveBid = (numberToRemove: string) => {
-    setBidList(currentList => currentList.filter(bid => bid.number !== numberToRemove));
-  };
-  
-  const totalAmount = useMemo(() => {
-    return bidList.reduce((sum, bid) => sum + bid.amount, 0);
-  }, [bidList]);
-  
-  const filteredJodis = useMemo(() => {
-    if (selectedDigitFilter === null) {
-        return jodis;
-    }
-    return jodis.filter(jodi => jodi.includes(selectedDigitFilter));
-  }, [selectedDigitFilter]);
-
-  const handlePlaceBet = async () => {
-    if (!user || !game) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Authentication or game data missing.' });
-        return;
-    }
-    if (bidList.length === 0) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Your bid list is empty.' });
-      return;
-    }
+    const { toast } = useToast();
+    const { user } = useAuth();
+    const { game, now } = useGame();
     
-    setIsSubmitting(true);
-    const userDocRef = doc(db, 'users', user.uid);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedDigit, setSelectedDigit] = useState<string>('0');
+    const [mode, setMode] = useState<'Classic' | 'Advanced'>('Classic');
+    const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
+    const [classicBidsInput, setClassicBidsInput] = useState<Record<string, string>>({});
+    const [advancedBidNumber, setAdvancedBidNumber] = useState('');
+    const [advancedAmount, setAdvancedAmount] = useState('');
+    const [isMounted, setIsMounted] = useState(false);
 
-    try {
-        await runTransaction(db, async (transaction) => {
-            const userDoc = await transaction.get(userDocRef);
-            if (!userDoc.exists()) throw new Error("User document does not exist!");
-            
-            const userData = userDoc.data();
-            const currentBalance = userData.balance || 0;
-            const currentBonusBalance = userData.bonusBalance || 0;
-            const totalUserBalance = currentBalance + currentBonusBalance;
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
-            if (totalUserBalance < totalAmount) throw new Error("Insufficient total balance.");
-            
-            let amountFromReal = Math.min(totalAmount, currentBalance);
-            let amountFromBonus = totalAmount - amountFromReal;
+    const { openTime, isBettingDisabled } = useMemo(() => {
+        if (!game || !isMounted) return { openTime: new Date(), isBettingDisabled: true };
+        
+        const [hours, minutes] = game.openTime.split(':').map(Number);
+        const openTime = new Date(now);
+        openTime.setHours(hours, minutes, 0, 0);
 
-            transaction.update(userDocRef, { 
-                balance: increment(-amountFromReal),
-                bonusBalance: increment(-amountFromBonus),
+        return {
+            openTime,
+            isBettingDisabled: now.getTime() >= openTime.getTime(),
+        };
+    }, [game, now, isMounted]);
+
+    const jodisForSelectedDigit = useMemo(() => allJodis[selectedDigit] || [], [selectedDigit]);
+    
+    const handleClassicInputChange = (digit: string, value: string) => {
+        setClassicBidsInput(prev => ({...prev, [digit]: value}));
+    };
+
+    const totalAmount = useMemo(() => {
+        return submittedBids.reduce((acc, bid) => acc + Number(bid.amount), 0);
+    }, [submittedBids]);
+
+    const handleAddClassicBids = () => {
+        const newBids = Object.entries(classicBidsInput)
+            .filter(([_, amount]) => amount && parseInt(amount) >= 10)
+            .map(([digit, amount]) => ({ number: digit, amount: Number(amount) }));
+
+        if (newBids.length === 0) {
+            toast({ title: 'No Bids to Add', description: 'Please enter points (minimum 10) for at least one digit.', variant: 'destructive' });
+            return;
+        }
+        
+        setSubmittedBids(prev => {
+            const bidsMap = new Map(prev.map(b => [b.number, b.amount]));
+            newBids.forEach(bid => {
+                bidsMap.set(bid.number, (bidsMap.get(bid.number) || 0) + bid.amount);
             });
-            
-            const bidsCollectionRef = collection(db, 'bids');
-            
-            const groupedByAmount = bidList.reduce((acc, bid) => {
-              const amountKey = bid.amount.toString();
-              if (!acc[amountKey]) {
-                acc[amountKey] = [];
-              }
-              acc[amountKey].push(bid.number);
-              return acc;
-            }, {} as Record<string, string[]>);
-
-            for (const amountStr in groupedByAmount) {
-              const numbersForAmount = groupedByAmount[amountStr];
-              const amountPerBet = parseInt(amountStr, 10);
-              const totalAmountForGroup = amountPerBet * numbersForAmount.length;
-
-              transaction.set(doc(bidsCollectionRef), {
-                  userId: user.uid,
-                  displayName: user.displayName,
-                  mobile: userData.mobile,
-                  gameId: game.id,
-                  gameName: game?.name,
-                  betType: 'Jodi Digit',
-                  session: 'Open',
-                  numbers: numbersForAmount,
-                  amountPerBet: amountPerBet,
-                  totalAmount: totalAmountForGroup,
-                  status: 'running',
-                  createdAt: serverTimestamp(),
-              });
-            }
+            return Array.from(bidsMap, ([number, amount]) => ({ number, amount })).sort((a,b) => a.number.localeCompare(b.number));
         });
+        setClassicBidsInput({});
+        toast({ title: 'Bids Added', description: `${newBids.length} bid(s) have been added/updated in your list.` });
+    };
 
-        toast({
-            title: 'Bet Placed Successfully!',
-            description: `Your bets totaling ₹${totalAmount} have been placed.`,
-            className: 'bg-green-600 text-white border-green-700',
+    const handleAddAdvancedBid = () => {
+        const number = advancedBidNumber;
+        const amount = parseInt(advancedAmount, 10);
+
+        if (!number || !/^\d{2}$/.test(number)) {
+            toast({ title: 'Invalid Number', description: 'Please enter a valid 2-digit number.', variant: 'destructive' });
+            return;
+        }
+        if (!amount || amount < 10) {
+            toast({ title: 'Invalid Amount', description: 'Minimum bid amount is 10.', variant: 'destructive' });
+            return;
+        }
+        setSubmittedBids(prev => {
+            const bidsMap = new Map(prev.map(b => [b.number, b.amount]));
+            bidsMap.set(number, (bidsMap.get(number) || 0) + amount);
+            return Array.from(bidsMap, ([number, amount]) => ({ number, amount })).sort((a,b) => a.number.localeCompare(b.number));
         });
-        setBidList([]);
-    } catch (error: any) {
-        console.error('Error placing bet:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Bet Failed',
-            description: error.message || 'Could not place your bet.',
-        });
-    } finally {
-        setIsSubmitting(false);
+        setAdvancedBidNumber('');
+        setAdvancedAmount('');
+    };
+
+    const removeBid = (number: string) => {
+        setSubmittedBids(prev => prev.filter((bid) => bid.number !== number));
+    };
+
+    const handleFinalSubmit = async () => {
+        if (submittedBids.length === 0) {
+          toast({ title: 'No Bids to Submit', description: 'Please add at least one valid bid.', variant: 'destructive' });
+          return;
+        }
+        if (!user || !game) return;
+
+        setIsSubmitting(true);
+        const userDocRef = doc(db, 'users', user.uid);
+
+        try {
+            await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userDocRef);
+                if (!userDoc.exists()) throw new Error("User document does not exist!");
+                
+                const userData = userDoc.data();
+                const currentBalance = userData.balance || 0;
+                const currentBonusBalance = userData.bonusBalance || 0;
+                const totalUserBalance = currentBalance + currentBonusBalance;
+    
+                if (totalUserBalance < totalAmount) throw new Error("Insufficient total balance.");
+                
+                let amountFromReal = Math.min(totalAmount, currentBalance);
+                let amountFromBonus = totalAmount - amountFromReal;
+    
+                transaction.update(userDocRef, { 
+                    balance: increment(-amountFromReal),
+                    bonusBalance: increment(-amountFromBonus),
+                });
+                
+                const bidsCollectionRef = collection(db, 'bids');
+                
+                for (const bid of submittedBids) {
+                    transaction.set(doc(bidsCollectionRef), {
+                        userId: user.uid,
+                        displayName: user.displayName,
+                        mobile: userData.mobile,
+                        gameId: game.id,
+                        gameName: game.name,
+                        betType: 'Jodi Digit',
+                        session: 'Open',
+                        numbers: [bid.number],
+                        amountPerBet: bid.amount,
+                        totalAmount: bid.amount,
+                        status: 'running',
+                        createdAt: serverTimestamp(),
+                    });
+                }
+            });
+    
+            toast({
+                title: 'Bids Submitted!',
+                description: `Your bids totalling ₹${totalAmount} have been submitted.`,
+                className: 'bg-green-600 text-white border-green-700',
+            });
+    
+            setSubmittedBids([]);
+        } catch (error: any) {
+            console.error("Error submitting bid: ", error);
+            toast({
+                title: 'Submission Failed',
+                description: error.message || 'There was an error submitting your bids.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    if (!isMounted || !game) {
+        return <div className="flex h-full w-full items-center justify-center"><Loader className="h-10 w-10 text-primary" /></div>;
     }
-  };
-  
-  if (!isMounted || !game) {
+
     return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Loader className="h-10 w-10 text-primary" />
-      </div>
-    );
-  }
-  
-  const isBettingDisabled = isTimeOver;
-
-  return (
-    <div className="space-y-4 mt-4">
-        {isTimeOver && (
-             <Alert variant="destructive" className="bg-red-600 border-red-700 text-white">
-                <AlertTitle className="font-bold">JODI TIME OVER</AlertTitle>
-                <AlertDescription className="text-white/90">
-                   Jodi betting for this game is now closed.
-                </AlertDescription>
-            </Alert>
-        )}
-        
-        <div className="bg-[#173D73] p-2 rounded-lg mb-4">
-            <div className="grid grid-cols-5 justify-items-center gap-y-2">
-                {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-                    <div
-                        key={digit}
-                        onClick={() => setSelectedDigitFilter(selectedDigitFilter === digit ? null : digit)}
-                        className={cn(
-                            "flex items-center justify-center h-8 w-10 rounded-md cursor-pointer text-white text-lg font-medium transition-all",
-                            selectedDigitFilter === digit && "bg-white text-black font-bold shadow-md"
-                        )}
-                    >
-                        {digit}
+        <div className="space-y-4 mt-4">
+            <Card className="bg-background/80 border-white/10">
+                <CardContent className="p-4 space-y-4 pb-40">
+                    <p className="text-center text-sm font-medium">{game.name}</p>
+                    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-3 flex items-center gap-3">
+                        <CalendarIcon className="h-4 w-4" />
+                        <p className="text-sm font-medium">{format(new Date(), "EEEE, dd MMMM yyyy")}</p>
                     </div>
-                ))}
-            </div>
-        </div>
-        
-        <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
-            <CardHeader className="p-4">
-                <CardTitle className="text-base">Enter Amount</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-                <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-                    {filteredJodis.map(jodi => (
-                        <div key={jodi} className="flex items-center gap-2">
-                            <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-primary rounded-md font-bold text-primary-foreground">
-                                {jodi}
+
+                    <div className="p-1 rounded-full grid grid-cols-2 gap-1 bg-slate-800">
+                        <Button type="button" onClick={() => setMode('Classic')} variant={mode === 'Classic' ? 'default' : 'ghost'} className={cn("rounded-full shadow-md text-sm", mode === 'Classic' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-slate-700')}>Classic</Button>
+                        <Button type="button" onClick={() => setMode('Advanced')} variant={mode === 'Advanced' ? 'default' : 'ghost'} className={cn("rounded-full shadow-md text-sm", mode === 'Advanced' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-slate-700')}>Advanced</Button>
+                    </div>
+
+                    {isBettingDisabled && (
+                        <p className="text-center text-red-500 text-sm font-bold p-2 bg-red-100/10 rounded-md">Bidding is closed for Jodi Digit in this market.</p>
+                    )}
+                    
+                    {mode === 'Classic' ? (
+                        <div className="space-y-4">
+                            <div className="p-2 rounded-lg bg-slate-800">
+                                <div className="grid grid-cols-5 gap-1">
+                                    {Object.keys(allJodis).map(digit => (
+                                        <Button
+                                            key={digit}
+                                            type="button"
+                                            variant={selectedDigit === digit ? 'secondary' : 'ghost'}
+                                            onClick={() => setSelectedDigit(digit)}
+                                            className={cn("rounded-md text-sm h-8", selectedDigit === digit ? 'bg-primary text-primary-foreground' : 'text-white hover:bg-white/10')}
+                                        >
+                                            {digit}
+                                        </Button>
+                                    ))}
+                                </div>
                             </div>
-                            <Input
-                                type="number"
-                                placeholder=""
-                                className="bg-slate-700 border-slate-600 h-8 text-center text-white"
-                                value={inputAmounts[jodi] || ''}
-                                onChange={(e) => handleInputChange(jodi, e.target.value)}
-                                disabled={isBettingDisabled}
-                            />
+                            <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
+                                <CardContent className="p-4 grid grid-cols-2 gap-x-4 gap-y-3">
+                                    {jodisForSelectedDigit.map(jodi => (
+                                        <div key={jodi} className="flex items-center h-8 bg-background rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary shadow-md">
+                                            <label className="flex items-center justify-center h-full w-9 bg-primary text-primary-foreground border-r text-xs font-bold">
+                                                {jodi}
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                value={classicBidsInput[jodi] || ''}
+                                                onChange={(e) => handleClassicInputChange(jodi, e.target.value)}
+                                                className="h-full bg-background border-none text-center text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
+                                                disabled={isBettingDisabled}
+                                            />
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                            <Button type="button" onClick={handleAddClassicBids} className="w-full bg-orange-600 hover:bg-orange-700" size="sm" disabled={isBettingDisabled}>
+                               <PlusCircle className="mr-2 h-4 w-4" /> Add All Bids
+                            </Button>
                         </div>
-                    ))}
-                </div>
-                <Button onClick={handleAddAllBids} variant="outline" className="w-full mt-4 bg-slate-800 border-slate-700 hover:bg-slate-700">
-                    Add All Bids
-                </Button>
-            </CardContent>
-        </Card>
-
-        {bidList.length > 0 && (
-            <div className="mt-6">
-                <h3 className="font-semibold mb-2">Your Bids List</h3>
-                <ScrollArea className="h-40 rounded-lg bg-slate-900 p-2">
-                    <div className="space-y-1">
-                        {bidList.map((bid, index) => (
-                            <div key={index} className="flex justify-between items-center bg-slate-800 px-2 py-1 rounded-md text-xs">
-                                <p>Number: <span className="font-bold">{bid.number}</span></p>
-                                <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
-                                <Button size="icon" variant="ghost" className="h-4 w-4 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
-                                    <Trash2 className="h-3 w-3" />
+                    ) : (
+                        <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
+                            <CardContent className="p-4 space-y-4">
+                                <div>
+                                    <Label className="text-xs">Add Bid Number</Label>
+                                    <Input placeholder="Enter 2-digit number" value={advancedBidNumber} onChange={e => setAdvancedBidNumber(e.target.value)} maxLength={2} className="text-center text-sm h-9 bg-slate-700 border-slate-600" disabled={isBettingDisabled} />
+                                </div>
+                                <div>
+                                    <Label className="text-xs">Add Amount</Label>
+                                    <Input type="number" placeholder="Enter amount (min 10)" value={advancedAmount} onChange={e => setAdvancedAmount(e.target.value)} className="text-center text-sm h-9 bg-slate-700 border-slate-600" disabled={isBettingDisabled} />
+                                </div>
+                                <Button type="button" onClick={handleAddAdvancedBid} className="w-full text-sm bg-orange-600 hover:bg-orange-700" size="sm" disabled={isBettingDisabled}>
+                                    <Send className="mr-2 h-4 w-4" /> Add Bid
                                 </Button>
-                            </div>
-                        ))}
+                            </CardContent>
+                        </Card>
+                    )}
+                    
+                    {submittedBids.length > 0 && (
+                        <div className="space-y-2 pt-4">
+                            <h4 className="text-xs font-medium text-center text-muted-foreground">YOUR BIDS LIST</h4>
+                            <ScrollArea className="h-32 rounded-lg bg-slate-900 border border-slate-700 p-1 space-y-1">
+                                {submittedBids.map((bid, index) => (
+                                    <div key={index} className="flex justify-between items-center bg-slate-800 p-1 px-2 rounded-md animate-in fade-in-0">
+                                        <p className="text-xs">Number: <span className="font-bold">{bid.number}</span></p>
+                                        <p className="text-xs">Amount: <span className="font-bold">₹{bid.amount}</span></p>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeBid(bid.number)}>
+                                            <Trash2 className="h-3 w-3 text-destructive"/>
+                                        </Button>
+                                    </div>
+                                ))}
+                            </ScrollArea>
+                        </div>
+                    )}
+                </CardContent>
+                <CardFooter className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-background/80 backdrop-blur-sm border-t border-border p-3 flex items-center justify-between gap-4 z-10">
+                    <div className="flex flex-col text-left">
+                        <span className="text-xs text-muted-foreground">Total Amount</span>
+                        <span className="font-bold text-lg text-white">₹{totalAmount}</span>
                     </div>
-                </ScrollArea>
-            </div>
-        )}
-
-        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border p-3 flex items-center justify-between z-10 max-w-2xl mx-auto">
-            <div>
-                <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="font-bold text-xl text-white">₹{totalAmount}</p>
-            </div>
-            <Button className="h-12 px-8 font-bold text-base bg-green-600 hover:bg-green-700" onClick={handlePlaceBet} disabled={isSubmitting || totalAmount === 0 || isBettingDisabled}>
-                {isSubmitting ? <Loader className="mr-2" /> : null}
-                {isBettingDisabled ? 'JODI TIME OVER' : 'Continue'}
-            </Button>
-        </div>
-    </div>
+                    <Button onClick={handleFinalSubmit} size="lg" className="w-2/3 text-sm bg-green-600 hover:bg-green-700" disabled={isSubmitting || isBettingDisabled || submittedBids.length === 0}>
+                         {isSubmitting ? <Loader className="mr-2" /> : null}
+                         {isBettingDisabled ? 'Bidding Closed' : 'Continue'}
+                    </Button>
+                </CardFooter>
+            </Card>
+        </form>
+    </Form>
   );
 }
