@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -17,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useGame } from '@/hooks/use-game';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 const jodis = Array.from({ length: 100 }, (_, i) => i.toString().padStart(2, '0'));
 
@@ -34,6 +34,7 @@ export default function JodiDigitPage() {
   const [bidList, setBidList] = useState<Bid[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [selectedDigitFilter, setSelectedDigitFilter] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -96,6 +97,13 @@ export default function JodiDigitPage() {
   const totalAmount = useMemo(() => {
     return bidList.reduce((sum, bid) => sum + bid.amount, 0);
   }, [bidList]);
+  
+  const filteredJodis = useMemo(() => {
+    if (selectedDigitFilter === null) {
+        return jodis;
+    }
+    return jodis.filter(jodi => jodi.includes(selectedDigitFilter));
+  }, [selectedDigitFilter]);
 
   const handlePlaceBet = async () => {
     if (!user || !game) {
@@ -202,13 +210,30 @@ export default function JodiDigitPage() {
             </Alert>
         )}
         
+        <div className="bg-[#173D73] p-2 rounded-lg mb-4">
+            <div className="grid grid-cols-5 justify-items-center gap-y-2">
+                {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+                    <div
+                        key={digit}
+                        onClick={() => setSelectedDigitFilter(selectedDigitFilter === digit ? null : digit)}
+                        className={cn(
+                            "flex items-center justify-center h-8 w-10 rounded-md cursor-pointer text-white text-lg font-medium transition-all",
+                            selectedDigitFilter === digit && "bg-white text-black font-bold shadow-md"
+                        )}
+                    >
+                        {digit}
+                    </div>
+                ))}
+            </div>
+        </div>
+        
         <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
             <CardHeader className="p-4">
                 <CardTitle className="text-base">Enter Amount</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-                    {jodis.map(jodi => (
+                    {filteredJodis.map(jodi => (
                         <div key={jodi} className="flex items-center gap-2">
                             <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-primary rounded-md font-bold text-primary-foreground">
                                 {jodi}
