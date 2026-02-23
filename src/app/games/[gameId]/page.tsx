@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -103,6 +102,26 @@ const TriplePanaIcon = () => (
     </svg>
 );
 
+const SinglePanaBulkIcon = () => (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_bulk_1)"/>
+        <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_bulk_1)"/>
+        <rect x="29" y="26" width="10" height="2" rx="1" fill="white" fillOpacity="0.8"/>
+        <rect x="29" y="30" width="10" height="2" rx="1" fill="white" fillOpacity="0.8"/>
+        <rect x="29" y="34" width="6" height="2" rx="1" fill="white" fillOpacity="0.8"/>
+        <defs>
+            <linearGradient id="paint0_linear_bulk_1" x1="24" y1="4" x2="24" y2="37" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#A78BFA"/>
+                <stop offset="1" stopColor="#7C3AED"/>
+            </linearGradient>
+            <linearGradient id="paint1_linear_bulk_1" x1="24" y1="36" x2="24" y2="44" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#A78BFA"/>
+                <stop offset="1" stopColor="#7C3AED"/>
+            </linearGradient>
+        </defs>
+    </svg>
+);
+
 export default function GamePage() {
   const [animatingBetType, setAnimatingBetType] = useState<string | null>(null);
   const { game } = useGame();
@@ -117,6 +136,7 @@ export default function GamePage() {
     { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <SinglePanaIcon />, gradient: 'bg-gradient-to-br from-slate-700 to-slate-900' },
     { title: 'Double Pana', href: `/games/${game.id}/double-pana`, icon: <DoublePanaIcon />, gradient: 'bg-gradient-to-br from-teal-500 to-cyan-600' },
     { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon />, gradient: 'bg-gradient-to-br from-rose-500 to-red-600' },
+    { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <SinglePanaBulkIcon />, gradient: 'bg-gradient-to-br from-violet-500 to-purple-600' },
   ];
 
 
