@@ -122,6 +122,52 @@ const SinglePanaBulkIcon = () => (
     </svg>
 );
 
+const DoublePanaBulkIcon = () => (
+    <svg width="48" height="48" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(8, 8) scale(0.8)" style={{opacity: 0.6}}>
+            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_bulk_2)"/>
+            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_bulk_2)"/>
+        </g>
+        <g>
+            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_bulk_2_main)"/>
+            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_bulk_2_main)"/>
+        </g>
+        <rect x="29" y="26" width="10" height="2" rx="1" fill="white" fillOpacity="0.8"/>
+        <rect x="29" y="30" width="10" height="2" rx="1" fill="white" fillOpacity="0.8"/>
+        <rect x="29" y="34" width="6" height="2" rx="1" fill="white" fillOpacity="0.8"/>
+        <defs>
+            <linearGradient id="paint0_linear_bulk_2" x1="24" y1="4" x2="24" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#818CF8"/><stop offset="1" stopColor="#4F46E5"/></linearGradient>
+            <linearGradient id="paint1_linear_bulk_2" x1="24" y1="36" x2="24" y2="44" gradientUnits="userSpaceOnUse"><stop stopColor="#818CF8"/><stop offset="1" stopColor="#4F46E5"/></linearGradient>
+            <linearGradient id="paint0_linear_bulk_2_main" x1="24" y1="4" x2="24" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#818CF8"/><stop offset="1" stopColor="#4F46E5"/></linearGradient>
+            <linearGradient id="paint1_linear_bulk_2_main" x1="24" y1="36" x2="24" y2="44" gradientUnits="userSpaceOnUse"><stop stopColor="#818CF8"/><stop offset="1" stopColor="#4F46E5"/></linearGradient>
+        </defs>
+    </svg>
+);
+
+const HalfSangamIcon = () => (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37V4Z" fill="url(#paint0_linear_half_sangam)"/>
+        <path d="M24 4C29.5 12 37 17.5 37 24C37 31.1797 31.1797 37 24 37V4Z" stroke="url(#paint1_linear_half_sangam)" strokeWidth="2"/>
+        <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint2_linear_half_sangam)"/>
+        <defs>
+            <linearGradient id="paint0_linear_half_sangam" x1="17.5" y1="4" x2="17.5" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#6EE7B7"/><stop offset="1" stopColor="#10B981"/></linearGradient>
+            <linearGradient id="paint1_linear_half_sangam" x1="30.5" y1="4" x2="30.5" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#6EE7B7"/><stop offset="1" stopColor="#10B981"/></linearGradient>
+            <linearGradient id="paint2_linear_half_sangam" x1="24" y1="36" x2="24" y2="44" gradientUnits="userSpaceOnUse"><stop stopColor="#6EE7B7"/><stop offset="1" stopColor="#10B981"/></linearGradient>
+        </defs>
+    </svg>
+);
+
+const FullSangamIcon = () => (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" fill="url(#paint0_linear_full_sangam)"/>
+        <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="url(#paint1_linear_full_sangam)"/>
+        <defs>
+            <linearGradient id="paint0_linear_full_sangam" x1="24" y1="4" x2="24" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#F87171"/><stop offset="1" stopColor="#DC2626"/></linearGradient>
+            <linearGradient id="paint1_linear_full_sangam" x1="24" y1="36" x2="24" y2="44" gradientUnits="userSpaceOnUse"><stop stopColor="#F87171"/><stop offset="1" stopColor="#DC2626"/></linearGradient>
+        </defs>
+    </svg>
+);
+
 export default function GamePage() {
   const [animatingBetType, setAnimatingBetType] = useState<string | null>(null);
   const { game } = useGame();
@@ -133,10 +179,13 @@ export default function GamePage() {
   const betTypes = [
     { title: 'Single Digit', href: `/games/${game.id}/single-digit`, icon: <SingleDigitIcon />, gradient: 'bg-gradient-to-br from-blue-400 to-blue-600' },
     { title: 'Jodi Digit', href: `/games/${game.id}/jodi-digit`, icon: <JodiDigitIcon />, gradient: 'bg-gradient-to-br from-purple-500 to-indigo-600' },
-    { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <SinglePanaIcon />, gradient: 'bg-gradient-to-br from-slate-700 to-slate-900' },
+    { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <SinglePanaIcon />, gradient: 'bg-gradient-to-br from-pink-500 to-fuchsia-600' },
     { title: 'Double Pana', href: `/games/${game.id}/double-pana`, icon: <DoublePanaIcon />, gradient: 'bg-gradient-to-br from-teal-500 to-cyan-600' },
     { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon />, gradient: 'bg-gradient-to-br from-rose-500 to-red-600' },
     { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <SinglePanaBulkIcon />, gradient: 'bg-gradient-to-br from-violet-500 to-purple-600' },
+    { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <DoublePanaBulkIcon />, gradient: 'bg-gradient-to-br from-indigo-500 to-blue-600' },
+    { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon />, gradient: 'bg-gradient-to-br from-emerald-500 to-green-600' },
+    { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon />, gradient: 'bg-gradient-to-br from-red-500 to-orange-600' },
   ];
 
 
