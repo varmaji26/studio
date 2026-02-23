@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -170,13 +171,44 @@ const FullSangamIcon = () => (
 
 const AllPanaBulkIcon = () => (
     <svg width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" fill="#3B82F6"/>
-        <circle cx="12" cy="6" r="1.5" fill="white"/>
-        <circle cx="17" cy="9" r="1.5" fill="white"/>
-        <circle cx="17" cy="15" r="1.5" fill="white"/>
-        <circle cx="12" cy="18" r="1.5" fill="white"/>
-        <circle cx="7" cy="15" r="1.5" fill="white"/>
-        <circle cx="7" cy="9" r="1.5" fill="white"/>
+        <circle cx="12" cy="12" r="10" fill="white"/>
+        <circle cx="12" cy="6" r="1.5" fill="#3B82F6"/>
+        <circle cx="17" cy="9" r="1.5" fill="#3B82F6"/>
+        <circle cx="17" cy="15" r="1.5" fill="#3B82F6"/>
+        <circle cx="12" cy="18" r="1.5" fill="#3B82F6"/>
+        <circle cx="7" cy="15" r="1.5" fill="#3B82F6"/>
+        <circle cx="7" cy="9" r="1.5" fill="#3B82F6"/>
+    </svg>
+);
+
+const SPMotorIcon = () => (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="9" fill="#0c4a6e"/>
+        <path d="M12,7.5a1,1,0,1,1-1-1,1,1,0,0,1,1,1Z" fill="white" />
+        <path d="M16.5,13a1,1,0,1,1-1-1,1,1,0,0,1,1,1Z" fill="white" />
+        <path d="M12,18.5a1,1,0,1,1-1-1,1,1,0,0,1,1,1Z" fill="white" />
+        <path d="M7.5,13a1,1,0,1,1-1-1,1,1,0,0,1,1,1Z" fill="white" />
+        <path d="M15.06,8.94a1,1,0,1,1-1.41-1.41,1,1,0,0,1,1.41,1.41Z" fill="white"/>
+        <path d="M8.94,15.06a1,1,0,1,1-1.41-1.41,1,1,0,0,1,1.41,1.41Z" fill="white"/>
+        <path d="M8.94,8.94a1,1,0,1,1,1.41-1.41,1,1,0,0,1-1.41,1.41Z" fill="white"/>
+        <path d="M15.06,15.06a1,1,0,1,1,1.41-1.41,1,1,0,0,1-1.41,1.41Z" fill="white"/>
+    </svg>
+);
+
+const DPMotorIcon = () => (
+    <svg width="48" height="48" viewBox="0 0 24 24" stroke="#0c4a6e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <path d="M8 21h8" />
+        <path d="M12 17v4" />
+        <circle cx="12" cy="9" r="8" />
+        <path d="M12 1v2" />
+        <path d="M12 15v2" />
+        <path d="M4.929 4.929l1.414 1.414" />
+        <path d="M17.657 17.657l-1.414-1.414" />
+        <path d="M3 9h2" />
+        <path d="M19 9h2" />
+        <path d="M4.929 13.071l1.414-1.414" />
+        <path d="M17.657 6.343l-1.414 1.414" />
+        <circle cx="12" cy="9" r="2" fill="#0c4a6e" stroke="none" />
     </svg>
 );
 
@@ -198,6 +230,8 @@ export default function GamePage() {
     { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <SinglePanaBulkIcon />, gradient: 'bg-gradient-to-br from-violet-500 to-purple-600' },
     { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <DoublePanaBulkIcon />, gradient: 'bg-gradient-to-br from-indigo-500 to-blue-600' },
     { title: 'SP DP TP', href: `/games/${game.id}/all-pana-bulk`, icon: <AllPanaBulkIcon />, gradient: 'bg-white text-gray-800 shadow-md' },
+    { title: 'SP Motor', href: `/games/${game.id}/sp-motor`, icon: <SPMotorIcon />, gradient: 'bg-white text-gray-800 shadow-md' },
+    { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <DPMotorIcon />, gradient: 'bg-white text-gray-800 shadow-md' },
     { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon />, gradient: 'bg-gradient-to-br from-emerald-500 to-green-600' },
     { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon />, gradient: 'bg-gradient-to-br from-red-500 to-orange-600' },
   ];
