@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useGame } from '@/hooks/use-game';
 import { cn } from '@/lib/utils';
 
+// Icon components
 const SingleDigitIcon = () => (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M4.80005 17.5V30.5C4.80005 32.7091 6.59091 34.5 8.80005 34.5H21.8L33.8 22.5V9.5C33.8 7.29086 32.0092 5.5 29.8 5.5H16.8L4.80005 17.5Z" fill="currentColor" fillOpacity="0.8"/>
@@ -156,21 +157,21 @@ export default function GamePage() {
     { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon /> },
     { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon /> },
     { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon /> },
-    { title: 'SP DP TP', href: `/games/${game.id}/sp-dp-tp-motor`, icon: <AllPanaBulkIcon /> },
+    { title: 'SP DP TP', href: `/games/${game.id}/all-pana-bulk`, icon: <AllPanaBulkIcon /> },
     { title: 'SP Motor', href: `/games/${game.id}/sp-motor`, icon: <SPMotorIcon /> },
     { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <DPMotorIcon /> },
   ];
 
   return (
     <div className="grid grid-cols-2 gap-4">
-        {betTypes.map((betType) => (
-            <BetTypeCard
-                key={betType.title}
-                href={betType.href}
-                title={betType.title}
-                icon={betType.icon}
-            />
-        ))}
+      {betTypes.map((betType) => (
+        <BetTypeCard
+          key={betType.title}
+          href={betType.href}
+          title={betType.title}
+          icon={betType.icon}
+        />
+      ))}
     </div>
   );
 }

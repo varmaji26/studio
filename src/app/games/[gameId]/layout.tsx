@@ -95,11 +95,11 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
     if (loading) {
          return (
-            <div className="dark min-h-screen bg-background text-foreground p-2">
+            <div className="min-h-screen bg-green-100 text-slate-900 p-2">
                 <div className="max-w-2xl mx-auto space-y-4">
-                    <Skeleton className="h-14 w-full bg-slate-700/50" />
-                    <Skeleton className="h-20 w-full bg-slate-700/50" />
-                    <Skeleton className="h-64 w-full bg-slate-700/50" />
+                    <Skeleton className="h-14 w-full bg-slate-200" />
+                    <Skeleton className="h-20 w-full bg-slate-200" />
+                    <Skeleton className="h-64 w-full bg-slate-200" />
                 </div>
             </div>
         );
@@ -107,7 +107,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
     if (!game) {
         return (
-            <div className="dark flex h-screen w-full items-center justify-center bg-background">
+            <div className="flex h-screen w-full items-center justify-center bg-green-100">
                 <p>Game not found.</p>
             </div>
         );
