@@ -1,11 +1,9 @@
-
 'use client';
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import React from 'react';
 import Link from 'next/link';
 import { useGame } from '@/hooks/use-game';
+import { cn } from '@/lib/utils';
 
 const SingleDigitIcon = () => (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -126,9 +124,23 @@ const FullSangamIcon = () => (
     </svg>
 );
 
+const BetTypeCard = ({ href, title, icon }: { href: string; title: string; icon: React.ReactNode }) => (
+    <Link href={href} passHref>
+        <div className={cn(
+            "group relative flex h-28 flex-col items-center justify-center space-y-2 rounded-xl p-2 text-center",
+            "border border-slate-700 bg-gradient-to-b from-slate-800 to-slate-900 shadow-lg",
+            "transition-all duration-300 hover:scale-105 hover:border-primary hover:shadow-primary/20"
+        )}>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground border border-primary/30">
+                {icon}
+            </div>
+            <p className="w-full truncate text-xs font-bold text-foreground">{title}</p>
+        </div>
+    </Link>
+);
+
 
 export default function GamePage() {
-  const [animatingBetType, setAnimatingBetType] = useState<string | null>(null);
   const { game } = useGame();
 
   if (!game) {
@@ -150,49 +162,16 @@ export default function GamePage() {
     { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon /> },
   ];
 
-
-  const handleBetTypeClick = (betTypeTitle: string) => {
-    setAnimatingBetType(betTypeTitle);
-  };
-
-  const BetTypeItem = ({ betType }: { betType: (typeof betTypes)[0] }) => (
-    <div
-      onClick={() => handleBetTypeClick(betType.title)}
-      className={cn(
-        "rounded-xl p-2 text-center flex flex-col items-center justify-center space-y-1 h-28 cursor-pointer",
-        "transition-all duration-300 transform hover:scale-105 hover:bg-slate-700",
-        "bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700",
-        animatingBetType === betType.title && 'animate-pulse-once'
-      )}
-    >
-      <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-1 text-primary">
-        {betType.icon}
-      </div>
-      <p className="font-semibold text-xs text-foreground truncate w-full">{betType.title}</p>
-    </div>
-  );
-  
-  const firstBetType = betTypes[0];
-  const otherBetTypes = betTypes.slice(1);
-
   return (
-      <Card className="bg-transparent border-none shadow-none">
-          <CardContent className="flex flex-col gap-2 p-0">
-            <Link key={firstBetType.title} href={firstBetType.href} passHref>
-                <BetTypeItem betType={firstBetType} />
-            </Link>
-            <div className="grid grid-cols-2 gap-2">
-                {otherBetTypes.map((betType, index) => (
-                     <Link key={betType.title} href={betType.href} passHref
-                        className={cn(
-                            (otherBetTypes.length % 2 !== 0 && index === otherBetTypes.length - 1) && 'col-span-2'
-                        )}
-                    >
-                        <BetTypeItem betType={betType} />
-                    </Link>
-                ))}
-            </div>
-          </CardContent>
-      </Card>
+    <div className="grid grid-cols-2 gap-3">
+        {betTypes.map((betType) => (
+            <BetTypeCard 
+                key={betType.title} 
+                href={betType.href}
+                title={betType.title}
+                icon={betType.icon}
+            />
+        ))}
+    </div>
   );
 }
