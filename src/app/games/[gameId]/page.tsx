@@ -113,6 +113,18 @@ const DPMotorIcon = () => (
     </svg>
 );
 
+const HalfSangamIcon = () => (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22V2Z" />
+    </svg>
+);
+
+const FullSangamIcon = () => (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" />
+    </svg>
+);
+
 
 export default function GamePage() {
   const [animatingBetType, setAnimatingBetType] = useState<string | null>(null);
@@ -133,6 +145,8 @@ export default function GamePage() {
     { title: 'SP DP TP', href: `/games/${game.id}/sp-dp-tp-motor`, icon: <AllPanaBulkIcon /> },
     { title: 'SP Motor', href: `/games/${game.id}/sp-motor`, icon: <SPMotorIcon /> },
     { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <DPMotorIcon /> },
+    { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon /> },
+    { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon /> },
   ];
 
 
@@ -167,8 +181,12 @@ export default function GamePage() {
                 <BetTypeItem betType={firstBetType} />
             </Link>
             <div className="grid grid-cols-2 gap-2">
-                {otherBetTypes.map((betType) => (
-                    <Link key={betType.title} href={betType.href} passHref>
+                {otherBetTypes.map((betType, index) => (
+                     <Link key={betType.title} href={betType.href} passHref
+                        className={cn(
+                            (otherBetTypes.length % 2 !== 0 && index === otherBetTypes.length - 1) && 'col-span-2'
+                        )}
+                    >
                         <BetTypeItem betType={betType} />
                     </Link>
                 ))}
