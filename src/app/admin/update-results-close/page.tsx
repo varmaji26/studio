@@ -109,6 +109,8 @@ export default function UpdateResultsClosePage() {
             'Single Pana': gameRates?.singlePanaPrize ? gameRates.singlePanaPrize / 10 : 150,
             'Double Pana': gameRates?.doublePanaPrize ? gameRates.doublePanaPrize / 10 : 300,
             'Triple Pana': gameRates?.triplePanaPrize ? gameRates.triplePanaPrize / 10 : 600,
+            'Half Sangam': gameRates?.halfSangamPrize ? gameRates.halfSangamPrize / 10 : 500,
+            'Full Sangam': gameRates?.fullSangamPrize ? gameRates.fullSangamPrize / 10 : 1000,
         };
 
         const batch = writeBatch(db);
@@ -241,6 +243,12 @@ export default function UpdateResultsClosePage() {
                 else if (bid.betType === 'Single Digit' && bidNumbers.includes(closeJodiDigit)) isWinner = true;
             } else if (bid.betType === 'Jodi Digit' && bidNumbers.includes(finalJodi)) {
                 isWinner = true;
+            } else if (bid.betType === 'Half Sangam') {
+                const [sangamOpenPana, sangamCloseDigit] = bidNumbers[0].split('x');
+                if(sangamOpenPana === openPana && sangamCloseDigit === closeJodiDigit) isWinner = true;
+            } else if (bid.betType === 'Full Sangam') {
+                 const [sangamOpenPana, sangamClosePana] = bidNumbers[0].split('x');
+                 if(sangamOpenPana === openPana && sangamClosePana === newClosePana) isWinner = true;
             }
             
             if (isWinner) {
@@ -296,7 +304,7 @@ export default function UpdateResultsClosePage() {
             for (const bidDoc of bidsSnapshot.docs) {
                 const bid = bidDoc.data();
                 // Only revert 'Close' and 'Jodi' bets. 'Open' bets that were won/lost should remain so.
-                if (bid.session === 'Close' || bid.betType === 'Jodi Digit') {
+                if (bid.session === 'Close' || bid.betType === 'Jodi Digit' || bid.betType === 'Half Sangam' || bid.betType === 'Full Sangam') {
                     if (bid.status === 'won') {
                         const userRef = doc(db, 'users', bid.userId);
                         const winningAmount = bid.winningAmount || 0;
