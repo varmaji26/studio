@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GameContext, type Game } from '@/hooks/use-game';
 import { useAuth } from '@/hooks/use-auth';
+import { motion } from 'framer-motion';
 
 interface UserProfile extends DocumentData {
   balance?: number;
@@ -133,9 +134,20 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                     </div>
                 </header>
                 <main className="flex-1 p-2 pb-28">
-                    <div className="max-w-2xl mx-auto">
+                    <motion.div
+                        key={pathname}
+                        className="max-w-2xl mx-auto"
+                        initial={{ x: 300, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: -300, opacity: 0 }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 260,
+                            damping: 30,
+                        }}
+                    >
                         {children}
-                    </div>
+                    </motion.div>
                 </main>
             </div>
         </GameContext.Provider>

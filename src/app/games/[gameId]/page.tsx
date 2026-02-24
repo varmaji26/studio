@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useGame } from '@/hooks/use-game';
+import { motion } from 'framer-motion';
 
 // Simplified icons to match the user's image
 const SingleDigitIcon = () => (
@@ -41,14 +42,18 @@ const GenericBetIcon = () => (
 
 const BetTypeCard = ({ href, title, icon }: { href: string; title: string; icon: React.ReactNode }) => (
     <Link href={href} passHref>
-        <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-2xl shadow-lg p-4 flex flex-col items-center justify-center space-y-3 h-40 text-white transition-all duration-300 hover:bg-slate-800/80 active:scale-95">
+        <motion.div
+            className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-2xl shadow-lg p-4 flex flex-col items-center justify-center space-y-3 h-40 text-white transition-all duration-300 hover:bg-slate-800/80"
+            whileHover={{ y: -5 }}
+            whileTap={{ scale: 0.95 }}
+        >
             <div className="h-16 w-16 bg-gradient-to-br from-orange-500 to-yellow-400 rounded-full flex items-center justify-center text-white">
                 <div className="transform scale-90">
                     {icon}
                 </div>
             </div>
             <p className="text-sm font-semibold text-center">{title}</p>
-        </div>
+        </motion.div>
     </Link>
 );
 
