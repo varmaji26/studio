@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -210,11 +209,8 @@ export default function GamePage() {
   );
 
   return (
-      <Card className="bg-background/80 border-white/10 shadow-lg">
-          <CardHeader className="p-4">
-              <CardTitle className="text-2xl text-center">Choose a Bet Type</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-2 p-2">
+      <Card className="bg-transparent border-none shadow-none">
+          <CardContent className="grid grid-cols-2 gap-2 p-0">
              {betTypes.map((betType, index) => (
                 <Link key={betType.title} href={betType.href} passHref className={cn(index === 0 && "col-span-2")}>
                   <BetTypeItem betType={betType} />
