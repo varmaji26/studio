@@ -151,15 +151,15 @@ export default function GamePage() {
     { title: 'Single Digit', href: `/games/${game.id}/single-digit`, icon: <SingleDigitIcon /> },
     { title: 'Jodi Digit', href: `/games/${game.id}/jodi-digit`, icon: <JodiDigitIcon /> },
     { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <SinglePanaIcon /> },
-    { title: 'Double Pana', href: `/games/${game.id}/double-pana`, icon: <DoublePanaIcon /> },
-    { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon /> },
     { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <SinglePanaIcon /> },
+    { title: 'Double Pana', href: `/games/${game.id}/double-pana`, icon: <DoublePanaIcon /> },
     { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <DoublePanaIcon /> },
+    { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon /> },
+    { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon /> },
+    { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon /> },
     { title: 'SP DP TP', href: `/games/${game.id}/sp-dp-tp-motor`, icon: <AllPanaBulkIcon /> },
     { title: 'SP Motor', href: `/games/${game.id}/sp-motor`, icon: <SPMotorIcon /> },
     { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <DPMotorIcon /> },
-    { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon /> },
-    { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon /> },
   ];
 
   const firstBetType = betTypes[0];
