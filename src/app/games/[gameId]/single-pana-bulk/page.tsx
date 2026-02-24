@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { doc, runTransaction, collection, addDoc, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,19 @@ export default function SinglePanaBulkPage() {
     const [amount, setAmount] = useState<string>('');
     const [session, setSession] = useState<'Open' | 'Close'>('Open');
     const [isMounted, setIsMounted] = useState(false);
+    const [settings, setSettings] = useState<DocumentData | null>(null);
+
+    useEffect(() => {
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const unsubscribe = onSnapshot(settingsDocRef, (doc) => {
+        if (doc.exists()) {
+            setSettings(doc.data());
+        }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const minBet = settings?.betAmountSettings?.singlePana?.min || 10;
 
     useEffect(() => {
         setIsMounted(true);
@@ -100,8 +113,8 @@ export default function SinglePanaBulkPage() {
 
     const handleAddBids = () => {
         const parsedAmount = parseInt(amount, 10);
-        if (!amount || isNaN(parsedAmount) || parsedAmount < 10) {
-            toast({ title: 'Invalid Amount', description: 'Please enter a valid amount (minimum 10).', variant: 'destructive' });
+        if (!amount || isNaN(parsedAmount) || parsedAmount < minBet) {
+            toast({ title: 'Invalid Amount', description: `Please enter a valid amount (minimum ${minBet}).`, variant: 'destructive' });
             return;
         }
 
@@ -266,7 +279,7 @@ export default function SinglePanaBulkPage() {
                             <Input 
                                 id="bet-amount"
                                 type="number"
-                                placeholder="Enter amount (min 10)" 
+                                placeholder={`Enter amount (min ${minBet})`} 
                                 className="h-10 text-sm"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
