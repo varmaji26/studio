@@ -151,6 +151,36 @@ const settingsSchema = z.object({
   triplePanaPrize: z.preprocess((val) => Number(val), z.number().min(0)),
   halfSangamPrize: z.preprocess((val) => Number(val), z.number().min(0)),
   fullSangamPrize: z.preprocess((val) => Number(val), z.number().min(0)),
+  betAmountSettings: z.object({
+    singleDigit: z.object({
+      min: z.preprocess((val) => Number(val), z.number().min(1)),
+      max: z.preprocess((val) => Number(val), z.number().min(1)),
+    }),
+    jodiDigit: z.object({
+      min: z.preprocess((val) => Number(val), z.number().min(1)),
+      max: z.preprocess((val) => Number(val), z.number().min(1)),
+    }),
+    singlePana: z.object({
+      min: z.preprocess((val) => Number(val), z.number().min(1)),
+      max: z.preprocess((val) => Number(val), z.number().min(1)),
+    }),
+    doublePana: z.object({
+      min: z.preprocess((val) => Number(val), z.number().min(1)),
+      max: z.preprocess((val) => Number(val), z.number().min(1)),
+    }),
+    triplePana: z.object({
+      min: z.preprocess((val) => Number(val), z.number().min(1)),
+      max: z.preprocess((val) => Number(val), z.number().min(1)),
+    }),
+    halfSangam: z.object({
+      min: z.preprocess((val) => Number(val), z.number().min(1)),
+      max: z.preprocess((val) => Number(val), z.number().min(1)),
+    }),
+    fullSangam: z.object({
+      min: z.preprocess((val) => Number(val), z.number().min(1)),
+      max: z.preprocess((val) => Number(val), z.number().min(1)),
+    }),
+  }).optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -229,6 +259,15 @@ export default function SettingsPage() {
       triplePanaPrize: 6000,
       halfSangamPrize: 5000,
       fullSangamPrize: 10000,
+      betAmountSettings: {
+        singleDigit: { min: 10, max: 10000 },
+        jodiDigit: { min: 10, max: 10000 },
+        singlePana: { min: 10, max: 10000 },
+        doublePana: { min: 10, max: 10000 },
+        triplePana: { min: 10, max: 10000 },
+        halfSangam: { min: 10, max: 10000 },
+        fullSangam: { min: 10, max: 10000 },
+      },
     },
   });
 
@@ -296,6 +335,15 @@ export default function SettingsPage() {
             triplePanaPrize: data.gameRates?.triplePanaPrize ?? 6000,
             halfSangamPrize: data.gameRates?.halfSangamPrize ?? 5000,
             fullSangamPrize: data.gameRates?.fullSangamPrize ?? 10000,
+            betAmountSettings: data.betAmountSettings || {
+              singleDigit: { min: 10, max: 10000 },
+              jodiDigit: { min: 10, max: 10000 },
+              singlePana: { min: 10, max: 10000 },
+              doublePana: { min: 10, max: 10000 },
+              triplePana: { min: 10, max: 10000 },
+              halfSangam: { min: 10, max: 10000 },
+              fullSangam: { min: 10, max: 10000 },
+            },
           });
           if (data.paymentDetails?.['Scan QR Code']) {
             setExistingQrUrl(data.paymentDetails['Scan QR Code'].imageUrl);
@@ -620,7 +668,8 @@ export default function SettingsPage() {
                 triplePanaPrize: values.triplePanaPrize,
                 halfSangamPrize: values.halfSangamPrize,
                 fullSangamPrize: values.fullSangamPrize,
-            }
+            },
+            betAmountSettings: values.betAmountSettings,
         };
 
         if (qrCodeData) {
@@ -1234,6 +1283,42 @@ export default function SettingsPage() {
                            <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                       </AccordionContent>
                  </AccordionItem>
+
+                 {/* Bet Amount Settings Section */}
+                 <AccordionItem value="item-10">
+                    <AccordionTrigger className="text-lg font-semibold">Bet Amount Settings</AccordionTrigger>
+                    <AccordionContent className="space-y-4 pt-4">
+                          <p className="text-sm text-muted-foreground">Set the minimum and maximum bet amount for each game type.</p>
+                          {Object.keys(form.getValues().betAmountSettings || {}).map((key) => (
+                              <div key={key} className="grid grid-cols-2 gap-4 border-b pb-2">
+                                   <p className="col-span-2 text-md font-semibold text-primary">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
+                                  <FormField
+                                      control={form.control}
+                                      name={`betAmountSettings.${key}.min` as any}
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>Min Bet</FormLabel>
+                                              <FormControl><Input type="number" {...field} /></FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                                  <FormField
+                                      control={form.control}
+                                      name={`betAmountSettings.${key}.max` as any}
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>Max Bet</FormLabel>
+                                              <FormControl><Input type="number" {...field} /></FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                              </div>
+                          ))}
+                         <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                    </AccordionContent>
+               </AccordionItem>
                 
                 {/* Data Management Section */}
                  <AccordionItem value="item-6">

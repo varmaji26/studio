@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { doc, runTransaction, collection, addDoc, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
@@ -34,13 +34,27 @@ export default function SingleDigitPage() {
   const [session, setSession] = useState<'Open' | 'Close'>('Open');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [settings, setSettings] = useState<DocumentData | null>(null);
+
+  useEffect(() => {
+    const settingsDocRef = doc(db, 'settings', 'app-settings');
+    const unsubscribe = onSnapshot(settingsDocRef, (doc) => {
+      if (doc.exists()) {
+        setSettings(doc.data());
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const minBet = settings?.betAmountSettings?.singleDigit?.min || 10;
+  const maxBet = settings?.betAmountSettings?.singleDigit?.max || 10000;
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   const getTimeParts = (timeStr: string) => {
-    if (!timeStr) return { hours: 0, minutes: 0 };
+    if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) return { hours: 0, minutes: 0 };
     const [hours, minutes] = timeStr.split(':').map(Number);
     return { hours, minutes };
   }
@@ -81,10 +95,21 @@ export default function SingleDigitPage() {
         number,
         amount: parseInt(amountStr, 10),
       }))
-      .filter(bid => bid.amount > 0);
+      .filter(bid => {
+        if (isNaN(bid.amount) || bid.amount <= 0) return false;
+        if (bid.amount < minBet) {
+            toast({ variant: 'destructive', title: `Invalid amount for ${bid.number}`, description: `Minimum bet is ₹${minBet}.` });
+            return false;
+        }
+        if (bid.amount > maxBet) {
+            toast({ variant: 'destructive', title: `Invalid amount for ${bid.number}`, description: `Maximum bet is ₹${maxBet}.` });
+            return false;
+        }
+        return true;
+      });
 
     if (newBids.length === 0) {
-      toast({ variant: 'destructive', title: 'No Bids', description: 'Please enter an amount for at least one digit.' });
+      toast({ variant: 'destructive', title: 'No Bids', description: 'Please enter a valid amount for at least one digit.' });
       return;
     }
 
@@ -230,6 +255,10 @@ export default function SingleDigitPage() {
                         Close
                     </Label>
                 </RadioGroup>
+                
+                <p className="text-center text-xs text-muted-foreground">
+                    Min Bet: ₹{minBet} | Max Bet: ₹{maxBet}
+                </p>
 
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                     {numbers.map(num => (
@@ -239,7 +268,7 @@ export default function SingleDigitPage() {
                             </div>
                             <Input
                                 type="number"
-                                placeholder=""
+                                placeholder={`₹${minBet}-${maxBet}`}
                                 className="bg-slate-700 border-slate-600 h-8 text-center text-white"
                                 value={inputAmounts[num] || ''}
                                 onChange={(e) => handleInputChange(num, e.target.value)}
