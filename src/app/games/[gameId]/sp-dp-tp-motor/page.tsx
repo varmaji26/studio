@@ -25,7 +25,7 @@ const allSinglePanas: Record<string, string[]> = {
     '2': ['129', '138', '147', '156', '237', '246', '345', '390', '480', '570', '589', '679'],
     '3': ['120', '139', '148', '157', '238', '247', '256', '346', '490', '580', '670', '689'],
     '4': ['130', '149', '158', '167', '239', '248', '257', '347', '356', '590', '680', '789'],
-    '5': ['140', '159', '168', '230', '249', '258', '267', '348', '357', '456', '690', '780'],
+    '5': ['140', '159', '168', '230', '249', '258', '267', '348', '357', '459', '690', '780'],
     '6': ['123', '150', '169', '178', '240', '259', '268', '349', '358', '367', '450', '790'],
     '7': ['124', '160', '179', '250', '269', '278', '340', '359', '368', '458', '467', '890'],
     '8': ['125', '134', '170', '189', '260', '279', '350', '369', '378', '459', '468', '567'],
@@ -84,28 +84,13 @@ export default function SpDpTpMotorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
   
-  const { openTime, closeTime, isBettingDisabled, isOpenSessionAllowed, isCloseSessionAllowed } = useMemo(() => {
-    if (!game) return { openTime: new Date(), closeTime: new Date(), isBettingDisabled: true, isOpenSessionAllowed: false, isCloseSessionAllowed: false };
-    
+  const defaultSession = useMemo(() => {
+    if (!game) return 'Open';
     const [openHours, openMinutes] = game.openTime.split(':').map(Number);
     const openTime = new Date(now);
     openTime.setHours(openHours, openMinutes, 0, 0);
-
-    const [closeHours, closeMinutes] = game.closeTime.split(':').map(Number);
-    const closeTime = new Date(now);
-    closeTime.setHours(closeHours, closeMinutes, 0, 0);
-    
-    const session = form.getValues('session');
-    const bettingDisabled = (session === 'Open' && now.getTime() >= openTime.getTime()) || (session === 'Close' && now.getTime() >= closeTime.getTime());
-    const openAllowed = now.getTime() < openTime.getTime();
-    const closeAllowed = now.getTime() >= openTime.getTime() && now.getTime() < closeTime.getTime();
-
-    return { openTime, closeTime, isBettingDisabled: bettingDisabled, isOpenSessionAllowed: openAllowed, isCloseSessionAllowed: closeAllowed };
-  }, [game, now]);
-
-  const defaultSession = useMemo(() => {
     return now.getTime() >= openTime.getTime() ? 'Close' : 'Open';
-  }, [openTime, now]);
+  }, [game, now]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -117,6 +102,26 @@ export default function SpDpTpMotorPage() {
     },
     mode: "onChange"
   });
+
+  const session = form.watch('session');
+  
+  const { openTime, closeTime, isBettingDisabled, isOpenSessionAllowed, isCloseSessionAllowed } = useMemo(() => {
+    if (!game) return { openTime: new Date(), closeTime: new Date(), isBettingDisabled: true, isOpenSessionAllowed: false, isCloseSessionAllowed: false };
+    
+    const [openHours, openMinutes] = game.openTime.split(':').map(Number);
+    const openTime = new Date(now);
+    openTime.setHours(openHours, openMinutes, 0, 0);
+
+    const [closeHours, closeMinutes] = game.closeTime.split(':').map(Number);
+    const closeTime = new Date(now);
+    closeTime.setHours(closeHours, closeMinutes, 0, 0);
+    
+    const bettingDisabled = (session === 'Open' && now.getTime() >= openTime.getTime()) || (session === 'Close' && now.getTime() >= closeTime.getTime());
+    const openAllowed = now.getTime() < openTime.getTime();
+    const closeAllowed = now.getTime() >= openTime.getTime() && now.getTime() < closeTime.getTime();
+
+    return { openTime, closeTime, isBettingDisabled: bettingDisabled, isOpenSessionAllowed: openAllowed, isCloseSessionAllowed: closeAllowed };
+  }, [game, now, session]);
 
   useEffect(() => {
      form.setValue('session', defaultSession);
@@ -190,7 +195,7 @@ export default function SpDpTpMotorPage() {
     }
     
     setIsSubmitting(true);
-    const session = form.getValues('session');
+    const currentSession = form.getValues('session');
     
     try {
         await runTransaction(db, async (transaction) => {
@@ -223,7 +228,7 @@ export default function SpDpTpMotorPage() {
                 gameId: game?.id,
                 gameName: game?.name,
                 betType: 'spDpTp',
-                session: session,
+                session: currentSession,
                 numbers: submittedBids.map(b => b.number),
                 totalAmount: totalAmount,
                 status: 'running',
