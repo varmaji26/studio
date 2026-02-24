@@ -46,9 +46,8 @@ export default function DpMotorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
   
-  const { openTime, closeTime, isBettingDisabled, isOpenSessionAllowed, isCloseSessionAllowed } = useMemo(() => {
-    if (!game) return { openTime: new Date(), closeTime: new Date(), isBettingDisabled: true, isOpenSessionAllowed: false, isCloseSessionAllowed: false };
-    
+  const { openTime, closeTime } = useMemo(() => {
+    if (!game) return { openTime: new Date(), closeTime: new Date() };
     const [openHours, openMinutes] = game.openTime.split(':').map(Number);
     const openTime = new Date(now);
     openTime.setHours(openHours, openMinutes, 0, 0);
@@ -57,13 +56,9 @@ export default function DpMotorPage() {
     const closeTime = new Date(now);
     closeTime.setHours(closeHours, closeMinutes, 0, 0);
     
-    const bettingDisabled = (session.get === 'Open' && now.getTime() >= openTime.getTime()) || (session.get === 'Close' && now.getTime() >= closeTime.getTime());
-    const openAllowed = now.getTime() < openTime.getTime();
-    const closeAllowed = now.getTime() >= openTime.getTime() && now.getTime() < closeTime.getTime();
-
-    return { openTime, closeTime, isBettingDisabled: bettingDisabled, isOpenSessionAllowed: openAllowed, isCloseSessionAllowed: closeAllowed };
+    return { openTime, closeTime };
   }, [game, now]);
-
+  
   const defaultSession = useMemo(() => {
     return now.getTime() >= openTime.getTime() ? 'Close' : 'Open';
   }, [now, openTime]);
@@ -79,6 +74,15 @@ export default function DpMotorPage() {
   });
 
   const session = form.watch('session');
+
+  const { isBettingDisabled, isOpenSessionAllowed, isCloseSessionAllowed } = useMemo(() => {
+    const openAllowed = now.getTime() < openTime.getTime();
+    const closeAllowed = now.getTime() >= openTime.getTime() && now.getTime() < closeTime.getTime();
+    
+    const bettingDisabled = (session === 'Open' && !openAllowed) || (session === 'Close' && !closeAllowed);
+
+    return { isBettingDisabled, isOpenSessionAllowed: openAllowed, isCloseSessionAllowed: closeAllowed };
+  }, [now, openTime, closeTime, session]);
   
   useEffect(() => {
      form.setValue('session', defaultSession);
@@ -164,7 +168,7 @@ export default function DpMotorPage() {
     }
     
     setIsSubmitting(true);
-    const currentSession = form.getValues('session');
+    const session = form.getValues('session');
     
     try {
         await runTransaction(db, async (transaction) => {
@@ -198,7 +202,7 @@ export default function DpMotorPage() {
                     gameId: game?.id,
                     gameName: game?.name,
                     betType: 'Double Pana',
-                    session: currentSession,
+                    session: session,
                     numbers: [bid.number],
                     totalAmount: bid.amount,
                     amountPerBet: bid.amount,
@@ -234,7 +238,7 @@ export default function DpMotorPage() {
       return <Loader />
     }
   
-  const isBettingFinalDisabled = (session === 'Open' && now.getTime() >= openTime.getTime()) || (session === 'Close' && now.getTime() >= closeTime.getTime());
+  const isBettingFinalDisabled = isBettingDisabled;
 
   return (
     <Form {...form}>
