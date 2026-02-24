@@ -162,16 +162,31 @@ export default function GamePage() {
     { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon /> },
   ];
 
+  const firstBetType = betTypes[0];
+  const otherBetTypes = betTypes.slice(1);
+
   return (
-    <div className="grid grid-cols-2 gap-3">
-        {betTypes.map((betType) => (
-            <BetTypeCard 
-                key={betType.title} 
-                href={betType.href}
-                title={betType.title}
-                icon={betType.icon}
-            />
-        ))}
+    <div className="space-y-3">
+        {firstBetType && (
+            <div className="col-span-2">
+                 <BetTypeCard
+                    key={firstBetType.title}
+                    href={firstBetType.href}
+                    title={firstBetType.title}
+                    icon={firstBetType.icon}
+                />
+            </div>
+        )}
+        <div className="grid grid-cols-2 gap-3">
+            {otherBetTypes.map((betType) => (
+                <BetTypeCard
+                    key={betType.title}
+                    href={betType.href}
+                    title={betType.title}
+                    icon={betType.icon}
+                />
+            ))}
+        </div>
     </div>
   );
 }
