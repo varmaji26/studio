@@ -116,14 +116,14 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     return (
         <GameContext.Provider value={{ game, loading, now }}>
             <div className="dark min-h-screen bg-background text-foreground flex flex-col">
-                <header className="bg-[#112a45] text-white p-2.5 grid grid-cols-3 items-center sticky top-0 z-10 shadow-md">
+                <header className="bg-[#112a45] text-white p-2.5 grid grid-cols-[auto_1fr_auto] gap-2 items-center sticky top-0 z-10 shadow-md">
                     <div className="flex justify-start">
                         <Button variant="ghost" size="icon" className="text-white h-8 w-8" onClick={() => router.back()}>
                             <ArrowLeft />
                         </Button>
                     </div>
-                    <div className="text-center overflow-hidden">
-                        <h1 className="text-lg font-bold uppercase whitespace-nowrap">{activeBetType}</h1>
+                    <div className="text-center">
+                        <h1 className="text-lg font-bold uppercase whitespace-nowrap">{game.name}</h1>
                     </div>
                     <div className="flex justify-end">
                         <div className="flex items-center gap-2 bg-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg">

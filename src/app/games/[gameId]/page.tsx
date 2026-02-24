@@ -211,8 +211,8 @@ export default function GamePage() {
   return (
       <Card className="bg-transparent border-none shadow-none">
           <CardContent className="grid grid-cols-2 gap-2 p-0">
-             {betTypes.map((betType, index) => (
-                <Link key={betType.title} href={betType.href} passHref className={cn(index === 0 && "col-span-2")}>
+             {betTypes.map((betType) => (
+                <Link key={betType.title} href={betType.href} passHref>
                   <BetTypeItem betType={betType} />
                 </Link>
              ))}
