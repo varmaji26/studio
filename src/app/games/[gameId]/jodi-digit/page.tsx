@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { doc, runTransaction, collection, addDoc, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
@@ -58,6 +58,20 @@ export default function JodiDigitPage() {
     const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
     const [bidsInput, setBidsInput] = useState<Record<string, string>>({});
     const [isMounted, setIsMounted] = useState(false);
+    const [settings, setSettings] = useState<DocumentData | null>(null);
+
+    useEffect(() => {
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const unsubscribe = onSnapshot(settingsDocRef, (doc) => {
+          if (doc.exists()) {
+            setSettings(doc.data());
+          }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const minBet = settings?.betAmountSettings?.jodiDigit?.min || 10;
+    const maxBet = settings?.betAmountSettings?.jodiDigit?.max || 10000;
 
     useEffect(() => {
         setIsMounted(true);
@@ -122,12 +136,23 @@ export default function JodiDigitPage() {
     const handleAddAllBids = () => {
         const classicBidsData = form.getValues('classicBids');
         const newBids = classicBidsData
-            .filter(bid => bid.points && bid.points >= 10)
+            .filter(bid => {
+                if (!bid.points) return false;
+                if (bid.points < minBet) {
+                    toast({ variant: 'destructive', title: `Invalid amount for ${bid.digit}`, description: `Minimum bet is ₹${minBet}.` });
+                    return false;
+                }
+                if (bid.points > maxBet) {
+                    toast({ variant: 'destructive', title: `Invalid amount for ${bid.digit}`, description: `Maximum bet is ₹${maxBet}.` });
+                    return false;
+                }
+                return true;
+            })
             .map(bid => ({ number: bid.digit, amount: Number(bid.points!) }));
 
 
         if (newBids.length === 0) {
-            toast({ title: 'No Bids to Add', description: 'Please enter points (minimum 10) for at least one jodi.', variant: 'destructive' });
+            toast({ title: 'No Bids to Add', description: 'Please enter points for at least one jodi.', variant: 'destructive' });
             return;
         }
         
@@ -248,6 +273,7 @@ export default function JodiDigitPage() {
                     {isBettingDisabled && (
                         <p className="text-center text-red-500 text-sm font-bold p-2 bg-red-100/10 rounded-md">Bidding is closed for Jodi Digit in this market.</p>
                     )}
+                     <p className="text-center text-xs text-muted-foreground">Min Bet: ₹{minBet} | Max Bet: ₹{maxBet}</p>
                     
                     <div className="space-y-4">
                         <div className="p-2 rounded-lg bg-slate-800">
@@ -340,3 +366,5 @@ export default function JodiDigitPage() {
         </div>
     );
 }
+
+    

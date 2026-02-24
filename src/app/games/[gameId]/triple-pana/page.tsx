@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { doc, runTransaction, collection, addDoc, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,20 @@ export default function TriplePanaPage() {
     const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
     const [session, setSession] = useState<'Open' | 'Close'>('Open');
     const [isMounted, setIsMounted] = useState(false);
+    const [settings, setSettings] = useState<DocumentData | null>(null);
+
+    useEffect(() => {
+        const settingsDocRef = doc(db, 'settings', 'app-settings');
+        const unsubscribe = onSnapshot(settingsDocRef, (doc) => {
+          if (doc.exists()) {
+            setSettings(doc.data());
+          }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const minBet = settings?.betAmountSettings?.triplePana?.min || 10;
+    const maxBet = settings?.betAmountSettings?.triplePana?.max || 10000;
 
     useEffect(() => {
         setIsMounted(true);
@@ -103,7 +117,18 @@ export default function TriplePanaPage() {
     const handleAddAllBids = () => {
         const bidsData = form.getValues('bids');
         const newBids = bidsData
-            .filter(bid => bid.points && bid.points >= 10)
+            .filter(bid => {
+                if (!bid.points) return false;
+                if (bid.points < minBet) {
+                    toast({ variant: 'destructive', title: `Invalid amount for ${bid.pana}`, description: `Minimum bet is ₹${minBet}.` });
+                    return false;
+                }
+                if (bid.points > maxBet) {
+                    toast({ variant: 'destructive', title: `Invalid amount for ${bid.pana}`, description: `Maximum bet is ₹${maxBet}.` });
+                    return false;
+                }
+                return true;
+            })
             .map(bid => ({ number: bid.pana, amount: Number(bid.points!) }));
 
 
@@ -246,6 +271,7 @@ export default function TriplePanaPage() {
                     {isBettingDisabled && (
                         <p className="text-center text-red-500 text-sm font-bold p-2 bg-red-100/10 rounded-md">Bidding is closed for this session.</p>
                     )}
+                    <p className="text-center text-xs text-muted-foreground">Min Bet: ₹{minBet} | Max Bet: ₹{maxBet}</p>
                     
                     <div className="space-y-4">
                         <Form {...form}>
@@ -323,3 +349,5 @@ export default function TriplePanaPage() {
         </div>
     );
 }
+
+    
