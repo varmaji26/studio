@@ -10,7 +10,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Trash2, PlusCircle } from 'lucide-react';
+import { CalendarIcon, Send, Trash2, PlusCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useGame } from '@/hooks/use-game';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -271,7 +271,6 @@ export default function TriplePanaPage() {
                     {isBettingDisabled && (
                         <p className="text-center text-red-500 text-sm font-bold p-2 bg-red-100/10 rounded-md">Bidding is closed for this session.</p>
                     )}
-                    <p className="text-center text-xs text-muted-foreground">Min Bet: ₹{minBet} | Max Bet: ₹{maxBet}</p>
                     
                     <div className="space-y-4">
                         <Form {...form}>
@@ -349,5 +348,3 @@ export default function TriplePanaPage() {
         </div>
     );
 }
-
-    

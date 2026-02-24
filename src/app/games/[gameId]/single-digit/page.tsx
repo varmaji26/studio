@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -236,8 +235,8 @@ export default function SingleDigitPage() {
   return (
     <div className="space-y-4 mt-4">
         <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
-            <CardHeader className="p-0 mb-4 pt-4 px-4">
-                <CardTitle className="text-sm font-semibold text-foreground">Choose Session</CardTitle>
+            <CardHeader className="p-0">
+                <CardTitle className="text-sm font-semibold text-foreground p-4">Choose Session</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0 space-y-4">
                 <RadioGroup 
@@ -256,10 +255,6 @@ export default function SingleDigitPage() {
                     </Label>
                 </RadioGroup>
                 
-                <p className="text-center text-xs text-muted-foreground">
-                    Min Bet: ₹{minBet} | Max Bet: ₹{maxBet}
-                </p>
-
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                     {numbers.map(num => (
                         <div key={num} className="flex items-center gap-2">

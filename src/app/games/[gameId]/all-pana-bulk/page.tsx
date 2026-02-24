@@ -343,7 +343,7 @@ export default function SpDpTpMotorPage() {
                     <Input 
                         id="point"
                         type="number"
-                        placeholder="Enter amount (min 10)" 
+                        placeholder="Enter amount" 
                         className="h-10 text-sm"
                         value={pointInput}
                         onChange={(e) => setPointInput(e.target.value)}
@@ -384,4 +384,3 @@ export default function SpDpTpMotorPage() {
     </div>
   );
 }
-    

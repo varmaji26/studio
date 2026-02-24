@@ -279,7 +279,7 @@ export default function SinglePanaBulkPage() {
                             <Input 
                                 id="bet-amount"
                                 type="number"
-                                placeholder={`Enter amount (min ${minBet})`} 
+                                placeholder="Enter amount" 
                                 className="h-10 text-sm"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}

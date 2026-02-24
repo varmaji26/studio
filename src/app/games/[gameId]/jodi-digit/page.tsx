@@ -273,7 +273,6 @@ export default function JodiDigitPage() {
                     {isBettingDisabled && (
                         <p className="text-center text-red-500 text-sm font-bold p-2 bg-red-100/10 rounded-md">Bidding is closed for Jodi Digit in this market.</p>
                     )}
-                     <p className="text-center text-xs text-muted-foreground">Min Bet: ₹{minBet} | Max Bet: ₹{maxBet}</p>
                     
                     <div className="space-y-4">
                         <div className="p-2 rounded-lg bg-slate-800">
@@ -366,5 +365,3 @@ export default function JodiDigitPage() {
         </div>
     );
 }
-
-    
