@@ -41,8 +41,8 @@ const GenericBetIcon = () => (
 
 const BetTypeCard = ({ href, title, icon }: { href: string; title: string; icon: React.ReactNode }) => (
     <Link href={href} passHref>
-        <div className="bg-slate-900 rounded-2xl shadow-md p-4 flex flex-col items-center justify-center space-y-3 h-40 text-white transition-all duration-300 hover:bg-slate-800 hover:shadow-lg hover:shadow-primary/20 active:scale-95">
-            <div className="h-16 w-16 bg-primary rounded-full flex items-center justify-center text-white">
+        <div className="bg-card rounded-2xl shadow-md p-4 flex flex-col items-center justify-center space-y-3 h-40 text-card-foreground transition-all duration-300 hover:bg-accent hover:shadow-lg hover:shadow-primary/20 active:scale-95">
+            <div className="h-16 w-16 bg-primary rounded-full flex items-center justify-center text-primary-foreground">
                 <div className="transform scale-90">
                     {icon}
                 </div>
@@ -64,15 +64,15 @@ export default function GamePage() {
     { title: 'Single Digit', href: `/games/${game.id}/single-digit`, icon: <SingleDigitIcon /> },
     { title: 'Jodi Digit', href: `/games/${game.id}/jodi-digit`, icon: <JodiDigitIcon /> },
     { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <PanaIcon /> },
-    { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <PanaIcon /> },
     { title: 'Double Pana', href: `/games/${game.id}/double-pana`, icon: <PanaIcon /> },
-    { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <PanaIcon /> },
     { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <PanaIcon /> },
     { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon /> },
     { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon /> },
-    { title: 'SP DP TP', href: `/games/${game.id}/all-pana-bulk`, icon: <GenericBetIcon /> },
     { title: 'SP Motor', href: `/games/${game.id}/sp-motor`, icon: <GenericBetIcon /> },
     { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <GenericBetIcon /> },
+    { title: 'SP DP TP', href: `/games/${game.id}/all-pana-bulk`, icon: <GenericBetIcon /> },
+    { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <PanaIcon /> },
+    { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <PanaIcon /> },
   ];
 
   return (
