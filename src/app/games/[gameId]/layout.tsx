@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -30,6 +31,11 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     const activeBetType = useMemo(() => {
         const pathSegments = pathname.split('/');
         const lastSegment = pathSegments[pathSegments.length - 1];
+
+        if (lastSegment === gameId) {
+            return game?.name || '';
+        }
+
         switch (lastSegment) {
             case 'single-digit': return 'Single Digit';
             case 'jodi-digit': return 'Jodi Digit';
@@ -43,9 +49,9 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             case 'full-sangam': return 'Full Sangam';
             case 'single-pana-bulk': return 'Single Pana Bulk';
             case 'double-pana-bulk': return 'Double Pana Bulk';
-            default: return gameId ? 'Choose Bet Type' : '';
+            default: return game?.name || '';
         }
-    }, [pathname, gameId]);
+    }, [pathname, gameId, game]);
 
     useEffect(() => {
         if (user?.uid) {
