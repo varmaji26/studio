@@ -42,7 +42,7 @@ export default function DpMotorPage() {
   const { user } = useAuth();
   const { game, now } = useGame();
   const [profile, setProfile] = useState<DocumentData>({});
-
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
   
@@ -78,10 +78,9 @@ export default function DpMotorPage() {
   const { isBettingDisabled, isOpenSessionAllowed, isCloseSessionAllowed } = useMemo(() => {
     const openAllowed = now.getTime() < openTime.getTime();
     const closeAllowed = now.getTime() >= openTime.getTime() && now.getTime() < closeTime.getTime();
-    
     const bettingDisabled = (session === 'Open' && !openAllowed) || (session === 'Close' && !closeAllowed);
 
-    return { isBettingDisabled, isOpenSessionAllowed: openAllowed, isCloseSessionAllowed: closeAllowed };
+    return { isBettingDisabled: bettingDisabled, isOpenSessionAllowed: openAllowed, isCloseSessionAllowed: closeAllowed };
   }, [now, openTime, closeTime, session]);
   
   useEffect(() => {
