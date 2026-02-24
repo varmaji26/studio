@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -123,8 +122,8 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                             <ArrowLeft />
                         </Button>
                     </div>
-                    <div className="text-center">
-                        <h1 className="text-lg font-bold uppercase">{activeBetType}</h1>
+                    <div className="text-center overflow-hidden">
+                        <h1 className="text-lg font-bold uppercase whitespace-nowrap">{activeBetType}</h1>
                     </div>
                     <div className="flex justify-end">
                         <div className="flex items-center gap-2 bg-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg">
