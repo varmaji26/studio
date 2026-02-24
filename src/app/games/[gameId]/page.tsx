@@ -78,47 +78,6 @@ const TriplePanaIcon = () => (
     </svg>
 );
 
-const SinglePanaBulkIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" />
-        <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-        <rect x="29" y="26" width="10" height="2" rx="1" fill="currentColor" opacity="0.5"/>
-        <rect x="29" y="30" width="10" height="2" rx="1" fill="currentColor" opacity="0.5"/>
-        <rect x="29" y="34" width="6" height="2" rx="1" fill="currentColor" opacity="0.5"/>
-    </svg>
-);
-
-const DoublePanaBulkIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 56 56" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(8, 8) scale(0.8)" opacity="0.6">
-            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" />
-            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-        </g>
-        <g>
-            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" />
-            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-        </g>
-        <rect x="29" y="26" width="10" height="2" rx="1" fill="currentColor" opacity="0.5"/>
-        <rect x="29" y="30" width="10" height="2" rx="1" fill="currentColor" opacity="0.5"/>
-        <rect x="29" y="34" width="6" height="2" rx="1" fill="currentColor" opacity="0.5"/>
-    </svg>
-);
-
-const HalfSangamIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37V4Z" fill="currentColor"/>
-        <path d="M24 4C29.5 12 37 17.5 37 24C37 31.1797 31.1797 37 24 37V4Z" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
-        <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" fill="currentColor"/>
-    </svg>
-);
-
-const FullSangamIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" />
-        <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-    </svg>
-);
-
 const AllPanaBulkIcon = () => (
     <svg width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2"/>
@@ -132,16 +91,8 @@ const AllPanaBulkIcon = () => (
 );
 
 const SPMotorIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.8"/>
-        <path d="M12,7.5a1,1,0,1,1-1-1,1,1,0,0,1,1,1Z" fill="currentColor" opacity="0.4" />
-        <path d="M16.5,13a1,1,0,1,1-1-1,1,1,0,0,1,1,1Z" fill="currentColor" opacity="0.4" />
-        <path d="M12,18.5a1,1,0,1,1-1-1,1,1,0,0,1,1,1Z" fill="currentColor" opacity="0.4" />
-        <path d="M7.5,13a1,1,0,1,1-1-1,1,1,0,0,1,1,1Z" fill="currentColor" opacity="0.4" />
-        <path d="M15.06,8.94a1,1,0,1,1-1.41-1.41,1,1,0,0,1,1.41,1.41Z" fill="currentColor" opacity="0.4"/>
-        <path d="M8.94,15.06a1,1,0,1,1-1.41-1.41,1,1,0,0,1,1.41,1.41Z" fill="currentColor" opacity="0.4"/>
-        <path d="M8.94,8.94a1,1,0,1,1,1.41-1.41,1,1,0,0,1-1.41,1.41Z" fill="currentColor" opacity="0.4"/>
-        <path d="M15.06,15.06a1,1,0,1,1,1.41-1.41,1,1,0,0,1-1.41,1.41Z" fill="currentColor" opacity="0.4"/>
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="8" />
     </svg>
 );
 
@@ -177,13 +128,11 @@ export default function GamePage() {
     { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <SinglePanaIcon /> },
     { title: 'Double Pana', href: `/games/${game.id}/double-pana`, icon: <DoublePanaIcon /> },
     { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon /> },
-    { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <SinglePanaBulkIcon /> },
-    { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <DoublePanaBulkIcon /> },
+    { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <SinglePanaIcon /> },
+    { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <DoublePanaIcon /> },
     { title: 'SP DP TP', href: `/games/${game.id}/all-pana-bulk`, icon: <AllPanaBulkIcon /> },
     { title: 'SP Motor', href: `/games/${game.id}/sp-motor`, icon: <SPMotorIcon /> },
     { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <DPMotorIcon /> },
-    { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon /> },
-    { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon /> },
   ];
 
 
@@ -195,27 +144,35 @@ export default function GamePage() {
     <div
       onClick={() => handleBetTypeClick(betType.title)}
       className={cn(
-        "rounded-xl p-2 text-center flex flex-col items-center justify-center space-y-1 h-36 cursor-pointer",
-        "transition-all duration-300 transform hover:scale-105 hover:bg-slate-700/[.35]",
-        "bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700",
+        "rounded-xl p-2 text-center flex flex-col items-center justify-center space-y-1 h-28 cursor-pointer",
+        "transition-all duration-300 transform hover:scale-105 hover:bg-slate-700",
+        "bg-slate-800 border border-slate-700",
         animatingBetType === betType.title && 'animate-pulse-once'
       )}
     >
-      <div className="h-16 w-16 rounded-full bg-slate-900/70 flex items-center justify-center mb-1 text-primary">
+      <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-1 text-primary">
         {betType.icon}
       </div>
       <p className="font-semibold text-xs text-foreground truncate w-full">{betType.title}</p>
     </div>
   );
+  
+  const firstBetType = betTypes[0];
+  const otherBetTypes = betTypes.slice(1);
 
   return (
       <Card className="bg-transparent border-none shadow-none">
-          <CardContent className="grid grid-cols-2 gap-2 p-0">
-             {betTypes.map((betType) => (
-                <Link key={betType.title} href={betType.href} passHref>
-                  <BetTypeItem betType={betType} />
-                </Link>
-             ))}
+          <CardContent className="flex flex-col gap-2 p-0">
+            <Link key={firstBetType.title} href={firstBetType.href} passHref>
+                <BetTypeItem betType={firstBetType} />
+            </Link>
+            <div className="grid grid-cols-2 gap-2">
+                {otherBetTypes.map((betType) => (
+                    <Link key={betType.title} href={betType.href} passHref>
+                        <BetTypeItem betType={betType} />
+                    </Link>
+                ))}
+            </div>
           </CardContent>
       </Card>
   );
