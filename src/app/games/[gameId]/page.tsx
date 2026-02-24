@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -160,7 +161,7 @@ export default function GamePage() {
       className={cn(
         "rounded-xl p-2 text-center flex flex-col items-center justify-center space-y-1 h-28 cursor-pointer",
         "transition-all duration-300 transform hover:scale-105 hover:bg-slate-700",
-        "bg-slate-800 border border-slate-700",
+        "bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700",
         animatingBetType === betType.title && 'animate-pulse-once'
       )}
     >
