@@ -3,138 +3,51 @@
 import React from 'react';
 import Link from 'next/link';
 import { useGame } from '@/hooks/use-game';
-import { cn } from '@/lib/utils';
 
-// Icon components
+// Simplified icons to match the user's image
 const SingleDigitIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4.80005 17.5V30.5C4.80005 32.7091 6.59091 34.5 8.80005 34.5H21.8L33.8 22.5V9.5C33.8 7.29086 32.0092 5.5 29.8 5.5H16.8L4.80005 17.5Z" fill="currentColor" fillOpacity="0.8"/>
-        <path d="M21.8 34.5H34.8C37.0092 34.5 38.8 32.7091 38.8 30.5V17.5L21.8 34.5Z" fill="currentColor" fillOpacity="0.6"/>
-        <path d="M43.2 22.5L33.8 31.5V9.5L43.2 22.5Z" fill="currentColor" fillOpacity="0.6"/>
-        <circle cx="25" cy="15" r="2" fill="currentColor" fillOpacity="0.3"/>
-        <circle cx="15" cy="25" r="2" fill="currentColor" fillOpacity="0.3"/>
-        <circle cx="10" cy="20" r="1.5" fill="currentColor" fillOpacity="0.3"/>
-        <circle cx="20" cy="30" r="1.5" fill="currentColor" fillOpacity="0.3"/>
-        <circle cx="30" cy="25" r="1.5" fill="currentColor" fillOpacity="0.3"/>
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 10h-4v4h4v-4zm-6 0H4v4h4v-4zm12 0h-4v4h4v-4z"/>
     </svg>
 );
-
 const JodiDigitIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(15, 0) scale(0.9)" fill="currentColor" opacity="0.7">
-            <path d="M9.8 17.5V30.5C9.8 32.7091 11.5909 34.5 13.8 34.5H26.8L38.8 22.5V9.5C38.8 7.29086 37.0092 5.5 34.8 5.5H21.8L9.8 17.5Z" />
-            <path d="M26.8 34.5H39.8C42.0092 34.5 43.8 32.7091 43.8 30.5V17.5L26.8 34.5Z" opacity="0.8"/>
-            <path d="M48.2 22.5L38.8 31.5V9.5L48.2 22.5Z" opacity="0.8"/>
-            <circle cx="30" cy="15" r="2" fill="currentColor" opacity="0.5"/>
-            <circle cx="20" cy="25" r="2" fill="currentColor" opacity="0.5"/>
-        </g>
-        <g transform="translate(0, 5) scale(0.9)" fill="currentColor">
-            <path d="M9.8 17.5V30.5C9.8 32.7091 11.5909 34.5 13.8 34.5H26.8L38.8 22.5V9.5C38.8 7.29086 37.0092 5.5 34.8 5.5H21.8L9.8 17.5Z"/>
-            <path d="M26.8 34.5H39.8C42.0092 34.5 43.8 32.7091 43.8 30.5V17.5L26.8 34.5Z" opacity="0.8"/>
-            <path d="M48.2 22.5L38.8 31.5V9.5L48.2 22.5Z" opacity="0.8"/>
-            <circle cx="30" cy="15" r="2" fill="currentColor" opacity="0.4"/>
-            <circle cx="20" cy="25" r="2" fill="currentColor" opacity="0.4"/>
-            <circle cx="15" cy="20" r="1.5" fill="currentColor" opacity="0.4"/>
-            <circle cx="25" cy="30" r="1.5" fill="currentColor" opacity="0.4"/>
-            <circle cx="35" cy="25" r="1.5" fill="currentColor" opacity="0.4"/>
-        </g>
-    </svg>
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="8" width="14" height="10" rx="2" fill="currentColor" stroke="none" opacity="0.7"/>
+    <rect x="7" y="6" width="14" height="10" rx="2" fill="currentColor" stroke="none"/>
+  </svg>
 );
-
-const SinglePanaIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z"/>
-        <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-    </svg>
+const PanaIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C9.486 2 7.5 3.986 7.5 6.5C7.5 9.742 12 15 12 15s4.5-5.258 4.5-8.5C16.5 3.986 14.514 2 12 2zM10 20v2h4v-2h-4z"/>
+  </svg>
 );
-
-const DoublePanaIcon = () => (
-     <svg width="48" height="48" viewBox="0 0 56 56" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(8, 8) scale(0.8)" opacity="0.6">
-            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" />
-            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-        </g>
-        <g>
-            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" />
-            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-        </g>
-    </svg>
-);
-
-const TriplePanaIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 64 64" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(16, 16) scale(0.7)" opacity="0.5">
-            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" />
-            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-        </g>
-        <g transform="translate(8, 8) scale(0.8)" opacity="0.7">
-            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" />
-            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-        </g>
-        <g>
-            <path d="M24 4C18.5 12 11 17.5 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 17.5 29.5 12 24 4Z" />
-            <path d="M28 36H20C17.7909 36 16 37.7909 16 40V42C16 43.1046 16.8954 44 18 44H30C31.1046 44 32 43.1046 32 42V40C32 37.7909 30.2091 36 28 36Z" />
-        </g>
-    </svg>
-);
-
-const AllPanaBulkIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2"/>
-        <circle cx="12" cy="6" r="1.5" fill="currentColor"/>
-        <circle cx="17" cy="9" r="1.5" fill="currentColor"/>
-        <circle cx="17" cy="15" r="1.5" fill="currentColor"/>
-        <circle cx="12" cy="18" r="1.5" fill="currentColor"/>
-        <circle cx="7" cy="15" r="1.5" fill="currentColor"/>
-        <circle cx="7" cy="9" r="1.5" fill="currentColor"/>
-    </svg>
-);
-
-const SPMotorIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="8" />
-    </svg>
-);
-
-const DPMotorIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <path d="M8 21h8" />
-        <path d="M12 17v4" />
-        <circle cx="12" cy="9" r="8" />
-        <path d="M12 1v2" />
-        <path d="M12 15v2" />
-        <path d="M4.929 4.929l1.414 1.414" />
-        <path d="M17.657 17.657l-1.414-1.414" />
-        <path d="M3 9h2" />
-        <path d="M19 9h2" />
-        <path d="M4.929 13.071l1.414-1.414" />
-        <path d="M17.657 6.343l-1.414 1.414" />
-        <circle cx="12" cy="9" r="2" fill="currentColor" stroke="none" />
-    </svg>
-);
-
 const HalfSangamIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22V2Z" />
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2A10 10 0 0 0 2 12h20A10 10 0 0 0 12 2z"/>
+  </svg>
+);
+const FullSangamIcon = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10"/>
+  </svg>
+);
+const GenericBetIcon = () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21.41,11.58l-9-9C12.05,2.22,11.55,2,11,2H4C2.9,2,2,2.9,2,4v7c0,0.55,0.22,1.05,0.59,1.42l9,9C13.95,21.78,14.45,22,15,22s1.05-0.22,1.41-0.59l6-6C22.17,14.65,22.17,12.35,21.41,11.58z M13,20l-9-9V4h7l9,9L13,20z"/>
+        <circle cx="6.5" cy="6.5" r="1.5"/>
     </svg>
 );
 
-const FullSangamIcon = () => (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" />
-    </svg>
-);
 
 const BetTypeCard = ({ href, title, icon }: { href: string; title: string; icon: React.ReactNode }) => (
     <Link href={href} passHref>
-        <div className="bg-white rounded-2xl shadow-md p-2 flex flex-col items-center justify-center space-y-2 h-40">
-            <div className="h-16 w-16 bg-slate-900 rounded-full flex items-center justify-center text-white">
-                <div className="transform scale-75">
+        <div className="bg-slate-900 rounded-2xl shadow-md p-4 flex flex-col items-center justify-center space-y-3 h-40 text-white transition-all duration-300 hover:bg-slate-800 hover:shadow-lg hover:shadow-primary/20 active:scale-95">
+            <div className="h-16 w-16 bg-primary rounded-full flex items-center justify-center text-white">
+                <div className="transform scale-90">
                     {icon}
                 </div>
             </div>
-            <div className="w-8 h-0.5 bg-slate-200" />
-            <p className="text-sm font-semibold text-slate-800 text-center">{title}</p>
+            <p className="text-sm font-semibold text-center">{title}</p>
         </div>
     </Link>
 );
@@ -150,16 +63,16 @@ export default function GamePage() {
   const betTypes = [
     { title: 'Single Digit', href: `/games/${game.id}/single-digit`, icon: <SingleDigitIcon /> },
     { title: 'Jodi Digit', href: `/games/${game.id}/jodi-digit`, icon: <JodiDigitIcon /> },
-    { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <SinglePanaIcon /> },
-    { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <SinglePanaIcon /> },
-    { title: 'Double Pana', href: `/games/${game.id}/double-pana`, icon: <DoublePanaIcon /> },
-    { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <DoublePanaIcon /> },
-    { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon /> },
+    { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <PanaIcon /> },
+    { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <PanaIcon /> },
+    { title: 'Double Pana', href: `/games/${game.id}/double-pana`, icon: <PanaIcon /> },
+    { title: 'Double Pana Bulk', href: `/games/${game.id}/double-pana-bulk`, icon: <PanaIcon /> },
+    { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <PanaIcon /> },
     { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon /> },
     { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIcon /> },
-    { title: 'SP DP TP', href: `/games/${game.id}/all-pana-bulk`, icon: <AllPanaBulkIcon /> },
-    { title: 'SP Motor', href: `/games/${game.id}/sp-motor`, icon: <SPMotorIcon /> },
-    { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <DPMotorIcon /> },
+    { title: 'SP DP TP', href: `/games/${game.id}/all-pana-bulk`, icon: <GenericBetIcon /> },
+    { title: 'SP Motor', href: `/games/${game.id}/sp-motor`, icon: <GenericBetIcon /> },
+    { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <GenericBetIcon /> },
   ];
 
   return (

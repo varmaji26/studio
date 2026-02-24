@@ -95,11 +95,11 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
     if (loading) {
          return (
-            <div className="min-h-screen bg-green-100 text-slate-900 p-2">
+            <div className="min-h-screen bg-background text-foreground p-2">
                 <div className="max-w-2xl mx-auto space-y-4">
-                    <Skeleton className="h-14 w-full bg-slate-200" />
-                    <Skeleton className="h-20 w-full bg-slate-200" />
-                    <Skeleton className="h-64 w-full bg-slate-200" />
+                    <Skeleton className="h-14 w-full bg-slate-700/50" />
+                    <Skeleton className="h-20 w-full bg-slate-700/50" />
+                    <Skeleton className="h-64 w-full bg-slate-700/50" />
                 </div>
             </div>
         );
@@ -107,7 +107,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
     if (!game) {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-green-100">
+            <div className="flex h-screen w-full items-center justify-center bg-background">
                 <p>Game not found.</p>
             </div>
         );
@@ -115,10 +115,10 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
     return (
         <GameContext.Provider value={{ game, loading, now }}>
-            <div className="min-h-screen bg-gradient-to-b from-green-50 via-green-100 to-green-200 text-slate-900 flex flex-col">
-                <header className="bg-transparent backdrop-blur-sm p-2.5 grid grid-cols-[auto_1fr_auto] gap-2 items-center sticky top-0 z-10">
+            <div className="min-h-screen bg-background text-foreground flex flex-col">
+                <header className="bg-background/80 backdrop-blur-sm p-2.5 grid grid-cols-[auto_1fr_auto] gap-2 items-center sticky top-0 z-10 border-b border-white/10">
                     <div className="flex justify-start">
-                        <Button variant="ghost" size="icon" className="text-slate-800 h-10 w-10" onClick={() => router.back()}>
+                        <Button variant="ghost" size="icon" className="text-white h-10 w-10" onClick={() => router.back()}>
                             <ArrowLeft />
                         </Button>
                     </div>
@@ -126,8 +126,8 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                         <h1 className="text-lg font-bold uppercase">{game?.name || ''}</h1>
                     </div>
                     <div className="flex justify-end">
-                        <div className="flex items-center gap-2 bg-white text-slate-800 px-3 py-1.5 rounded-full shadow">
-                            <Wallet className="h-5 w-5 text-slate-600" />
+                        <div className="flex items-center gap-2 bg-slate-800/80 text-white px-3 py-1.5 rounded-full shadow border border-white/10">
+                            <Wallet className="h-5 w-5 text-green-400" />
                             <span className="font-bold text-sm">₹{totalBalance.toFixed(0)}</span>
                         </div>
                     </div>
