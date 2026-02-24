@@ -72,32 +72,29 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       !pathname.startsWith('/panel-chart') &&
       pathname !== '/download';
 
-    if (loading) {
+    useEffect(() => {
+        if (loading || isAdminPage) {
+            return;
+        }
+        
+        const isProtectedRoute = !isPublicPage && pathname !== '/download';
+
+        if (!user && isProtectedRoute) {
+            router.replace('/login');
+        }
+
+        if (user && isPublicPage) {
+            router.replace('/');
+        }
+    }, [user, loading, pathname, router, isAdminPage, isPublicPage]);
+
+    const isProtectedRoute = !isPublicPage && pathname !== '/download';
+    if (loading || (!isAdminPage && ((!user && isProtectedRoute) || (user && isPublicPage)))) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
             </div>
         );
-    }
-
-    if (!isAdminPage) {
-        if (!user && !isPublicPage && pathname !== '/download') {
-            router.replace('/login');
-            return (
-                <div className="flex h-screen w-full items-center justify-center bg-background">
-                    <Loader className="h-10 w-10 text-primary" />
-                </div>
-            );
-        }
-
-        if (user && isPublicPage) {
-            router.replace('/');
-            return (
-                <div className="flex h-screen w-full items-center justify-center bg-background">
-                    <Loader className="h-10 w-10 text-primary" />
-                </div>
-            );
-        }
     }
     
     return (
