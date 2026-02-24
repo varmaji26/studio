@@ -141,9 +141,9 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: -300, opacity: 0 }}
                         transition={{
-                            type: "spring",
-                            stiffness: 180,
-                            damping: 25,
+                            type: "tween",
+                            ease: "easeInOut",
+                            duration: 0.4
                         }}
                     >
                         {children}
