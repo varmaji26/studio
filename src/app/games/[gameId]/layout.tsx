@@ -115,20 +115,20 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
     return (
         <GameContext.Provider value={{ game, loading, now }}>
-            <div className="dark min-h-screen bg-background text-foreground flex flex-col">
-                <header className="bg-[#112a45] text-white p-2.5 grid grid-cols-[auto_1fr_auto] gap-2 items-center sticky top-0 z-10 shadow-md">
+            <div className="min-h-screen bg-gradient-to-b from-green-50 via-green-100 to-green-200 text-slate-900 flex flex-col">
+                <header className="bg-transparent backdrop-blur-sm p-2.5 grid grid-cols-[auto_1fr_auto] gap-2 items-center sticky top-0 z-10">
                     <div className="flex justify-start">
-                        <Button variant="ghost" size="icon" className="text-white h-8 w-8" onClick={() => router.back()}>
+                        <Button variant="ghost" size="icon" className="text-slate-800 h-10 w-10" onClick={() => router.back()}>
                             <ArrowLeft />
                         </Button>
                     </div>
                     <div className="text-center">
-                        <h1 className="text-lg font-bold uppercase">{activeBetType}</h1>
+                        <h1 className="text-lg font-bold uppercase">{game?.name || ''}</h1>
                     </div>
                     <div className="flex justify-end">
-                        <div className="flex items-center gap-2 bg-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg">
-                            <Wallet className="h-5 w-5" />
-                            <span className="font-bold text-sm">{totalBalance.toFixed(0)}</span>
+                        <div className="flex items-center gap-2 bg-white text-slate-800 px-3 py-1.5 rounded-full shadow">
+                            <Wallet className="h-5 w-5 text-slate-600" />
+                            <span className="font-bold text-sm">₹{totalBalance.toFixed(0)}</span>
                         </div>
                     </div>
                 </header>

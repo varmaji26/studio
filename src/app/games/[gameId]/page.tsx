@@ -126,15 +126,14 @@ const FullSangamIcon = () => (
 
 const BetTypeCard = ({ href, title, icon }: { href: string; title: string; icon: React.ReactNode }) => (
     <Link href={href} passHref>
-        <div className={cn(
-            "group relative flex h-28 flex-col items-center justify-center space-y-2 rounded-xl p-2 text-center",
-            "border border-slate-700 bg-gradient-to-b from-slate-800 to-slate-900 shadow-lg",
-            "transition-all duration-300 hover:scale-105 hover:border-primary hover:shadow-primary/20"
-        )}>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground border border-primary/30">
-                {icon}
+        <div className="bg-white rounded-2xl shadow-md p-2 flex flex-col items-center justify-center space-y-2 h-40">
+            <div className="h-16 w-16 bg-slate-900 rounded-full flex items-center justify-center text-white">
+                <div className="transform scale-75">
+                    {icon}
+                </div>
             </div>
-            <p className="w-full truncate text-xs font-bold text-foreground">{title}</p>
+            <div className="w-8 h-0.5 bg-slate-200" />
+            <p className="text-sm font-semibold text-slate-800 text-center">{title}</p>
         </div>
     </Link>
 );
@@ -162,31 +161,16 @@ export default function GamePage() {
     { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <DPMotorIcon /> },
   ];
 
-  const firstBetType = betTypes[0];
-  const otherBetTypes = betTypes.slice(1);
-
   return (
-    <div className="space-y-3">
-        {firstBetType && (
-            <div className="col-span-2">
-                 <BetTypeCard
-                    key={firstBetType.title}
-                    href={firstBetType.href}
-                    title={firstBetType.title}
-                    icon={firstBetType.icon}
-                />
-            </div>
-        )}
-        <div className="grid grid-cols-2 gap-3">
-            {otherBetTypes.map((betType) => (
-                <BetTypeCard
-                    key={betType.title}
-                    href={betType.href}
-                    title={betType.title}
-                    icon={betType.icon}
-                />
-            ))}
-        </div>
+    <div className="grid grid-cols-2 gap-4">
+        {betTypes.map((betType) => (
+            <BetTypeCard
+                key={betType.title}
+                href={betType.href}
+                title={betType.title}
+                icon={betType.icon}
+            />
+        ))}
     </div>
   );
 }
