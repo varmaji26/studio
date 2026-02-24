@@ -43,6 +43,7 @@ export default function SinglePanaBulkPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedDigit, setSelectedDigit] = useState<string>('1');
     const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
+    const [locallySelectedPanas, setLocallySelectedPanas] = useState<string[]>([]);
     const [amount, setAmount] = useState<string>('');
     const [session, setSession] = useState<'Open' | 'Close'>('Open');
     const [isMounted, setIsMounted] = useState(false);
@@ -89,6 +90,14 @@ export default function SinglePanaBulkPage() {
         return submittedBids.reduce((acc, bid) => acc + Number(bid.amount), 0);
     }, [submittedBids]);
 
+    const handlePanaSelect = (pana: string) => {
+        setLocallySelectedPanas(prev => 
+            prev.includes(pana) 
+                ? prev.filter(p => p !== pana) 
+                : [...prev, pana]
+        );
+    };
+
     const handleAddBids = () => {
         const parsedAmount = parseInt(amount, 10);
         if (!amount || isNaN(parsedAmount) || parsedAmount < 10) {
@@ -96,13 +105,13 @@ export default function SinglePanaBulkPage() {
             return;
         }
 
-        const newBids = panasForSelectedDigit.map(pana => ({ number: pana, amount: parsedAmount }));
-
-        if (newBids.length === 0) {
-            toast({ title: 'No Panas Selected', description: 'Please select a digit to add bids.', variant: 'destructive' });
+        if (locallySelectedPanas.length === 0) {
+            toast({ title: 'No Panas Selected', description: 'Please select at least one pana to add.', variant: 'destructive' });
             return;
         }
-        
+
+        const newBids = locallySelectedPanas.map(pana => ({ number: pana, amount: parsedAmount }));
+
         setSubmittedBids(prev => {
             const bidsMap = new Map(prev.map(b => [b.number, b.amount]));
             newBids.forEach(bid => {
@@ -112,6 +121,7 @@ export default function SinglePanaBulkPage() {
         });
         
         setAmount('');
+        setLocallySelectedPanas([]);
         toast({ title: 'Bids Added', description: `${newBids.length} bids have been added/updated in your list.` });
     };
 
@@ -264,16 +274,28 @@ export default function SinglePanaBulkPage() {
                             />
                         </div>
                         <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
-                            <CardContent className="p-4 grid grid-cols-3 gap-2">
-                                {panasForSelectedDigit.map((pana) => (
-                                    <div key={pana} className="flex items-center justify-center h-8 bg-background rounded-lg shadow-md border border-primary/50">
-                                        <p className="text-sm font-semibold">{pana}</p>
-                                    </div>
-                                ))}
+                             <CardContent className="p-4 grid grid-cols-3 gap-2">
+                                {panasForSelectedDigit.map((pana) => {
+                                    const isSelected = locallySelectedPanas.includes(pana);
+                                    return (
+                                        <Button
+                                            key={pana}
+                                            variant={isSelected ? "default" : "outline"}
+                                            className={cn(
+                                                "h-8 text-sm font-semibold",
+                                                isSelected ? "bg-primary text-primary-foreground" : "bg-background"
+                                            )}
+                                            onClick={() => handlePanaSelect(pana)}
+                                            disabled={isBettingDisabled}
+                                        >
+                                            {pana}
+                                        </Button>
+                                    );
+                                })}
                             </CardContent>
                         </Card>
                         <Button type="button" onClick={handleAddBids} className="w-full bg-orange-600 hover:bg-orange-700" size="sm" disabled={isBettingDisabled}>
-                           <PlusCircle className="mr-2 h-4 w-4" /> Add Bids
+                           <PlusCircle className="mr-2 h-4 w-4" /> Add Selected Bids
                         </Button>
                     </div>
                     
