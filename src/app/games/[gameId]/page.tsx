@@ -6,11 +6,6 @@ import { useGame } from '@/hooks/use-game';
 import { motion } from 'framer-motion';
 
 // Simplified icons to match the user's image
-const SingleDigitIcon = () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 10h-4v4h4v-4zm-6 0H4v4h4v-4zm12 0h-4v4h4v-4z"/>
-    </svg>
-);
 const JodiDigitIcon = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="8" width="14" height="10" rx="2" fill="currentColor" stroke="none" opacity="0.7"/>
@@ -66,7 +61,7 @@ export default function GamePage() {
   }
   
   const betTypes = [
-    { title: 'Single Digit', href: `/games/${game.id}/single-digit`, icon: <SingleDigitIcon /> },
+    { title: 'Single Digit', href: `/games/${game.id}/single-digit`, icon: <img width="60" height="60" src="https://img.icons8.com/stickers/100/dice.png" alt="dice"/> },
     { title: 'Jodi Digit', href: `/games/${game.id}/jodi-digit`, icon: <JodiDigitIcon /> },
     { title: 'Single Pana', href: `/games/${game.id}/single-pana`, icon: <PanaIcon /> },
     { title: 'Single Pana Bulk', href: `/games/${game.id}/single-pana-bulk`, icon: <PanaIcon /> },
