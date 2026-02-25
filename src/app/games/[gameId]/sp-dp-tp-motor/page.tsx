@@ -17,7 +17,8 @@ import { db } from '@/lib/firebase';
 import { useGame } from '@/hooks/use-game';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+
 
 // Pana lists
 const allSinglePanas: Record<string, string[]> = {
@@ -58,8 +59,8 @@ const panaTypes = [
 
 const formSchema = z.object({
     session: z.enum(['Open', 'Close']),
-    panaType: z.enum(['sp', 'dp', 'tp'], {
-        required_error: "You have to select a pana type.",
+    panaTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
+        message: "You have to select at least one pana type.",
     }),
     number: z.string().length(1, "Please enter a single digit.").regex(/^\d+$/, "Must be digits."),
     points: z.coerce.number().min(10, "Minimum points is 10."),
@@ -103,7 +104,7 @@ export default function SpDpTpMotorPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       session: defaultSession,
-      panaType: undefined,
+      panaTypes: [],
       number: '',
       points: undefined
     },
@@ -140,16 +141,18 @@ export default function SpDpTpMotorPage() {
   }, [submittedBids]);
 
   const handleGenerate = (data: FormValues) => {
-    const { number, points, panaType } = data;
+    const { number, points, panaTypes } = data;
     let generatedPanas: BidItem[] = [];
 
-    if (panaType === 'sp') {
+    if (panaTypes.includes('sp')) {
         const panas = allSinglePanas[number] || [];
         generatedPanas.push(...panas.map(p => ({ number: p, amount: points, type: 'SP' as const })));
-    } else if (panaType === 'dp') {
+    }
+    if (panaTypes.includes('dp')) {
         const panas = allDoublePanas[number] || [];
         generatedPanas.push(...panas.map(p => ({ number: p, amount: points, type: 'DP' as const })));
-    } else if (panaType === 'tp') {
+    }
+    if (panaTypes.includes('tp')) {
         const pana = tpCustomMapping[number];
         if (pana) {
             generatedPanas.push({ number: pana, amount: points, type: 'TP' as const });
@@ -163,6 +166,12 @@ export default function SpDpTpMotorPage() {
 
     setSubmittedBids(prev => [...prev, ...generatedPanas].sort((a, b) => a.number.localeCompare(b.number)));
     toast({ title: "Bids Generated", description: `${generatedPanas.length} bids have been added to your list.` });
+    form.reset({
+        session: form.getValues('session'),
+        panaTypes: [],
+        number: '',
+        points: undefined,
+    });
   };
 
   const removeBid = (index: number) => {
@@ -257,7 +266,12 @@ export default function SpDpTpMotorPage() {
             className: 'bg-green-600 text-white',
         });
         
-        form.reset();
+        form.reset({
+            session: form.getValues('session'),
+            panaTypes: [],
+            number: '',
+            points: undefined,
+        });
         setSubmittedBids([]);
 
     } catch (error: any) {
@@ -305,26 +319,34 @@ export default function SpDpTpMotorPage() {
             
             <FormField
               control={form.control}
-              name="panaType"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex justify-around items-center pt-2"
-                    >
-                      {panaTypes.map((item) => (
-                        <FormItem key={item.id} className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value={item.id} id={item.id} />
-                          </FormControl>
-                          <FormLabel htmlFor={item.id} className="font-medium">{item.label}</FormLabel>
-                        </FormItem>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
+              name="panaTypes"
+              render={() => (
+                <FormItem>
+                  <div className="flex justify-around items-center pt-2">
+                    {panaTypes.map((item) => (
+                      <FormField
+                        key={item.id}
+                        control={form.control}
+                        name="panaTypes"
+                        render={({ field }) => (
+                          <FormItem key={item.id} className="flex flex-row items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(item.id)}
+                                onCheckedChange={(checked) => {
+                                  return checked
+                                    ? field.onChange([...field.value, item.id])
+                                    : field.onChange(field.value?.filter((value) => value !== item.id));
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-medium">{item.label}</FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                  </div>
+                   <FormMessage />
                 </FormItem>
               )}
             />
