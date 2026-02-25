@@ -83,13 +83,22 @@ export default function SpDpTpMotorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
   
-  const defaultSession = useMemo(() => {
-    if (!game) return 'Open';
+  const { openTime, closeTime } = useMemo(() => {
+    if (!game) return { openTime: new Date(), closeTime: new Date() };
     const [openHours, openMinutes] = game.openTime.split(':').map(Number);
     const openTime = new Date(now);
     openTime.setHours(openHours, openMinutes, 0, 0);
-    return now.getTime() >= openTime.getTime() ? 'Close' : 'Open';
+
+    const [closeHours, closeMinutes] = game.closeTime.split(':').map(Number);
+    const closeTime = new Date(now);
+    closeTime.setHours(closeHours, closeMinutes, 0, 0);
+    
+    return { openTime, closeTime };
   }, [game, now]);
+  
+  const defaultSession = useMemo(() => {
+    return now.getTime() >= openTime.getTime() ? 'Close' : 'Open';
+  }, [now, openTime]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -103,24 +112,14 @@ export default function SpDpTpMotorPage() {
   });
 
   const session = form.watch('session');
-  
-  const { openTime, closeTime, isBettingDisabled, isOpenSessionAllowed, isCloseSessionAllowed } = useMemo(() => {
-    if (!game) return { openTime: new Date(), closeTime: new Date(), isBettingDisabled: true, isOpenSessionAllowed: false, isCloseSessionAllowed: false };
-    
-    const [openHours, openMinutes] = game.openTime.split(':').map(Number);
-    const openTime = new Date(now);
-    openTime.setHours(openHours, openMinutes, 0, 0);
 
-    const [closeHours, closeMinutes] = game.closeTime.split(':').map(Number);
-    const closeTime = new Date(now);
-    closeTime.setHours(closeHours, closeMinutes, 0, 0);
-    
-    const bettingDisabled = (session === 'Open' && now.getTime() >= openTime.getTime()) || (session === 'Close' && now.getTime() >= closeTime.getTime());
+  const { isBettingDisabled, isOpenSessionAllowed, isCloseSessionAllowed } = useMemo(() => {
     const openAllowed = now.getTime() < openTime.getTime();
     const closeAllowed = now.getTime() >= openTime.getTime() && now.getTime() < closeTime.getTime();
+    const bettingDisabled = (session === 'Open' && !openAllowed) || (session === 'Close' && !closeAllowed);
 
-    return { openTime, closeTime, isBettingDisabled: bettingDisabled, isOpenSessionAllowed: openAllowed, isCloseSessionAllowed: closeAllowed };
-  }, [game, now, session]);
+    return { isBettingDisabled: bettingDisabled, isOpenSessionAllowed: openAllowed, isCloseSessionAllowed: closeAllowed };
+  }, [now, openTime, closeTime, session]);
   
   useEffect(() => {
      form.setValue('session', defaultSession);
@@ -276,11 +275,11 @@ export default function SpDpTpMotorPage() {
     }
   };
 
-  if (!game) {
-    return <Loader />
-  }
+    if (!game) {
+      return <Loader />
+    }
   
-  const isBettingFinalDisabled = isBettingDisabled || !isBettingAllowed;
+  const isBettingFinalDisabled = isBettingDisabled;
 
   return (
     <Form {...form}>
@@ -391,7 +390,7 @@ export default function SpDpTpMotorPage() {
           <CardFooter className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-background/80 backdrop-blur-sm border-t border-border p-4 flex items-center justify-between gap-4 z-10">
             <div className="flex flex-col text-left">
               <span className="text-xs text-muted-foreground">Total Amount</span>
-              <span className="font-bold text-lg text-white">₹{totalAmount}</span>
+              <span className="font-bold text-lg">₹{totalAmount}</span>
             </div>
             <Button type="button" onClick={handleFinalSubmit} size="lg" className="w-2/3 text-sm bg-green-600 hover:bg-green-700" disabled={isSubmitting || submittedBids.length === 0 || isBettingFinalDisabled}>
               {isSubmitting ? <Loader className="mr-2" /> : null}
