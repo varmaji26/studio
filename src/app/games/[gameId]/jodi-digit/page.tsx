@@ -263,7 +263,7 @@ export default function JodiDigitPage() {
     return (
         <div className="space-y-4 mt-4">
             <Card className="bg-background/80 border-white/10">
-                <CardContent className="p-4 space-y-4 pb-40">
+                <CardContent className="p-4 space-y-4 pb-20">
                     <p className="text-center text-sm font-medium">{game.name}</p>
                     <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-3 flex items-center gap-3">
                         <CalendarIcon className="h-4 w-4" />
@@ -338,7 +338,7 @@ export default function JodiDigitPage() {
                             <ScrollArea className="h-32 rounded-lg bg-slate-900 border border-slate-700 p-1">
                                 <div className="space-y-2 p-1">
                                     {submittedBids.map((bid, index) => (
-                                        <div key={index} className="flex justify-between items-center bg-slate-800 p-1 px-2 rounded-md animate-in fade-in-0">
+                                        <div key={index} className="flex justify-between items-center bg-slate-800 p-1.5 px-3 rounded-md animate-in fade-in-0">
                                             <p className="text-xs">Number: <span className="font-bold">{bid.number}</span></p>
                                             <p className="text-xs">Amount: <span className="font-bold">₹{bid.amount}</span></p>
                                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeBid(bid.number)}>

@@ -233,7 +233,7 @@ export default function SingleDigitPage() {
   const isBettingDisabled = (session === 'Open' && isOpenDisabled) || (session === 'Close' && isCloseDisabled) || isCloseDisabled;
 
   return (
-    <div className="space-y-4 mt-4">
+    <div className="space-y-4 mt-4 pb-20">
         <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
             <CardHeader className="p-0">
                 <CardTitle className="text-sm font-semibold text-foreground p-4">Choose Session</CardTitle>

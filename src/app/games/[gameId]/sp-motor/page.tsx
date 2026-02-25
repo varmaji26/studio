@@ -223,7 +223,7 @@ export default function SpMotorPage() {
     <Form {...form}>
       <form className="space-y-6">
         <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
-          <CardContent className="p-4 space-y-4 pb-40">
+          <CardContent className="p-4 space-y-4 pb-20">
             <p className="text-center text-sm font-medium">{game.name}</p>
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-3 flex items-center gap-3">
               <CalendarIcon className="h-4 w-4" />

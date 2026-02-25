@@ -245,7 +245,7 @@ export default function TriplePanaPage() {
     return (
         <div className="space-y-4 mt-4">
             <Card className="bg-background/80 border-white/10">
-                <CardContent className="p-4 space-y-4 pb-40">
+                <CardContent className="p-4 space-y-4 pb-20">
                     <p className="text-center text-sm font-medium">{game.name}</p>
                     <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-3 flex items-center gap-3">
                         <CalendarIcon className="h-4 w-4" />

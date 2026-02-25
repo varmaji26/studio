@@ -192,7 +192,7 @@ export default function SpDpTpPage() {
   return (
     <div className="space-y-4">
         <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
-            <CardContent className="p-4 space-y-4 pb-40">
+            <CardContent className="p-4 space-y-4 pb-20">
                 <p className="text-center font-bold text-lg text-primary">{game.name}</p>
                 <div className="rounded-lg border bg-card p-3 flex items-center justify-center gap-3">
                     <CalendarIcon className="h-4 w-4" />
