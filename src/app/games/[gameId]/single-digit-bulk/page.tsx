@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, runTransaction, collection, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
+import { doc, runTransaction, collection, addDoc, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ export default function SingleDigitBulkPage() {
         return () => unsubscribe();
     }, []);
 
-    const minBet = settings?.betAmountSettings?.singleDigit?.min || 10;
+    const minBet = settings?.betAmountSettings?.singleDigit?.min || 5;
 
     useEffect(() => {
         setIsMounted(true);
@@ -213,50 +213,50 @@ export default function SingleDigitBulkPage() {
     }
 
     return (
-        <div className="space-y-4 mt-4">
+        <div className="space-y-3 mt-2">
             <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
-                <CardContent className="p-4 space-y-4 pb-20">
-                    <p className="text-center text-sm font-bold text-primary uppercase">{game.name}</p>
-                    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-3 flex items-center justify-center gap-3">
-                        <CalendarIcon className="h-4 w-4" />
-                        <p className="text-sm font-medium">{format(new Date(), "EEEE, dd MMMM yyyy")}</p>
+                <CardContent className="p-3 space-y-3 pb-20">
+                    <p className="text-center text-xs font-bold text-primary uppercase">{game.name}</p>
+                    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-2 flex items-center justify-center gap-2">
+                        <CalendarIcon className="h-3 w-3" />
+                        <p className="text-[10px] font-medium">{format(new Date(), "EEEE, dd MMMM yyyy")}</p>
                     </div>
-                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase text-muted-foreground">Choose Session</Label>
+                     <div className="space-y-1">
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Choose Session</Label>
                         <RadioGroup 
                             value={session} 
                             onValueChange={(value) => setSession(value as 'Open' | 'Close')}
                             className="grid grid-cols-2 gap-2"
                         >
-                            <Label className={cn("flex items-center justify-center rounded-md border p-3 text-center text-sm font-bold cursor-pointer transition-all", session === 'Open' ? 'bg-orange-600 text-white border-orange-600 shadow-lg' : 'bg-background/20 border-white/10', (now.getTime() >= openTime.getTime()) && 'opacity-50 cursor-not-allowed')}>
+                            <Label className={cn("flex items-center justify-center rounded-md border p-1.5 text-center text-xs font-bold cursor-pointer transition-all", session === 'Open' ? 'bg-orange-600 text-white border-orange-600 shadow-md' : 'bg-background/20 border-white/10', (now.getTime() >= openTime.getTime()) && 'opacity-50 cursor-not-allowed')}>
                                 <RadioGroupItem value="Open" id="open" className="sr-only" disabled={now.getTime() >= openTime.getTime()} />
                                 Open
                             </Label>
-                            <Label className={cn("flex items-center justify-center rounded-md border p-3 text-center text-sm font-bold cursor-pointer transition-all", session === 'Close' ? 'bg-orange-600 text-white border-orange-600 shadow-lg' : 'bg-background/20 border-white/10', now.getTime() >= closeTime.getTime() && 'opacity-50 cursor-not-allowed')}>
+                            <Label className={cn("flex items-center justify-center rounded-md border p-1.5 text-center text-xs font-bold cursor-pointer transition-all", session === 'Close' ? 'bg-orange-600 text-white border-orange-600 shadow-md' : 'bg-background/20 border-white/10', now.getTime() >= closeTime.getTime() && 'opacity-50 cursor-not-allowed')}>
                                 <RadioGroupItem value="Close" id="close" className="sr-only" disabled={now.getTime() >= closeTime.getTime()} />
                                 Close
                             </Label>
                         </RadioGroup>
                     </div>
                     {isBettingDisabled && (
-                        <p className="text-center text-red-500 text-xs font-bold p-2 bg-red-100/10 rounded-md">Bidding is closed for this session.</p>
+                        <p className="text-center text-red-500 text-[10px] font-bold p-1.5 bg-red-100/10 rounded-md">Bidding is closed for this session.</p>
                     )}
                     
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="bet-amount" className="text-xs font-bold uppercase text-muted-foreground">Add Amount</Label>
+                    <div className="space-y-3">
+                        <div className="space-y-1">
+                            <Label htmlFor="bet-amount" className="text-[10px] font-bold uppercase text-muted-foreground">Add Amount</Label>
                             <Input 
                                 id="bet-amount"
                                 type="number"
                                 placeholder={`Enter amount (min ${minBet})`} 
-                                className="h-12 text-center text-base font-bold bg-slate-100 text-slate-900 border-none rounded-lg"
+                                className="h-9 text-center text-xs font-bold bg-slate-100 text-slate-900 border-none rounded-md"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                                 disabled={isBettingDisabled}
                             />
                         </div>
                         
-                        <div className="grid grid-cols-5 gap-2">
+                        <div className="grid grid-cols-5 gap-1.5">
                             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((digit) => {
                                 const isSelected = locallySelectedDigits.includes(digit.toString());
                                 return (
@@ -264,9 +264,9 @@ export default function SingleDigitBulkPage() {
                                         key={digit}
                                         variant="outline"
                                         className={cn(
-                                            "h-14 text-lg font-black rounded-lg border-2 transition-all",
+                                            "h-10 text-base font-black rounded-md border transition-all",
                                             isSelected 
-                                                ? "bg-orange-600 text-white border-orange-600 shadow-md scale-95" 
+                                                ? "bg-orange-600 text-white border-orange-600 shadow-sm scale-95" 
                                                 : "bg-slate-100 text-slate-900 border-slate-200 hover:bg-slate-200"
                                         )}
                                         onClick={() => handleDigitSelect(digit.toString())}
@@ -278,22 +278,22 @@ export default function SingleDigitBulkPage() {
                             })}
                         </div>
 
-                        <Button type="button" onClick={handleAddBids} className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg shadow-lg" disabled={isBettingDisabled}>
-                           <PlusCircle className="mr-2 h-5 w-5" /> Add Bids
+                        <Button type="button" onClick={handleAddBids} className="w-full h-9 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-md shadow-md" disabled={isBettingDisabled}>
+                           <PlusCircle className="mr-1.5 h-4 w-4" /> Add Bids
                         </Button>
                     </div>
                     
                     {submittedBids.length > 0 && (
-                        <div className="space-y-2 pt-4">
-                            <h4 className="text-[10px] font-bold text-center text-muted-foreground uppercase">YOUR BIDS LIST</h4>
-                             <ScrollArea className="h-28 rounded-lg bg-slate-950/50 p-1 border border-white/5">
+                        <div className="space-y-1 pt-2">
+                            <h4 className="text-[9px] font-bold text-center text-muted-foreground uppercase">YOUR BIDS LIST</h4>
+                             <ScrollArea className="h-28 rounded-md bg-slate-950/50 p-1 border border-white/5">
                                 <div className="space-y-1">
                                     {submittedBids.map((bid, index) => (
-                                        <div key={index} className="flex justify-between items-center bg-slate-800/80 p-1 px-3 rounded-md border border-white/5 text-[10px] animate-in fade-in-0">
+                                        <div key={index} className="flex justify-between items-center bg-slate-800/80 p-1 px-2 rounded-md border border-white/5 text-[9px] animate-in fade-in-0">
                                             <p>Number: <span className="font-bold text-primary">{bid.number}</span></p>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
                                                 <p>Amount: <span className="font-bold text-green-400">₹{bid.amount}</span></p>
-                                                <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeBid(bid.number)}>
+                                                <Button variant="ghost" size="icon" className="h-4 w-4 text-destructive" onClick={() => removeBid(bid.number)}>
                                                     <Trash2 className="h-3 w-3"/>
                                                 </Button>
                                             </div>
@@ -304,12 +304,12 @@ export default function SingleDigitBulkPage() {
                         </div>
                     )}
                 </CardContent>
-                <CardFooter className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-background/95 backdrop-blur-sm border-t border-border p-4 flex items-center justify-between gap-4 z-50">
+                <CardFooter className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-background/95 backdrop-blur-sm border-t border-border p-3 flex items-center justify-between gap-3 z-50">
                     <div className="flex flex-col text-left">
-                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Amount</span>
-                        <span className="font-black text-xl text-primary">₹{totalAmount}</span>
+                        <span className="text-[9px] text-muted-foreground uppercase font-bold">Total Amount</span>
+                        <span className="font-black text-lg text-primary">₹{totalAmount}</span>
                     </div>
-                    <Button onClick={handleFinalSubmit} size="lg" className="flex-1 h-12 bg-slate-400 text-slate-100 hover:bg-green-600 hover:text-white font-black rounded-lg transition-all" disabled={isSubmitting || isBettingDisabled || submittedBids.length === 0}>
+                    <Button onClick={handleFinalSubmit} size="lg" className="flex-1 h-10 bg-green-600 text-white hover:bg-green-700 font-bold text-xs rounded-md transition-all" disabled={isSubmitting || isBettingDisabled || submittedBids.length === 0}>
                          {isSubmitting ? <Loader className="mr-2" /> : null}
                          {isBettingDisabled ? 'Bidding Closed' : 'Continue'}
                     </Button>
