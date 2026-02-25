@@ -37,6 +37,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
         switch (lastSegment) {
             case 'single-digit': return 'Single Digit';
+            case 'single-digit-bulk': return 'Single Digit Bulk';
             case 'jodi-digit': return 'Jodi Digit';
             case 'single-pana': return 'Single Pana';
             case 'double-pana': return 'Double Pana';
@@ -115,30 +116,30 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     }
 
     return (
-        <GameContext.Provider value={{ game, loading, now }}>
-            <div className="min-h-screen bg-background text-foreground flex flex-col">
-                <header className="bg-background/80 backdrop-blur-sm p-2.5 grid grid-cols-[auto_1fr_auto] gap-2 items-center sticky top-0 z-10 border-b border-white/10">
-                    <div className="flex justify-start">
-                        <Button variant="ghost" size="icon" className="text-white h-10 w-10" onClick={() => router.back()}>
-                            <ArrowLeft />
-                        </Button>
+        <div className="min-h-screen bg-background text-foreground flex flex-col">
+            <header className="bg-background/80 backdrop-blur-sm p-2.5 grid grid-cols-[auto_1fr_auto] gap-2 items-center sticky top-0 z-10 border-b border-white/10">
+                <div className="flex justify-start">
+                    <Button variant="ghost" size="icon" className="text-white h-10 w-10" onClick={() => router.back()}>
+                        <ArrowLeft />
+                    </Button>
+                </div>
+                <div className="text-center">
+                    <h1 className="text-lg font-bold uppercase">{activeBetType}</h1>
+                </div>
+                <div className="flex justify-end">
+                    <div className="flex items-center gap-2 bg-slate-800/80 text-white px-3 py-1.5 rounded-full shadow border border-white/10">
+                        <Wallet className="h-5 w-5 text-green-400" />
+                        <span className="font-bold text-sm">₹{totalBalance.toFixed(0)}</span>
                     </div>
-                    <div className="text-center">
-                        <h1 className="text-lg font-bold uppercase">{activeBetType}</h1>
-                    </div>
-                    <div className="flex justify-end">
-                        <div className="flex items-center gap-2 bg-slate-800/80 text-white px-3 py-1.5 rounded-full shadow border border-white/10">
-                            <Wallet className="h-5 w-5 text-green-400" />
-                            <span className="font-bold text-sm">₹{totalBalance.toFixed(0)}</span>
-                        </div>
-                    </div>
-                </header>
-                <main className="flex-1 p-2 pb-10">
-                    <div className="max-w-2xl mx-auto">
+                </div>
+            </header>
+            <main className="flex-1 p-2 pb-10">
+                <div className="max-w-2xl mx-auto">
+                    <GameContext.Provider value={{ game, loading, now }}>
                         {children}
-                    </div>
-                </main>
-            </div>
-        </GameContext.Provider>
+                    </GameContext.Provider>
+                </div>
+            </main>
+        </div>
     );
 }
