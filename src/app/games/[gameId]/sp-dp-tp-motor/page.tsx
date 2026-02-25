@@ -10,13 +10,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 import { CalendarIcon, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { collection, runTransaction, doc, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, runTransaction, doc, serverTimestamp, increment, DocumentData, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useGame } from '@/hooks/use-game';
-import { useAuth } from '@/hooks/use-auth';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader } from '@/components/loader';
 
 // Pana lists from other files
@@ -44,7 +44,6 @@ const allDoublePanas: Record<string, string[]> = {
     '9': ['117', '144', '199', '225', '388', '559', '577', '667', '900'],
     '0': ['118', '226', '244', '299', '334', '488', '550', '668', '677'],
 };
-const allTriplePanas = ['000', '111', '222', '333', '444', '555', '666', '777', '888', '999'];
 const tpCustomMapping: Record<string, string> = {
     '1': '777', '2': '444', '3': '111', '4': '888', '5': '555',
     '6': '222', '7': '999', '8': '666', '9': '333', '0': '000',
@@ -122,7 +121,7 @@ export default function SpDpTpMotorPage() {
 
     return { openTime, closeTime, isBettingDisabled: bettingDisabled, isOpenSessionAllowed: openAllowed, isCloseSessionAllowed: closeAllowed };
   }, [game, now, session]);
-
+  
   useEffect(() => {
      form.setValue('session', defaultSession);
   }, [defaultSession, form]);
@@ -215,28 +214,45 @@ export default function SpDpTpMotorPage() {
             
             let realAmountToDeduct = Math.min(totalAmount, realBalance);
             let bonusAmountToDeduct = totalAmount - realAmountToDeduct;
-            
+
             transaction.update(userDocRef, {
                 balance: increment(-realAmountToDeduct),
                 bonusBalance: increment(-bonusAmountToDeduct)
             });
             
-            const bidData = {
-                userId: user.uid,
-                displayName: user.displayName,
-                mobile: profile.mobile,
-                gameId: game?.id,
-                gameName: game?.name,
-                betType: 'spDpTp',
-                session: currentSession,
-                numbers: submittedBids.map(b => b.number),
-                totalAmount: totalAmount,
-                status: 'running',
-                betSource: bonusAmountToDeduct > 0 && realAmountToDeduct > 0 ? 'mixed' : bonusAmountToDeduct > 0 ? 'bonus' : 'real'
-            };
-            
-            const newBidRef = doc(collection(db, "bids"));
-            transaction.set(newBidRef, { ...bidData, createdAt: serverTimestamp() });
+            const groupedBids: { [key: string]: { numbers: string[]; amount: number; type: 'SP' | 'DP' | 'TP' } } = {};
+            submittedBids.forEach(bid => {
+                const key = `${bid.type}-${bid.amount}`;
+                if (!groupedBids[key]) {
+                    groupedBids[key] = { numbers: [], amount: bid.amount, type: bid.type };
+                }
+                groupedBids[key].numbers.push(bid.number);
+            });
+
+            for (const key in groupedBids) {
+                const group = groupedBids[key];
+                const totalGroupAmount = group.amount * group.numbers.length;
+                
+                let betTypeForDb: 'Single Pana' | 'Double Pana' | 'Triple Pana' = 'Single Pana';
+                if (group.type === 'DP') betTypeForDb = 'Double Pana';
+                if (group.type === 'TP') betTypeForDb = 'Triple Pana';
+
+                const bidData = {
+                    userId: user.uid,
+                    displayName: user.displayName,
+                    mobile: userData.mobile,
+                    gameId: game?.id,
+                    gameName: game?.name,
+                    betType: betTypeForDb,
+                    session: currentSession,
+                    numbers: group.numbers,
+                    totalAmount: totalGroupAmount,
+                    amountPerBet: group.amount,
+                    status: 'running',
+                };
+                const newBidRef = doc(collection(db, "bids"));
+                transaction.set(newBidRef, { ...bidData, createdAt: serverTimestamp() });
+            }
         });
 
         toast({
@@ -263,12 +279,15 @@ export default function SpDpTpMotorPage() {
   if (!game) {
     return <Loader />
   }
+  
+  const isBettingFinalDisabled = isBettingDisabled || !isBettingAllowed;
 
   return (
     <Form {...form}>
       <form className="space-y-6">
         <Card className="bg-background/80 border-white/10">
           <CardContent className="p-4 space-y-4 pb-40">
+            <p className="text-center text-sm font-medium">{game.name}</p>
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-3 flex items-center gap-3">
               <CalendarIcon className="h-4 w-4" />
               <p className="text-sm font-medium">{format(new Date(), "EEEE, dd MMMM yyyy")}</p>
@@ -372,11 +391,11 @@ export default function SpDpTpMotorPage() {
           <CardFooter className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-background/80 backdrop-blur-sm border-t border-border p-4 flex items-center justify-between gap-4 z-10">
             <div className="flex flex-col text-left">
               <span className="text-xs text-muted-foreground">Total Amount</span>
-              <span className="font-bold text-lg">₹{totalAmount}</span>
+              <span className="font-bold text-lg text-white">₹{totalAmount}</span>
             </div>
-            <Button type="button" onClick={handleFinalSubmit} size="lg" className="w-2/3 text-sm bg-green-600 hover:bg-green-700" disabled={isSubmitting || submittedBids.length === 0 || isBettingDisabled}>
+            <Button type="button" onClick={handleFinalSubmit} size="lg" className="w-2/3 text-sm bg-green-600 hover:bg-green-700" disabled={isSubmitting || submittedBids.length === 0 || isBettingFinalDisabled}>
               {isSubmitting ? <Loader className="mr-2" /> : null}
-              {isBettingDisabled ? 'Bidding Closed' : 'Submit Bids'}
+              {isBettingFinalDisabled ? 'Bidding Closed' : 'Submit Bids'}
             </Button>
           </CardFooter>
         </Card>
