@@ -334,16 +334,18 @@ export default function JodiDigitPage() {
                     
                     {submittedBids.length > 0 && (
                         <div className="space-y-2 pt-4">
-                            <h4 className="text-xs font-medium text-center text-muted-foreground">YOUR BIDS LIST</h4>
-                            <ScrollArea className="h-32 rounded-lg bg-slate-900 border border-slate-700 p-1">
-                                <div className="space-y-2 p-1">
+                            <h4 className="text-xs font-bold text-center text-muted-foreground uppercase">YOUR BIDS LIST</h4>
+                            <ScrollArea className="h-28 rounded-lg bg-slate-950/50 p-1 border border-white/5">
+                                <div className="space-y-1">
                                     {submittedBids.map((bid, index) => (
-                                        <div key={index} className="flex justify-between items-center bg-slate-800 p-1.5 px-3 rounded-md animate-in fade-in-0">
-                                            <p className="text-xs">Number: <span className="font-bold">{bid.number}</span></p>
-                                            <p className="text-xs">Amount: <span className="font-bold">₹{bid.amount}</span></p>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeBid(bid.number)}>
-                                                <Trash2 className="h-3 w-3 text-destructive"/>
-                                            </Button>
+                                        <div key={index} className="flex justify-between items-center bg-slate-800/80 p-1 px-3 rounded-md border border-white/5 text-[10px] animate-in fade-in-0">
+                                            <p>Number: <span className="font-bold">{bid.number}</span></p>
+                                            <div className="flex items-center gap-3">
+                                                <p>Amount: <span className="font-bold text-green-400">₹{bid.amount}</span></p>
+                                                <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeBid(bid.number)}>
+                                                    <Trash2 className="h-3 w-3"/>
+                                                </Button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -353,7 +355,7 @@ export default function JodiDigitPage() {
                 </CardContent>
                 <CardFooter className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-background/80 backdrop-blur-sm border-t border-border p-3 flex items-center justify-between gap-4 z-10">
                     <div className="flex flex-col text-left">
-                        <span className="text-xs text-muted-foreground">Total Amount</span>
+                        <span className="text-xs text-muted-foreground uppercase font-bold">Total Amount</span>
                         <span className="font-bold text-lg text-white">₹{totalAmount}</span>
                     </div>
                     <Button onClick={handleFinalSubmit} size="lg" className="w-2/3 text-sm bg-green-600 hover:bg-green-700" disabled={isSubmitting || isBettingDisabled || submittedBids.length === 0}>

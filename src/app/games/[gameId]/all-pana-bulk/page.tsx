@@ -17,6 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Pana lists
 const allSinglePanas: Record<string, string[]> = {
@@ -235,19 +236,22 @@ export default function SpDpTpPage() {
                 {submittedBids.length > 0 && (
                     <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                            <h4 className="text-xs font-bold text-muted-foreground">GENERATED BIDS ({submittedBids.length})</h4>
-                            <Button variant="ghost" size="sm" onClick={() => setSubmittedBids([])} className="h-6 text-[10px] text-destructive">Clear All</Button>
+                            <h4 className="text-[10px] font-bold text-muted-foreground uppercase text-center w-full">GENERATED BIDS ({submittedBids.length})</h4>
                         </div>
-                        <div className="border rounded-lg p-1 space-y-1 max-h-48 overflow-y-auto bg-slate-950/50">
-                            {submittedBids.map((b, i) => (
-                                <div key={i} className="flex justify-between items-center bg-slate-800/80 p-2 rounded-md border border-white/5">
-                                    <p className="text-xs font-bold"><span className="text-primary">{b.type}:</span> {b.number}</p>
-                                    <div className="flex items-center gap-3">
-                                        <p className="text-xs font-bold text-green-400">₹{b.amount}</p>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSubmittedBids(prev => prev.filter((_, idx) => idx !== i))}><Trash2 className="h-3 w-3 text-destructive"/></Button>
-                                    </div>
+                        <div className="border rounded-lg p-1 border-white/5 bg-slate-950/50">
+                            <ScrollArea className="h-28">
+                                <div className="space-y-1 p-1">
+                                    {submittedBids.map((b, i) => (
+                                        <div key={i} className="flex justify-between items-center bg-slate-800/80 p-1 px-3 rounded-md border border-white/5 text-[10px]">
+                                            <p className="font-bold"><span className="text-primary">{b.type}:</span> {b.number}</p>
+                                            <div className="flex items-center gap-3">
+                                                <p className="font-bold text-green-400">₹{b.amount}</p>
+                                                <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => setSubmittedBids(prev => prev.filter((_, idx) => idx !== i))}><Trash2 className="h-3 w-3"/></Button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </ScrollArea>
                         </div>
                     </div>
                 )}

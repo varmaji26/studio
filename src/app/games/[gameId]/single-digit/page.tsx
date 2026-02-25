@@ -280,16 +280,18 @@ export default function SingleDigitPage() {
 
         {bidList.length > 0 && (
             <div className="mt-6">
-                <h3 className="font-semibold mb-2">Your Bids List</h3>
-                <ScrollArea className="h-40 rounded-lg bg-slate-900 p-2">
+                <h3 className="text-xs font-bold text-muted-foreground text-center uppercase mb-2">Your Bids List</h3>
+                <ScrollArea className="h-28 rounded-lg bg-slate-950/50 p-1 border border-white/5">
                     <div className="space-y-1">
                         {bidList.map((bid, index) => (
-                            <div key={index} className="flex justify-between items-center bg-slate-800 px-2 py-1 rounded-md text-xs">
+                            <div key={index} className="flex justify-between items-center bg-slate-800/80 px-3 py-1 rounded-md border border-white/5 text-[10px]">
                                 <p>Number: <span className="font-bold">{bid.number}</span></p>
-                                <p>Amount: <span className="font-bold">₹{bid.amount}</span></p>
-                                <Button size="icon" variant="ghost" className="h-4 w-4 text-red-400" onClick={() => handleRemoveBid(bid.number)}>
-                                    <Trash2 className="h-3 w-3" />
-                                </Button>
+                                <div className="flex items-center gap-3">
+                                    <p>Amount: <span className="font-bold text-green-400">₹{bid.amount}</span></p>
+                                    <Button size="icon" variant="ghost" className="h-5 w-5 text-destructive" onClick={() => handleRemoveBid(bid.number)}>
+                                        <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -299,8 +301,8 @@ export default function SingleDigitPage() {
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border p-3 flex items-center justify-between z-10 max-w-2xl mx-auto">
             <div>
-                <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="font-bold text-xl text-white">₹{totalAmount}</p>
+                <p className="text-xs text-muted-foreground uppercase font-bold">Total Amount</p>
+                <p className="font-bold text-xl text-primary">₹{totalAmount}</p>
             </div>
             <Button className="h-12 px-8 font-bold text-base bg-green-600 hover:bg-green-700" onClick={handlePlaceBet} disabled={isSubmitting || totalAmount === 0 || isBettingDisabled}>
                 {isSubmitting ? <Loader className="mr-2" /> : null}

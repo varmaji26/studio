@@ -18,6 +18,7 @@ import { useGame } from '@/hooks/use-game';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader } from '@/components/loader';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 // Pana lists
@@ -383,24 +384,30 @@ export default function SpDpTpMotorPage() {
             
             {submittedBids.length > 0 && (
                 <div className="space-y-2 pt-4">
-                    <h4 className="text-xs font-medium text-center text-muted-foreground">Generated Bids</h4>
-                    <div className="border rounded-lg p-1 space-y-1 max-h-48 overflow-y-auto bg-slate-900 border-slate-700">
-                        {submittedBids.map((bid, index) => (
-                            <div key={index} className="flex justify-between items-center bg-slate-800 p-1 px-2 rounded-md animate-in fade-in-0">
-                                <p className="text-xs">Pana: <span className="font-bold">{bid.number}</span> ({bid.type})</p>
-                                <p className="text-xs">Amount: <span className="font-bold">₹{bid.amount}</span></p>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeBid(index)}>
-                                    <Trash2 className="h-3 w-3 text-destructive"/>
-                                </Button>
+                    <h4 className="text-[10px] font-bold text-center text-muted-foreground uppercase">Generated Bids</h4>
+                    <div className="border rounded-lg p-1 border-white/5 bg-slate-950/50">
+                        <ScrollArea className="h-28">
+                            <div className="space-y-1 p-1">
+                                {submittedBids.map((bid, index) => (
+                                    <div key={index} className="flex justify-between items-center bg-slate-800 p-1 px-3 rounded-md border border-white/5 text-[10px] animate-in fade-in-0">
+                                        <p>Pana: <span className="font-bold">{bid.number}</span> ({bid.type})</p>
+                                        <div className="flex items-center gap-3">
+                                            <p>Amount: <span className="font-bold text-green-400">₹{bid.amount}</span></p>
+                                            <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeBid(index)}>
+                                                <Trash2 className="h-3 w-3"/>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        </ScrollArea>
                     </div>
                 </div>
             )}
           </CardContent>
           <CardFooter className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-background/80 backdrop-blur-sm border-t border-border p-4 flex items-center justify-between gap-4 z-10">
             <div className="flex flex-col text-left">
-              <span className="text-xs text-muted-foreground">Total Amount</span>
+              <span className="text-xs text-muted-foreground uppercase font-bold">Total Amount</span>
               <span className="font-bold text-lg">₹{totalAmount}</span>
             </div>
             <Button type="button" onClick={handleFinalSubmit} size="lg" className="w-2/3 text-sm bg-green-600 hover:bg-green-700" disabled={isSubmitting || submittedBids.length === 0 || isBettingFinalDisabled}>
