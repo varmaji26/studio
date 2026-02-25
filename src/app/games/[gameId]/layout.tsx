@@ -133,7 +133,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                         </div>
                     </div>
                 </header>
-                <main className="flex-1 p-2 pb-28">
+                <main className="flex-1 p-2 pb-10">
                     <div className="max-w-2xl mx-auto">
                         {children}
                     </div>

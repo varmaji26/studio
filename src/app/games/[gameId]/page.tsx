@@ -327,7 +327,7 @@ export default function GamePage() {
     { title: 'Triple Pana', href: `/games/${game.id}/triple-pana`, icon: <TriplePanaIcon /> },
 
     { title: 'Half Sangam', href: `/games/${game.id}/half-sangam`, icon: <HalfSangamIcon /> },
-    { title: 'Full Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIconNew /> },
+    { title: 'Half Sangam', href: `/games/${game.id}/full-sangam`, icon: <FullSangamIconNew /> },
 
     // Updated SP DP TP
     { title: 'SP DP TP', href: `/games/${game.id}/all-pana-bulk`, icon: <SPDPTP_Icon /> },
@@ -335,12 +335,12 @@ export default function GamePage() {
     // Updated SP Motor
     { title: 'SP Motor', href: `/games/${game.id}/sp-motor`, icon: <SPMotorIcon /> },
     
-    // Updated DP Motor with naya icon jo aapne diya
+    // Updated DP Motor with naya icon jo aapने दिया
     { title: 'DP Motor', href: `/games/${game.id}/dp-motor`, icon: <DPMotorIcon /> },
   ];
 
   return (
-    <div className="p-4 bg-background min-h-screen">
+    <div className="p-4">
       <div className="grid grid-cols-2 gap-4">
         {betTypes.map((betType) => (
           <BetTypeCard
