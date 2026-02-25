@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GameContext, type Game } from '@/hooks/use-game';
 import { useAuth } from '@/hooks/use-auth';
-import { motion } from 'framer-motion';
 
 interface UserProfile extends DocumentData {
   balance?: number;
@@ -49,6 +48,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             case 'full-sangam': return 'Full Sangam';
             case 'single-pana-bulk': return 'Single Pana Bulk';
             case 'double-pana-bulk': return 'Double Pana Bulk';
+            case 'sp-dp-tp-motor': return 'SP DP TP MOTOR';
             default: return game?.name || '';
         }
     }, [pathname, gameId, game]);
@@ -134,20 +134,9 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                     </div>
                 </header>
                 <main className="flex-1 p-2 pb-28">
-                    <motion.div
-                        key={pathname}
-                        className="max-w-2xl mx-auto"
-                        initial={{ x: 300, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: -300, opacity: 0 }}
-                        transition={{
-                            type: "tween",
-                            ease: "easeInOut",
-                            duration: 0.4
-                        }}
-                    >
+                    <div className="max-w-2xl mx-auto">
                         {children}
-                    </motion.div>
+                    </div>
                 </main>
             </div>
         </GameContext.Provider>
