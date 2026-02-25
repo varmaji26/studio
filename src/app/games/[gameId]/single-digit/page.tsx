@@ -263,7 +263,7 @@ export default function SingleDigitPage() {
                             </div>
                             <Input
                                 type="number"
-                                placeholder={`₹${minBet}-${maxBet}`}
+                                placeholder=""
                                 className="bg-slate-700 border-slate-600 h-8 text-center text-white"
                                 value={inputAmounts[num] || ''}
                                 onChange={(e) => handleInputChange(num, e.target.value)}
