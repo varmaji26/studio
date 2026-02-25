@@ -2,382 +2,265 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, runTransaction, collection, addDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { doc, runTransaction, collection, addDoc, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useGame } from '@/hooks/use-game';
+import { cn } from '@/lib/utils';
 import { CalendarIcon, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useGame } from '@/hooks/use-game';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Checkbox } from '@/components/ui/checkbox';
+
+// Pana lists
+const allSinglePanas: Record<string, string[]> = {
+    '1': ['128', '137', '146', '236', '245', '290', '380', '470', '489', '560', '678', '579'],
+    '2': ['129', '138', '147', '156', '237', '246', '345', '390', '480', '570', '589', '679'],
+    '3': ['120', '139', '148', '157', '238', '247', '256', '346', '490', '580', '670', '689'],
+    '4': ['130', '149', '158', '167', '239', '248', '257', '347', '356', '590', '680', '789'],
+    '5': ['140', '159', '168', '230', '249', '258', '267', '348', '357', '459', '690', '780'],
+    '6': ['123', '150', '169', '178', '240', '259', '268', '349', '358', '367', '450', '790'],
+    '7': ['124', '160', '179', '250', '269', '278', '340', '359', '368', '458', '467', '890'],
+    '8': ['125', '134', '170', '189', '260', '279', '350', '369', '378', '459', '468', '567'],
+    '9': ['126', '135', '180', '234', '270', '289', '360', '379', '450', '469', '478', '568'],
+    '0': ['127', '136', '145', '190', '235', '280', '370', '389', '460', '479', '569', '578'],
+};
+const allDoublePanas: Record<string, string[]> = {
+    '1': ['100', '119', '155', '227', '335', '344', '399', '588', '669'],
+    '2': ['110', '200', '228', '255', '336', '499', '660', '688', '778'],
+    '3': ['166', '229', '300', '337', '355', '445', '599', '779', '788'],
+    '4': ['112', '220', '266', '338', '400', '446', '455', '699', '770'],
+    '5': ['113', '122', '177', '339', '366', '447', '500', '799', '889'],
+    '6': ['114', '277', '330', '448', '466', '556', '600', '880', '899'],
+    '7': ['115', '133', '188', '223', '377', '449', '557', '566', '700'],
+    '8': ['116', '224', '233', '288', '440', '477', '558', '800', '990'],
+    '9': ['117', '144', '199', '225', '388', '559', '577', '667', '900'],
+    '0': ['118', '226', '244', '299', '334', '488', '550', '668', '677'],
+};
+const tpCustomMapping: Record<string, string> = {
+    '1': '777', '2': '444', '3': '111', '4': '888', '5': '555',
+    '6': '222', '7': '999', '8': '666', '9': '333', '0': '000',
+};
+
+const panaTypes = [
+  { id: 'sp', label: 'SP' },
+  { id: 'dp', label: 'DP' },
+  { id: 'tp', label: 'TP' },
+] as const;
 
 interface BidItem {
     number: string;
     amount: number;
-    type: 'Single Pana' | 'Double Pana' | 'Triple Pana';
+    type: 'SP' | 'DP' | 'TP';
 }
 
-export default function SpDpTpMotorPage() {
+const formSchema = z.object({
+    session: z.enum(['Open', 'Close']),
+    selectedTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
+        message: "Select at least one type.",
+    }),
+    number: z.string().length(1, "Enter a single digit.").regex(/^\d+$/, "Digits only."),
+    points: z.coerce.number().min(10, "Min points is 10."),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+export default function SpDpTpPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { game, now } = useGame();
-
-  const [session, setSession] = useState<'Open' | 'Close'>('Open');
-  const [panaType, setPanaType] = useState<'SP' | 'DP' | 'TP'>('SP');
-  const [numberInput, setNumberInput] = useState('');
-  const [pointInput, setPointInput] = useState('');
-  
-  const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
+  const [profile, setProfile] = useState<DocumentData>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [submittedBids, setSubmittedBids] = useState<BidItem[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-  
+    if (user?.uid) {
+        const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+            if (doc.exists()) setProfile(doc.data());
+        });
+        return () => unsubscribe();
+    }
+  }, [user]);
+
   const { openTime, closeTime, isBettingDisabled } = useMemo(() => {
     if (!game || !isMounted) return { openTime: new Date(), closeTime: new Date(), isBettingDisabled: true };
-    
-    const [openHours, openMinutes] = game.openTime.split(':').map(Number);
-    const openTime = new Date(now);
-    openTime.setHours(openHours, openMinutes, 0, 0);
+    const [oh, om] = game.openTime.split(':').map(Number);
+    const [ch, cm] = game.closeTime.split(':').map(Number);
+    const ot = new Date(now); ot.setHours(oh, om, 0, 0);
+    const ct = new Date(now); ct.setHours(ch, cm, 0, 0);
+    return { openTime: ot, closeTime: ct, isBettingDisabled: now >= ct };
+  }, [game, now, isMounted]);
 
-    const [closeHours, closeMinutes] = game.closeTime.split(':').map(Number);
-    const closeTime = new Date(now);
-    closeTime.setHours(closeHours, closeMinutes, 0, 0);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      session: now < openTime ? 'Open' : 'Close',
+      selectedTypes: [],
+      number: '',
+      points: undefined,
+    },
+  });
 
-    const isBettingDisabled = (session === 'Open' && now.getTime() >= openTime.getTime()) || 
-                              (session === 'Close' && now.getTime() >= closeTime.getTime());
+  const session = form.watch('session');
+  const sessionAllowed = session === 'Open' ? now < openTime : now < closeTime;
 
-    return {
-        openTime,
-        closeTime,
-        isBettingDisabled,
-    };
-  }, [game, now, isMounted, session]);
+  const handleGenerate = (data: FormValues) => {
+    const { number, points, selectedTypes } = data;
+    let generated: BidItem[] = [];
 
-   useEffect(() => {
-    const isOpenDisabled = now.getTime() >= openTime.getTime();
-    const isCloseDisabled = now.getTime() >= closeTime.getTime();
-
-    if (isOpenDisabled && !isCloseDisabled) {
-      setSession('Close');
-    } else if (!isOpenDisabled) {
-      setSession('Open');
+    if (selectedTypes.includes('sp')) {
+        generated.push(...(allSinglePanas[number] || []).map(p => ({ number: p, amount: points, type: 'SP' as const })));
     }
-  }, [now, openTime, closeTime]);
+    if (selectedTypes.includes('dp')) {
+        generated.push(...(allDoublePanas[number] || []).map(p => ({ number: p, amount: points, type: 'DP' as const })));
+    }
+    if (selectedTypes.includes('tp')) {
+        const p = tpCustomMapping[number];
+        if (p) generated.push({ number: p, amount: points, type: 'TP' as const });
+    }
 
-  const totalAmount = useMemo(() => {
-      return submittedBids.reduce((acc, bid) => acc + bid.amount, 0);
-  }, [submittedBids]);
-
-  const getUniqueDigits = (input: string) => {
-    return [...new Set(input.split(''))].filter(d => !isNaN(parseInt(d, 10))).map(d => parseInt(d, 10));
-  }
-
-  const generateSP = (digits: number[]) => {
-      const results = new Set<string>();
-      if (digits.length < 3) return [];
-      for (let i = 0; i < digits.length; i++) {
-          for (let j = i + 1; j < digits.length; j++) {
-              for (let k = j + 1; k < digits.length; k++) {
-                  const combo = [digits[i], digits[j], digits[k]].sort((a,b)=>a-b);
-                  results.add(combo.join(''));
-              }
-          }
-      }
-      return Array.from(results);
-  }
-  
-  const generateDP = (digits: number[]) => {
-      const results = new Set<string>();
-      if (digits.length < 2) return [];
-      for (let i = 0; i < digits.length; i++) {
-          for (let j = 0; j < digits.length; j++) {
-              if (i === j) continue;
-              const combo = [digits[i], digits[i], digits[j]].sort((a,b)=>a-b);
-              results.add(combo.join(''));
-          }
-      }
-      return Array.from(results);
-  }
-  
-  const generateTP = (digits: number[]) => {
-      return digits.map(d => `${d}${d}${d}`);
-  }
-  
-  const handleGenerate = () => {
-    const digits = getUniqueDigits(numberInput);
-    if (digits.length === 0) {
-        toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter valid digits (0-9) in the number field.' });
+    if (generated.length === 0) {
+        toast({ variant: 'destructive', title: "No Panas", description: "Could not generate any panas." });
         return;
     }
 
-    const points = parseInt(pointInput, 10);
-    if (isNaN(points) || points < 10) {
-        toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Please enter a bet amount of at least ₹10.' });
-        return;
-    }
-
-    let generatedPanas: string[] = [];
-    let betType: BidItem['type'] = 'Single Pana';
-
-    if (panaType === 'SP') {
-        if (digits.length < 3) {
-            toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter at least 3 unique digits for Single Pana Motor.' });
-            return;
-        }
-        generatedPanas = generateSP(digits);
-        betType = 'Single Pana';
-    } else if (panaType === 'DP') {
-        if (digits.length < 2) {
-            toast({ variant: 'destructive', title: 'Invalid Input', description: 'Please enter at least 2 unique digits for Double Pana Motor.' });
-            return;
-        }
-        generatedPanas = generateDP(digits);
-        betType = 'Double Pana';
-    } else if (panaType === 'TP') {
-        generatedPanas = generateTP(digits);
-        betType = 'Triple Pana';
-    }
-
-    if (generatedPanas.length === 0) {
-        toast({ title: 'No Panas Generated', description: 'No valid panas could be generated from your input.' });
-        return;
-    }
-
-    const newBids = generatedPanas.map(pana => ({
-        number: pana,
-        amount: points,
-        type: betType,
-    }));
-
-    setSubmittedBids(prevBids => {
-        const bidsMap = new Map(prevBids.map(b => [`${b.number}-${b.type}`, b]));
-        newBids.forEach(bid => {
-            const key = `${bid.number}-${bid.type}`;
-            if (bidsMap.has(key)) {
-                const existingBid = bidsMap.get(key)!;
-                existingBid.amount += bid.amount;
-            } else {
-                bidsMap.set(key, bid);
-            }
-        });
-        return Array.from(bidsMap.values());
-    });
-
-    toast({ title: 'Bids Generated', description: `${newBids.length} bids have been added to your list.` });
-    setNumberInput('');
-  }
-
-  const removeBid = (number: string, type: string) => {
-    setSubmittedBids(prev => prev.filter(bid => !(bid.number === number && bid.type === type)));
+    setSubmittedBids(prev => [...prev, ...generated].sort((a,b) => a.number.localeCompare(b.number)));
+    form.reset({ ...form.getValues(), number: '', points: undefined });
   };
 
+  const totalAmount = useMemo(() => submittedBids.reduce((acc, b) => acc + b.amount, 0), [submittedBids]);
+
   const handleFinalSubmit = async () => {
-    if (submittedBids.length === 0) {
-      toast({ title: 'No Bids to Submit', description: 'Please generate at least one valid bid.', variant: 'destructive' });
-      return;
+    if (!user || !game || submittedBids.length === 0) return;
+    const balance = (profile.balance || 0) + (profile.bonusBalance || 0);
+    if (totalAmount > balance) {
+        toast({ variant: 'destructive', title: 'Insufficient Balance' });
+        return;
     }
-    if (!user || !game) return;
 
     setIsSubmitting(true);
-    const userDocRef = doc(db, 'users', user.uid);
-
     try {
-        await runTransaction(db, async (transaction) => {
-            const userDoc = await transaction.get(userDocRef);
-            if (!userDoc.exists()) throw new Error("User document does not exist!");
-            
+        await runTransaction(db, async (tx) => {
+            const userRef = doc(db, 'users', user.uid);
+            const userDoc = await tx.get(userRef);
             const userData = userDoc.data();
-            const currentBalance = userData.balance || 0;
-            const currentBonusBalance = userData.bonusBalance || 0;
-            const totalUserBalance = currentBalance + currentBonusBalance;
+            const real = userData?.balance || 0;
+            const bonus = userData?.bonusBalance || 0;
 
-            if (totalUserBalance < totalAmount) throw new Error("Insufficient total balance.");
-            
-            let amountFromReal = Math.min(totalAmount, currentBalance);
-            let amountFromBonus = totalAmount - amountFromReal;
+            let deductReal = Math.min(totalAmount, real);
+            let deductBonus = totalAmount - deductReal;
 
-            transaction.update(userDocRef, { 
-                balance: increment(-amountFromReal),
-                bonusBalance: increment(-amountFromBonus),
+            tx.update(userRef, { balance: increment(-deductReal), bonusBalance: increment(-deductBonus) });
+
+            const grouped: Record<string, { numbers: string[]; amount: number; type: string }> = {};
+            submittedBids.forEach(b => {
+                const key = `${b.type}-${b.amount}`;
+                if (!grouped[key]) grouped[key] = { numbers: [], amount: b.amount, type: b.type };
+                grouped[key].numbers.push(b.number);
             });
-            
-            const bidsCollectionRef = collection(db, 'bids');
 
-            const groupedByTypeAndAmount = submittedBids.reduce((acc, bid) => {
-                const key = `${bid.type}-${bid.amount}`;
-                if (!acc[key]) {
-                    acc[key] = {
-                        type: bid.type,
-                        amountPerBet: bid.amount,
-                        numbers: []
-                    };
-                }
-                acc[key].numbers.push(bid.number);
-                return acc;
-            }, {} as Record<string, { type: BidItem['type'], amountPerBet: number, numbers: string[]}>);
-            
-            for (const key in groupedByTypeAndAmount) {
-                const group = groupedByTypeAndAmount[key];
-                const totalAmountForGroup = group.amountPerBet * group.numbers.length;
-
-                transaction.set(doc(bidsCollectionRef), {
-                    userId: user.uid,
-                    displayName: user.displayName,
-                    mobile: userData.mobile,
-                    gameId: game.id,
-                    gameName: game.name,
-                    betType: group.type,
-                    session: session,
-                    numbers: group.numbers,
-                    amountPerBet: group.amountPerBet,
-                    totalAmount: totalAmountForGroup,
-                    status: 'running',
-                    createdAt: serverTimestamp(),
+            Object.values(grouped).forEach(g => {
+                const betType = g.type === 'DP' ? 'Double Pana' : g.type === 'TP' ? 'Triple Pana' : 'Single Pana';
+                tx.set(doc(collection(db, 'bids')), {
+                    userId: user.uid, displayName: user.displayName, mobile: profile.mobile,
+                    gameId: game.id, gameName: game.name, betType, session,
+                    numbers: g.numbers, amountPerBet: g.amount, totalAmount: g.amount * g.numbers.length,
+                    status: 'running', createdAt: serverTimestamp()
                 });
-            }
+            });
         });
-
-        toast({
-            title: 'Bids Submitted!',
-            description: `Your bets totalling ₹${totalAmount} have been submitted.`,
-            className: 'bg-green-600 text-white border-green-700',
-        });
-
+        toast({ title: 'Bids Submitted!', className: 'bg-green-600 text-white' });
         setSubmittedBids([]);
-        setPointInput('');
-    } catch (error: any) {
-        console.error("Error submitting bid: ", error);
-        toast({
-            title: 'Submission Failed',
-            description: error.message || 'There was an error submitting your bids.',
-            variant: 'destructive',
-        });
+    } catch (e) {
+        console.error(e);
+        toast({ variant: 'destructive', title: 'Error' });
     } finally {
         setIsSubmitting(false);
     }
   };
-  
-  if (!isMounted) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Loader className="h-10 w-10 text-primary" />
-      </div>
-    );
-  }
-  
-  if (!game) {
-    return null;
-  }
+
+  if (!isMounted || !game) return <div className="flex h-screen items-center justify-center"><Loader className="h-10 w-10 text-primary" /></div>;
 
   return (
     <div className="space-y-4">
         <Card className="bg-background/80 border-white/10">
-            <CardHeader className="p-4 text-center">
-                <CardTitle className="text-base">{game.name}</CardTitle>
-                <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-3 flex items-center justify-center gap-3">
+            <CardContent className="p-4 space-y-4 pb-40">
+                <p className="text-center font-bold text-lg text-primary">{game.name}</p>
+                <div className="rounded-lg border bg-card p-3 flex items-center justify-center gap-3">
                     <CalendarIcon className="h-4 w-4" />
                     <p className="text-sm font-medium">{format(new Date(), "EEEE, dd MMMM yyyy")}</p>
                 </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-4 pb-40">
-                <div className="space-y-2">
-                    <Label className="text-sm">Choose Session:</Label>
-                    <RadioGroup 
-                        value={session} 
-                        onValueChange={(value) => setSession(value as 'Open' | 'Close')}
-                        className="grid grid-cols-2 gap-2"
-                    >
-                        <Label className={cn("flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer", session === 'Open' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20', (now.getTime() >= openTime.getTime()) && 'opacity-50 cursor-not-allowed')}>
-                            <RadioGroupItem value="Open" id="open" className="sr-only" disabled={now.getTime() >= openTime.getTime()} />
-                            Open
-                        </Label>
-                        <Label className={cn("flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer", session === 'Close' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20', now.getTime() >= closeTime.getTime() && 'opacity-50 cursor-not-allowed')}>
-                            <RadioGroupItem value="Close" id="close" className="sr-only" disabled={now.getTime() >= closeTime.getTime()} />
-                            Close
-                        </Label>
-                    </RadioGroup>
-                </div>
 
-                <RadioGroup 
-                    value={panaType} 
-                    onValueChange={(value) => setPanaType(value as 'SP' | 'DP' | 'TP')}
-                    className="grid grid-cols-3 gap-2"
-                >
-                    <Label className={cn("flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer", panaType === 'SP' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20')}>
-                        <RadioGroupItem value="SP" id="sp" className="sr-only" />
-                        SP
-                    </Label>
-                    <Label className={cn("flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer", panaType === 'DP' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20')}>
-                        <RadioGroupItem value="DP" id="dp" className="sr-only" />
-                        DP
-                    </Label>
-                    <Label className={cn("flex items-center justify-center rounded-md border p-2 text-center text-sm font-semibold cursor-pointer", panaType === 'TP' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/20')}>
-                        <RadioGroupItem value="TP" id="tp" className="sr-only" />
-                        TP
-                    </Label>
-                </RadioGroup>
-                 <div className="space-y-2">
-                    <Label htmlFor="number" className="text-sm">Number</Label>
-                    <Input 
-                        id="number"
-                        type="number"
-                        placeholder="Enter digits (e.g., 1234)" 
-                        className="h-10 text-sm"
-                        value={numberInput}
-                        onChange={(e) => setNumberInput(e.target.value)}
-                        disabled={isBettingDisabled}
-                    />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="point" className="text-sm">Enter Point</Label>
-                    <Input 
-                        id="point"
-                        type="number"
-                        placeholder="Enter amount" 
-                        className="h-10 text-sm"
-                        value={pointInput}
-                        onChange={(e) => setPointInput(e.target.value)}
-                        disabled={isBettingDisabled}
-                    />
-                </div>
-                <Button onClick={handleGenerate} className="w-full" disabled={isBettingDisabled}>Generate</Button>
+                <Form {...form}>
+                    <form className="space-y-4">
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button type="button" variant={session === 'Open' ? 'default' : 'outline'} onClick={() => form.setValue('session', 'Open')} disabled={now >= openTime} className="h-10">Open</Button>
+                            <Button type="button" variant={session === 'Close' ? 'default' : 'outline'} onClick={() => form.setValue('session', 'Close')} disabled={now >= closeTime} className="h-10">Close</Button>
+                        </div>
+
+                        <div className="flex justify-around items-center py-2 border rounded-lg bg-card/50">
+                            {panaTypes.map((t) => (
+                                <FormField key={t.id} control={form.control} name="selectedTypes" render={({ field }) => (
+                                    <FormItem className="flex items-center space-x-2 space-y-0">
+                                        <FormControl>
+                                            <Checkbox checked={field.value.includes(t.id)} onCheckedChange={(c) => c ? field.onChange([...field.value, t.id]) : field.onChange(field.value.filter(v => v !== t.id))} />
+                                        </FormControl>
+                                        <FormLabel className="font-bold cursor-pointer">{t.label}</FormLabel>
+                                    </FormItem>
+                                )} />
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <FormField control={form.control} name="number" render={({ field }) => (
+                                <FormItem><FormControl><Input placeholder="Digit (0-9)" {...field} maxLength={1} className="text-center h-12 text-lg font-bold" /></FormControl></FormItem>
+                            )} />
+                            <FormField control={form.control} name="points" render={({ field }) => (
+                                <FormItem><FormControl><Input type="number" placeholder="Points" {...field} value={field.value ?? ''} className="text-center h-12 text-lg font-bold" /></FormControl></FormItem>
+                            )} />
+                        </div>
+
+                        <Button type="button" onClick={form.handleSubmit(handleGenerate)} className="w-full h-12 bg-orange-600 hover:bg-orange-700 font-bold" disabled={!sessionAllowed}>Generate</Button>
+                    </form>
+                </Form>
+
                 {submittedBids.length > 0 && (
-                    <div className="space-y-2 pt-4">
-                        <h4 className="text-xs font-medium text-center text-muted-foreground">YOUR BIDS LIST</h4>
-                         <ScrollArea className="h-32 rounded-lg bg-slate-900 border border-slate-700 p-1">
-                            <div className="space-y-2 p-1">
-                                {submittedBids.map((bid, index) => (
-                                    <div key={`${bid.number}-${bid.type}-${index}`} className="flex justify-between items-center bg-slate-800 p-1.5 px-3 rounded-md animate-in fade-in-0">
-                                        <p className="text-xs">{bid.type}: <span className="font-bold">{bid.number}</span></p>
-                                        <p className="text-xs">Amount: <span className="font-bold">₹{bid.amount}</span></p>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeBid(bid.number, bid.type)}>
-                                            <Trash2 className="h-3 w-3 text-destructive"/>
-                                        </Button>
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center px-1">
+                            <h4 className="text-xs font-bold text-muted-foreground">GENERATED BIDS ({submittedBids.length})</h4>
+                            <Button variant="ghost" size="sm" onClick={() => setSubmittedBids([])} className="h-6 text-[10px] text-destructive">Clear All</Button>
+                        </div>
+                        <div className="border rounded-lg p-1 space-y-1 max-h-48 overflow-y-auto bg-slate-950/50">
+                            {submittedBids.map((b, i) => (
+                                <div key={i} className="flex justify-between items-center bg-slate-800/80 p-2 rounded-md border border-white/5">
+                                    <p className="text-xs font-bold"><span className="text-primary">{b.type}:</span> {b.number}</p>
+                                    <div className="flex items-center gap-3">
+                                        <p className="text-xs font-bold text-green-400">₹{b.amount}</p>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSubmittedBids(prev => prev.filter((_, idx) => idx !== i))}><Trash2 className="h-3 w-3 text-destructive"/></Button>
                                     </div>
-                                ))}
-                            </div>
-                        </ScrollArea>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </CardContent>
-             <CardFooter className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-background/80 backdrop-blur-sm border-t border-border p-3 flex items-center justify-between gap-4 z-10">
-                <div className="flex flex-col text-left">
-                    <span className="text-xs text-muted-foreground">Total Amount</span>
-                    <span className="font-bold text-lg text-white">₹{totalAmount}</span>
+            <CardFooter className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-background/95 backdrop-blur-sm border-t p-4 flex items-center justify-between gap-4 z-50">
+                <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground font-bold uppercase">Total Amount</span>
+                    <span className="font-black text-xl text-primary">₹{totalAmount}</span>
                 </div>
-                <Button onClick={handleFinalSubmit} size="lg" className="w-2/3 text-sm bg-green-600 hover:bg-green-700" disabled={isSubmitting || isBettingDisabled || submittedBids.length === 0}>
-                     {isSubmitting ? <Loader className="mr-2" /> : null}
-                     {isBettingDisabled ? 'Bidding Closed' : 'Submit Bids'}
+                <Button onClick={handleFinalSubmit} size="lg" className="flex-1 bg-green-600 hover:bg-green-700 font-black text-white" disabled={isSubmitting || submittedBids.length === 0 || !sessionAllowed}>
+                    {isSubmitting ? <Loader className="h-5 w-5 mr-2" /> : null}
+                    {sessionAllowed ? 'Submit Bids' : 'Market Closed'}
                 </Button>
             </CardFooter>
         </Card>

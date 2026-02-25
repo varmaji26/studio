@@ -29,6 +29,7 @@ import {
   PieChart,
   List,
   BellRing,
+  ShieldOff,
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, Sidebar, SidebarTrigger } from '@/components/ui/sidebar';
@@ -423,6 +424,14 @@ export default function AdminLayout({
                     <ClipboardList />
                     <span>Manage Panel Chart</span>
                     </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/admin/global-bet-control" passHref onClick={handleLinkClick}>
+                  <SidebarMenuButton isActive={isActive('/admin/global-bet-control')} tooltip={{children: "Global Bet Control"}}>
+                    <ShieldOff />
+                    <span>Global Bet Control</span>
+                  </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
                <SidebarMenuItem>
