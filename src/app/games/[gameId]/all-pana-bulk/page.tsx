@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, runTransaction, collection, addDoc, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
+import { doc, runTransaction, collection, serverTimestamp, increment, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader } from '@/components/loader';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,10 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { CalendarIcon, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useGame } from '@/hooks/use-game';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -91,13 +90,13 @@ export default function SpDpTpPage() {
     }
   }, [user]);
 
-  const { openTime, closeTime, isBettingDisabled } = useMemo(() => {
+  const { openTime, closeTime } = useMemo(() => {
     if (!game || !isMounted) return { openTime: new Date(), closeTime: new Date(), isBettingDisabled: true };
     const [oh, om] = game.openTime.split(':').map(Number);
     const [ch, cm] = game.closeTime.split(':').map(Number);
     const ot = new Date(now); ot.setHours(oh, om, 0, 0);
     const ct = new Date(now); ct.setHours(ch, cm, 0, 0);
-    return { openTime: ot, closeTime: ct, isBettingDisabled: now >= ct };
+    return { openTime: ot, closeTime: ct };
   }, [game, now, isMounted]);
 
   const form = useForm<FormValues>({
@@ -192,7 +191,7 @@ export default function SpDpTpPage() {
 
   return (
     <div className="space-y-4">
-        <Card className="bg-background/80 border-white/10">
+        <Card className="bg-gradient-to-b from-slate-800 to-slate-900 border-white/10">
             <CardContent className="p-4 space-y-4 pb-40">
                 <p className="text-center font-bold text-lg text-primary">{game.name}</p>
                 <div className="rounded-lg border bg-card p-3 flex items-center justify-center gap-3">
