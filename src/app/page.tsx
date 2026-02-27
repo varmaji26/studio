@@ -777,7 +777,7 @@ export default function Home() {
                 
                 <div className="relative z-10 space-y-3">
                     <div className="flex items-center gap-2">
-                        <div className="h-2.5 w-2.5 rounded-full bg-[#fbbf24]" />
+                        <div className="h-2.5 w-2.5 rounded-full bg-[#fbbf24] animate-pulse shadow-[0_0_8px_#fbbf24]" />
                         <h2 className="text-[10px] font-black tracking-widest text-[#fbbf24] uppercase">
                             Official Announcement
                         </h2>
