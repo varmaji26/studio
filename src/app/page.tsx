@@ -769,7 +769,7 @@ export default function Home() {
         </Card>
         
         {settings.notice?.enabled && settings.notice.text && (
-            <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-[#1e3a8a] to-[#1e40af] p-5 shadow-xl mx-2 border border-white/10">
+            <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-[#1e3a8a] to-[#1e40af] p-5 shadow-xl border border-white/10">
                 {/* Crown Watermark */}
                 <div className="absolute top-0 right-0 opacity-10 pointer-events-none translate-x-1/4 -translate-y-1/4">
                     <Crown className="h-48 w-48 text-white" />
