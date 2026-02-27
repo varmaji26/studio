@@ -769,19 +769,25 @@ export default function Home() {
         </Card>
         
         {settings.notice?.enabled && settings.notice.text && (
-            <Card className="bg-card/80 border-white/10 shadow-lg animate-won-glow">
-                <CardHeader className="p-4">
-                    <CardTitle className="text-xl text-white">Notice</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                    <p 
-                    className="text-white font-bold" 
-                    style={{ whiteSpace: 'pre-wrap' }}
-                    >
-                    {settings.notice.text}
+            <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-[#1e3a8a] to-[#1e40af] p-5 shadow-xl mx-2 border border-white/10">
+                {/* Crown Watermark */}
+                <div className="absolute top-0 right-0 opacity-10 pointer-events-none translate-x-1/4 -translate-y-1/4">
+                    <Crown className="h-48 w-48 text-white" />
+                </div>
+                
+                <div className="relative z-10 space-y-3">
+                    <div className="flex items-center gap-2">
+                        <div className="h-2.5 w-2.5 rounded-full bg-[#fbbf24]" />
+                        <h2 className="text-[10px] font-black tracking-widest text-[#fbbf24] uppercase">
+                            Official Announcement
+                        </h2>
+                    </div>
+                    
+                    <p className="text-[14px] font-bold text-white leading-relaxed" style={{ whiteSpace: 'pre-wrap' }}>
+                        {settings.notice.text}
                     </p>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         )}
 
         <div>
