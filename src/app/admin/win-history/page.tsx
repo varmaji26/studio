@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs } from 'firebase/firestore';
+import { collection, query, DocumentData, orderBy, Timestamp, where, getDocs, runTransaction, doc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader } from '@/components/loader';
 import { Badge } from '@/components/ui/badge';
-import { Search, Trophy, Calendar as CalendarIcon, Download, Trash2, XCircle } from 'lucide-react';
+import { Search, Trophy, Calendar as CalendarIcon, Download, Trash2, XCircle, MoreVertical, Edit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cleanOldWins } from '@/actions/clean-old-wins';
-import { runTransaction, doc, increment } from 'firebase/firestore';
+import { EditBidDialog } from '@/components/edit-bid-dialog';
 
 
 interface Win extends DocumentData {
@@ -60,6 +60,14 @@ export default function AdminWinHistoryPage() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // States for password protection and actions
+  const [winToEdit, setWinToEdit] = useState<Win | null>(null);
+  const [winToCancel, setWinToCancel] = useState<Win | null>(null);
+  const [winForAction, setWinForAction] = useState<Win | null>(null);
+  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [isActionDialogVisible, setIsActionDialogVisible] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('viewed') === 'true') {
@@ -130,7 +138,7 @@ export default function AdminWinHistoryPage() {
   
   const totalWinningAmount = useMemo(() => {
     return filteredWins
-        .filter(win => win.status === 'won') // Only sum 'won' bids for the total
+        .filter(win => win.status === 'won')
         .reduce((acc, win) => acc + (win.winningAmount || 0), 0);
   }, [filteredWins]);
   
@@ -145,6 +153,24 @@ export default function AdminWinHistoryPage() {
       setCurrentPage(1);
   }, [searchTerm, fromDate, toDate]);
 
+  const handleActionClick = (win: Win) => {
+    setWinForAction(win);
+    setIsPasswordVerified(false);
+    setPasswordInput('');
+    setIsActionDialogVisible(true);
+  };
+
+  const handlePasswordCheck = () => {
+      if (passwordInput === '2626') {
+          setIsPasswordVerified(true);
+      } else {
+          toast({
+              variant: 'destructive',
+              title: 'Incorrect Password',
+          });
+          setPasswordInput('');
+      }
+  };
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return 'N/A';
@@ -223,10 +249,7 @@ export default function AdminWinHistoryPage() {
                 throw new Error("This bid is not in a 'won' state.");
             }
             
-            // Revert winnings from user's balance
             transaction.update(userDocRef, { balance: increment(-win.winningAmount) });
-            
-            // Update bid status
             transaction.update(bidDocRef, { status: 'cancelled' });
         });
         toast({
@@ -257,7 +280,9 @@ export default function AdminWinHistoryPage() {
 
     return (
         <div className="flex justify-between items-center mt-6 text-sm text-muted-foreground">
-            <div>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></div>
+            <div>
+                Showing <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredWins.length)}</strong> of <strong>{filteredWins.length}</strong> entries
+            </div>
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
@@ -447,28 +472,14 @@ export default function AdminWinHistoryPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            {win.status === 'won' && (
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="destructive" size="sm">
-                                                            <XCircle className="h-4 w-4 mr-1" />
-                                                            Cancel
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure you want to cancel this win?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This will deduct ₹{win.winningAmount.toFixed(2)} from {win.displayName}'s wallet and change the status to cancelled. This action cannot be undone.
-                                                        </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                        <AlertDialogCancel>Close</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleCancelWin(win)}>Confirm Cancel</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            )}
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0"
+                                                onClick={() => handleActionClick(win)}
+                                            >
+                                                <span className="sr-only">Open menu</span>
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -486,6 +497,102 @@ export default function AdminWinHistoryPage() {
                 </>
             )}
         </div>
+
+        {/* Action Dialog Protected by Password */}
+        <AlertDialog open={isActionDialogVisible} onOpenChange={setIsActionDialogVisible}>
+            <AlertDialogContent className="sm:max-w-[425px]">
+                {!isPasswordVerified ? (
+                    <>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Enter Password</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Please enter the password to access win actions.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <Input
+                            type="password"
+                            placeholder="Password"
+                            value={passwordInput}
+                            onChange={(e) => setPasswordInput(e.target.value)}
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handlePasswordCheck();
+                                }
+                            }}
+                            className="text-center"
+                        />
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <Button type="button" onClick={handlePasswordCheck}>Submit</Button>
+                        </AlertDialogFooter>
+                    </>
+                ) : (
+                    <>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Actions for Winning Bid</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Select an action for the bid by {winForAction?.displayName}.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="flex flex-col gap-2 py-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    if (winForAction) setWinToEdit(winForAction);
+                                    setIsActionDialogVisible(false);
+                                }}
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Win/Bet
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    if (winForAction) setWinToCancel(winForAction);
+                                    setIsActionDialogVisible(false);
+                                }}
+                            >
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Cancel Win (Refund)
+                            </Button>
+                        </div>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Close</AlertDialogCancel>
+                        </AlertDialogFooter>
+                    </>
+                )}
+            </AlertDialogContent>
+        </AlertDialog>
+
+        {winToEdit && (
+            <EditBidDialog
+                open={!!winToEdit}
+                onOpenChange={(open) => !open && setWinToEdit(null)}
+                bid={winToEdit}
+                onBidUpdate={() => {
+                    setWinToEdit(null);
+                    setRefreshTrigger(t => t + 1);
+                }}
+            />
+        )}
+
+        {winToCancel && (
+            <AlertDialog open={!!winToCancel} onOpenChange={(open) => !open && setWinToCancel(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Cancel Win & Revert Balance?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will deduct ₹{winToCancel.winningAmount.toFixed(2)} from {winToCancel.displayName}'s wallet and mark the bid as cancelled.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Close</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => { handleCancelWin(winToCancel); setWinToCancel(null); }}>Confirm Revert</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
       </div>
   );
 }

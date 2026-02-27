@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, updateDoc, DocumentData, runTransaction, increment } from 'firebase/firestore';
+import { doc, DocumentData, runTransaction, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,10 +29,19 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
 import { Textarea } from './ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const editBidSchema = z.object({
   numbers: z.string().min(1, 'Bid numbers are required.'),
   totalAmount: z.coerce.number().min(1, 'Amount must be at least ₹1.'),
+  status: z.enum(['running', 'won', 'lost', 'cancelled']),
+  winningAmount: z.coerce.number().min(0, 'Winning amount cannot be negative.'),
 });
 
 type EditBidFormValues = z.infer<typeof editBidSchema>;
@@ -58,6 +67,8 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
     defaultValues: {
       numbers: bid.numbers.join(', '),
       totalAmount: bid.totalAmount,
+      status: bid.status,
+      winningAmount: bid.winningAmount || 0,
     },
   });
 
@@ -66,6 +77,8 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
         form.reset({
             numbers: bid.numbers.join(', '),
             totalAmount: bid.totalAmount,
+            status: bid.status,
+            winningAmount: bid.winningAmount || 0,
         });
     }
   }, [open, bid, form]);
@@ -78,32 +91,37 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
 
     const newNumbers = values.numbers.split(',').map(n => n.trim()).filter(Boolean);
     const newTotalAmount = values.totalAmount;
-    const oldTotalAmount = bid.totalAmount;
-    const amountDifference = newTotalAmount - oldTotalAmount;
+    const oldTotalAmount = bid.totalAmount || 0;
+    
+    const newStatus = values.status;
+    const oldStatus = bid.status;
+    
+    const newWinningAmount = newStatus === 'won' ? values.winningAmount : 0;
+    const oldWinningAmount = bid.winningAmount || 0;
 
     try {
       await runTransaction(db, async (transaction) => {
-        if (amountDifference !== 0) {
-          const userDoc = await transaction.get(userDocRef);
-          if (!userDoc.exists()) {
-            throw new Error("User not found.");
-          }
-          const userBalance = userDoc.data().balance || 0;
-          if (amountDifference > 0 && userBalance < amountDifference) {
-            throw new Error("User has insufficient balance for this amount increase.");
-          }
-          transaction.update(userDocRef, { balance: increment(-amountDifference) });
+        const userDoc = await transaction.get(userDocRef);
+        if (!userDoc.exists()) {
+          throw new Error("User not found.");
         }
+        
+        // adjustment = refund old bet price - charge new bet price + add new win - take back old win
+        const balanceAdjustment = (oldTotalAmount - newTotalAmount) + (newWinningAmount - oldWinningAmount);
+
+        transaction.update(userDocRef, { balance: increment(balanceAdjustment) });
         
         transaction.update(bidDocRef, {
             numbers: newNumbers,
             totalAmount: newTotalAmount,
+            status: newStatus,
+            winningAmount: newWinningAmount,
         });
       });
 
       toast({
         title: 'Success!',
-        description: `Bid for ${bid.displayName} has been updated.`,
+        description: `Bid for ${bid.displayName} has been updated and balance adjusted.`,
       });
       onBidUpdate();
       setOpen(false);
@@ -119,14 +137,16 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
     }
   };
 
+  const currentStatus = form.watch('status');
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Bid for {bid.displayName}</DialogTitle>
           <DialogDescription>
-            Change the numbers or amount for this bid. This action is final.
+            Change the numbers, amount, or status. Balance will be adjusted automatically.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -136,7 +156,7 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
               name="numbers"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bid Numbers</FormLabel>
+                  <FormLabel>Bid Numbers (comma separated)</FormLabel>
                   <FormControl>
                     <Textarea {...field} placeholder="e.g., 123, 456" />
                   </FormControl>
@@ -144,19 +164,61 @@ export function EditBidDialog({ bid, children, onBidUpdate, open: openProp, onOp
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="totalAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Total Amount</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="totalAmount"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Bet Points (₹)</FormLabel>
+                    <FormControl>
+                        <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="running">Running</SelectItem>
+                            <SelectItem value="won">Won</SelectItem>
+                            <SelectItem value="lost">Lost</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+
+            {currentStatus === 'won' && (
+                <FormField
+                    control={form.control}
+                    name="winningAmount"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Winning Amount (₹)</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+
             <DialogFooter className="gap-2 sm:gap-0">
                <DialogClose asChild>
                     <Button type="button" variant="outline">
