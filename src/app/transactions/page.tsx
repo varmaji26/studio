@@ -66,17 +66,19 @@ const TransactionItem = ({ transaction }: { transaction: Transaction; }) => {
     
     return (
         <div className={cn(
-            "bg-background/80 p-3 rounded-lg shadow-sm flex items-center justify-between border border-white/10",
+            "bg-background/80 p-3 rounded-lg shadow-sm flex items-center justify-between border border-white/10 gap-3",
             transaction.type === 'win' && 'animate-won-glow'
         )}>
-            <div className="flex items-center gap-3">
-                <TransactionIcon type={transaction.type} status={transaction.status} />
-                <div>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="shrink-0">
+                    <TransactionIcon type={transaction.type} status={transaction.status} />
+                </div>
+                <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm text-foreground">{transaction.title}</h4>
-                    <p className="text-xs text-muted-foreground">{transaction.description}</p>
+                    <p className="text-xs text-muted-foreground break-all">{transaction.description}</p>
                 </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
                 <div className="text-right">
                     <p className={cn("font-bold text-sm", amountColor)}>
                         {isCredit ? '+' : '-'}₹{transaction.amount}
