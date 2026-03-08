@@ -1,7 +1,7 @@
 'use client';
 
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toast"
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthProvider } from '@/components/auth-provider';
@@ -61,7 +61,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       pathname === '/login' || 
       pathname === '/signup';
       
-    // Forgot password is allowed for both logged in (as Change Password) and logged out users
     const isForgotPasswordPage = pathname === '/forgot-password';
     const isAdminPage = pathname.startsWith('/admin');
 
@@ -81,18 +80,22 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         
         const isProtectedRoute = !isPublicPage && !isForgotPasswordPage && pathname !== '/download';
 
+        // Only redirect to home if user is FULLY registered (has email assigned)
+        // This prevents intermediate Phone Auth state from jumping to home
+        const isFullyRegistered = user && user.email;
+
         if (!user && isProtectedRoute) {
             router.replace('/login');
         }
 
-        if (user && isPublicPage) {
+        if (isFullyRegistered && isPublicPage) {
             router.replace('/');
         }
     }, [user, loading, pathname, router, isAdminPage, isPublicPage, isForgotPasswordPage]);
 
     const isProtectedRoute = !isPublicPage && !isForgotPasswordPage && pathname !== '/download';
     
-    if (loading || (!isAdminPage && ((!user && isProtectedRoute) || (user && isPublicPage)))) {
+    if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
@@ -119,8 +122,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Auth Canvas</title>
-        <meta name="description" content="Authentication with Firebase and Canvas" />
+        <title>Matka King</title>
+        <meta name="description" content="Official Matka King Application" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
       <body className={`${inter.className} font-body antialiased`}>

@@ -11,10 +11,12 @@ import {
   updateProfile, 
   RecaptchaVerifier, 
   signInWithPhoneNumber,
+  updatePassword,
+  updateEmail,
   type ConfirmationResult 
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, runTransaction, increment, collection, query, where, getDocs } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,15 +25,14 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
 import { Eye, EyeOff, User, Phone, KeyRound, Gift, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import React, { useRef, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import React, { useRef } from 'react';
 
 const formSchema = z.object({
-  username: z.string().optional(),
+  username: z.string().min(3, 'Name must be at least 3 characters.').regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters.').optional().or(z.literal('')),
   mobile: z.string().length(10, { message: 'Mobile number must be exactly 10 digits.' }).regex(/^\d+$/, 'Invalid mobile number.'),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-  referralCode: z.string().optional(),
-  otp: z.string().optional(),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }).optional().or(z.literal('')),
+  referralCode: z.string().optional().or(z.literal('')),
+  otp: z.string().optional().or(z.literal('')),
 });
 
 type AuthFormProps = {
@@ -48,21 +49,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [confirmationResult, setConfirmationResult] = React.useState<ConfirmationResult | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(
-      formSchema.refine(
-        (data) => {
-          if (mode === 'signup' && signupStep === 'info') {
-            const usernameRegex = /^[a-zA-Z\s]+$/;
-            return !!data.username && data.username.length >= 3 && usernameRegex.test(data.username);
-          }
-          return true;
-        },
-        {
-          message: 'Username must be at least 3 characters and contain only letters/spaces.',
-          path: ['username'],
-        }
-      )
-    ),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       username: '',
       mobile: '',
@@ -72,10 +59,10 @@ export function AuthForm({ mode }: AuthFormProps) {
     },
   });
 
-  const { formState: { isSubmitting }, watch, trigger } = form;
+  const { formState: { isSubmitting }, watch, trigger, setValue } = form;
   const mobile = watch('mobile');
+  const username = watch('username');
 
-  // Initialize reCAPTCHA
   const initRecaptcha = () => {
     if (!recaptchaVerifierRef.current) {
       recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'signup-recaptcha-container', {
@@ -97,7 +84,6 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     setIsVerifying(true);
     try {
-      // Check if user already exists
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("mobile", "==", mobile));
       const querySnapshot = await getDocs(q);
@@ -136,7 +122,6 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     setIsVerifying(true);
     try {
-      // Verify OTP but don't complete signup yet
       await confirmationResult.confirm(otp);
       setSignupStep('password');
       toast({ title: 'Mobile Verified', description: 'Now set your password.', className: 'bg-green-600 text-white' });
@@ -153,6 +138,16 @@ export function AuthForm({ mode }: AuthFormProps) {
       const email = `${values.mobile.replace(/\s/g, '')}@authcanvas.dev`;
 
       if (mode === 'signup') {
+        if (signupStep !== 'password') return;
+        if (!values.password || values.password.length < 6) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please enter a valid password (min 6 chars).' });
+            return;
+        }
+
+        // Current user is already signed in via Phone Auth from handleVerifyOTP
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Authentication failed. Please try again.");
+
         let referredBy = null;
         if (values.referralCode) {
             const referralCode = values.referralCode.trim();
@@ -167,11 +162,12 @@ export function AuthForm({ mode }: AuthFormProps) {
             }
         }
         
-        // Final account creation
-        const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
-        await updateProfile(userCredential.user, { displayName: values.username });
+        // Finalize account: set email and password for the phone-authenticated user
+        await updateEmail(currentUser, email);
+        await updatePassword(currentUser, values.password);
+        await updateProfile(currentUser, { displayName: values.username });
         
-        const userDocRef = doc(db, "users", userCredential.user.uid);
+        const userDocRef = doc(db, "users", currentUser.uid);
         const statsDocRef = doc(db, 'app-stats', 'dashboard');
         const settingsDocRef = doc(db, 'settings', 'app-settings');
         
@@ -189,7 +185,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             let welcomeBonusAmount = (welcomeBonusSettings?.enabled && welcomeBonusSettings?.amount > 0) ? welcomeBonusSettings.amount : 0;
 
             transaction.set(userDocRef, {
-                uid: userCredential.user.uid,
+                uid: currentUser.uid,
                 displayName: values.username,
                 mobile: values.mobile,
                 email: email,
@@ -199,7 +195,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 isAdmin: false,
                 isBlocked: false,
                 createdAt: serverTimestamp(),
-                referralCode: userCredential.user.uid.substring(0, 8).toUpperCase(),
+                referralCode: currentUser.uid.substring(0, 8).toUpperCase(),
                 referredBy: referredBy,
                 hasDeposited: false,
             });
@@ -207,7 +203,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             if (welcomeBonusAmount > 0) {
               const newBonusTransactionRef = doc(collection(db, 'bonusTransactions'));
               transaction.set(newBonusTransactionRef, {
-                  userId: userCredential.user.uid,
+                  userId: currentUser.uid,
                   displayName: values.username,
                   mobile: values.mobile,
                   amount: welcomeBonusAmount,
@@ -219,7 +215,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         });
         toast({ title: 'Welcome!', description: 'Account created successfully.' });
       } else {
-        const userCredential = await signInWithEmailAndPassword(auth, email, values.password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, values.password!);
         const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
 
         if (userDoc.exists() && userDoc.data().isBlocked) {
@@ -266,11 +262,11 @@ export function AuthForm({ mode }: AuthFormProps) {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-white">Name</FormLabel>
+                          <FormLabel className="text-white">Full Name</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                              <Input placeholder="Full Name" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
+                              <Input placeholder="Your Name" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -353,7 +349,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                   <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
                     <div className="flex items-center gap-2 bg-green-500/10 p-3 rounded-lg border border-green-500/20 mb-4">
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      <span className="text-green-500 text-sm font-semibold">Number +91 {mobile} verified</span>
+                      <span className="text-green-500 text-sm font-semibold">Verified +91 {mobile}</span>
                     </div>
                     <FormField
                       control={form.control}
@@ -364,7 +360,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                           <div className="relative">
                             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <FormControl>
-                              <Input type={showPassword ? "text" : "password"} placeholder="Min 6 characters" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10 pr-10" />
+                              <Input type={showPassword ? "text" : "password"} placeholder="Minimum 6 characters" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10 pr-10" />
                             </FormControl>
                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -376,13 +372,12 @@ export function AuthForm({ mode }: AuthFormProps) {
                     />
                     <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-black font-bold rounded-xl" disabled={isSubmitting}>
                       {isSubmitting && <Loader className="mr-2 h-4 w-4" />}
-                      Create My Account
+                      Finalize Registration
                     </Button>
                   </div>
                 )}
               </>
             ) : (
-              // Login Mode
               <div className="space-y-4">
                 <FormField
                   control={form.control}
