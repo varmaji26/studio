@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,12 +13,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
-import { Phone, KeyRound } from 'lucide-react';
+import { Phone, KeyRound, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { updateUserPassword } from '@/actions/update-user-password';
 import { useRouter } from 'next/navigation';
 
-// Add a declaration for the window object
+// Window इंटरफ़ेस विस्तार
 declare global {
     interface Window {
         confirmationResult?: ConfirmationResult;
@@ -28,15 +27,14 @@ declare global {
 }
 
 const mobileSchema = z.object({
-  mobile: z.string().length(10, { message: 'Mobile number must be exactly 10 digits.' }).regex(/^\d+$/, 'Invalid mobile number.'),
+  mobile: z.string().length(10, { message: 'मोबाइल नंबर 10 अंकों का होना चाहिए।' }).regex(/^\d+$/, 'केवल अंक डालें।'),
 });
 
 const otpSchema = z.object({
-  otp: z.string().length(6, { message: 'OTP must be 6 digits.' }),
-  newPassword: z.string().min(6, 'Password must be at least 6 characters.'),
+  otp: z.string().length(6, { message: 'OTP 6 अंकों का होना चाहिए।' }),
+  newPassword: z.string().min(6, 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।'),
 });
 
-// Main component
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -47,104 +45,92 @@ export default function ForgotPasswordPage() {
   const auth = getAuth(app);
 
   useEffect(() => {
-    // This effect ensures the RecaptchaVerifier is created once and cleaned up properly.
-    if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
+    // Re-captcha वेरिफ़ायर सेटअप
+    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            'size': 'invisible',
+        });
     }
-    
-    try {
-      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container-forgot-password', {
-        'size': 'invisible',
-        'callback': () => {
-          // reCAPTCHA solved
-        },
-        'expired-callback': () => {
-          // Response expired. Ask user to solve reCAPTCHA again.
-        }
-      });
-      window.recaptchaVerifier = recaptchaVerifier;
-    } catch (error) {
-      console.error("Error creating RecaptchaVerifier:", error);
-    }
-    
-    // We are intentionally not returning a cleanup function that calls .clear()
-    // because it can cause an error if the component unmounts and the reCAPTCHA
-    // container is no longer in the DOM. The clear() at the start of the effect
-    // handles re-initialization on subsequent mounts/re-renders.
   }, [auth]);
 
-  // Step 1: Send OTP
+  // स्टेप 1: मोबाइल नंबर चेक करें और OTP भेजें
   const onMobileSubmit = async (values: z.infer<typeof mobileSchema>) => {
     setIsSubmitting(true);
-    setMobileNumber(values.mobile);
-    
     try {
+      // 1. चेक करें कि यूजर मौजूद है या नहीं
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("mobile", "==", values.mobile));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        throw new Error("No account found with this mobile number.");
+        throw new Error("इस नंबर से कोई अकाउंट नहीं मिला। कृपया सही नंबर डालें।");
       }
       
       const userDoc = querySnapshot.docs[0];
       setUserUid(userDoc.id);
+      setMobileNumber(values.mobile);
 
-      const appVerifier = window.recaptchaVerifier!;
+      // 2. OTP भेजें
+      const appVerifier = window.recaptchaVerifier;
+      if (!appVerifier) throw new Error("Recaptcha लोड नहीं हो सका।");
+
       const phoneNumber = `+91${values.mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       window.confirmationResult = confirmation;
       
       setStep('otp');
       toast({
-        title: 'OTP Sent',
-        description: 'An OTP has been sent to your mobile number.',
+        title: 'OTP भेजा गया',
+        description: `हमने +91 ${values.mobile} पर एक वेरिफिकेशन कोड भेजा है।`,
       });
 
     } catch (error: any) {
-      console.error("Error sending OTP:", error);
+      console.error("SMS Error:", error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to send OTP. Please try again.',
+        description: error.message || 'OTP भेजने में समस्या आई। बाद में प्रयास करें।',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Step 2: Verify OTP and update password
+  // स्टेप 2: OTP वेरीफाई करें और पासवर्ड बदलें
   const onOtpSubmit = async (values: z.infer<typeof otpSchema>) => {
     if (!window.confirmationResult || !userUid) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Verification session expired. Please try again.' });
+      toast({ variant: 'destructive', title: 'Session Expired', description: 'सत्र समाप्त हो गया है। कृपया दोबारा मोबाइल नंबर डालें।' });
       setStep('mobile');
       return;
     }
+
     setIsSubmitting(true);
     try {
+      // 1. OTP वेरीफाई करें
       await window.confirmationResult.confirm(values.otp);
       
+      // 2. सर्वर एक्शन के जरिए पासवर्ड अपडेट करें
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
       if(result.success) {
-        toast({ title: 'Password Updated!', description: 'You can now log in with your new password.' });
-        auth.signOut();
+        toast({ 
+            title: 'सफलता!', 
+            description: 'आपका पासवर्ड बदल दिया गया है। अब आप नए पासवर्ड से लॉगिन कर सकते हैं।',
+            className: 'bg-green-600 text-white' 
+        });
         router.replace('/login');
       } else {
          throw new Error(result.message);
       }
     } catch (error: any) {
-      console.error("Error verifying OTP or updating password:", error);
-      let errorMessage = 'An unexpected error occurred.';
-        if (error.code === 'auth/invalid-verification-code' || error.code === 'auth/invalid-credential') {
-            errorMessage = 'The OTP you entered is incorrect. Please try again.';
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
+      console.error("Verification Error:", error);
+      let msg = 'गलत OTP कोड। कृपया दोबारा जांचें।';
+      if (error.code === 'auth/code-expired') msg = 'OTP की समय सीमा समाप्त हो गई है।';
+      
       toast({
         variant: 'destructive',
-        title: 'Failed',
-        description: errorMessage,
+        title: 'विफल',
+        description: msg,
       });
     } finally {
       setIsSubmitting(false);
@@ -152,28 +138,92 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="dark flex min-h-screen items-center justify-center bg-background p-4 perspective">
-      <div id="recaptcha-container-forgot-password"></div>
-      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-2 border-orange-400 rounded-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/20 animate-in fade-in-0 slide-in-from-bottom-10 backface-hidden">
-        <CardHeader className="text-center pt-8">
-          <CardTitle className="text-3xl font-bold text-white">Reset Password</CardTitle>
+    <main className="dark flex min-h-screen items-center justify-center bg-background p-4">
+      <div id="recaptcha-container"></div>
+      
+      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold text-white flex items-center justify-center gap-2">
+            <KeyRound className="h-6 w-6 text-orange-500" />
+            पासवर्ड रिसेट
+          </CardTitle>
           <CardDescription className="text-gray-400">
             {step === 'mobile' 
-              ? "Enter your registered mobile number to receive an OTP."
-              : `Enter the OTP sent to ${mobileNumber} and your new password.`
+              ? "अपना रजिस्टर्ड मोबाइल नंबर डालें"
+              : `OTP कोड डालें जो ${mobileNumber} पर भेजा गया है`
             }
           </CardDescription>
         </CardHeader>
         
-        {step === 'mobile' ? (
-          <MobileStepForm onSubmit={onMobileSubmit} isSubmitting={isSubmitting} />
-        ) : (
-          <OtpStepForm onSubmit={onOtpSubmit} isSubmitting={isSubmitting} />
-        )}
+        <CardContent>
+            {step === 'mobile' ? (
+                <Form {...formMobile}>
+                    <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4">
+                        <FormField
+                            control={formMobile.control}
+                            name="mobile"
+                            render={({ field }) => (
+                            <FormItem>
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <FormControl>
+                                        <Input type="tel" placeholder="मोबाइल नंबर (10 अंक)" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 pl-10" maxLength={10} />
+                                    </FormControl>
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-black font-bold text-lg" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader className="mr-2" /> : null}
+                            OTP भेजें
+                        </Button>
+                    </form>
+                </Form>
+            ) : (
+                <Form {...formOtp}>
+                    <form onSubmit={formOtp.handleSubmit(onOtpSubmit)} className="space-y-4">
+                        <FormField
+                            control={formOtp.control}
+                            name="otp"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-white text-xs">OTP कोड</FormLabel>
+                                <FormControl>
+                                    <Input type="tel" placeholder="XXXXXX" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 text-center text-xl tracking-[0.5em]" maxLength={6} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={formOtp.control}
+                            name="newPassword"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-white text-xs">नया पासवर्ड</FormLabel>
+                                <FormControl>
+                                    <Input type="password" placeholder="कम से कम 6 अक्षर" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12" />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <Button type="submit" className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader className="mr-2" /> : null}
+                            पासवर्ड बदलें
+                        </Button>
+                        <Button variant="link" className="w-full text-orange-400" onClick={() => setStep('mobile')} disabled={isSubmitting}>
+                            नंबर बदलें
+                        </Button>
+                    </form>
+                </Form>
+            )}
+        </CardContent>
         
-        <CardFooter className="flex justify-center pb-6">
-            <Link href="/login" className="text-sm text-orange-400 hover:underline">
-              Back to Login
+        <CardFooter className="justify-center border-t border-white/10 pt-4">
+            <Link href="/login" className="text-sm text-gray-400 hover:text-white flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" /> वापस लॉगिन पर जाएँ
             </Link>
         </CardFooter>
       </Card>
@@ -181,93 +231,21 @@ export default function ForgotPasswordPage() {
   );
 }
 
-// Mobile number input form component
-function MobileStepForm({ onSubmit, isSubmitting }: { onSubmit: (values: z.infer<typeof mobileSchema>) => void, isSubmitting: boolean }) {
-  const form = useForm<z.infer<typeof mobileSchema>>({
-    resolver: zodResolver(mobileSchema),
-    defaultValues: { mobile: '' },
-  });
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <CardContent className="space-y-6">
-          <FormField
-            control={form.control}
-            name="mobile"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-white">Mobile Number</FormLabel>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <FormControl>
-                    <Input type="tel" placeholder="Enter your mobile number" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" maxLength={10} />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </CardContent>
-        <CardFooter className="flex flex-col pt-2 px-6 pb-6">
-          <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-orange-400 text-black hover:bg-orange-500" disabled={isSubmitting}>
-            {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
-            Send OTP
-          </Button>
-        </CardFooter>
-      </form>
-    </Form>
-  );
+// हेल्पर फॉर्म हुक
+function useFormMobile() {
+    return useForm<z.infer<typeof mobileSchema>>({
+        resolver: zodResolver(mobileSchema),
+        defaultValues: { mobile: '' },
+    });
 }
 
-// OTP and New Password input form component
-function OtpStepForm({ onSubmit, isSubmitting }: { onSubmit: (values: z.infer<typeof otpSchema>) => void, isSubmitting: boolean }) {
-  const form = useForm<z.infer<typeof otpSchema>>({
-    resolver: zodResolver(otpSchema),
-    defaultValues: { otp: '', newPassword: '' },
-  });
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <CardContent className="space-y-6">
-          <FormField
-            control={form.control}
-            name="otp"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-white">OTP</FormLabel>
-                <FormControl>
-                  <Input type="tel" placeholder="Enter 6-digit OTP" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg text-center tracking-[0.5em]" maxLength={6} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="newPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-white">New Password</FormLabel>
-                <div className="relative">
-                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <FormControl>
-                    <Input type="password" placeholder="Enter new password" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </CardContent>
-        <CardFooter className="flex flex-col pt-2 px-6 pb-6">
-          <Button type="submit" className="w-full h-12 rounded-lg text-lg font-bold bg-orange-400 text-black hover:bg-orange-500" disabled={isSubmitting}>
-            {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
-            Reset Password
-          </Button>
-        </CardFooter>
-      </form>
-    </Form>
-  );
+function useFormOtp() {
+    return useForm<z.infer<typeof otpSchema>>({
+        resolver: zodResolver(otpSchema),
+        defaultValues: { otp: '', newPassword: '' },
+    });
 }
+
+// React Hook Form के लिए अलग-अलग वेरिएबल
+const formMobile = { ...useFormMobile() };
+const formOtp = { ...useFormOtp() };
