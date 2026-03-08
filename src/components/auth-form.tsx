@@ -23,7 +23,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
-import { Eye, EyeOff, User, Phone, KeyRound, Gift, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, User, Phone, KeyRound, Gift, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import React, { useRef } from 'react';
 
 const formSchema = z.object({
@@ -106,11 +106,15 @@ export function AuthForm({ mode }: AuthFormProps) {
     } catch (error: any) {
       console.error("OTP Error:", error);
       let message = 'Failed to send OTP. Try again.';
+      
       if (error.code === 'auth/invalid-phone-number') {
           message = 'The mobile number entered is wrong or invalid.';
       } else if (error.code === 'auth/too-many-requests') {
           message = 'Too many requests. Please try again after some time.';
+      } else if (error.code === 'auth/quota-exceeded') {
+          message = 'SMS quota exceeded. Please contact admin.';
       }
+      
       toast({ variant: 'destructive', title: 'Error', description: message });
       recaptchaVerifierRef.current = null;
     } finally {
@@ -221,7 +225,6 @@ export function AuthForm({ mode }: AuthFormProps) {
         toast({ title: 'Welcome!', description: 'Account created successfully.' });
       } else {
         // Login Logic
-        // First check if user exists in DB to give a better error message
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("mobile", "==", values.mobile));
         const querySnapshot = await getDocs(q);
