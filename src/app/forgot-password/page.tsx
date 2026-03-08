@@ -42,7 +42,6 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   const formMobile = useForm<z.infer<typeof mobileSchema>>({
     resolver: zodResolver(mobileSchema),
@@ -54,44 +53,43 @@ export default function ForgotPasswordPage() {
     defaultValues: { otp: '', newPassword: '' },
   });
 
+  // Handle reCAPTCHA initialization
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const initializeRecaptcha = () => {
-        // Only initialize if not already present to prevent "internal-error" on re-render
-        if (!window.recaptchaVerifier) {
-            try {
-                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                    'size': 'invisible',
-                    'callback': () => {
-                        // reCAPTCHA solved
-                    },
-                    'expired-callback': () => {
-                        toast({ 
-                            variant: 'destructive', 
-                            title: 'reCAPTCHA Expired', 
-                            description: 'Please refresh the page and try again.' 
-                        });
-                    }
-                });
-            } catch (e) {
-                console.error("Recaptcha init error:", e);
-            }
+    if (!window.recaptchaVerifier) {
+        try {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'invisible',
+                'callback': () => {},
+                'expired-callback': () => {
+                    toast({ 
+                        variant: 'destructive', 
+                        title: 'reCAPTCHA Expired', 
+                        description: 'Please refresh the page and try again.' 
+                    });
+                }
+            });
+        } catch (e) {
+            console.error("Recaptcha init error:", e);
         }
-    };
-
-    // Small delay to ensure the container div is in the DOM
-    const timer = setTimeout(initializeRecaptcha, 100);
-
-    return () => {
-        clearTimeout(timer);
     }
   }, [toast]);
+
+  // CRITICAL: Force clear OTP field whenever step changes to OTP
+  useEffect(() => {
+    if (step === 'otp') {
+        const timer = setTimeout(() => {
+            formOtp.reset({ otp: '', newPassword: '' });
+            formOtp.setValue('otp', '', { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+        }, 150); // Slight delay to ensure DOM update and bypass browser heuristic
+        return () => clearTimeout(timer);
+    }
+  }, [step, formOtp]);
 
   const onMobileSubmit = async (values: z.infer<typeof mobileSchema>) => {
     setIsSubmitting(true);
     try {
-      // 1. Check if user exists in Firestore
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("mobile", "==", values.mobile));
       const querySnapshot = await getDocs(q);
@@ -103,23 +101,16 @@ export default function ForgotPasswordPage() {
       const userDoc = querySnapshot.docs[0];
       const uid = userDoc.id;
 
-      // 2. Trigger Phone OTP
       if (!window.recaptchaVerifier) {
-          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-              'size': 'invisible'
-          });
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
       }
 
       const phoneNumber = `+91${values.mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
       
-      // Store in window and local state
       window.confirmationResult = confirmation;
       setUserUid(uid);
       setMobileNumber(values.mobile);
-      
-      // Force clear the OTP form to prevent autofill issues
-      formOtp.reset({ otp: '', newPassword: '' });
       
       setStep('otp');
       toast({
@@ -131,21 +122,16 @@ export default function ForgotPasswordPage() {
       console.error("SMS Error:", error);
       let message = error.message || 'Failed to send OTP. Try again later.';
       if (error.code === 'auth/too-many-requests') message = 'Too many requests. Please try later.';
-      if (error.code === 'auth/captcha-check-failed') message = 'Captcha verification failed. Refresh and try again.';
+      if (error.code === 'auth/captcha-check-failed') {
+          message = 'Captcha verification failed. Refresh and try again.';
+          window.recaptchaVerifier = undefined; // Reset for retry
+      }
       
       toast({
         variant: 'destructive',
         title: 'Error',
         description: message,
       });
-      
-      // If captcha failed, we reset the verifier
-      if (window.recaptchaVerifier) {
-          try {
-              window.recaptchaVerifier.clear();
-              window.recaptchaVerifier = undefined;
-          } catch (e) {}
-      }
     } finally {
       setIsSubmitting(false);
     }
@@ -160,11 +146,10 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      // 1. Verify OTP
-      // This step is mandatory. If code is wrong, confirm() throws an error.
+      // 1. Verify OTP - If incorrect, this will throw an error
       await window.confirmationResult.confirm(values.otp);
       
-      // 2. Update password via Server Action ONLY after successful OTP verification
+      // 2. Update password ONLY if OTP is correct
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
       if(result.success) {
@@ -173,7 +158,6 @@ export default function ForgotPasswordPage() {
             description: 'Password changed successfully. Please login.',
             className: 'bg-green-600 text-white' 
         });
-        // Clear global objects
         window.confirmationResult = undefined;
         router.replace('/login');
       } else {
@@ -181,14 +165,10 @@ export default function ForgotPasswordPage() {
       }
     } catch (error: any) {
       console.error("Verification Error:", error);
-      let msg = 'Invalid OTP. Please check and try again.';
-      if (error.code === 'auth/code-expired') msg = 'OTP expired. Please request a new one.';
-      if (error.code === 'auth/invalid-verification-code') msg = 'Wrong OTP code. Please enter correctly.';
-      
       toast({
         variant: 'destructive',
         title: 'Verification Failed',
-        description: msg,
+        description: 'Invalid OTP code. Please check and try again.',
       });
     } finally {
       setIsSubmitting(false);
@@ -197,7 +177,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4">
-      {/* Container for invisible reCAPTCHA */}
       <div id="recaptcha-container"></div>
       
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl">
@@ -217,7 +196,7 @@ export default function ForgotPasswordPage() {
         <CardContent>
             {step === 'mobile' ? (
                 <Form {...formMobile}>
-                    <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4">
+                    <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4" autoComplete="off">
                         <FormField
                             control={formMobile.control}
                             name="mobile"
@@ -232,7 +211,7 @@ export default function ForgotPasswordPage() {
                                             {...field} 
                                             className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" 
                                             maxLength={10} 
-                                            autoComplete="off"
+                                            autoComplete="one-time-code" // Confuse standard phone field heuristics
                                         />
                                     </FormControl>
                                 </div>
@@ -248,7 +227,7 @@ export default function ForgotPasswordPage() {
                 </Form>
             ) : (
                 <Form {...formOtp}>
-                    <form onSubmit={formOtp.handleSubmit(onOtpSubmit)} className="space-y-4">
+                    <form onSubmit={formOtp.handleSubmit(onOtpSubmit)} className="space-y-4" autoComplete="off">
                         <FormField
                             control={formOtp.control}
                             name="otp"
@@ -257,6 +236,7 @@ export default function ForgotPasswordPage() {
                                 <FormLabel className="text-white text-xs">OTP Code</FormLabel>
                                 <FormControl>
                                     <Input 
+                                        id="otp-verification-field"
                                         type="text" 
                                         inputMode="numeric"
                                         placeholder="Enter 6-digit code" 
@@ -264,6 +244,7 @@ export default function ForgotPasswordPage() {
                                         className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 text-center text-xl tracking-[0.2em] rounded-xl" 
                                         maxLength={6} 
                                         autoComplete="one-time-code"
+                                        onFocus={(e) => e.target.select()}
                                     />
                                 </FormControl>
                                 <FormMessage />
