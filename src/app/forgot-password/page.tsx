@@ -37,8 +37,8 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   
-  // Refs to manage recaptcha lifecycle
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   const formMobile = useForm<z.infer<typeof mobileSchema>>({
@@ -51,7 +51,6 @@ export default function ForgotPasswordPage() {
     defaultValues: { otp: '', newPassword: '' },
   });
 
-  // Pre-fill mobile number if user is logged in
   useEffect(() => {
     if (user?.email) {
       const mobile = user.email.split('@')[0];
@@ -72,7 +71,7 @@ export default function ForgotPasswordPage() {
   }, [step, formOtp]);
 
   const initRecaptcha = () => {
-    const container = document.getElementById('recaptcha-container');
+    const container = document.getElementById('forgot-recaptcha-container');
     if (!container) return null;
 
     try {
@@ -93,7 +92,9 @@ export default function ForgotPasswordPage() {
   };
 
   const onMobileSubmit = async (values: z.infer<typeof mobileSchema>) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
+    
     try {
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("mobile", "==", values.mobile));
@@ -112,7 +113,7 @@ export default function ForgotPasswordPage() {
       const phoneNumber = `+91${values.mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       
-      // Store confirmation result globally temporarily
+      setConfirmationResult(confirmation);
       (window as any).confirmationResult = confirmation;
       
       setUserUid(uid);
@@ -141,9 +142,9 @@ export default function ForgotPasswordPage() {
   };
 
   const onOtpSubmit = async (values: z.infer<typeof otpSchema>) => {
-    const confirmationResult = (window as any).confirmationResult;
+    const activeConfirmation = confirmationResult || (window as any).confirmationResult;
     
-    if (!confirmationResult || !userUid) {
+    if (!activeConfirmation || !userUid) {
       toast({ variant: 'destructive', title: 'Session Expired', description: 'Please restart the process.' });
       setStep('mobile');
       return;
@@ -151,12 +152,15 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      await confirmationResult.confirm(values.otp);
+      // Use trimmed OTP to prevent mismatch due to spaces
+      const cleanOtp = values.otp.trim();
+      await activeConfirmation.confirm(cleanOtp);
       
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
       if(result.success) {
         toast({ title: 'Success!', description: 'Password changed successfully.', className: 'bg-green-600 text-white' });
+        setConfirmationResult(null);
         (window as any).confirmationResult = undefined;
         router.replace(user ? '/' : '/login');
       } else {
@@ -176,7 +180,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4 relative">
-      <div id="recaptcha-container"></div>
+      <div id="forgot-recaptcha-container"></div>
       
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden relative z-10">
         <CardHeader className="text-center">
@@ -195,7 +199,7 @@ export default function ForgotPasswordPage() {
         <CardContent className="animate-in fade-in zoom-in-95 duration-300">
             {step === 'mobile' ? (
                 <Form {...formMobile}>
-                    <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4" autoComplete="off">
+                    <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4" autoComplete="off" key="mobile-form">
                         <FormField
                             control={formMobile.control}
                             name="mobile"
@@ -231,8 +235,8 @@ export default function ForgotPasswordPage() {
                 </Form>
             ) : (
                 <Form {...formOtp}>
-                    <form onSubmit={formOtp.handleSubmit(onOtpSubmit)} className="space-y-4" autoComplete="off">
-                        <div key="otp-wrapper" className="space-y-4">
+                    <form onSubmit={formOtp.handleSubmit(onOtpSubmit)} className="space-y-4" autoComplete="off" key="otp-form">
+                        <div className="space-y-4">
                             <FormField
                                 control={formOtp.control}
                                 name="otp"

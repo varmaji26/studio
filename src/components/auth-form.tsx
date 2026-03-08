@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
 import { Eye, EyeOff, User, Phone, KeyRound, Gift, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
 const formSchema = z.object({
   username: z.string().min(3, 'Name must be at least 3 characters.').regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters.').optional().or(z.literal('')),
@@ -41,11 +41,11 @@ type AuthFormProps = {
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [signupStep, setSignupStep] = React.useState<'info' | 'otp' | 'password'>('info');
-  const [isVerifying, setIsVerifying] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [signupStep, setSignupStep] = useState<'info' | 'otp' | 'password'>('info');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
-  const [confirmationResult, setConfirmationResult] = React.useState<ConfirmationResult | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -137,13 +137,17 @@ export function AuthForm({ mode }: AuthFormProps) {
   };
 
   const handleVerifyOTP = async () => {
-    const otp = watch('otp');
+    const otp = watch('otp')?.trim();
     if (!otp || otp.length !== 6) {
       toast({ variant: 'destructive', title: 'Invalid OTP', description: 'Enter 6-digit code.' });
       return;
     }
 
-    if (!confirmationResult) return;
+    if (!confirmationResult) {
+      toast({ variant: 'destructive', title: 'Session Expired', description: 'Please restart signup.' });
+      setSignupStep('info');
+      return;
+    }
 
     setIsVerifying(true);
     try {
