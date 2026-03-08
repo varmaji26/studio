@@ -6,13 +6,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { 
-  createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   updateProfile, 
   RecaptchaVerifier, 
   signInWithPhoneNumber,
-  updatePassword,
-  updateEmail,
+  EmailAuthProvider,
+  linkWithCredential,
   type ConfirmationResult 
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
@@ -59,9 +58,8 @@ export function AuthForm({ mode }: AuthFormProps) {
     },
   });
 
-  const { formState: { isSubmitting }, watch, trigger, setValue } = form;
+  const { formState: { isSubmitting }, watch, trigger } = form;
   const mobile = watch('mobile');
-  const username = watch('username');
 
   const initRecaptcha = () => {
     if (!recaptchaVerifierRef.current) {
@@ -144,7 +142,6 @@ export function AuthForm({ mode }: AuthFormProps) {
             return;
         }
 
-        // Current user is already signed in via Phone Auth from handleVerifyOTP
         const currentUser = auth.currentUser;
         if (!currentUser) throw new Error("Authentication failed. Please try again.");
 
@@ -162,9 +159,9 @@ export function AuthForm({ mode }: AuthFormProps) {
             }
         }
         
-        // Finalize account: set email and password for the phone-authenticated user
-        await updateEmail(currentUser, email);
-        await updatePassword(currentUser, values.password);
+        // Finalize account by linking email and password to the phone user
+        const credential = EmailAuthProvider.credential(email, values.password);
+        await linkWithCredential(currentUser, credential);
         await updateProfile(currentUser, { displayName: values.username });
         
         const userDocRef = doc(db, "users", currentUser.uid);
@@ -229,6 +226,8 @@ export function AuthForm({ mode }: AuthFormProps) {
       let errorMessage = error.message || 'Authentication failed.';
       if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
           errorMessage = 'Invalid mobile number or password.';
+      } else if (error.code === 'auth/email-already-in-use') {
+          errorMessage = 'This mobile number is already registered.';
       }
       toast({ variant: 'destructive', title: 'Error', description: errorMessage });
     }
