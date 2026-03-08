@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
-import { Phone, KeyRound, ArrowLeft } from 'lucide-react';
+import { Phone, KeyRound, ArrowLeft, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { updateUserPassword } from '@/actions/update-user-password';
 import { useRouter } from 'next/navigation';
@@ -57,41 +57,40 @@ export default function ForgotPasswordPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    if (!window.recaptchaVerifier) {
-        try {
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                'size': 'invisible',
-                'callback': () => {},
-                'expired-callback': () => {
-                    toast({ 
-                        variant: 'destructive', 
-                        title: 'reCAPTCHA Expired', 
-                        description: 'Please refresh the page and try again.' 
-                    });
-                }
-            });
-        } catch (e) {
-            console.error("Recaptcha init error:", e);
+    const initRecaptcha = () => {
+        if (!window.recaptchaVerifier) {
+            try {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'invisible',
+                    'callback': () => {},
+                    'expired-callback': () => {
+                        window.recaptchaVerifier = undefined;
+                    }
+                });
+            } catch (e) {
+                console.error("Recaptcha init error:", e);
+            }
         }
-    }
-  }, [toast]);
+    };
 
-  // CRITICAL FIX: Aggressively clear the OTP field to stop persistent browser autofill
+    initRecaptcha();
+    return () => {
+        // Cleanup if necessary
+    };
+  }, []);
+
+  // Aggressively clear the OTP field to stop persistent browser autofill when switching steps
   useEffect(() => {
     if (step === 'otp') {
         const clearField = () => {
             formOtp.setValue('otp', '', { shouldValidate: false });
-            formOtp.resetField('otp', { defaultValue: '' });
         };
-        
         clearField();
-        // Multiple triggers to beat different browser timings
         const timers = [
             setTimeout(clearField, 50),
-            setTimeout(clearField, 200),
-            setTimeout(clearField, 500)
+            setTimeout(clearField, 250),
+            setTimeout(clearField, 600)
         ];
-        
         return () => timers.forEach(t => clearTimeout(t));
     }
   }, [step, formOtp]);
@@ -130,10 +129,12 @@ export default function ForgotPasswordPage() {
     } catch (error: any) {
       console.error("SMS Error:", error);
       let message = error.message || 'Failed to send OTP. Try again later.';
-      if (error.code === 'auth/too-many-requests') message = 'Too many requests. Please try later.';
-      if (error.code === 'auth/captcha-check-failed') {
-          message = 'Captcha verification failed. Refresh and try again.';
-          window.recaptchaVerifier = undefined; // Reset for retry
+      
+      if (error.code === 'auth/too-many-requests') {
+          message = 'Too many attempts. Please wait 15-30 minutes before trying again.';
+      } else if (error.code === 'auth/captcha-check-failed') {
+          message = 'Captcha verification failed. Please refresh the page.';
+          window.recaptchaVerifier = undefined;
       }
       
       toast({
@@ -155,10 +156,8 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      // 1. Verify OTP
       await window.confirmationResult.confirm(values.otp);
       
-      // 2. Update password
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
       if(result.success) {
@@ -188,7 +187,7 @@ export default function ForgotPasswordPage() {
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4">
       <div id="recaptcha-container"></div>
       
-      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden">
+      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden relative">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-white flex items-center justify-center gap-2">
             <KeyRound className="h-6 w-6 text-orange-500" />
@@ -202,7 +201,7 @@ export default function ForgotPasswordPage() {
           </CardDescription>
         </CardHeader>
         
-        <CardContent key={step} className="animate-in fade-in zoom-in-95 duration-200">
+        <CardContent key={step} className="animate-in fade-in zoom-in-95 duration-300">
             {step === 'mobile' ? (
                 <Form {...formMobile}>
                     <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4" autoComplete="off">
@@ -220,7 +219,7 @@ export default function ForgotPasswordPage() {
                                             {...field} 
                                             className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" 
                                             maxLength={10} 
-                                            autoComplete="username" 
+                                            autoComplete="off" 
                                         />
                                     </FormControl>
                                 </div>
@@ -228,7 +227,7 @@ export default function ForgotPasswordPage() {
                             </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-black font-bold text-lg rounded-xl" disabled={isSubmitting}>
+                        <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-black font-bold text-lg rounded-xl transition-all" disabled={isSubmitting}>
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                             Send OTP
                         </Button>
@@ -242,16 +241,16 @@ export default function ForgotPasswordPage() {
                             name="otp"
                             render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="text-white text-xs">OTP Code</FormLabel>
+                                <FormLabel className="text-white text-xs">OTP Verification Code</FormLabel>
                                 <FormControl>
                                     <Input 
-                                        key="otp-input-field"
-                                        id="otp-verification-code"
+                                        key="otp-exclusive-input"
+                                        id="unique-otp-id-fixed"
                                         type="text" 
                                         inputMode="numeric"
-                                        placeholder="Enter 6-digit code" 
+                                        placeholder="000000" 
                                         {...field} 
-                                        className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 text-center text-xl tracking-[0.2em] rounded-xl" 
+                                        className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-14 text-center text-2xl font-black tracking-[0.25em] rounded-xl focus:ring-2 focus:ring-orange-500" 
                                         maxLength={6} 
                                         autoComplete="one-time-code"
                                         onFocus={(e) => e.target.select()}
@@ -266,7 +265,7 @@ export default function ForgotPasswordPage() {
                             name="newPassword"
                             render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="text-white text-xs">New Password</FormLabel>
+                                <FormLabel className="text-white text-xs">Set New Password</FormLabel>
                                 <FormControl>
                                     <Input 
                                         type="password" 
@@ -280,20 +279,20 @@ export default function ForgotPasswordPage() {
                             </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg rounded-xl" disabled={isSubmitting}>
+                        <Button type="submit" className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-green-900/20" disabled={isSubmitting}>
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                             Update Password
                         </Button>
-                        <Button variant="link" className="w-full text-orange-400" onClick={() => setStep('mobile')} disabled={isSubmitting}>
-                            Change Number
+                        <Button variant="link" className="w-full text-orange-400 text-xs" onClick={() => setStep('mobile')} disabled={isSubmitting}>
+                            Incorrect number? Change it
                         </Button>
                     </form>
                 </Form>
             )}
         </CardContent>
         
-        <CardFooter className="justify-center border-t border-white/10 pt-4">
-            <Link href="/login" className="text-sm text-gray-400 hover:text-white flex items-center gap-2">
+        <CardFooter className="justify-center border-t border-white/10 pt-4 pb-6">
+            <Link href="/login" className="text-sm text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
               <ArrowLeft className="h-4 w-4" /> Back to Login
             </Link>
         </CardFooter>
