@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -76,14 +76,23 @@ export default function ForgotPasswordPage() {
     }
   }, [toast]);
 
-  // CRITICAL: Force clear OTP field whenever step changes to OTP
+  // CRITICAL FIX: Aggressively clear the OTP field to stop persistent browser autofill
   useEffect(() => {
     if (step === 'otp') {
-        const timer = setTimeout(() => {
-            formOtp.reset({ otp: '', newPassword: '' });
-            formOtp.setValue('otp', '', { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-        }, 150); // Slight delay to ensure DOM update and bypass browser heuristic
-        return () => clearTimeout(timer);
+        const clearField = () => {
+            formOtp.setValue('otp', '', { shouldValidate: false });
+            formOtp.resetField('otp', { defaultValue: '' });
+        };
+        
+        clearField();
+        // Multiple triggers to beat different browser timings
+        const timers = [
+            setTimeout(clearField, 50),
+            setTimeout(clearField, 200),
+            setTimeout(clearField, 500)
+        ];
+        
+        return () => timers.forEach(t => clearTimeout(t));
     }
   }, [step, formOtp]);
 
@@ -146,10 +155,10 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      // 1. Verify OTP - If incorrect, this will throw an error
+      // 1. Verify OTP
       await window.confirmationResult.confirm(values.otp);
       
-      // 2. Update password ONLY if OTP is correct
+      // 2. Update password
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
       if(result.success) {
@@ -179,7 +188,7 @@ export default function ForgotPasswordPage() {
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4">
       <div id="recaptcha-container"></div>
       
-      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl">
+      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-white flex items-center justify-center gap-2">
             <KeyRound className="h-6 w-6 text-orange-500" />
@@ -193,7 +202,7 @@ export default function ForgotPasswordPage() {
           </CardDescription>
         </CardHeader>
         
-        <CardContent>
+        <CardContent key={step} className="animate-in fade-in zoom-in-95 duration-200">
             {step === 'mobile' ? (
                 <Form {...formMobile}>
                     <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4" autoComplete="off">
@@ -211,7 +220,7 @@ export default function ForgotPasswordPage() {
                                             {...field} 
                                             className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" 
                                             maxLength={10} 
-                                            autoComplete="one-time-code" // Confuse standard phone field heuristics
+                                            autoComplete="username" 
                                         />
                                     </FormControl>
                                 </div>
@@ -236,7 +245,8 @@ export default function ForgotPasswordPage() {
                                 <FormLabel className="text-white text-xs">OTP Code</FormLabel>
                                 <FormControl>
                                     <Input 
-                                        id="otp-verification-field"
+                                        key="otp-input-field"
+                                        id="otp-verification-code"
                                         type="text" 
                                         inputMode="numeric"
                                         placeholder="Enter 6-digit code" 
