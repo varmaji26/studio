@@ -23,7 +23,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
-import { Eye, EyeOff, User, Phone, KeyRound, Gift, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, User, Phone, KeyRound, Gift, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import React, { useRef } from 'react';
 
 const formSchema = z.object({
@@ -82,12 +82,19 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     setIsVerifying(true);
     try {
+      // Check if number already exists in DB
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("mobile", "==", mobile));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        throw new Error("This number is already registered. Please login.");
+        toast({ 
+          variant: 'destructive', 
+          title: 'Account Exists', 
+          description: 'This number is already registered. Please login.' 
+        });
+        setIsVerifying(false);
+        return;
       }
 
       const verifier = initRecaptcha();
@@ -98,11 +105,13 @@ export function AuthForm({ mode }: AuthFormProps) {
       toast({ title: 'OTP Sent', description: `Code sent to +91 ${mobile}` });
     } catch (error: any) {
       console.error("OTP Error:", error);
-      toast({ 
-        variant: 'destructive', 
-        title: 'Error', 
-        description: error.message || 'Failed to send OTP. Try again.' 
-      });
+      let message = 'Failed to send OTP. Try again.';
+      if (error.code === 'auth/invalid-phone-number') {
+          message = 'The mobile number entered is wrong or invalid.';
+      } else if (error.code === 'auth/too-many-requests') {
+          message = 'Too many requests. Please try again after some time.';
+      }
+      toast({ variant: 'destructive', title: 'Error', description: message });
       recaptchaVerifierRef.current = null;
     } finally {
       setIsVerifying(false);
@@ -159,7 +168,6 @@ export function AuthForm({ mode }: AuthFormProps) {
             }
         }
         
-        // Finalize account by linking email and password to the phone user
         const credential = EmailAuthProvider.credential(email, values.password);
         await linkWithCredential(currentUser, credential);
         await updateProfile(currentUser, { displayName: values.username });
@@ -212,6 +220,21 @@ export function AuthForm({ mode }: AuthFormProps) {
         });
         toast({ title: 'Welcome!', description: 'Account created successfully.' });
       } else {
+        // Login Logic
+        // First check if user exists in DB to give a better error message
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("mobile", "==", values.mobile));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            toast({ 
+                variant: 'destructive', 
+                title: 'Not Registered', 
+                description: 'This mobile number is not registered. Please Signup first.' 
+            });
+            return;
+        }
+
         const userCredential = await signInWithEmailAndPassword(auth, email, values.password!);
         const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
 
@@ -223,12 +246,16 @@ export function AuthForm({ mode }: AuthFormProps) {
       router.push('/');
     } catch (error: any) {
       console.error(error);
-      let errorMessage = error.message || 'Authentication failed.';
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-          errorMessage = 'Invalid mobile number or password.';
-      } else if (error.code === 'auth/email-already-in-use') {
-          errorMessage = 'This mobile number is already registered.';
+      let errorMessage = 'Authentication failed.';
+      
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/user-not-found') {
+          errorMessage = 'This number is not registered.';
+      } else if (error.message) {
+          errorMessage = error.message;
       }
+      
       toast({ variant: 'destructive', title: 'Error', description: errorMessage });
     }
   };
