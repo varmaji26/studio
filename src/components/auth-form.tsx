@@ -75,15 +75,16 @@ export function AuthForm({ mode }: AuthFormProps) {
     const container = document.getElementById('signup-recaptcha-container');
     if (!container) return null;
 
-    if (!recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, container, {
-        'size': 'invisible',
-        'callback': () => {},
-        'expired-callback': () => {
-          recaptchaVerifierRef.current = null;
-        }
-      });
+    if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
     }
+    recaptchaVerifierRef.current = new RecaptchaVerifier(auth, container, {
+      'size': 'invisible',
+      'callback': () => {},
+      'expired-callback': () => {
+        recaptchaVerifierRef.current = null;
+      }
+    });
     return recaptchaVerifierRef.current;
   };
 
@@ -115,6 +116,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       const phoneNumber = `+91${mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       setConfirmationResult(confirmation);
+      (window as any).confirmationResult = confirmation;
       setSignupStep('otp');
       toast({ title: 'OTP Sent', description: `Code sent to +91 ${mobile}` });
     } catch (error: any) {
@@ -130,20 +132,25 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
       
       toast({ variant: 'destructive', title: 'Error', description: message });
-      recaptchaVerifierRef.current = null;
+      if (recaptchaVerifierRef.current) {
+          recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null;
+      }
     } finally {
       setIsVerifying(false);
     }
   };
 
   const handleVerifyOTP = async () => {
-    const otp = watch('otp')?.trim();
+    const otp = watch('otp')?.replace(/\D/g, '').trim();
     if (!otp || otp.length !== 6) {
       toast({ variant: 'destructive', title: 'Invalid OTP', description: 'Enter 6-digit code.' });
       return;
     }
 
-    if (!confirmationResult) {
+    const activeConfirmation = confirmationResult || (window as any).confirmationResult;
+
+    if (!activeConfirmation) {
       toast({ variant: 'destructive', title: 'Session Expired', description: 'Please restart signup.' });
       setSignupStep('info');
       return;
@@ -151,12 +158,12 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     setIsVerifying(true);
     try {
-      await confirmationResult.confirm(otp);
+      await activeConfirmation.confirm(otp);
       setSignupStep('password');
       toast({ title: 'Mobile Verified', description: 'Now set your password.', className: 'bg-green-600 text-white' });
     } catch (error: any) {
       console.error("Verification Error:", error);
-      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The code you entered is incorrect.' });
+      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The code you entered is incorrect or expired.' });
     } finally {
       setIsVerifying(false);
     }

@@ -75,15 +75,16 @@ export default function ForgotPasswordPage() {
     if (!container) return null;
 
     try {
-        if (!recaptchaVerifierRef.current) {
-            recaptchaVerifierRef.current = new RecaptchaVerifier(auth, container, {
-                'size': 'invisible',
-                'callback': () => {},
-                'expired-callback': () => {
-                    recaptchaVerifierRef.current = null;
-                }
-            });
+        if (recaptchaVerifierRef.current) {
+            recaptchaVerifierRef.current.clear();
         }
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, container, {
+            'size': 'invisible',
+            'callback': () => {},
+            'expired-callback': () => {
+                recaptchaVerifierRef.current = null;
+            }
+        });
         return recaptchaVerifierRef.current;
     } catch (error) {
         console.error("Recaptcha Init Error:", error);
@@ -113,6 +114,7 @@ export default function ForgotPasswordPage() {
       const phoneNumber = `+91${values.mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       
+      // Store in both state and window for maximum persistence
       setConfirmationResult(confirmation);
       (window as any).confirmationResult = confirmation;
       
@@ -135,7 +137,10 @@ export default function ForgotPasswordPage() {
       }
       
       toast({ variant: 'destructive', title: 'Error', description: message });
-      recaptchaVerifierRef.current = null;
+      if (recaptchaVerifierRef.current) {
+          recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null;
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -152,8 +157,10 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      // Use trimmed OTP to prevent mismatch due to spaces
-      const cleanOtp = values.otp.trim();
+      // Strictly clean and trim the OTP
+      const cleanOtp = values.otp.replace(/\D/g, '').trim();
+      if (cleanOtp.length !== 6) throw new Error("Please enter a valid 6-digit code.");
+
       await activeConfirmation.confirm(cleanOtp);
       
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
