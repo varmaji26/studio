@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -45,6 +45,7 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
+  const recaptchaRef = useRef<HTMLDivElement>(null);
 
   const formMobile = useForm<z.infer<typeof mobileSchema>>({
     resolver: zodResolver(mobileSchema),
@@ -65,20 +66,14 @@ export default function ForgotPasswordPage() {
     }
   }, [user, formMobile]);
 
-  // Clear fields when step transitions
-  useEffect(() => {
-    if (step === 'otp') {
-        formOtp.setValue('otp', '');
-    }
-  }, [step, formOtp]);
-
   const initRecaptcha = () => {
     const container = document.getElementById('forgot-recaptcha-container');
     if (!container) return null;
 
     try {
         if (window.forgotRecaptcha) {
-            return window.forgotRecaptcha;
+            window.forgotRecaptcha.clear();
+            window.forgotRecaptcha = null;
         }
         
         auth.languageCode = 'en';
@@ -134,7 +129,8 @@ export default function ForgotPasswordPage() {
     } catch (error: any) {
       console.error("SMS Error:", error);
       let message = 'Failed to send verification code. Please check the number.';
-      if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Please wait 15-20 minutes.';
+      if (error.code === 'auth/invalid-phone-number') message = 'Invalid mobile number.';
+      if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Please wait.';
       toast({ variant: 'destructive', title: 'Error', description: message });
     } finally {
       setIsSubmitting(false);
@@ -145,7 +141,7 @@ export default function ForgotPasswordPage() {
     const confirmation = window.forgotConfirmationResult;
     
     if (!confirmation || !userUid) {
-      toast({ variant: 'destructive', title: 'Session Expired', description: 'Session timed out. Please request a new OTP.' });
+      toast({ variant: 'destructive', title: 'Session Expired', description: 'Session timed out. Please try again.' });
       setStep('mobile');
       return;
     }
@@ -178,7 +174,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4 relative">
-      <div id="forgot-recaptcha-container" className="absolute top-0 left-0 h-0 w-0 pointer-events-none opacity-0"></div>
+      <div id="forgot-recaptcha-container"></div>
       
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden">
         <CardHeader className="text-center">
@@ -243,7 +239,6 @@ export default function ForgotPasswordPage() {
                                     <FormLabel className="text-white text-xs">Verification Code</FormLabel>
                                     <FormControl>
                                         <Input 
-                                            id="forgot-otp-input"
                                             type="text" 
                                             inputMode="numeric"
                                             placeholder="000000" 

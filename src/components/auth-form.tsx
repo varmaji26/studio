@@ -67,22 +67,15 @@ export function AuthForm({ mode }: AuthFormProps) {
   const { formState: { isSubmitting }, watch, trigger, setValue } = form;
   const mobile = watch('mobile');
 
-  // Clear OTP field when step changes to prevent old values
-  useEffect(() => {
-    if (signupStep === 'otp') {
-      setValue('otp', '');
-    }
-  }, [signupStep, setValue]);
-
   const initRecaptcha = () => {
     const container = document.getElementById('auth-recaptcha-anchor');
     if (!container) return null;
 
     try {
         if (window.authRecaptcha) {
-            return window.authRecaptcha;
+            window.authRecaptcha.clear();
+            window.authRecaptcha = null;
         }
-        // Set language to Hindi or English as preferred
         auth.languageCode = 'en'; 
         
         const verifier = new RecaptchaVerifier(auth, container, {
@@ -130,8 +123,9 @@ export function AuthForm({ mode }: AuthFormProps) {
       toast({ title: 'OTP Sent', description: `Verification code sent to +91 ${mobile}` });
     } catch (error: any) {
       console.error("OTP Error:", error);
-      let message = 'The mobile number entered is wrong or invalid.';
-      if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Please wait 15-20 minutes.';
+      let message = 'Failed to send verification code.';
+      if (error.code === 'auth/invalid-phone-number') message = 'The mobile number entered is wrong or invalid.';
+      if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Please wait.';
       toast({ variant: 'destructive', title: 'Error', description: message });
     } finally {
       setIsVerifying(false);
@@ -156,7 +150,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     try {
       await confirmation.confirm(otp);
       setSignupStep('password');
-      toast({ title: 'Verified', description: 'Mobile verified successfully. Now set your password.', className: 'bg-green-600 text-white' });
+      toast({ title: 'Verified', description: 'Mobile verified. Set your password.', className: 'bg-green-600 text-white' });
     } catch (error: any) {
       console.error("OTP Verify Error:", error);
       toast({ variant: 'destructive', title: 'Invalid OTP', description: 'Verification code does not match or has expired.' });
@@ -173,7 +167,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (signupStep !== 'password') return;
         
         const currentUser = auth.currentUser;
-        if (!currentUser) throw new Error("Verification session lost. Please restart the registration.");
+        if (!currentUser) throw new Error("Verification session lost. Please restart.");
 
         let referredBy = null;
         if (values.referralCode) {
@@ -183,7 +177,6 @@ export function AuthForm({ mode }: AuthFormProps) {
             else { toast({ variant: 'destructive', title: 'Invalid Referral', description: 'Referral code not found.' }); return; }
         }
         
-        // Link the existing Phone Auth user with Email/Password credential (for standard login later)
         const credential = EmailAuthProvider.credential(email, values.password!);
         await linkWithCredential(currentUser, credential);
         await updateProfile(currentUser, { displayName: values.username });
@@ -228,10 +221,9 @@ export function AuthForm({ mode }: AuthFormProps) {
         });
         toast({ title: 'Welcome!', description: 'Account created successfully.' });
       } else {
-        // Login Flow
         const snap = await getDocs(query(collection(db, "users"), where("mobile", "==", values.mobile)));
         if (snap.empty) { 
-            toast({ variant: 'destructive', title: 'Not Registered', description: 'This number is not registered. Please Signup first.' }); 
+            toast({ variant: 'destructive', title: 'Not Registered', description: 'This number is not registered. Please Signup.' }); 
             return; 
         }
 
@@ -239,13 +231,13 @@ export function AuthForm({ mode }: AuthFormProps) {
         const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
         if (userDoc.exists() && userDoc.data().isBlocked) {
             await auth.signOut();
-            throw new Error("Your account is blocked. Please contact support.");
+            throw new Error("Your account is blocked.");
         }
       }
       router.replace('/');
     } catch (error: any) {
       console.error(error);
-      let message = 'Authentication failed. Please check your credentials.';
+      let message = 'Authentication failed.';
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') message = 'Invalid mobile number or password.';
       toast({ variant: 'destructive', title: 'Error', description: message });
     }
