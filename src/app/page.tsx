@@ -38,6 +38,7 @@ import {
   XCircle,
   Copy,
   ArrowUpCircle,
+  KeyRound,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -505,6 +506,10 @@ export default function Home() {
                             <Link href="/profile" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                             <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><UserIcon className="h-5 w-5" /></div>
                                 <span>Profile</span>
+                            </Link>
+                            <Link href="/forgot-password" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
+                                <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><KeyRound className="h-5 w-5" /></div>
+                                <span>Change Password</span>
                             </Link>
                             <Link href="/time-table" onClick={handleLinkClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-primary/10 transition-colors" onContextMenu={(e) => e.preventDefault()}>
                                 <div className="h-8 w-8 rounded-full bg-teal-700 flex items-center justify-center text-white"><Clock className="h-5 w-5" /></div>
