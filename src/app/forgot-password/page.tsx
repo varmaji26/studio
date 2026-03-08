@@ -55,25 +55,36 @@ export default function ForgotPasswordPage() {
   });
 
   useEffect(() => {
-    // Cleanup verifier on mount/unmount to avoid multiple instances
-    if (typeof window !== 'undefined') {
-        if (window.recaptchaVerifier) {
-            window.recaptchaVerifier.clear();
-        }
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            'size': 'invisible',
-            'callback': () => {
-                // reCAPTCHA solved
-            },
-            'expired-callback': () => {
-                toast({ variant: 'destructive', title: 'reCAPTCHA Expired', description: 'Please try again.' });
+    if (typeof window === 'undefined') return;
+
+    const initializeRecaptcha = () => {
+        // Only initialize if not already present to prevent "internal-error" on re-render
+        if (!window.recaptchaVerifier) {
+            try {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'invisible',
+                    'callback': () => {
+                        // reCAPTCHA solved
+                    },
+                    'expired-callback': () => {
+                        toast({ 
+                            variant: 'destructive', 
+                            title: 'reCAPTCHA Expired', 
+                            description: 'Please refresh the page and try again.' 
+                        });
+                    }
+                });
+            } catch (e) {
+                console.error("Recaptcha init error:", e);
             }
-        });
-    }
-    return () => {
-        if (window.recaptchaVerifier) {
-            window.recaptchaVerifier.clear();
         }
+    };
+
+    // Small delay to ensure the container div is in the DOM
+    const timer = setTimeout(initializeRecaptcha, 100);
+
+    return () => {
+        clearTimeout(timer);
     }
   }, [toast]);
 
@@ -93,18 +104,21 @@ export default function ForgotPasswordPage() {
       const uid = userDoc.id;
 
       // 2. Trigger Phone OTP
-      const appVerifier = window.recaptchaVerifier;
-      if (!appVerifier) throw new Error("Recaptcha failed to initialize.");
+      if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+              'size': 'invisible'
+          });
+      }
 
       const phoneNumber = `+91${values.mobile}`;
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
       
       // Store in window and local state
       window.confirmationResult = confirmation;
       setUserUid(uid);
       setMobileNumber(values.mobile);
       
-      // Reset OTP form to ensure it's empty
+      // Force clear the OTP form to prevent autofill issues
       formOtp.reset({ otp: '', newPassword: '' });
       
       setStep('otp');
@@ -124,8 +138,14 @@ export default function ForgotPasswordPage() {
         title: 'Error',
         description: message,
       });
-      // Reset verifier on error
-      if (window.recaptchaVerifier) window.recaptchaVerifier.render();
+      
+      // If captcha failed, we reset the verifier
+      if (window.recaptchaVerifier) {
+          try {
+              window.recaptchaVerifier.clear();
+              window.recaptchaVerifier = undefined;
+          } catch (e) {}
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -140,7 +160,8 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      // 1. Verify OTP - If this fails, it throws an error and password won't be updated
+      // 1. Verify OTP
+      // This step is mandatory. If code is wrong, confirm() throws an error.
       await window.confirmationResult.confirm(values.otp);
       
       // 2. Update password via Server Action ONLY after successful OTP verification
@@ -149,9 +170,11 @@ export default function ForgotPasswordPage() {
       if(result.success) {
         toast({ 
             title: 'Success!', 
-            description: 'Password changed. Please login with your new password.',
+            description: 'Password changed successfully. Please login.',
             className: 'bg-green-600 text-white' 
         });
+        // Clear global objects
+        window.confirmationResult = undefined;
         router.replace('/login');
       } else {
          throw new Error(result.message);
@@ -159,7 +182,7 @@ export default function ForgotPasswordPage() {
     } catch (error: any) {
       console.error("Verification Error:", error);
       let msg = 'Invalid OTP. Please check and try again.';
-      if (error.code === 'auth/code-expired') msg = 'OTP expired.';
+      if (error.code === 'auth/code-expired') msg = 'OTP expired. Please request a new one.';
       if (error.code === 'auth/invalid-verification-code') msg = 'Wrong OTP code. Please enter correctly.';
       
       toast({
@@ -174,7 +197,8 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4">
-      <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
+      {/* Container for invisible reCAPTCHA */}
+      <div id="recaptcha-container"></div>
       
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl">
         <CardHeader className="text-center">
@@ -208,7 +232,7 @@ export default function ForgotPasswordPage() {
                                             {...field} 
                                             className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" 
                                             maxLength={10} 
-                                            autoComplete="tel"
+                                            autoComplete="off"
                                         />
                                     </FormControl>
                                 </div>
@@ -233,10 +257,11 @@ export default function ForgotPasswordPage() {
                                 <FormLabel className="text-white text-xs">OTP Code</FormLabel>
                                 <FormControl>
                                     <Input 
-                                        type="tel" 
-                                        placeholder="XXXXXX" 
+                                        type="text" 
+                                        inputMode="numeric"
+                                        placeholder="Enter 6-digit code" 
                                         {...field} 
-                                        className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 text-center text-xl tracking-[0.5em] rounded-xl" 
+                                        className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 text-center text-xl tracking-[0.2em] rounded-xl" 
                                         maxLength={6} 
                                         autoComplete="one-time-code"
                                     />
