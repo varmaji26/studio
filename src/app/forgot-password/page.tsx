@@ -13,10 +13,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from '@/components/loader';
-import { Phone, KeyRound, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Phone, KeyRound, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { updateUserPassword } from '@/actions/update-user-password';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 // Extension for window object to hold recaptcha and confirmation
 declare global {
@@ -38,6 +39,7 @@ const otpSchema = z.object({
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
   const [userUid, setUserUid] = useState<string | null>(null);
@@ -53,30 +55,33 @@ export default function ForgotPasswordPage() {
     defaultValues: { otp: '', newPassword: '' },
   });
 
+  // Pre-fill mobile number if user is logged in
+  useEffect(() => {
+    if (user?.email) {
+      const mobile = user.email.split('@')[0];
+      if (mobile && /^\d{10}$/.test(mobile)) {
+        formMobile.setValue('mobile', mobile);
+      }
+    }
+  }, [user, formMobile]);
+
   // Handle reCAPTCHA initialization
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const initRecaptcha = () => {
-        if (!window.recaptchaVerifier) {
-            try {
-                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                    'size': 'invisible',
-                    'callback': () => {},
-                    'expired-callback': () => {
-                        window.recaptchaVerifier = undefined;
-                    }
-                });
-            } catch (e) {
-                console.error("Recaptcha init error:", e);
-            }
+    if (!window.recaptchaVerifier) {
+        try {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'invisible',
+                'callback': () => {},
+                'expired-callback': () => {
+                    window.recaptchaVerifier = undefined;
+                }
+            });
+        } catch (e) {
+            console.error("Recaptcha init error:", e);
         }
-    };
-
-    initRecaptcha();
-    return () => {
-        // Cleanup if necessary
-    };
+    }
   }, []);
 
   // Aggressively clear the OTP field to stop persistent browser autofill when switching steps
@@ -131,10 +136,7 @@ export default function ForgotPasswordPage() {
       let message = error.message || 'Failed to send OTP. Try again later.';
       
       if (error.code === 'auth/too-many-requests') {
-          message = 'Too many attempts. Please wait 15-30 minutes before trying again.';
-      } else if (error.code === 'auth/captcha-check-failed') {
-          message = 'Captcha verification failed. Please refresh the page.';
-          window.recaptchaVerifier = undefined;
+          message = 'Too many attempts. Please wait 15-20 minutes before trying again.';
       }
       
       toast({
@@ -195,7 +197,7 @@ export default function ForgotPasswordPage() {
           </CardTitle>
           <CardDescription className="text-gray-400">
             {step === 'mobile' 
-              ? "Enter your registered mobile number"
+              ? (user ? "Confirm your registered mobile number" : "Enter your registered mobile number")
               : `Enter the 6-digit OTP sent to ${mobileNumber}`
             }
           </CardDescription>
@@ -217,9 +219,13 @@ export default function ForgotPasswordPage() {
                                             type="tel" 
                                             placeholder="Mobile Number" 
                                             {...field} 
-                                            className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" 
+                                            className={cn(
+                                                "bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10",
+                                                user && "opacity-80 cursor-not-allowed select-none"
+                                            )} 
                                             maxLength={10} 
-                                            autoComplete="off" 
+                                            autoComplete="username" 
+                                            readOnly={!!user}
                                         />
                                     </FormControl>
                                 </div>
@@ -292,8 +298,8 @@ export default function ForgotPasswordPage() {
         </CardContent>
         
         <CardFooter className="justify-center border-t border-white/10 pt-4 pb-6">
-            <Link href="/login" className="text-sm text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
-              <ArrowLeft className="h-4 w-4" /> Back to Login
+            <Link href={user ? "/" : "/login"} className="text-sm text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
+              <ArrowLeft className="h-4 w-4" /> Back to {user ? "Home" : "Login"}
             </Link>
         </CardFooter>
       </Card>
