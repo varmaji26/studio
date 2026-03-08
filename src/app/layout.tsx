@@ -1,7 +1,7 @@
 'use client';
 
 import './globals.css';
-import { Toaster } from "@/components/ui/toast"
+import { Toaster } from "@/components/ui/toaster"
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthProvider } from '@/components/auth-provider';
