@@ -2,7 +2,7 @@
 
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthProvider } from '@/components/auth-provider';
 import { useAuth } from '@/hooks/use-auth';
@@ -59,14 +59,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
     const isPublicPage = 
       pathname === '/login' || 
-      pathname === '/signup' || 
-      pathname === '/forgot-password';
+      pathname === '/signup';
       
+    // Forgot password is allowed for both logged in (as Change Password) and logged out users
+    const isForgotPasswordPage = pathname === '/forgot-password';
     const isAdminPage = pathname.startsWith('/admin');
 
     const showBottomNav = 
       !isAdminPage && 
       !isPublicPage && 
+      !isForgotPasswordPage &&
       !pathname.startsWith('/games') &&
       !pathname.startsWith('/jodi-chart') &&
       !pathname.startsWith('/panel-chart') &&
@@ -77,7 +79,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             return;
         }
         
-        const isProtectedRoute = !isPublicPage && pathname !== '/download';
+        const isProtectedRoute = !isPublicPage && !isForgotPasswordPage && pathname !== '/download';
 
         if (!user && isProtectedRoute) {
             router.replace('/login');
@@ -86,9 +88,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         if (user && isPublicPage) {
             router.replace('/');
         }
-    }, [user, loading, pathname, router, isAdminPage, isPublicPage]);
+    }, [user, loading, pathname, router, isAdminPage, isPublicPage, isForgotPasswordPage]);
 
-    const isProtectedRoute = !isPublicPage && pathname !== '/download';
+    const isProtectedRoute = !isPublicPage && !isForgotPasswordPage && pathname !== '/download';
+    
     if (loading || (!isAdminPage && ((!user && isProtectedRoute) || (user && isPublicPage)))) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">

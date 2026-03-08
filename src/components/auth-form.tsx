@@ -302,7 +302,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </p>
              {mode === 'login' && (
                 <p className="mt-2 text-center text-sm">
-                    <Link href="/forgot-password" passHref>
+                    <Link href="/forgot-password">
                         <span className="font-semibold text-orange-400 hover:underline cursor-pointer">Forgot Password?</span>
                     </Link>
                 </p>
