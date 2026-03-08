@@ -26,6 +26,14 @@ import { Loader } from './loader';
 import { Eye, EyeOff, User, Phone, KeyRound, Gift, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import React, { useRef, useEffect, useState } from 'react';
 
+// Global type augmentation
+declare global {
+  interface Window {
+    authRecaptcha?: RecaptchaVerifier | null;
+    authConfirmationResult?: ConfirmationResult | null;
+  }
+}
+
 const formSchema = z.object({
   username: z.string().min(3, 'Name must be at least 3 characters.').regex(/^[a-zA-Z\s]+$/, 'Letters only.').optional().or(z.literal('')),
   mobile: z.string().length(10, { message: 'Enter 10-digit number.' }).regex(/^\d+$/, 'Digits only.'),
@@ -44,7 +52,6 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [signupStep, setSignupStep] = useState<'info' | 'otp' | 'password'>('info');
   const [isVerifying, setIsVerifying] = useState(false);
-  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -72,17 +79,17 @@ export function AuthForm({ mode }: AuthFormProps) {
     if (!container) return null;
 
     try {
-        if ((window as any).authRecaptcha) {
-            return (window as any).authRecaptcha;
+        if (window.authRecaptcha) {
+            return window.authRecaptcha;
         }
         const verifier = new RecaptchaVerifier(auth, container, {
             'size': 'invisible',
             'callback': () => {},
             'expired-callback': () => {
-                (window as any).authRecaptcha = null;
+                window.authRecaptcha = null;
             }
         });
-        (window as any).authRecaptcha = verifier;
+        window.authRecaptcha = verifier;
         return verifier;
     } catch (e) {
         console.error("Recaptcha Error:", e);
@@ -102,24 +109,27 @@ export function AuthForm({ mode }: AuthFormProps) {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        toast({ variant: 'destructive', title: 'Already Registered', description: 'Please login.' });
+        toast({ variant: 'destructive', title: 'Already Registered', description: 'This number is already registered. Please login.' });
         setIsVerifying(false);
         return;
       }
 
       const verifier = initRecaptcha();
-      if (!verifier) throw new Error("Recaptcha init failed.");
+      if (!verifier) throw new Error("reCAPTCHA failed to initialize.");
 
       const phoneNumber = `+91${mobile}`;
+      window.authConfirmationResult = null; // Clear old
+      
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       
-      (window as any).authConfirmationResult = confirmation;
+      window.authConfirmationResult = confirmation;
       setSignupStep('otp');
-      toast({ title: 'OTP Sent', description: `Sent to +91 ${mobile}` });
+      toast({ title: 'OTP Sent', description: `Code sent to +91 ${mobile}` });
     } catch (error: any) {
       console.error("OTP Error:", error);
       let message = error.message || 'Failed to send OTP.';
-      if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Wait 15 mins.';
+      if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Please wait 15 minutes.';
+      else if (error.code === 'auth/invalid-phone-number') message = 'The mobile number entered is invalid.';
       toast({ variant: 'destructive', title: 'Error', description: message });
     } finally {
       setIsVerifying(false);
@@ -129,13 +139,13 @@ export function AuthForm({ mode }: AuthFormProps) {
   const handleVerifyOTP = async () => {
     const otp = watch('otp')?.replace(/\D/g, '').trim();
     if (!otp || otp.length !== 6) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Enter 6-digit code.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Please enter 6-digit code.' });
       return;
     }
 
-    const confirmation = (window as any).authConfirmationResult;
+    const confirmation = window.authConfirmationResult;
     if (!confirmation) {
-      toast({ variant: 'destructive', title: 'Expired', description: 'Please restart.' });
+      toast({ variant: 'destructive', title: 'Expired', description: 'Session expired. Please request a new OTP.' });
       setSignupStep('info');
       return;
     }
@@ -144,10 +154,10 @@ export function AuthForm({ mode }: AuthFormProps) {
     try {
       await confirmation.confirm(otp);
       setSignupStep('password');
-      toast({ title: 'Success', description: 'Mobile verified.', className: 'bg-green-600 text-white' });
+      toast({ title: 'Verified', description: 'Mobile verified successfully.', className: 'bg-green-600 text-white' });
     } catch (error: any) {
       console.error("OTP Verify Error:", error);
-      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'Code does not match.' });
+      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'Verification code does not match.' });
     } finally {
       setIsVerifying(false);
     }
@@ -161,14 +171,14 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (signupStep !== 'password') return;
         
         const currentUser = auth.currentUser;
-        if (!currentUser) throw new Error("Session lost. Restart.");
+        if (!currentUser) throw new Error("Verification session lost. Please restart.");
 
         let referredBy = null;
         if (values.referralCode) {
-            const q = query(collection(db, 'users'), where('referralCode', '==', values.referralCode.trim()));
+            const q = query(collection(db, 'users'), where('referralCode', '==', values.referralCode.trim().toUpperCase()));
             const snap = await getDocs(q);
             if (!snap.empty) referredBy = snap.docs[0].id;
-            else { toast({ variant: 'destructive', title: 'Invalid Referral' }); return; }
+            else { toast({ variant: 'destructive', title: 'Invalid Referral', description: 'Referral code not found.' }); return; }
         }
         
         const credential = EmailAuthProvider.credential(email, values.password!);
@@ -200,10 +210,10 @@ export function AuthForm({ mode }: AuthFormProps) {
             }
             tx.update(statsDocRef, { totalUsers: increment(1) });
         });
-        toast({ title: 'Success', description: 'Account created.' });
+        toast({ title: 'Welcome!', description: 'Account created successfully.' });
       } else {
         const snap = await getDocs(query(collection(db, "users"), where("mobile", "==", values.mobile)));
-        if (snap.empty) { toast({ variant: 'destructive', title: 'Not Found', description: 'Please Signup.' }); return; }
+        if (snap.empty) { toast({ variant: 'destructive', title: 'Not Registered', description: 'Number not found. Please Signup first.' }); return; }
 
         const userCredential = await signInWithEmailAndPassword(auth, email, values.password!);
         const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
@@ -215,13 +225,15 @@ export function AuthForm({ mode }: AuthFormProps) {
       router.push('/');
     } catch (error: any) {
       console.error(error);
-      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed.' });
+      let message = error.message || 'Authentication failed.';
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') message = 'Invalid mobile number or password.';
+      toast({ variant: 'destructive', title: 'Error', description: message });
     }
   };
 
   return (
-    <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-2 border-orange-400 rounded-2xl shadow-2xl">
-      <div id="auth-recaptcha-anchor"></div>
+    <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-2 border-orange-400 rounded-2xl shadow-2xl relative">
+      <div id="auth-recaptcha-anchor" className="absolute top-0 left-0 h-0 w-0 pointer-events-none opacity-0"></div>
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold text-white">
           {mode === 'login' ? 'Welcome Back' : 'Join Matka King'}
@@ -232,19 +244,19 @@ export function AuthForm({ mode }: AuthFormProps) {
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4" key={signupStep}>
             {mode === 'signup' ? (
               <>
                 {signupStep === 'info' && (
                   <div className="space-y-4 animate-in fade-in">
                     <FormField control={form.control} name="username" render={({ field }) => (
-                        <FormItem><div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input placeholder="Full Name" {...field} className="bg-[#2A3B4C] text-white pl-10" /></FormControl></div><FormMessage /></FormItem>
+                        <FormItem><div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input placeholder="Full Name" {...field} className="bg-[#2A3B4C] text-white pl-10 h-12" autoComplete="name" /></FormControl></div><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="mobile" render={({ field }) => (
-                        <FormItem><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type="tel" placeholder="Mobile Number" {...field} className="bg-[#2A3B4C] text-white pl-10" maxLength={10} /></FormControl></div><FormMessage /></FormItem>
+                        <FormItem><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type="tel" placeholder="Mobile Number" {...field} className="bg-[#2A3B4C] text-white pl-10 h-12" maxLength={10} autoComplete="tel" /></FormControl></div><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="referralCode" render={({ field }) => (
-                        <FormItem><div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input placeholder="Referral Code (Optional)" {...field} className="bg-[#2A3B4C] text-white pl-10" /></FormControl></div><FormMessage /></FormItem>
+                        <FormItem><div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input placeholder="Referral Code (Optional)" {...field} className="bg-[#2A3B4C] text-white pl-10 h-12" /></FormControl></div><FormMessage /></FormItem>
                     )} />
                     <Button type="button" onClick={handleSendOTP} className="w-full h-12 bg-orange-500 font-bold" disabled={isVerifying}>{isVerifying && <Loader className="mr-2 h-4" />}Send OTP</Button>
                   </div>
@@ -252,37 +264,37 @@ export function AuthForm({ mode }: AuthFormProps) {
                 {signupStep === 'otp' && (
                   <div className="space-y-4 animate-in fade-in text-center">
                     <FormField control={form.control} name="otp" render={({ field }) => (
-                        <FormItem><FormLabel className="text-white">Enter OTP Code</FormLabel><FormControl><Input placeholder="000000" {...field} className="bg-[#2A3B4C] text-white text-2xl text-center h-14" maxLength={6} inputMode="numeric" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel className="text-white">Enter 6-Digit OTP</FormLabel><FormControl><Input placeholder="000000" {...field} className="bg-[#2A3B4C] text-white text-3xl text-center h-16 font-black tracking-widest" maxLength={6} inputMode="numeric" autoComplete="one-time-code" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <Button type="button" onClick={handleVerifyOTP} className="w-full h-12 bg-green-600 font-bold" disabled={isVerifying}>{isVerifying && <Loader className="mr-2 h-4" />}Verify Code</Button>
-                    <Button variant="link" className="text-orange-400 text-xs" onClick={() => setSignupStep('info')}>Change Number?</Button>
+                    <Button variant="link" className="text-orange-400 text-xs" onClick={() => { setSignupStep('info'); window.authConfirmationResult = null; }}>Wrong Number? Go Back</Button>
                   </div>
                 )}
                 {signupStep === 'password' && (
                   <div className="space-y-4 animate-in fade-in">
-                    <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/20 flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-green-500" /><span className="text-green-500 text-sm">Verified +91 {mobile}</span></div>
+                    <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/20 flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-green-500" /><span className="text-green-500 text-sm font-bold">Verified +91 {mobile}</span></div>
                     <FormField control={form.control} name="password" render={({ field }) => (
-                        <FormItem><FormLabel className="text-white">Set Password</FormLabel><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type={showPassword ? "text" : "password"} placeholder="Min 6 characters" {...field} className="bg-[#2A3B4C] text-white pl-10 pr-10" /></FormControl><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2">{showPassword ? <EyeOff className="h-4" /> : <Eye className="h-4" />}</button></div><FormMessage /></FormItem>
+                        <FormItem><FormLabel className="text-white">Set Secure Password</FormLabel><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type={showPassword ? "text" : "password"} placeholder="Min 6 characters" {...field} className="bg-[#2A3B4C] text-white pl-10 pr-10 h-12" autoComplete="new-password" /></FormControl><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPassword ? <EyeOff className="h-4" /> : <Eye className="h-4" />}</button></div><FormMessage /></FormItem>
                     )} />
-                    <Button type="submit" className="w-full h-12 bg-orange-500 font-bold" disabled={isSubmitting}>{isSubmitting && <Loader className="mr-2 h-4" />}Complete Signup</Button>
+                    <Button type="submit" className="w-full h-12 bg-orange-500 font-bold" disabled={isSubmitting}>{isSubmitting && <Loader className="mr-2 h-4" />}Create Account</Button>
                   </div>
                 )}
               </>
             ) : (
               <div className="space-y-4">
                 <FormField control={form.control} name="mobile" render={({ field }) => (
-                    <FormItem><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type="tel" placeholder="Mobile Number" {...field} className="bg-[#2A3B4C] text-white pl-10" maxLength={10} /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type="tel" placeholder="Mobile Number" {...field} className="bg-[#2A3B4C] text-white pl-10 h-12" maxLength={10} autoComplete="tel" /></FormControl></div><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="password" render={({ field }) => (
-                    <FormItem><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} className="bg-[#2A3B4C] text-white pl-10 pr-10" /></FormControl><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2">{showPassword ? <EyeOff className="h-4" /> : <Eye className="h-4" />}</button></div><FormMessage /></FormItem>
+                    <FormItem><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} className="bg-[#2A3B4C] text-white pl-10 pr-10 h-12" autoComplete="current-password" /></FormControl><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPassword ? <EyeOff className="h-4" /> : <Eye className="h-4" />}</button></div><FormMessage /></FormItem>
                 )} />
                 <Button type="submit" className="w-full h-12 bg-orange-500 font-bold" disabled={isSubmitting}>{isSubmitting && <Loader className="mr-2 h-4" />}Sign In</Button>
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-col text-sm text-gray-400 pb-8">
-            <p>{mode === 'login' ? "New here?" : 'Already have an account?'} <Link href={mode === 'login' ? '/signup' : '/login'} className="text-orange-400 hover:underline">{mode === 'login' ? 'Create Account' : 'Sign In'}</Link></p>
-            {mode === 'login' && <Link href="/forgot-password" title="reset password"><span className="mt-4 text-orange-400 hover:underline cursor-pointer">Forgot Password?</span></Link>}
+          <CardFooter className="flex flex-col text-sm text-gray-400 pb-8 gap-2">
+            <p>{mode === 'login' ? "New user?" : 'Already have an account?'} <Link href={mode === 'login' ? '/signup' : '/login'} className="text-orange-400 font-bold hover:underline">{mode === 'login' ? 'Register Now' : 'Login Here'}</Link></p>
+            {mode === 'login' && <Link href="/forgot-password"><span className="text-orange-400 hover:underline cursor-pointer">Forgot Password?</span></Link>}
           </CardFooter>
         </form>
       </Form>

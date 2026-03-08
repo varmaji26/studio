@@ -20,6 +20,14 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
+// Global type augmentation
+declare global {
+  interface Window {
+    forgotRecaptcha?: RecaptchaVerifier | null;
+    forgotConfirmationResult?: ConfirmationResult | null;
+  }
+}
+
 const mobileSchema = z.object({
   mobile: z.string().length(10, { message: 'Mobile number must be 10 digits.' }).regex(/^\d+$/, 'Numbers only.'),
 });
@@ -38,7 +46,8 @@ export default function ForgotPasswordPage() {
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
   
-  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  // Use local state to force component awareness of window changes
+  const [sessionActive, setSessionActive] = useState(false);
 
   const formMobile = useForm<z.infer<typeof mobileSchema>>({
     resolver: zodResolver(mobileSchema),
@@ -63,16 +72,21 @@ export default function ForgotPasswordPage() {
   useEffect(() => {
     if (step === 'otp') {
         formOtp.setValue('otp', '');
+        // Force focus after a tiny delay to ensure step transition is done
+        setTimeout(() => {
+            const input = document.getElementById('forgot-otp-input-field');
+            if (input) input.focus();
+        }, 300);
     }
   }, [step, formOtp]);
 
   const initRecaptcha = () => {
-    const container = document.getElementById('forgot-recaptcha-anchor');
+    const container = document.getElementById('forgot-recaptcha-container');
     if (!container) return null;
 
     try {
-        if ((window as any).forgotRecaptcha) {
-            return (window as any).forgotRecaptcha;
+        if (window.forgotRecaptcha) {
+            return window.forgotRecaptcha;
         }
         
         const verifier = new RecaptchaVerifier(auth, container, {
@@ -81,10 +95,10 @@ export default function ForgotPasswordPage() {
                 console.log('reCAPTCHA solved');
             },
             'expired-callback': () => {
-                (window as any).forgotRecaptcha = null;
+                window.forgotRecaptcha = null;
             }
         });
-        (window as any).forgotRecaptcha = verifier;
+        window.forgotRecaptcha = verifier;
         return verifier;
     } catch (error) {
         console.error("Recaptcha Init Error:", error);
@@ -112,13 +126,18 @@ export default function ForgotPasswordPage() {
       if (!verifier) throw new Error("Captcha failed to initialize.");
 
       const phoneNumber = `+91${values.mobile}`;
+      
+      // Clear existing result if any to prevent mismatch
+      window.forgotConfirmationResult = null;
+      
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       
-      // Store globally for maximum session reliability
-      (window as any).forgotConfirmationResult = confirmation;
+      // Store session globally
+      window.forgotConfirmationResult = confirmation;
       
       setUserUid(uid);
       setMobileNumber(values.mobile);
+      setSessionActive(true);
       setStep('otp');
       
       toast({
@@ -131,6 +150,8 @@ export default function ForgotPasswordPage() {
       let message = error.message || 'Failed to send OTP.';
       if (error.code === 'auth/too-many-requests') {
           message = 'Too many attempts. Please wait 15-20 minutes.';
+      } else if (error.code === 'auth/invalid-phone-number') {
+          message = 'The mobile number entered is invalid.';
       }
       toast({ variant: 'destructive', title: 'Error', description: message });
     } finally {
@@ -139,36 +160,44 @@ export default function ForgotPasswordPage() {
   };
 
   const onOtpSubmit = async (values: z.infer<typeof otpSchema>) => {
-    const confirmation = (window as any).forgotConfirmationResult;
+    const confirmation = window.forgotConfirmationResult;
     
     if (!confirmation || !userUid) {
-      toast({ variant: 'destructive', title: 'Session Expired', description: 'Please restart.' });
+      toast({ variant: 'destructive', title: 'Session Lost', description: 'Please go back and send OTP again.' });
       setStep('mobile');
+      setSessionActive(false);
       return;
     }
 
     setIsSubmitting(true);
     try {
       const cleanOtp = values.otp.replace(/\D/g, '').trim();
-      if (cleanOtp.length !== 6) throw new Error("Invalid code length.");
+      if (cleanOtp.length !== 6) throw new Error("Please enter all 6 digits.");
 
+      // Verify the code
       await confirmation.confirm(cleanOtp);
       
+      // Verification successful, update password on server
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
       if(result.success) {
-        toast({ title: 'Success!', description: 'Password updated.', className: 'bg-green-600 text-white' });
-        (window as any).forgotConfirmationResult = null;
+        toast({ title: 'Success!', description: 'Password updated successfully.', className: 'bg-green-600 text-white' });
+        window.forgotConfirmationResult = null;
+        setSessionActive(false);
         router.replace(user ? '/' : '/login');
       } else {
          throw new Error(result.message);
       }
     } catch (error: any) {
       console.error("Verification Error:", error);
+      let message = 'Verification code does not match. Please try again.';
+      if (error.code === 'auth/code-expired') {
+          message = 'This OTP has expired. Please request a new one.';
+      }
       toast({
         variant: 'destructive',
         title: 'Invalid OTP',
-        description: 'Verification code does not match. Please try again.',
+        description: message,
       });
     } finally {
       setIsSubmitting(false);
@@ -176,11 +205,11 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="dark flex min-h-screen items-center justify-center bg-background p-4">
-      {/* Invisible reCAPTCHA Anchor */}
-      <div id="forgot-recaptcha-anchor"></div>
+    <main className="dark flex min-h-screen items-center justify-center bg-background p-4 relative">
+      {/* reCAPTCHA container must be outside the keyed card area to stay stable */}
+      <div id="forgot-recaptcha-container" className="absolute top-0 left-0 h-0 w-0 pointer-events-none opacity-0"></div>
       
-      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden">
+      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden" key={`step-${step}`}>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-white flex items-center justify-center gap-2">
             <KeyRound className="h-6 w-6 text-orange-500" />
@@ -197,7 +226,7 @@ export default function ForgotPasswordPage() {
         <CardContent>
             {step === 'mobile' ? (
                 <Form {...formMobile}>
-                    <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4" key="forgot-mobile-form">
+                    <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4">
                         <FormField
                             control={formMobile.control}
                             name="mobile"
@@ -216,6 +245,7 @@ export default function ForgotPasswordPage() {
                                             )} 
                                             maxLength={10} 
                                             readOnly={!!user}
+                                            autoComplete="tel"
                                         />
                                     </FormControl>
                                     {user && <ShieldCheck className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
@@ -232,7 +262,7 @@ export default function ForgotPasswordPage() {
                 </Form>
             ) : (
                 <Form {...formOtp}>
-                    <form onSubmit={formOtp.handleSubmit(onOtpSubmit)} className="space-y-4" key="forgot-otp-form">
+                    <form onSubmit={formOtp.handleSubmit(onOtpSubmit)} className="space-y-4">
                         <div className="space-y-4">
                             <FormField
                                 control={formOtp.control}
@@ -261,13 +291,14 @@ export default function ForgotPasswordPage() {
                                 name="newPassword"
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-white text-xs">New Password</FormLabel>
+                                    <FormLabel className="text-white text-xs">Set New Password</FormLabel>
                                     <FormControl>
                                         <Input 
                                             type="password" 
                                             placeholder="Min 6 characters" 
                                             {...field} 
                                             className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-xl" 
+                                            autoComplete="new-password"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -279,7 +310,7 @@ export default function ForgotPasswordPage() {
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                             Update Password
                         </Button>
-                        <Button variant="link" className="w-full text-orange-400 text-xs" onClick={() => setStep('mobile')} disabled={isSubmitting}>
+                        <Button variant="link" className="w-full text-orange-400 text-xs" onClick={() => { setStep('mobile'); setSessionActive(false); }} disabled={isSubmitting}>
                             Change number? Go back
                         </Button>
                     </form>
