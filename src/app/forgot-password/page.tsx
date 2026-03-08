@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -31,7 +31,7 @@ const mobileSchema = z.object({
 });
 
 const otpSchema = z.object({
-  otp: z.string().length(6, { message: 'OTP must be 6 digits.' }),
+  otp: z.string().length(6, { message: 'OTP must be 6 digits.' }).regex(/^\d+$/, 'OTP must be numeric.'),
   newPassword: z.string().min(6, 'Minimum 6 characters.'),
 });
 
@@ -42,6 +42,7 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   const formMobile = useForm<z.infer<typeof mobileSchema>>({
     resolver: zodResolver(mobileSchema),
@@ -54,12 +55,27 @@ export default function ForgotPasswordPage() {
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
+    // Cleanup verifier on mount/unmount to avoid multiple instances
+    if (typeof window !== 'undefined') {
+        if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+        }
         window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
             'size': 'invisible',
+            'callback': () => {
+                // reCAPTCHA solved
+            },
+            'expired-callback': () => {
+                toast({ variant: 'destructive', title: 'reCAPTCHA Expired', description: 'Please try again.' });
+            }
         });
     }
-  }, []);
+    return () => {
+        if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+        }
+    }
+  }, [toast]);
 
   const onMobileSubmit = async (values: z.infer<typeof mobileSchema>) => {
     setIsSubmitting(true);
@@ -74,16 +90,22 @@ export default function ForgotPasswordPage() {
       }
       
       const userDoc = querySnapshot.docs[0];
-      setUserUid(userDoc.id);
-      setMobileNumber(values.mobile);
+      const uid = userDoc.id;
 
       // 2. Trigger Phone OTP
       const appVerifier = window.recaptchaVerifier;
-      if (!appVerifier) throw new Error("Recaptcha failed to load.");
+      if (!appVerifier) throw new Error("Recaptcha failed to initialize.");
 
       const phoneNumber = `+91${values.mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      
+      // Store in window and local state
       window.confirmationResult = confirmation;
+      setUserUid(uid);
+      setMobileNumber(values.mobile);
+      
+      // Reset OTP form to ensure it's empty
+      formOtp.reset({ otp: '', newPassword: '' });
       
       setStep('otp');
       toast({
@@ -93,11 +115,17 @@ export default function ForgotPasswordPage() {
 
     } catch (error: any) {
       console.error("SMS Error:", error);
+      let message = error.message || 'Failed to send OTP. Try again later.';
+      if (error.code === 'auth/too-many-requests') message = 'Too many requests. Please try later.';
+      if (error.code === 'auth/captcha-check-failed') message = 'Captcha verification failed. Refresh and try again.';
+      
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to send OTP. Try again later.',
+        description: message,
       });
+      // Reset verifier on error
+      if (window.recaptchaVerifier) window.recaptchaVerifier.render();
     } finally {
       setIsSubmitting(false);
     }
@@ -112,10 +140,10 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      // 1. Verify OTP
+      // 1. Verify OTP - If this fails, it throws an error and password won't be updated
       await window.confirmationResult.confirm(values.otp);
       
-      // 2. Update password via Server Action
+      // 2. Update password via Server Action ONLY after successful OTP verification
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
       if(result.success) {
@@ -132,10 +160,11 @@ export default function ForgotPasswordPage() {
       console.error("Verification Error:", error);
       let msg = 'Invalid OTP. Please check and try again.';
       if (error.code === 'auth/code-expired') msg = 'OTP expired.';
+      if (error.code === 'auth/invalid-verification-code') msg = 'Wrong OTP code. Please enter correctly.';
       
       toast({
         variant: 'destructive',
-        title: 'Failed',
+        title: 'Verification Failed',
         description: msg,
       });
     } finally {
@@ -145,7 +174,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4">
-      <div id="recaptcha-container"></div>
+      <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
       
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl">
         <CardHeader className="text-center">
@@ -173,14 +202,21 @@ export default function ForgotPasswordPage() {
                                 <div className="relative">
                                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                     <FormControl>
-                                        <Input type="tel" placeholder="Mobile Number" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 pl-10" maxLength={10} />
+                                        <Input 
+                                            type="tel" 
+                                            placeholder="Mobile Number" 
+                                            {...field} 
+                                            className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" 
+                                            maxLength={10} 
+                                            autoComplete="tel"
+                                        />
                                     </FormControl>
                                 </div>
                                 <FormMessage />
                             </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-black font-bold text-lg" disabled={isSubmitting}>
+                        <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-black font-bold text-lg rounded-xl" disabled={isSubmitting}>
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                             Send OTP
                         </Button>
@@ -196,7 +232,14 @@ export default function ForgotPasswordPage() {
                             <FormItem>
                                 <FormLabel className="text-white text-xs">OTP Code</FormLabel>
                                 <FormControl>
-                                    <Input type="tel" placeholder="XXXXXX" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 text-center text-xl tracking-[0.5em]" maxLength={6} />
+                                    <Input 
+                                        type="tel" 
+                                        placeholder="XXXXXX" 
+                                        {...field} 
+                                        className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 text-center text-xl tracking-[0.5em] rounded-xl" 
+                                        maxLength={6} 
+                                        autoComplete="one-time-code"
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -209,13 +252,19 @@ export default function ForgotPasswordPage() {
                             <FormItem>
                                 <FormLabel className="text-white text-xs">New Password</FormLabel>
                                 <FormControl>
-                                    <Input type="password" placeholder="Min 6 characters" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12" />
+                                    <Input 
+                                        type="password" 
+                                        placeholder="Min 6 characters" 
+                                        {...field} 
+                                        className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-xl" 
+                                        autoComplete="new-password"
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg" disabled={isSubmitting}>
+                        <Button type="submit" className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg rounded-xl" disabled={isSubmitting}>
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                             Update Password
                         </Button>
