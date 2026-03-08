@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
 import { Eye, EyeOff, User, Phone, KeyRound, Gift, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Global type augmentation
 declare global {
@@ -67,7 +67,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const { formState: { isSubmitting }, watch, trigger, setValue } = form;
   const mobile = watch('mobile');
 
-  // Clear OTP field when step changes
+  // Clear OTP field when step changes to prevent old values
   useEffect(() => {
     if (signupStep === 'otp') {
       setValue('otp', '');
@@ -82,6 +82,9 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (window.authRecaptcha) {
             return window.authRecaptcha;
         }
+        // Set language to Hindi or English as preferred
+        auth.languageCode = 'en'; 
+        
         const verifier = new RecaptchaVerifier(auth, container, {
             'size': 'invisible',
             'callback': () => {},
@@ -99,7 +102,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   const handleSendOTP = async () => {
     const isMobileValid = await trigger('mobile');
-    const isNameValid = await trigger('username');
+    const isNameValid = mode === 'signup' ? await trigger('username') : true;
     if (!isMobileValid || !isNameValid) return;
 
     setIsVerifying(true);
@@ -118,18 +121,17 @@ export function AuthForm({ mode }: AuthFormProps) {
       if (!verifier) throw new Error("reCAPTCHA failed to initialize.");
 
       const phoneNumber = `+91${mobile}`;
-      window.authConfirmationResult = null; // Clear old
+      window.authConfirmationResult = null; 
       
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       
       window.authConfirmationResult = confirmation;
       setSignupStep('otp');
-      toast({ title: 'OTP Sent', description: `Code sent to +91 ${mobile}` });
+      toast({ title: 'OTP Sent', description: `Verification code sent to +91 ${mobile}` });
     } catch (error: any) {
       console.error("OTP Error:", error);
-      let message = error.message || 'Failed to send OTP.';
-      if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Please wait 15 minutes.';
-      else if (error.code === 'auth/invalid-phone-number') message = 'The mobile number entered is invalid.';
+      let message = 'The mobile number entered is wrong or invalid.';
+      if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Please wait 15-20 minutes.';
       toast({ variant: 'destructive', title: 'Error', description: message });
     } finally {
       setIsVerifying(false);
@@ -145,7 +147,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     const confirmation = window.authConfirmationResult;
     if (!confirmation) {
-      toast({ variant: 'destructive', title: 'Expired', description: 'Session expired. Please request a new OTP.' });
+      toast({ variant: 'destructive', title: 'Session Lost', description: 'Session expired. Please request a new OTP.' });
       setSignupStep('info');
       return;
     }
@@ -154,10 +156,10 @@ export function AuthForm({ mode }: AuthFormProps) {
     try {
       await confirmation.confirm(otp);
       setSignupStep('password');
-      toast({ title: 'Verified', description: 'Mobile verified successfully.', className: 'bg-green-600 text-white' });
+      toast({ title: 'Verified', description: 'Mobile verified successfully. Now set your password.', className: 'bg-green-600 text-white' });
     } catch (error: any) {
       console.error("OTP Verify Error:", error);
-      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'Verification code does not match.' });
+      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'Verification code does not match or has expired.' });
     } finally {
       setIsVerifying(false);
     }
@@ -171,7 +173,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (signupStep !== 'password') return;
         
         const currentUser = auth.currentUser;
-        if (!currentUser) throw new Error("Verification session lost. Please restart.");
+        if (!currentUser) throw new Error("Verification session lost. Please restart the registration.");
 
         let referredBy = null;
         if (values.referralCode) {
@@ -181,6 +183,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             else { toast({ variant: 'destructive', title: 'Invalid Referral', description: 'Referral code not found.' }); return; }
         }
         
+        // Link the existing Phone Auth user with Email/Password credential (for standard login later)
         const credential = EmailAuthProvider.credential(email, values.password!);
         await linkWithCredential(currentUser, credential);
         await updateProfile(currentUser, { displayName: values.username });
@@ -195,37 +198,54 @@ export function AuthForm({ mode }: AuthFormProps) {
             const bonus = (welcomeBonus?.enabled && welcomeBonus?.amount > 0) ? welcomeBonus.amount : 0;
 
             tx.set(userDocRef, {
-                uid: currentUser.uid, displayName: values.username, mobile: values.mobile, email,
-                balance: 0, bonusBalance: bonus, totalBonusGiven: bonus,
-                isAdmin: false, isBlocked: false, createdAt: serverTimestamp(),
+                uid: currentUser.uid, 
+                displayName: values.username, 
+                mobile: values.mobile, 
+                email,
+                balance: 0, 
+                bonusBalance: bonus, 
+                totalBonusGiven: bonus,
+                isAdmin: false, 
+                isBlocked: false, 
+                createdAt: serverTimestamp(),
                 referralCode: currentUser.uid.substring(0, 8).toUpperCase(),
-                referredBy, hasDeposited: false,
+                referredBy, 
+                hasDeposited: false,
             });
 
             if (bonus > 0) {
               tx.set(doc(collection(db, 'bonusTransactions')), {
-                  userId: currentUser.uid, displayName: values.username, mobile: values.mobile,
-                  amount: bonus, type: 'Given', description: 'Welcome bonus.', createdAt: serverTimestamp(),
+                  userId: currentUser.uid, 
+                  displayName: values.username, 
+                  mobile: values.mobile,
+                  amount: bonus, 
+                  type: 'Given', 
+                  description: 'Welcome bonus.', 
+                  createdAt: serverTimestamp(),
               });
             }
             tx.update(statsDocRef, { totalUsers: increment(1) });
         });
         toast({ title: 'Welcome!', description: 'Account created successfully.' });
       } else {
+        // Login Flow
         const snap = await getDocs(query(collection(db, "users"), where("mobile", "==", values.mobile)));
-        if (snap.empty) { toast({ variant: 'destructive', title: 'Not Registered', description: 'Number not found. Please Signup first.' }); return; }
+        if (snap.empty) { 
+            toast({ variant: 'destructive', title: 'Not Registered', description: 'This number is not registered. Please Signup first.' }); 
+            return; 
+        }
 
         const userCredential = await signInWithEmailAndPassword(auth, email, values.password!);
         const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
         if (userDoc.exists() && userDoc.data().isBlocked) {
             await auth.signOut();
-            throw new Error("Account blocked. Contact support.");
+            throw new Error("Your account is blocked. Please contact support.");
         }
       }
-      router.push('/');
+      router.replace('/');
     } catch (error: any) {
       console.error(error);
-      let message = error.message || 'Authentication failed.';
+      let message = 'Authentication failed. Please check your credentials.';
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') message = 'Invalid mobile number or password.';
       toast({ variant: 'destructive', title: 'Error', description: message });
     }
@@ -244,9 +264,9 @@ export function AuthForm({ mode }: AuthFormProps) {
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <CardContent className="space-y-4" key={signupStep}>
+          <CardContent className="space-y-4">
             {mode === 'signup' ? (
-              <>
+              <div key={`signup-${signupStep}`}>
                 {signupStep === 'info' && (
                   <div className="space-y-4 animate-in fade-in">
                     <FormField control={form.control} name="username" render={({ field }) => (
@@ -258,7 +278,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     <FormField control={form.control} name="referralCode" render={({ field }) => (
                         <FormItem><div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input placeholder="Referral Code (Optional)" {...field} className="bg-[#2A3B4C] text-white pl-10 h-12" /></FormControl></div><FormMessage /></FormItem>
                     )} />
-                    <Button type="button" onClick={handleSendOTP} className="w-full h-12 bg-orange-500 font-bold" disabled={isVerifying}>{isVerifying && <Loader className="mr-2 h-4" />}Send OTP</Button>
+                    <Button type="button" onClick={handleSendOTP} className="w-full h-12 bg-orange-500 font-bold hover:bg-orange-600 transition-colors" disabled={isVerifying}>{isVerifying && <Loader className="mr-2 h-4" />}Send OTP</Button>
                   </div>
                 )}
                 {signupStep === 'otp' && (
@@ -266,7 +286,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     <FormField control={form.control} name="otp" render={({ field }) => (
                         <FormItem><FormLabel className="text-white">Enter 6-Digit OTP</FormLabel><FormControl><Input placeholder="000000" {...field} className="bg-[#2A3B4C] text-white text-3xl text-center h-16 font-black tracking-widest" maxLength={6} inputMode="numeric" autoComplete="one-time-code" /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <Button type="button" onClick={handleVerifyOTP} className="w-full h-12 bg-green-600 font-bold" disabled={isVerifying}>{isVerifying && <Loader className="mr-2 h-4" />}Verify Code</Button>
+                    <Button type="button" onClick={handleVerifyOTP} className="w-full h-12 bg-green-600 font-bold hover:bg-green-700" disabled={isVerifying}>{isVerifying && <Loader className="mr-2 h-4" />}Verify Mobile</Button>
                     <Button variant="link" className="text-orange-400 text-xs" onClick={() => { setSignupStep('info'); window.authConfirmationResult = null; }}>Wrong Number? Go Back</Button>
                   </div>
                 )}
@@ -276,10 +296,10 @@ export function AuthForm({ mode }: AuthFormProps) {
                     <FormField control={form.control} name="password" render={({ field }) => (
                         <FormItem><FormLabel className="text-white">Set Secure Password</FormLabel><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type={showPassword ? "text" : "password"} placeholder="Min 6 characters" {...field} className="bg-[#2A3B4C] text-white pl-10 pr-10 h-12" autoComplete="new-password" /></FormControl><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPassword ? <EyeOff className="h-4" /> : <Eye className="h-4" />}</button></div><FormMessage /></FormItem>
                     )} />
-                    <Button type="submit" className="w-full h-12 bg-orange-500 font-bold" disabled={isSubmitting}>{isSubmitting && <Loader className="mr-2 h-4" />}Create Account</Button>
+                    <Button type="submit" className="w-full h-12 bg-orange-500 font-bold hover:bg-orange-600" disabled={isSubmitting}>{isSubmitting && <Loader className="mr-2 h-4" />}Complete Registration</Button>
                   </div>
                 )}
-              </>
+              </div>
             ) : (
               <div className="space-y-4">
                 <FormField control={form.control} name="mobile" render={({ field }) => (
@@ -288,12 +308,12 @@ export function AuthForm({ mode }: AuthFormProps) {
                 <FormField control={form.control} name="password" render={({ field }) => (
                     <FormItem><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /><FormControl><Input type={showPassword ? "text" : "password"} placeholder="Password" {...field} className="bg-[#2A3B4C] text-white pl-10 pr-10 h-12" autoComplete="current-password" /></FormControl><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPassword ? <EyeOff className="h-4" /> : <Eye className="h-4" />}</button></div><FormMessage /></FormItem>
                 )} />
-                <Button type="submit" className="w-full h-12 bg-orange-500 font-bold" disabled={isSubmitting}>{isSubmitting && <Loader className="mr-2 h-4" />}Sign In</Button>
+                <Button type="submit" className="w-full h-12 bg-orange-500 font-bold hover:bg-orange-600" disabled={isSubmitting}>{isSubmitting && <Loader className="mr-2 h-4" />}Sign In</Button>
               </div>
             )}
           </CardContent>
           <CardFooter className="flex flex-col text-sm text-gray-400 pb-8 gap-2">
-            <p>{mode === 'login' ? "New user?" : 'Already have an account?'} <Link href={mode === 'login' ? '/signup' : '/login'} className="text-orange-400 font-bold hover:underline">{mode === 'login' ? 'Register Now' : 'Login Here'}</Link></p>
+            <p>{mode === 'login' ? "New to Matka King?" : 'Already have an account?'} <Link href={mode === 'login' ? '/signup' : '/login'} className="text-orange-400 font-bold hover:underline">{mode === 'login' ? 'Register Now' : 'Login Here'}</Link></p>
             {mode === 'login' && <Link href="/forgot-password"><span className="text-orange-400 hover:underline cursor-pointer">Forgot Password?</span></Link>}
           </CardFooter>
         </form>

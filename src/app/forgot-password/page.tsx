@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -45,9 +45,6 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
-  
-  // Use local state to force component awareness of window changes
-  const [sessionActive, setSessionActive] = useState(false);
 
   const formMobile = useForm<z.infer<typeof mobileSchema>>({
     resolver: zodResolver(mobileSchema),
@@ -68,15 +65,10 @@ export default function ForgotPasswordPage() {
     }
   }, [user, formMobile]);
 
-  // Clean OTP field when entering OTP step
+  // Clear fields when step transitions
   useEffect(() => {
     if (step === 'otp') {
         formOtp.setValue('otp', '');
-        // Force focus after a tiny delay to ensure step transition is done
-        setTimeout(() => {
-            const input = document.getElementById('forgot-otp-input-field');
-            if (input) input.focus();
-        }, 300);
     }
   }, [step, formOtp]);
 
@@ -89,11 +81,10 @@ export default function ForgotPasswordPage() {
             return window.forgotRecaptcha;
         }
         
+        auth.languageCode = 'en';
         const verifier = new RecaptchaVerifier(auth, container, {
             'size': 'invisible',
-            'callback': () => {
-                console.log('reCAPTCHA solved');
-            },
+            'callback': () => {},
             'expired-callback': () => {
                 window.forgotRecaptcha = null;
             }
@@ -123,21 +114,16 @@ export default function ForgotPasswordPage() {
       const uid = userDoc.id;
 
       const verifier = initRecaptcha();
-      if (!verifier) throw new Error("Captcha failed to initialize.");
+      if (!verifier) throw new Error("Verification engine failed to initialize.");
 
       const phoneNumber = `+91${values.mobile}`;
-      
-      // Clear existing result if any to prevent mismatch
       window.forgotConfirmationResult = null;
       
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
-      
-      // Store session globally
       window.forgotConfirmationResult = confirmation;
       
       setUserUid(uid);
       setMobileNumber(values.mobile);
-      setSessionActive(true);
       setStep('otp');
       
       toast({
@@ -147,12 +133,8 @@ export default function ForgotPasswordPage() {
 
     } catch (error: any) {
       console.error("SMS Error:", error);
-      let message = error.message || 'Failed to send OTP.';
-      if (error.code === 'auth/too-many-requests') {
-          message = 'Too many attempts. Please wait 15-20 minutes.';
-      } else if (error.code === 'auth/invalid-phone-number') {
-          message = 'The mobile number entered is invalid.';
-      }
+      let message = 'Failed to send verification code. Please check the number.';
+      if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Please wait 15-20 minutes.';
       toast({ variant: 'destructive', title: 'Error', description: message });
     } finally {
       setIsSubmitting(false);
@@ -163,41 +145,31 @@ export default function ForgotPasswordPage() {
     const confirmation = window.forgotConfirmationResult;
     
     if (!confirmation || !userUid) {
-      toast({ variant: 'destructive', title: 'Session Lost', description: 'Please go back and send OTP again.' });
+      toast({ variant: 'destructive', title: 'Session Expired', description: 'Session timed out. Please request a new OTP.' });
       setStep('mobile');
-      setSessionActive(false);
       return;
     }
 
     setIsSubmitting(true);
     try {
       const cleanOtp = values.otp.replace(/\D/g, '').trim();
-      if (cleanOtp.length !== 6) throw new Error("Please enter all 6 digits.");
-
-      // Verify the code
       await confirmation.confirm(cleanOtp);
       
-      // Verification successful, update password on server
       const result = await updateUserPassword({ uid: userUid, newPassword: values.newPassword });
       
       if(result.success) {
         toast({ title: 'Success!', description: 'Password updated successfully.', className: 'bg-green-600 text-white' });
         window.forgotConfirmationResult = null;
-        setSessionActive(false);
         router.replace(user ? '/' : '/login');
       } else {
          throw new Error(result.message);
       }
     } catch (error: any) {
       console.error("Verification Error:", error);
-      let message = 'Verification code does not match. Please try again.';
-      if (error.code === 'auth/code-expired') {
-          message = 'This OTP has expired. Please request a new one.';
-      }
       toast({
         variant: 'destructive',
         title: 'Invalid OTP',
-        description: message,
+        description: 'The code you entered is incorrect or has expired.',
       });
     } finally {
       setIsSubmitting(false);
@@ -206,10 +178,9 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4 relative">
-      {/* reCAPTCHA container must be outside the keyed card area to stay stable */}
       <div id="forgot-recaptcha-container" className="absolute top-0 left-0 h-0 w-0 pointer-events-none opacity-0"></div>
       
-      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden" key={`step-${step}`}>
+      <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-white flex items-center justify-center gap-2">
             <KeyRound className="h-6 w-6 text-orange-500" />
@@ -218,7 +189,7 @@ export default function ForgotPasswordPage() {
           <CardDescription className="text-gray-400">
             {step === 'mobile' 
               ? (user ? "Confirm your registered number" : "Enter registered mobile number")
-              : `Enter 6-digit OTP sent to ${mobileNumber}`
+              : `Enter OTP sent to ${mobileNumber}`
             }
           </CardDescription>
         </CardHeader>
@@ -254,9 +225,9 @@ export default function ForgotPasswordPage() {
                             </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-black font-bold text-lg rounded-xl" disabled={isSubmitting}>
+                        <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-black font-bold text-lg rounded-xl transition-colors" disabled={isSubmitting}>
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
-                            Send OTP
+                            Send Verification Code
                         </Button>
                     </form>
                 </Form>
@@ -272,12 +243,12 @@ export default function ForgotPasswordPage() {
                                     <FormLabel className="text-white text-xs">Verification Code</FormLabel>
                                     <FormControl>
                                         <Input 
-                                            id="forgot-otp-input-field"
+                                            id="forgot-otp-input"
                                             type="text" 
                                             inputMode="numeric"
-                                            placeholder="Enter OTP" 
+                                            placeholder="000000" 
                                             {...field} 
-                                            className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-14 text-center text-2xl font-black tracking-widest rounded-xl focus:ring-2 focus:ring-orange-500" 
+                                            className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-14 text-center text-2xl font-black tracking-widest rounded-xl" 
                                             maxLength={6} 
                                             autoComplete="one-time-code"
                                         />
@@ -306,11 +277,11 @@ export default function ForgotPasswordPage() {
                                 )}
                             />
                         </div>
-                        <Button type="submit" className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg rounded-xl" disabled={isSubmitting}>
+                        <Button type="submit" className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg rounded-xl transition-colors" disabled={isSubmitting}>
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
-                            Update Password
+                            Verify & Update
                         </Button>
-                        <Button variant="link" className="w-full text-orange-400 text-xs" onClick={() => { setStep('mobile'); setSessionActive(false); }} disabled={isSubmitting}>
+                        <Button variant="link" className="w-full text-orange-400 text-xs" onClick={() => { setStep('mobile'); window.forgotConfirmationResult = null; }} disabled={isSubmitting}>
                             Change number? Go back
                         </Button>
                     </form>
