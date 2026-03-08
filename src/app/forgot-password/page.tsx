@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { updateUserPassword } from '@/actions/update-user-password';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { cn } from '@/lib/utils';
 
 // Extension for window object to hold recaptcha and confirmation
 declare global {
