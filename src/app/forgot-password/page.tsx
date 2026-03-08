@@ -38,9 +38,8 @@ export default function ForgotPasswordPage() {
   const [userUid, setUserUid] = useState<string | null>(null);
   const [mobileNumber, setMobileNumber] = useState('');
   
-  // Refs to manage recaptcha lifecycle without re-renders breaking it
+  // Refs to manage recaptcha lifecycle
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
   const formMobile = useForm<z.infer<typeof mobileSchema>>({
     resolver: zodResolver(mobileSchema),
@@ -73,18 +72,19 @@ export default function ForgotPasswordPage() {
   }, [step, formOtp]);
 
   const initRecaptcha = () => {
+    const container = document.getElementById('recaptcha-container');
+    if (!container) return null;
+
     try {
-        if (recaptchaVerifierRef.current) {
-            recaptchaVerifierRef.current.clear();
+        if (!recaptchaVerifierRef.current) {
+            recaptchaVerifierRef.current = new RecaptchaVerifier(auth, container, {
+                'size': 'invisible',
+                'callback': () => {},
+                'expired-callback': () => {
+                    recaptchaVerifierRef.current = null;
+                }
+            });
         }
-        
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            'size': 'invisible',
-            'callback': () => {},
-            'expired-callback': () => {
-                recaptchaVerifierRef.current = null;
-            }
-        });
         return recaptchaVerifierRef.current;
     } catch (error) {
         console.error("Recaptcha Init Error:", error);
@@ -112,7 +112,7 @@ export default function ForgotPasswordPage() {
       const phoneNumber = `+91${values.mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       
-      // Store confirmation result globally temporarily or manage via state
+      // Store confirmation result globally temporarily
       (window as any).confirmationResult = confirmation;
       
       setUserUid(uid);
@@ -129,9 +129,11 @@ export default function ForgotPasswordPage() {
       let message = error.message || 'Failed to send OTP. Try again later.';
       if (error.code === 'auth/too-many-requests') {
           message = 'Too many requests. Please wait 15-20 minutes.';
+      } else if (error.code === 'auth/invalid-phone-number') {
+          message = 'The mobile number entered is wrong or invalid.';
       }
+      
       toast({ variant: 'destructive', title: 'Error', description: message });
-      // Reset recaptcha on error
       recaptchaVerifierRef.current = null;
     } finally {
       setIsSubmitting(false);
@@ -174,8 +176,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="dark flex min-h-screen items-center justify-center bg-background p-4 relative">
-      {/* Recaptcha container must be always present and outside components that unmount */}
-      <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
+      <div id="recaptcha-container"></div>
       
       <Card className="w-full max-w-sm bg-[#1A2C3D] border-t-4 border-orange-500 rounded-2xl shadow-2xl overflow-hidden relative z-10">
         <CardHeader className="text-center">
@@ -191,7 +192,7 @@ export default function ForgotPasswordPage() {
           </CardDescription>
         </CardHeader>
         
-        <CardContent key={step} className="animate-in fade-in zoom-in-95 duration-300">
+        <CardContent className="animate-in fade-in zoom-in-95 duration-300">
             {step === 'mobile' ? (
                 <Form {...formMobile}>
                     <form onSubmit={formMobile.handleSubmit(onMobileSubmit)} className="space-y-4" autoComplete="off">
@@ -231,48 +232,50 @@ export default function ForgotPasswordPage() {
             ) : (
                 <Form {...formOtp}>
                     <form onSubmit={formOtp.handleSubmit(onOtpSubmit)} className="space-y-4" autoComplete="off">
-                        <FormField
-                            control={formOtp.control}
-                            name="otp"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-white text-xs">OTP Code</FormLabel>
-                                <FormControl>
-                                    <Input 
-                                        id="otp-verification-input-stable"
-                                        type="text" 
-                                        inputMode="numeric"
-                                        placeholder="Enter OTP" 
-                                        {...field} 
-                                        className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-14 text-center text-2xl font-black tracking-widest rounded-xl focus:ring-2 focus:ring-orange-500" 
-                                        maxLength={6} 
-                                        autoComplete="one-time-code"
-                                        onFocus={(e) => e.target.select()}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={formOtp.control}
-                            name="newPassword"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-white text-xs">New Password</FormLabel>
-                                <FormControl>
-                                    <Input 
-                                        type="password" 
-                                        placeholder="Min 6 characters" 
-                                        {...field} 
-                                        className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-xl" 
-                                        autoComplete="new-password"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
+                        <div key="otp-wrapper" className="space-y-4">
+                            <FormField
+                                control={formOtp.control}
+                                name="otp"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-white text-xs">OTP Code</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            id="otp-verification-input-unique"
+                                            type="text" 
+                                            inputMode="numeric"
+                                            placeholder="Enter OTP" 
+                                            {...field} 
+                                            className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-14 text-center text-2xl font-black tracking-widest rounded-xl focus:ring-2 focus:ring-orange-500" 
+                                            maxLength={6} 
+                                            autoComplete="one-time-code"
+                                            onFocus={(e) => e.target.select()}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={formOtp.control}
+                                name="newPassword"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-white text-xs">New Password</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            type="password" 
+                                            placeholder="Min 6 characters" 
+                                            {...field} 
+                                            className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-xl" 
+                                            autoComplete="new-password"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        </div>
                         <Button type="submit" className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg rounded-xl" disabled={isSubmitting}>
                             {isSubmitting ? <Loader className="mr-2 h-5 w-5" /> : null}
                             Change Password

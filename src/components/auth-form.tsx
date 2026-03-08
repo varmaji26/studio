@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from './loader';
 import { Eye, EyeOff, User, Phone, KeyRound, Gift, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 const formSchema = z.object({
   username: z.string().min(3, 'Name must be at least 3 characters.').regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters.').optional().or(z.literal('')),
@@ -58,12 +58,25 @@ export function AuthForm({ mode }: AuthFormProps) {
     },
   });
 
-  const { formState: { isSubmitting }, watch, trigger } = form;
+  const { formState: { isSubmitting }, watch, trigger, setValue } = form;
   const mobile = watch('mobile');
 
+  // Aggressively clear OTP field when entering OTP step
+  useEffect(() => {
+    if (signupStep === 'otp') {
+      const timer = setTimeout(() => {
+        setValue('otp', '', { shouldValidate: false });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [signupStep, setValue]);
+
   const initRecaptcha = () => {
+    const container = document.getElementById('signup-recaptcha-container');
+    if (!container) return null;
+
     if (!recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'signup-recaptcha-container', {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, container, {
         'size': 'invisible',
         'callback': () => {},
         'expired-callback': () => {
@@ -82,7 +95,6 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     setIsVerifying(true);
     try {
-      // Check if number already exists in DB
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("mobile", "==", mobile));
       const querySnapshot = await getDocs(q);
@@ -98,6 +110,8 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
 
       const verifier = initRecaptcha();
+      if (!verifier) throw new Error("Captcha initialization failed. Please refresh.");
+
       const phoneNumber = `+91${mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       setConfirmationResult(confirmation);
@@ -105,12 +119,12 @@ export function AuthForm({ mode }: AuthFormProps) {
       toast({ title: 'OTP Sent', description: `Code sent to +91 ${mobile}` });
     } catch (error: any) {
       console.error("OTP Error:", error);
-      let message = 'Failed to send OTP. Try again.';
+      let message = error.message || 'Failed to send OTP. Try again.';
       
       if (error.code === 'auth/invalid-phone-number') {
           message = 'The mobile number entered is wrong or invalid.';
       } else if (error.code === 'auth/too-many-requests') {
-          message = 'Too many requests. Please try again after some time.';
+          message = 'Too many requests. Please wait 15-20 minutes.';
       } else if (error.code === 'auth/quota-exceeded') {
           message = 'SMS quota exceeded. Please contact admin.';
       }
@@ -156,7 +170,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
 
         const currentUser = auth.currentUser;
-        if (!currentUser) throw new Error("Authentication failed. Please try again.");
+        if (!currentUser) throw new Error("Authentication session expired. Please restart.");
 
         let referredBy = null;
         if (values.referralCode) {
@@ -224,7 +238,6 @@ export function AuthForm({ mode }: AuthFormProps) {
         });
         toast({ title: 'Welcome!', description: 'Account created successfully.' });
       } else {
-        // Login Logic
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("mobile", "==", values.mobile));
         const querySnapshot = await getDocs(q);
@@ -249,14 +262,12 @@ export function AuthForm({ mode }: AuthFormProps) {
       router.push('/');
     } catch (error: any) {
       console.error(error);
-      let errorMessage = 'Authentication failed.';
+      let errorMessage = error.message || 'Authentication failed.';
       
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
           errorMessage = 'Incorrect password. Please try again.';
       } else if (error.code === 'auth/user-not-found') {
           errorMessage = 'This number is not registered.';
-      } else if (error.message) {
-          errorMessage = error.message;
       }
       
       toast({ variant: 'destructive', title: 'Error', description: errorMessage });
@@ -285,7 +296,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             {mode === 'signup' ? (
               <>
                 {signupStep === 'info' && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
+                  <div key="step-info" className="space-y-4 animate-in fade-in slide-in-from-right-5">
                     <FormField
                       control={form.control}
                       name="username"
@@ -311,7 +322,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                           <div className="relative">
                               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                               <FormControl>
-                                  <Input type="tel" placeholder="10-digit number" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" maxLength={10} />
+                                  <Input type="tel" placeholder="10-digit number" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" maxLength={10} autoComplete="tel" />
                               </FormControl>
                           </div>
                           <FormMessage />
@@ -342,7 +353,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 )}
 
                 {signupStep === 'otp' && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-right-5 text-center">
+                  <div key="step-otp" className="space-y-4 animate-in fade-in slide-in-from-right-5 text-center">
                     <div className="flex justify-center mb-2">
                       <ShieldCheck className="h-12 w-12 text-orange-500" />
                     </div>
@@ -354,10 +365,13 @@ export function AuthForm({ mode }: AuthFormProps) {
                           <FormLabel className="text-white">Enter 6-Digit OTP</FormLabel>
                           <FormControl>
                             <Input 
+                              id="signup-otp-input"
                               placeholder="000000" 
                               {...field} 
                               className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-14 text-center text-2xl font-black tracking-widest rounded-xl" 
                               maxLength={6}
+                              autoComplete="one-time-code"
+                              inputMode="numeric"
                             />
                           </FormControl>
                           <FormMessage />
@@ -375,7 +389,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 )}
 
                 {signupStep === 'password' && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
+                  <div key="step-password" className="space-y-4 animate-in fade-in slide-in-from-right-5">
                     <div className="flex items-center gap-2 bg-green-500/10 p-3 rounded-lg border border-green-500/20 mb-4">
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
                       <span className="text-green-500 text-sm font-semibold">Verified +91 {mobile}</span>
@@ -389,7 +403,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                           <div className="relative">
                             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <FormControl>
-                              <Input type={showPassword ? "text" : "password"} placeholder="Minimum 6 characters" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10 pr-10" />
+                              <Input type={showPassword ? "text" : "password"} placeholder="Minimum 6 characters" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10 pr-10" autoComplete="new-password" />
                             </FormControl>
                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -417,7 +431,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                       <div className="relative">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                           <FormControl>
-                              <Input type="tel" placeholder="Enter your number" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" maxLength={10} />
+                              <Input type="tel" placeholder="Enter your number" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10" maxLength={10} autoComplete="tel" />
                           </FormControl>
                       </div>
                       <FormMessage />
@@ -433,7 +447,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                       <div className="relative">
                         <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <FormControl>
-                          <Input type={showPassword ? "text" : "password"} placeholder="Enter your password" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10 pr-10" />
+                          <Input type={showPassword ? "text" : "password"} placeholder="Enter your password" {...field} className="bg-[#2A3B4C] border-[#3A4B5C] text-white h-12 rounded-lg pl-10 pr-10" autoComplete="current-password" />
                         </FormControl>
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
