@@ -62,33 +62,49 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
     const isPublicPage = 
       pathname === '/login' || 
-      pathname === '/signup' || 
-      pathname === '/forgot-password';
+      pathname === '/signup';
       
+    const isForgotPasswordPage = pathname === '/forgot-password';
     const isAdminPage = pathname.startsWith('/admin');
     
     // Exempt both Settings and Registered Users from the maintenance screen
     const isMaintenanceExempt = pathname === '/admin/settings' || pathname === '/admin/manage-users';
 
+<<<<<<< HEAD
     // Maintenance Mode Check
     const isAppClosed = settings.appEnabled === false;
+=======
+    const showBottomNav = 
+      !isAdminPage && 
+      !isPublicPage && 
+      !isForgotPasswordPage &&
+      !pathname.startsWith('/games') &&
+      !pathname.startsWith('/jodi-chart') &&
+      !pathname.startsWith('/panel-chart') &&
+      pathname !== '/download';
+>>>>>>> c0dd871e35509e1d4829fea628dfb9a486f711b8
 
     useEffect(() => {
         if (loading || isAdminPage) {
             return;
         }
         
-        const isProtectedRoute = !isPublicPage && pathname !== '/download';
+        const isProtectedRoute = !isPublicPage && !isForgotPasswordPage && pathname !== '/download';
+
+        // Only redirect to home if user is FULLY registered (has email assigned)
+        // This prevents intermediate Phone Auth state from jumping to home
+        const isFullyRegistered = user && user.email;
 
         if (!user && isProtectedRoute) {
             router.replace('/login');
         }
 
-        if (user && isPublicPage) {
+        if (isFullyRegistered && isPublicPage) {
             router.replace('/');
         }
-    }, [user, loading, pathname, router, isAdminPage, isPublicPage]);
+    }, [user, loading, pathname, router, isAdminPage, isPublicPage, isForgotPasswordPage]);
 
+<<<<<<< HEAD
     if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -125,6 +141,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
     const isProtectedRoute = !isPublicPage && pathname !== '/download';
     if (!isAdminPage && ((!user && isProtectedRoute) || (user && isPublicPage))) {
+=======
+    const isProtectedRoute = !isPublicPage && !isForgotPasswordPage && pathname !== '/download';
+    
+    if (loading) {
+>>>>>>> c0dd871e35509e1d4829fea628dfb9a486f711b8
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
@@ -159,8 +180,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+<<<<<<< HEAD
         <title>MKING</title>
         <meta name="description" content="MKING App" />
+=======
+        <title>Matka King</title>
+        <meta name="description" content="Official Matka King Application" />
+>>>>>>> c0dd871e35509e1d4829fea628dfb9a486f711b8
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
       <body className={`${inter.className} font-body antialiased`}>
