@@ -30,6 +30,7 @@ import {
   List,
   BellRing,
   ShieldOff,
+  Lock,
 } from 'lucide-react';
 import { LayoutProvider } from '@/components/layout-provider';
 import { SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, Sidebar, SidebarTrigger } from '@/components/ui/sidebar';
@@ -44,6 +45,17 @@ import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firest
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { Loader } from '@/components/loader';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 
 export default function AdminLayout({
@@ -52,11 +64,19 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
+
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [pendingDepositsCount, setPendingDepositsCount] = React.useState(0);
   const [pendingWithdrawalsCount, setPendingWithdrawalsCount] = React.useState(0);
   const [newUsersCount, setNewUsersCount] = React.useState(0);
   const [theme, setTheme] = React.useState('light');
+  
+  // States for Registered Users password protection
+  const [isUserPassDialogOpen, setIsUserPassDialogOpen] = React.useState(false);
+  const [userPassInput, setUserPassInput] = React.useState('');
   
   const isActive = (path: string) => pathname === path;
 
@@ -70,12 +90,8 @@ export default function AdminLayout({
   const [isPaymentHistoryMenuOpen, setPaymentHistoryMenuOpen] = React.useState(isPaymentHistoryMenuInitiallyOpen);
 
 
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
-
   React.useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
-    // Check if storedTheme is not null and not an empty string before parsing
     if (storedTheme) {
         try {
             const currentTheme = JSON.parse(storedTheme);
@@ -84,12 +100,10 @@ export default function AdminLayout({
             document.documentElement.classList.add(currentTheme);
         } catch (error) {
             console.error("Failed to parse theme from localStorage", error);
-            // Fallback to default theme if parsing fails
             setTheme('light');
             document.documentElement.classList.add('light');
         }
     } else {
-        // Default theme if nothing is in localStorage
         setTheme('light');
         document.documentElement.classList.add('light');
     }
@@ -112,7 +126,6 @@ export default function AdminLayout({
   }, [user, authLoading, router]);
 
   React.useEffect(() => {
-    // Listener for pending requests
     const depositsQuery = query(collection(db, "deposits"), where("status", "==", "pending"));
     const withdrawalsQuery = query(collection(db, "withdrawals"), where("status", "==", "pending"));
 
@@ -124,7 +137,6 @@ export default function AdminLayout({
         setPendingWithdrawalsCount(snapshot.size);
     });
 
-    // Listener for new users
     const lastViewedUsersTimestamp = localStorage.getItem('lastViewedUsersTimestamp');
     const lastViewedUsersDate = lastViewedUsersTimestamp ? new Date(parseInt(lastViewedUsersTimestamp, 10)) : new Date(0);
 
@@ -152,6 +164,22 @@ export default function AdminLayout({
       router.replace('/login');
     } catch (error) {
       console.error('Logout failed', error);
+    }
+  };
+
+  const handleUserListAccess = () => {
+    if (userPassInput === '2426@password') {
+      setIsUserPassDialogOpen(false);
+      setUserPassInput('');
+      router.push('/admin/manage-users?viewed=true');
+      setNewUsersCount(0);
+      handleLinkClick();
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Incorrect Password',
+      });
+      setUserPassInput('');
     }
   };
 
@@ -224,7 +252,13 @@ export default function AdminLayout({
                   </CollapsibleContent>
                </Collapsible>
               <SidebarMenuItem>
-                 <Link href="/admin/manage-users?viewed=true" passHref onClick={() => { handleLinkClick(); setNewUsersCount(0); }}>
+                 <div 
+                    className="w-full cursor-pointer"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        setIsUserPassDialogOpen(true);
+                    }}
+                 >
                     <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Registered Users"}}>
                       <div className="flex items-center gap-2">
                         <Users />
@@ -236,7 +270,7 @@ export default function AdminLayout({
                         </span>
                      )}
                     </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
                <SidebarMenuItem>
                  <Link href="/admin/user-list" passHref onClick={handleLinkClick}>
@@ -487,6 +521,35 @@ export default function AdminLayout({
             {children}
         </div>
       </main>
+
+      {/* Registered Users Access Password Dialog */}
+      <Dialog open={isUserPassDialogOpen} onOpenChange={setIsUserPassDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                    <Lock className="h-5 w-5 text-primary" />
+                    Access Verification
+                </DialogTitle>
+                <DialogDescription>
+                    Please enter the password to view Registered Users.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <Input 
+                    type="password" 
+                    placeholder="Enter Password" 
+                    value={userPassInput}
+                    onChange={(e) => setUserPassInput(e.target.value)}
+                    className="text-center text-lg"
+                    onKeyDown={(e) => e.key === 'Enter' && handleUserListAccess()}
+                />
+                <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => setIsUserPassDialogOpen(false)}>Cancel</Button>
+                    <Button className="flex-1 bg-primary text-white" onClick={handleUserListAccess}>Verify</Button>
+                </div>
+            </div>
+        </DialogContent>
+      </Dialog>
     </LayoutProvider>
   );
 }

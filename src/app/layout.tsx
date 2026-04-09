@@ -66,7 +66,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       pathname === '/forgot-password';
       
     const isAdminPage = pathname.startsWith('/admin');
-    const isSettingsPage = pathname === '/admin/settings';
+    
+    // Exempt both Settings and Registered Users from the maintenance screen
+    const isMaintenanceExempt = pathname === '/admin/settings' || pathname === '/admin/manage-users';
 
     // Maintenance Mode Check
     const isAppClosed = settings.appEnabled === false;
@@ -95,8 +97,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // Maintenance Mode Overlay (Allows only admin/settings)
-    if (isAppClosed && !isSettingsPage) {
+    // Maintenance Mode Overlay (Allows only admin/settings and manage-users)
+    if (isAppClosed && !isMaintenanceExempt) {
         return (
             <div className="flex h-screen w-full flex-col items-center justify-center bg-background p-6 text-center text-foreground">
                 <div className="bg-red-500/10 p-8 rounded-full mb-6">
@@ -109,11 +111,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                     The app is currently offline due to technical maintenance and guideline updates. We apologize for the inconvenience and will be back online shortly.
                 </p>
                 {user?.isAdmin && (
-                    <Link href="/admin/settings">
-                        <Button className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 rounded-full shadow-lg shadow-red-600/20">
-                            Admin: Access Settings
-                        </Button>
-                    </Link>
+                    <div className="flex flex-col gap-3 w-full max-w-xs">
+                        <Link href="/admin/settings">
+                            <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold px-8 rounded-full shadow-lg shadow-red-600/20">
+                                Admin: Access Settings
+                            </Button>
+                        </Link>
+                    </div>
                 )}
             </div>
         );
