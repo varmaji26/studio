@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -25,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cleanAllUserData } from '@/actions/clean-all-user-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UIDialogDescription } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
@@ -1005,6 +1005,7 @@ export default function SettingsPage() {
     }
   }
 
+  const isAppClosed = !form.watch('appEnabled');
 
   return (
     <div className="flex-1 space-y-6">
@@ -1051,7 +1052,11 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
 
-              <Accordion type="single" collapsible className="w-full">
+              <Accordion 
+                type="single" 
+                collapsible 
+                className={cn("w-full transition-all duration-300", isAppClosed && "opacity-50 pointer-events-none cursor-not-allowed select-none")}
+              >
                 {/* Golden Ank & Marquee Section */}
                 <AccordionItem value="item-1">
                   <AccordionTrigger className="text-lg font-semibold">Golden Ank & Marquee</AccordionTrigger>
