@@ -21,6 +21,7 @@ import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2, ShieldAlert, Lock, Power } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cleanAllUserData } from '@/actions/clean-all-user-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UIDialogDescription } from '@/components/ui/dialog';
