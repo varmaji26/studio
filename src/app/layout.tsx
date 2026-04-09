@@ -1,3 +1,4 @@
+
 'use client';
 
 import './globals.css';
@@ -11,6 +12,9 @@ import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Inter } from 'next/font/google';
 import { Loader } from '@/components/loader';
+import { XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -63,14 +67,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       pathname === '/forgot-password';
       
     const isAdminPage = pathname.startsWith('/admin');
+    const isSettingsPage = pathname === '/admin/settings';
 
-    const showBottomNav = 
-      !isAdminPage && 
-      !isPublicPage && 
-      !pathname.startsWith('/games') &&
-      !pathname.startsWith('/jodi-chart') &&
-      !pathname.startsWith('/panel-chart') &&
-      pathname !== '/download';
+    // Maintenance Mode Check
+    const isAppClosed = settings.appEnabled === false;
 
     useEffect(() => {
         if (loading || isAdminPage) {
@@ -88,8 +88,40 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         }
     }, [user, loading, pathname, router, isAdminPage, isPublicPage]);
 
+    if (loading) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <Loader className="h-10 w-10 text-primary" />
+            </div>
+        );
+    }
+
+    // Maintenance Mode Overlay (Allows only admin/settings)
+    if (isAppClosed && !isSettingsPage) {
+        return (
+            <div className="flex h-screen w-full flex-col items-center justify-center bg-background p-6 text-center text-foreground">
+                <div className="bg-red-500/10 p-8 rounded-full mb-6">
+                    <XCircle className="h-24 w-24 text-red-500 animate-pulse" />
+                </div>
+                <h1 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">
+                    App thode time ke liye band hai temparli guideline issue
+                </h1>
+                <p className="text-muted-foreground text-sm max-w-xs mb-8">
+                    We apologize for the inconvenience. Please check back later.
+                </p>
+                {user?.isAdmin && (
+                    <Link href="/admin/settings">
+                        <Button className="bg-red-600 hover:bg-red-700 text-white font-bold px-8">
+                            Admin: Open Settings
+                        </Button>
+                    </Link>
+                )}
+            </div>
+        );
+    }
+
     const isProtectedRoute = !isPublicPage && pathname !== '/download';
-    if (loading || (!isAdminPage && ((!user && isProtectedRoute) || (user && isPublicPage)))) {
+    if (!isAdminPage && ((!user && isProtectedRoute) || (user && isPublicPage))) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader className="h-10 w-10 text-primary" />
@@ -97,6 +129,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         );
     }
     
+    const showBottomNav = 
+      !isAdminPage && 
+      !isPublicPage && 
+      !pathname.startsWith('/games') &&
+      !pathname.startsWith('/jodi-chart') &&
+      !pathname.startsWith('/panel-chart') &&
+      pathname !== '/download';
+
     return (
       <>
         <main>
@@ -116,8 +156,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Auth Canvas</title>
-        <meta name="description" content="Authentication with Firebase and Canvas" />
+        <title>MKING</title>
+        <meta name="description" content="MKING App" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
       <body className={`${inter.className} font-body antialiased`}>

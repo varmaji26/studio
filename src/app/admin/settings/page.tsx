@@ -19,15 +19,17 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ShieldAlert, Lock, Power } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cleanAllUserData } from '@/actions/clean-all-user-data';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UIDialogDescription } from '@/components/ui/dialog';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
 
 const settingsSchema = z.object({
+  appEnabled: z.boolean().default(true),
   goldenAnk: z.string().optional(),
   whatsappNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
   callSupportNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
@@ -176,6 +178,10 @@ const settingsSchema = z.object({
       min: z.preprocess((val) => Number(val), z.number().min(1)),
       max: z.preprocess((val) => Number(val), z.number().min(1)),
     }),
+    halfSangamDigit: z.object({
+      min: z.preprocess((val) => Number(val), z.number().min(1)),
+      max: z.preprocess((val) => Number(val), z.number().min(1)),
+    }),
     fullSangam: z.object({
       min: z.preprocess((val) => Number(val), z.number().min(1)),
       max: z.preprocess((val) => Number(val), z.number().min(1)),
@@ -192,6 +198,11 @@ export default function SettingsPage() {
   const [isCleaning, setIsCleaning] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   
+  // New state for Maintenance Mode
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [pendingAppEnabled, setPendingAppEnabled] = useState<boolean | null>(null);
+
   const [existingQrUrl, setExistingQrUrl] = useState<string | null>(null);
   const [existingQrStoragePath, setExistingQrStoragePath] = useState<string | null>(null);
   const [existingGpayImageUrl, setExistingGpayImageUrl] = useState<string | null>(null);
@@ -214,6 +225,7 @@ export default function SettingsPage() {
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
+      appEnabled: true,
       goldenAnk: '',
       whatsappNumber: '',
       callSupportNumber: '',
@@ -225,7 +237,7 @@ export default function SettingsPage() {
       gpayEnabled: true,
       paytmEnabled: true,
       phonepeEnabled: true,
-      marqueeTitle: 'MATKA KING',
+      marqueeTitle: 'MKING',
       marqueeText: '',
       marqueeBackgroundColor: '#b91c1c', // default red-700
       marqueeTextColor: '#ffffff', // default white
@@ -266,6 +278,7 @@ export default function SettingsPage() {
         doublePana: { min: 10, max: 10000 },
         triplePana: { min: 10, max: 10000 },
         halfSangam: { min: 10, max: 10000 },
+        halfSangamDigit: { min: 10, max: 10000 },
         fullSangam: { min: 10, max: 10000 },
       },
     },
@@ -290,6 +303,7 @@ export default function SettingsPage() {
         if (docSnap.exists()) {
           const data = docSnap.data() as DocumentData;
           form.reset({
+            appEnabled: data.appEnabled ?? true,
             goldenAnk: data.goldenAnk || '',
             whatsappNumber: data.whatsappNumber || '',
             callSupportNumber: data.callSupportNumber || '',
@@ -301,7 +315,7 @@ export default function SettingsPage() {
             gpayEnabled: data.paymentDetails?.GPay?.enabled ?? true,
             paytmEnabled: data.paymentDetails?.Paytm?.enabled ?? true,
             phonepeEnabled: data.paymentDetails?.PhonePe?.enabled ?? true,
-            marqueeTitle: data.marquee?.title || 'MATKA KING',
+            marqueeTitle: data.marquee?.title || 'MKING',
             marqueeText: data.marquee?.text || '',
             marqueeBackgroundColor: data.marquee?.backgroundColor || '#b91c1c',
             marqueeTextColor: data.marquee?.textColor || '#ffffff',
@@ -342,6 +356,7 @@ export default function SettingsPage() {
               doublePana: { min: 10, max: 10000 },
               triplePana: { min: 10, max: 10000 },
               halfSangam: { min: 10, max: 10000 },
+              halfSangamDigit: { min: 10, max: 10000 },
               fullSangam: { min: 10, max: 10000 },
             },
           });
@@ -606,6 +621,7 @@ export default function SettingsPage() {
         const currentPaymentDetails = currentData.paymentDetails || {};
         
         const dataToSave: any = {
+            appEnabled: values.appEnabled,
             goldenAnk: values.goldenAnk,
             whatsappNumber: values.whatsappNumber,
             callSupportNumber: values.callSupportNumber,
@@ -705,6 +721,33 @@ export default function SettingsPage() {
     }
   };
   
+  const handleAppStatusToggleClick = (newValue: boolean) => {
+    setPendingAppEnabled(newValue);
+    setPasswordInput('');
+    setIsPasswordDialogOpen(true);
+  };
+
+  const handlePasswordVerify = async () => {
+    if (passwordInput === '2426') {
+        setIsPasswordDialogOpen(false);
+        if (pendingAppEnabled !== null) {
+            try {
+                const settingsDocRef = doc(db, 'settings', 'app-settings');
+                await updateDoc(settingsDocRef, { appEnabled: pendingAppEnabled });
+                form.setValue('appEnabled', pendingAppEnabled);
+                toast({
+                    title: 'Status Updated',
+                    description: `App is now ${pendingAppEnabled ? 'ENABLED' : 'CLOSED'}.`
+                });
+            } catch (error) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Failed to update status.' });
+            }
+        }
+    } else {
+        toast({ variant: 'destructive', title: 'Incorrect Password' });
+    }
+  };
+
   const handleDeleteWelcomeBanner = async () => {
     if (!existingWelcomeBannerStoragePath) return;
 
@@ -836,7 +879,7 @@ export default function SettingsPage() {
        });
 
       setExistingGpayImageUrl(null);
-      setExistingGpayImageStoragePath(null);
+      setExistingGpayImageStoragePath(old => null);
 
       toast({ title: 'Success!', description: 'GPay image deleted.' });
     } catch (error) {
@@ -976,6 +1019,37 @@ export default function SettingsPage() {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              
+              {/* MASTER APP CONTROL SECTION */}
+              <Card className="border-red-500 bg-red-50 dark:bg-red-950/10">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-red-600 flex items-center gap-2">
+                        <Power className="h-5 w-5" />
+                        Master App Control
+                    </CardTitle>
+                    <CardDescription className="text-red-500/80">
+                        Easily Close or Open the entire application instantly.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-lg border border-red-200">
+                        <div className="space-y-0.5">
+                            <Label className="text-base font-bold">App Status</Label>
+                            <p className="text-xs text-muted-foreground">
+                                {form.watch('appEnabled') 
+                                    ? "Application is currently ONLINE" 
+                                    : "Application is currently CLOSED"}
+                            </p>
+                        </div>
+                        <Switch 
+                            checked={form.watch('appEnabled')} 
+                            onCheckedChange={handleAppStatusToggleClick}
+                            className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
+                        />
+                    </div>
+                </CardContent>
+              </Card>
+
               <Accordion type="single" collapsible className="w-full">
                 {/* Golden Ank & Marquee Section */}
                 <AccordionItem value="item-1">
@@ -1022,7 +1096,7 @@ export default function SettingsPage() {
                         </FormItem>
                       )}
                     />
-                    <FormField control={form.control} name="marqueeTitle" render={({ field }) => (<FormItem><FormLabel>Marquee Title</FormLabel><FormControl><Input placeholder="e.g., MATKA KING" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="marqueeTitle" render={({ field }) => (<FormItem><FormLabel>Marquee Title</FormLabel><FormControl><Input placeholder="e.g., MKING" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="marqueeText" render={({ field }) => (<FormItem><FormLabel>Marquee Text</FormLabel><FormControl><Input placeholder="Sub-line text" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <div className="grid grid-cols-2 gap-4">
                       <FormField control={form.control} name="marqueeBackgroundColor" render={({ field }) => (<FormItem><FormLabel>BG Color</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -1368,6 +1442,35 @@ export default function SettingsPage() {
           </Form>
         )}
       </div>
+
+      {/* Password Dialog for App Status Toggle */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                    <Lock className="h-5 w-5 text-red-500" />
+                    Security Verification
+                </DialogTitle>
+                <UIDialogDescription>
+                    Please enter the Master Password to {pendingAppEnabled ? 'OPEN' : 'CLOSE'} the application.
+                </UIDialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <Input 
+                    type="password" 
+                    placeholder="Master Password" 
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    className="text-center text-lg tracking-widest"
+                    onKeyDown={(e) => e.key === 'Enter' && handlePasswordVerify()}
+                />
+                <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => setIsPasswordDialogOpen(false)}>Cancel</Button>
+                    <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={handlePasswordVerify}>Verify & Proceed</Button>
+                </div>
+            </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
