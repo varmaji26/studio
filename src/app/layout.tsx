@@ -1,9 +1,8 @@
-
 'use client';
 
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthProvider } from '@/components/auth-provider';
 import { useAuth } from '@/hooks/use-auth';
@@ -103,16 +102,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <div className="bg-red-500/10 p-8 rounded-full mb-6">
                     <XCircle className="h-24 w-24 text-red-500 animate-pulse" />
                 </div>
-                <h1 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">
-                    App thode time ke liye band hai temparli guideline issue
+                <h1 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">
+                    Application Temporarily Unavailable
                 </h1>
-                <p className="text-muted-foreground text-sm max-w-xs mb-8">
-                    We apologize for the inconvenience. Please check back later.
+                <p className="text-muted-foreground text-base max-w-sm mb-8 font-medium">
+                    The app is currently offline due to technical maintenance and guideline updates. We apologize for the inconvenience and will be back online shortly.
                 </p>
                 {user?.isAdmin && (
                     <Link href="/admin/settings">
-                        <Button className="bg-red-600 hover:bg-red-700 text-white font-bold px-8">
-                            Admin: Open Settings
+                        <Button className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 rounded-full shadow-lg shadow-red-600/20">
+                            Admin: Access Settings
                         </Button>
                     </Link>
                 )}
