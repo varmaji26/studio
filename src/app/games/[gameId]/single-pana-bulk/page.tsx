@@ -211,14 +211,6 @@ export default function SinglePanaBulkPage() {
                 className: 'bg-green-600 text-white border-green-700',
             });
     
-            setSubmittedBids([]);
-        } catch (error: any) {
-            console.error("Error submitting bid: ", error);
-            toast({
-                title: 'Submission Failed',
-                description: error.message || 'There was an error submitting your bids.',
-                variant: 'destructive',
-            });
         } finally {
             setIsSubmitting(false);
         }

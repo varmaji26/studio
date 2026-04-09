@@ -70,10 +70,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     // Exempt both Settings and Registered Users from the maintenance screen
     const isMaintenanceExempt = pathname === '/admin/settings' || pathname === '/admin/manage-users';
 
-<<<<<<< HEAD
     // Maintenance Mode Check
     const isAppClosed = settings.appEnabled === false;
-=======
+
     const showBottomNav = 
       !isAdminPage && 
       !isPublicPage && 
@@ -82,7 +81,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       !pathname.startsWith('/jodi-chart') &&
       !pathname.startsWith('/panel-chart') &&
       pathname !== '/download';
->>>>>>> c0dd871e35509e1d4829fea628dfb9a486f711b8
 
     useEffect(() => {
         if (loading || isAdminPage) {
@@ -91,8 +89,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         
         const isProtectedRoute = !isPublicPage && !isForgotPasswordPage && pathname !== '/download';
 
-        // Only redirect to home if user is FULLY registered (has email assigned)
-        // This prevents intermediate Phone Auth state from jumping to home
+        // Only redirect to home if user is FULLY registered
         const isFullyRegistered = user && user.email;
 
         if (!user && isProtectedRoute) {
@@ -104,7 +101,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         }
     }, [user, loading, pathname, router, isAdminPage, isPublicPage, isForgotPasswordPage]);
 
-<<<<<<< HEAD
     if (loading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -124,7 +120,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                     Application Temporarily Unavailable
                 </h1>
                 <p className="text-muted-foreground text-base max-w-sm mb-8 font-medium">
-                    The app is currently offline due to technical maintenance and guideline updates. We apologize for the inconvenience and will be back online shortly.
+                    Under Technical Maintenance & Policy Review. We apologize for the inconvenience and will be back online shortly.
                 </p>
                 {user?.isAdmin && (
                     <div className="flex flex-col gap-3 w-full max-w-xs">
@@ -138,28 +134,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             </div>
         );
     }
-
-    const isProtectedRoute = !isPublicPage && pathname !== '/download';
-    if (!isAdminPage && ((!user && isProtectedRoute) || (user && isPublicPage))) {
-=======
-    const isProtectedRoute = !isPublicPage && !isForgotPasswordPage && pathname !== '/download';
-    
-    if (loading) {
->>>>>>> c0dd871e35509e1d4829fea628dfb9a486f711b8
-        return (
-            <div className="flex h-screen w-full items-center justify-center bg-background">
-                <Loader className="h-10 w-10 text-primary" />
-            </div>
-        );
-    }
-    
-    const showBottomNav = 
-      !isAdminPage && 
-      !isPublicPage && 
-      !pathname.startsWith('/games') &&
-      !pathname.startsWith('/jodi-chart') &&
-      !pathname.startsWith('/panel-chart') &&
-      pathname !== '/download';
 
     return (
       <>
@@ -180,18 +154,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-<<<<<<< HEAD
         <title>MKING</title>
         <meta name="description" content="MKING App" />
-=======
-        <title>Matka King</title>
-        <meta name="description" content="Official Matka King Application" />
->>>>>>> c0dd871e35509e1d4829fea628dfb9a486f711b8
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
       <body className={`${inter.className} font-body antialiased`}>
         <AuthProvider>
-          <LayoutContent>{children}</LayoutContent>
+          <LayoutContent>
+            {children}
+          </LayoutContent>
         </AuthProvider>
       </body>
     </html>
