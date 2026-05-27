@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -79,6 +80,7 @@ export default function AdminLayout({
   const [isUserPassDialogOpen, setIsUserPassDialogOpen] = React.useState(false);
   const [userPassInput, setUserPassInput] = React.useState('');
   const [pendingPath, setPendingPath] = React.useState<string | null>(null);
+  const [pendingMenuSetter, setPendingMenuSetter] = React.useState<{ setter: (open: boolean) => void, val: boolean } | null>(null);
 
   const isActive = (path: string) => pathname === path;
 
@@ -186,6 +188,7 @@ export default function AdminLayout({
       if (isVerified) {
           setter(isOpen);
       } else {
+          setPendingMenuSetter({ setter, val: isOpen });
           setIsUserPassDialogOpen(true);
       }
   };
@@ -206,6 +209,12 @@ export default function AdminLayout({
         }
         setPendingPath(null);
       }
+
+      if (pendingMenuSetter) {
+          pendingMenuSetter.setter(pendingMenuSetter.val);
+          setPendingMenuSetter(null);
+      }
+
       handleLinkClick();
     } else {
       toast({
@@ -232,7 +241,7 @@ export default function AdminLayout({
                 <div className="p-1.5 rounded-lg bg-primary">
                     <Trophy className="h-6 w-6 text-primary-foreground" />
                 </div>
-                <h1 className="text-xl font-bold text-primary-foreground">Matka King</h1>
+                <h1 className="text-xl font-bold text-primary-foreground">MKING</h1>
               </div>
           </SidebarHeader>
           <SidebarContent className="p-2">
