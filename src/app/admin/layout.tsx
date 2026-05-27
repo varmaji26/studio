@@ -74,10 +74,12 @@ export default function AdminLayout({
   const [newUsersCount, setNewUsersCount] = React.useState(0);
   const [theme, setTheme] = React.useState('light');
   
-  // States for Registered Users password protection
+  // Verification States
+  const [isVerified, setIsVerified] = React.useState(false);
   const [isUserPassDialogOpen, setIsUserPassDialogOpen] = React.useState(false);
   const [userPassInput, setUserPassInput] = React.useState('');
-  
+  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
+
   const isActive = (path: string) => pathname === path;
 
   const isLoadMenuInitiallyOpen = isActive('/admin/view-open-load') || isActive('/admin/view-close-load') || isActive('/admin/view-gametype-load');
@@ -107,6 +109,10 @@ export default function AdminLayout({
         setTheme('light');
         document.documentElement.classList.add('light');
     }
+
+    // Check session verification
+    const verified = sessionStorage.getItem('admin_verified') === 'true';
+    setIsVerified(verified);
   }, []);
   
   const toggleTheme = () => {
@@ -160,6 +166,7 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     try {
+      sessionStorage.removeItem('admin_verified');
       await auth.signOut();
       router.replace('/login');
     } catch (error) {
@@ -167,12 +174,33 @@ export default function AdminLayout({
     }
   };
 
-  const handleUserListAccess = () => {
+  // Helper to handle password-protected navigation
+  const handleProtectedNav = (path: string) => {
+    if (isVerified) {
+      router.push(path);
+      handleLinkClick();
+    } else {
+      setPendingPath(path);
+      setIsUserPassDialogOpen(true);
+    }
+  };
+
+  const handleVerification = () => {
     if (userPassInput === '2426@password') {
+      setIsVerified(true);
+      sessionStorage.setItem('admin_verified', 'true');
       setIsUserPassDialogOpen(false);
       setUserPassInput('');
-      router.push('/admin/manage-users?viewed=true');
-      setNewUsersCount(0);
+      
+      if (pendingPath) {
+        router.push(pendingPath);
+        if (pendingPath.includes('manage-users')) {
+           localStorage.setItem('lastViewedUsersTimestamp', Date.now().toString());
+           window.dispatchEvent(new Event('storage'));
+           setNewUsersCount(0);
+        }
+        setPendingPath(null);
+      }
       handleLinkClick();
     } else {
       toast({
@@ -205,13 +233,14 @@ export default function AdminLayout({
           <SidebarContent className="p-2">
             <SidebarMenu>
               <SidebarMenuItem>
-                <Link href="/admin" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin')}>
                   <SidebarMenuButton isActive={pathname === '/admin'} tooltip={{children: "Dashboard"}}>
                     <Home />
                     <span>Dashboard</span>
                   </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
                <Collapsible open={isLoadMenuOpen} onOpenChange={setIsLoadMenuOpen}>
                   <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
@@ -229,36 +258,31 @@ export default function AdminLayout({
                   </SidebarMenuItem>
                   <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
                      <SidebarMenuItem>
-                        <Link href="/admin/view-open-load" passHref onClick={handleLinkClick}>
-                        <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-open-load')}>                        
-                            <span>View Open Load</span>
-                          </SidebarMenuButton>
-                        </Link>
+                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/view-open-load')}>
+                          <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-open-load')}>                        
+                              <span>View Open Load</span>
+                            </SidebarMenuButton>
+                        </div>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                        <Link href="/admin/view-close-load" passHref onClick={handleLinkClick}>
-                        <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-close-load')}>                        
-                            <span>View Close Load</span>
-                          </SidebarMenuButton>
-                        </Link>
+                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/view-close-load')}>
+                          <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-close-load')}>                        
+                              <span>View Close Load</span>
+                            </SidebarMenuButton>
+                        </div>
                       </SidebarMenuItem>
                        <SidebarMenuItem>
-                        <Link href="/admin/view-gametype-load" passHref onClick={handleLinkClick}>
+                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/view-gametype-load')}>
                           <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-gametype-load')}>
                             <span>View Game-Type wise Load</span>
                           </SidebarMenuButton>
-                        </Link>
+                        </div>
                       </SidebarMenuItem>
                   </CollapsibleContent>
                </Collapsible>
+
               <SidebarMenuItem>
-                 <div 
-                    className="w-full cursor-pointer"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        setIsUserPassDialogOpen(true);
-                    }}
-                 >
+                 <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/manage-users')}>
                     <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Registered Users"}}>
                       <div className="flex items-center gap-2">
                         <Users />
@@ -272,30 +296,34 @@ export default function AdminLayout({
                     </SidebarMenuButton>
                 </div>
               </SidebarMenuItem>
+
                <SidebarMenuItem>
-                 <Link href="/admin/user-list" passHref onClick={handleLinkClick}>
+                 <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/user-list')}>
                     <SidebarMenuButton isActive={isActive('/admin/user-list')} tooltip={{children: "User List"}}>
                         <List />
                         <span>User List</span>
                     </SidebarMenuButton>
-                 </Link>
+                 </div>
               </SidebarMenuItem>
+
                <SidebarMenuItem>
-                 <Link href="/admin/manage-games" passHref onClick={handleLinkClick}>
+                 <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/manage-games')}>
                     <SidebarMenuButton isActive={isActive('/admin/manage-games')} tooltip={{children: "Add New Game"}}>
                         <Gamepad />
                         <span>Add New Game</span>
                     </SidebarMenuButton>
-                 </Link>
+                 </div>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
-                <Link href="/admin/manage-banners" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/manage-banners')}>
                     <SidebarMenuButton isActive={isActive('/admin/manage-banners')} tooltip={{children: "Manage Banners"}}>
                         <ImageIcon />
                         <span>Manage Banners</span>
                     </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
                <Collapsible open={isRequestsMenuOpen} onOpenChange={setRequestsMenuOpen}>
                   <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
@@ -313,95 +341,103 @@ export default function AdminLayout({
                   </SidebarMenuItem>
                   <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
                      <SidebarMenuItem>
-                        <Link href="/admin/deposit-requests" passHref onClick={() => { handleLinkClick(); setPendingDepositsCount(0); }}>
-                        <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/deposit-requests')}>                        
-                            <div className="flex items-center justify-between w-full">
-                                <span>Deposit Requests</span>
-                                {pendingDepositsCount > 0 && (
-                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                                        {pendingDepositsCount}
-                                    </span>
-                                )}
-                            </div>
-                          </SidebarMenuButton>
-                        </Link>
+                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/deposit-requests')}>
+                          <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/deposit-requests')}>                        
+                              <div className="flex items-center justify-between w-full">
+                                  <span>Deposit Requests</span>
+                                  {pendingDepositsCount > 0 && (
+                                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                                          {pendingDepositsCount}
+                                      </span>
+                                  )}
+                              </div>
+                            </SidebarMenuButton>
+                        </div>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                        <Link href="/admin/withdrawal-requests" passHref onClick={() => { handleLinkClick(); setPendingWithdrawalsCount(0); }}>
-                        <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/withdrawal-requests')}>                        
-                             <div className="flex items-center justify-between w-full">
-                                <span>Withdrawal Requests</span>
-                                {pendingWithdrawalsCount > 0 && (
-                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                                        {pendingWithdrawalsCount}
-                                    </span>
-                                )}
-                            </div>
-                          </SidebarMenuButton>
-                        </Link>
+                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/withdrawal-requests')}>
+                          <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/withdrawal-requests')}>                        
+                               <div className="flex items-center justify-between w-full">
+                                  <span>Withdrawal Requests</span>
+                                  {pendingWithdrawalsCount > 0 && (
+                                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                                          {pendingWithdrawalsCount}
+                                      </span>
+                                  )}
+                              </div>
+                            </SidebarMenuButton>
+                        </div>
                       </SidebarMenuItem>
                   </CollapsibleContent>
                </Collapsible>
+
                <SidebarMenuItem>
-                <Link href="/admin/notifications" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/notifications')}>
                   <SidebarMenuButton isActive={isActive('/admin/notifications')} tooltip={{children: "Send Notifications"}}>
                     <BellRing />
                     <span>Notifications</span>
                   </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
-                <Link href="/admin/update-results" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/update-results')}>
                   <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result (Open)"}}>
                     <CheckCircle />
                     <span>Update Result (Open)</span>
                   </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
                <SidebarMenuItem>
-                <Link href="/admin/update-results-close" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/update-results-close')}>
                     <SidebarMenuButton isActive={isActive('/admin/update-results-close')} tooltip={{children: "Update Result (Close)"}}>
                         <XCircle />
                         <span>Update Result (Close)</span>
                     </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
                <SidebarMenuItem>
-                <Link href="/admin/market-load" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/market-load')}>
                     <SidebarMenuButton isActive={isActive('/admin/market-load')} tooltip={{children: "Market-wise Load"}}>
                       <LineChart />
                       <span>Market-wise Load</span>
                     </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
                 <SidebarMenuItem>
-                  <Link href="/admin/bid-history?viewed=true" passHref onClick={handleLinkClick}>
+                  <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/bid-history?viewed=true')}>
                     <SidebarMenuButton isActive={isActive('/admin/bid-history')} tooltip={{children: "Bid History"}}>
                       <div className="flex items-center gap-2">
                         <History />
                         <span>Bid History</span>
                       </div>
                     </SidebarMenuButton>
-                  </Link>
+                  </div>
               </SidebarMenuItem>
+
                <SidebarMenuItem>
-                  <Link href="/admin/win-history?viewed=true" passHref onClick={handleLinkClick}>
+                  <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/win-history?viewed=true')}>
                     <SidebarMenuButton isActive={isActive('/admin/win-history')} tooltip={{children: "Win History"}}>
                       <div className="flex items-center gap-2">
                         <Trophy />
                         <span>Win History</span>
                       </div>
                     </SidebarMenuButton>
-                  </Link>
+                  </div>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
-                <Link href="/admin/bonus-history" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/bonus-history')}>
                     <SidebarMenuButton isActive={isActive('/admin/bonus-history')} tooltip={{children: "Bonus History"}}>
                       <Gift />
                       <span>Bonus History</span>
                     </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
                 <Collapsible open={isPaymentHistoryMenuOpen} onOpenChange={setPaymentHistoryMenuOpen}>
                     <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
@@ -419,62 +455,66 @@ export default function AdminLayout({
                     </SidebarMenuItem>
                     <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
                         <SidebarMenuItem>
-                            <Link href="/admin/deposit-history" passHref onClick={handleLinkClick}>
+                            <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/deposit-history')}>
                                 <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/deposit-history')}>
                                     <ArrowUpCircle className="h-4 w-4" />
                                     <span>Deposit History</span>
                                 </SidebarMenuButton>
-                            </Link>
+                            </div>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
-                            <Link href="/admin/withdrawal-history" passHref onClick={handleLinkClick}>
+                            <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/withdrawal-history')}>
                                 <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/withdrawal-history')}>
                                     <ArrowDownCircle className="h-4 w-4" />
                                     <span>Withdrawal History</span>
                                 </SidebarMenuButton>
-                            </Link>
+                            </div>
                         </SidebarMenuItem>
                          <SidebarMenuItem>
-                            <Link href="/admin/monthly-report" passHref onClick={handleLinkClick}>
+                            <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/monthly-report')}>
                                 <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/monthly-report')}>
                                     <PieChart className="h-4 w-4" />
                                     <span>Monthly Report</span>
                                 </SidebarMenuButton>
-                            </Link>
+                            </div>
                         </SidebarMenuItem>
                     </CollapsibleContent>
                 </Collapsible>
+
                <SidebarMenuItem>
-                <Link href="/admin/jodi-panel" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/jodi-panel')}>
                     <SidebarMenuButton isActive={isActive('/admin/jodi-panel')} tooltip={{children: "Manage Jodi Chart"}}>
                     <ClipboardList />
                     <span>Manage Jodi Chart</span>
                     </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
-                <Link href="/admin/panel-chart" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/panel-chart')}>
                     <SidebarMenuButton isActive={isActive('/admin/panel-chart')} tooltip={{children: "Manage Panel Chart"}}>
                     <ClipboardList />
                     <span>Manage Panel Chart</span>
                     </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
-                <Link href="/admin/global-bet-control" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/global-bet-control')}>
                   <SidebarMenuButton isActive={isActive('/admin/global-bet-control')} tooltip={{children: "Global Bet Control"}}>
                     <ShieldOff />
                     <span>Global Bet Control</span>
                   </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
+
                <SidebarMenuItem>
-                <Link href="/admin/settings" passHref onClick={handleLinkClick}>
+                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/settings')}>
                   <SidebarMenuButton isActive={isActive('/admin/settings')} tooltip={{children: "Settings"}}>
                     <Settings />
                     <span>Settings</span>
                   </SidebarMenuButton>
-                </Link>
+                </div>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
@@ -510,11 +550,11 @@ export default function AdminLayout({
                   Go to User Panel
                 </Button>
               </Link>
-              <Link href="/admin/settings">
+              <div className="cursor-pointer" onClick={() => handleProtectedNav('/admin/settings')}>
                   <Button variant="default" size="icon">
                     <Settings />
                   </Button>
-              </Link>
+              </div>
             </div>
         </header>
         <div className="p-4 sm:p-6">
@@ -522,7 +562,7 @@ export default function AdminLayout({
         </div>
       </main>
 
-      {/* Registered Users Access Password Dialog */}
+      {/* Access Verification Password Dialog */}
       <Dialog open={isUserPassDialogOpen} onOpenChange={setIsUserPassDialogOpen}>
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -531,7 +571,7 @@ export default function AdminLayout({
                     Access Verification
                 </DialogTitle>
                 <DialogDescription>
-                    Please enter the password to view Registered Users.
+                    Please enter the password to access this section.
                 </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -541,11 +581,11 @@ export default function AdminLayout({
                     value={userPassInput}
                     onChange={(e) => setUserPassInput(e.target.value)}
                     className="text-center text-lg"
-                    onKeyDown={(e) => e.key === 'Enter' && handleUserListAccess()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleVerification()}
                 />
                 <div className="flex gap-2">
                     <Button variant="outline" className="flex-1" onClick={() => setIsUserPassDialogOpen(false)}>Cancel</Button>
-                    <Button className="flex-1 bg-primary text-white" onClick={handleUserListAccess}>Verify</Button>
+                    <Button className="flex-1 bg-primary text-white" onClick={handleVerification}>Verify</Button>
                 </div>
             </div>
         </DialogContent>
