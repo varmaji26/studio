@@ -82,14 +82,10 @@ export default function AdminLayout({
 
   const isActive = (path: string) => pathname === path;
 
-  const isLoadMenuInitiallyOpen = isActive('/admin/view-open-load') || isActive('/admin/view-close-load') || isActive('/admin/view-gametype-load');
-  const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(isLoadMenuInitiallyOpen);
-  
-  const isRequestsMenuInitiallyOpen = isActive('/admin/deposit-requests') || isActive('/admin/withdrawal-requests');
-  const [isRequestsMenuOpen, setRequestsMenuOpen] = React.useState(isRequestsMenuInitiallyOpen);
-  
-  const isPaymentHistoryMenuInitiallyOpen = isActive('/admin/deposit-history') || isActive('/admin/withdrawal-history') || isActive('/admin/monthly-report');
-  const [isPaymentHistoryMenuOpen, setPaymentHistoryMenuOpen] = React.useState(isPaymentHistoryMenuInitiallyOpen);
+  // Menu Expansion States
+  const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(false);
+  const [isRequestsMenuOpen, setRequestsMenuOpen] = React.useState(false);
+  const [isPaymentHistoryMenuOpen, setPaymentHistoryMenuOpen] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -185,6 +181,15 @@ export default function AdminLayout({
     }
   };
 
+  // Helper for password-protected collapsible menus
+  const handleProtectedMenuToggle = (isOpen: boolean, setter: (open: boolean) => void) => {
+      if (isVerified) {
+          setter(isOpen);
+      } else {
+          setIsUserPassDialogOpen(true);
+      }
+  };
+
   const handleVerification = () => {
     if (userPassInput === '2426@password') {
       setIsVerified(true);
@@ -241,11 +246,11 @@ export default function AdminLayout({
                 </div>
               </SidebarMenuItem>
 
-               <Collapsible open={isLoadMenuOpen} onOpenChange={setIsLoadMenuOpen}>
+               <Collapsible open={isLoadMenuOpen} onOpenChange={(open) => handleProtectedMenuToggle(open, setIsLoadMenuOpen)}>
                   <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                          <SidebarMenuButton 
-                            isActive={isLoadMenuInitiallyOpen} 
+                            isActive={isActive('/admin/view-open-load') || isActive('/admin/view-close-load') || isActive('/admin/view-gametype-load')} 
                             className="w-full justify-between"
                          >
                             <div className="flex items-center gap-2">
@@ -324,11 +329,11 @@ export default function AdminLayout({
                 </div>
               </SidebarMenuItem>
 
-               <Collapsible open={isRequestsMenuOpen} onOpenChange={setRequestsMenuOpen}>
+               <Collapsible open={isRequestsMenuOpen} onOpenChange={(open) => handleProtectedMenuToggle(open, setRequestsMenuOpen)}>
                   <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                          <SidebarMenuButton 
-                            isActive={isRequestsMenuInitiallyOpen} 
+                            isActive={isActive('/admin/deposit-requests') || isActive('/admin/withdrawal-requests')} 
                             className="w-full justify-between"
                          >
                             <div className="flex items-center gap-2">
@@ -438,11 +443,11 @@ export default function AdminLayout({
                 </div>
               </SidebarMenuItem>
 
-                <Collapsible open={isPaymentHistoryMenuOpen} onOpenChange={setPaymentHistoryMenuOpen}>
+                <Collapsible open={isPaymentHistoryMenuOpen} onOpenChange={(open) => handleProtectedMenuToggle(open, setPaymentHistoryMenuOpen)}>
                     <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                             <SidebarMenuButton
-                                isActive={isPaymentHistoryMenuInitiallyOpen}
+                                isActive={isActive('/admin/deposit-history') || isActive('/admin/withdrawal-history') || isActive('/admin/monthly-report')}
                                 className="w-full justify-between"
                             >
                                 <div className="flex items-center gap-2">
