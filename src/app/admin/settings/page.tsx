@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
 
+// Extremely flexible schema to prevent validation blocks
 const settingsSchema = z.object({
   appEnabled: z.boolean().default(true),
   goldenAnk: z.string().optional().or(z.literal('')),
@@ -855,7 +856,7 @@ export default function SettingsPage() {
                     toast({
                         variant: 'destructive',
                         title: 'Save Failed',
-                        description: 'Please check all sections for errors. Ensure numbers and required fields are correct.',
+                        description: 'Please check all sections for errors. Ensure required fields are correct.',
                     });
                 })} 
                 className="space-y-6"
@@ -907,7 +908,7 @@ export default function SettingsPage() {
                         <FormItem>
                           <FormLabel>Golden Ank Numbers</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., 4-9-2-7" {...field} />
+                            <Input placeholder="e.g., 4-9-2-7" {...field} value={field.value ?? ''} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -930,18 +931,18 @@ export default function SettingsPage() {
                       </div>
                     )}
                     <FormField control={form.control} name="marqueeLogo" render={() => (<FormItem><FormLabel>{existingMarqueeLogoUrl ? 'New Logo' : 'Upload Logo'}</FormLabel><FormControl><Input type="file" {...marqueeLogoRef} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="marqueeTitle" render={({ field }) => (<FormItem><FormLabel>Marquee Title</FormLabel><FormControl><Input placeholder="e.g., MKING" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="marqueeText" render={({ field }) => (<FormItem><FormLabel>Marquee Text</FormLabel><FormControl><Input placeholder="Sub-line text" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="marqueeTitle" render={({ field }) => (<FormItem><FormLabel>Marquee Title</FormLabel><FormControl><Input placeholder="e.g., MKING" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="marqueeText" render={({ field }) => (<FormItem><FormLabel>Marquee Text</FormLabel><FormControl><Input placeholder="Sub-line text" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <div className="grid grid-cols-2 gap-4">
-                      <FormField control={form.control} name="marqueeBackgroundColor" render={({ field }) => (<FormItem><FormLabel>BG Color</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="marqueeTextColor" render={({ field }) => (<FormItem><FormLabel>Text Color</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="marqueeBackgroundColor" render={({ field }) => (<FormItem><FormLabel>BG Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? '#000000'} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="marqueeTextColor" render={({ field }) => (<FormItem><FormLabel>Text Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? '#FFFFFF'} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                     <div className="grid grid-cols-3 gap-4">
-                      <FormField control={form.control} name="marqueeLogoSize" render={({ field }) => (<FormItem><FormLabel>Logo Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="marqueeTitleSize" render={({ field }) => (<FormItem><FormLabel>Title Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="marqueeTextSize" render={({ field }) => (<FormItem><FormLabel>Text Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="marqueeLogoSize" render={({ field }) => (<FormItem><FormLabel>Logo Size</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="marqueeTitleSize" render={({ field }) => (<FormItem><FormLabel>Title Size</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="marqueeTextSize" render={({ field }) => (<FormItem><FormLabel>Text Size</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
-                     <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
+                     <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Section</Button>
                   </AccordionContent>
                 </AccordionItem>
                 
@@ -950,22 +951,22 @@ export default function SettingsPage() {
                   <AccordionTrigger className="text-lg font-semibold">Bonus & Promotion Settings</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
                     <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                    {form.watch('bonusEnabled') && (<FormField control={form.control} name="bonusPercentage" render={({ field }) => (<FormItem><FormLabel>Bonus Percentage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                    {form.watch('bonusEnabled') && (<FormField control={form.control} name="bonusPercentage" render={({ field }) => (<FormItem><FormLabel>Bonus Percentage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />)}
                     <Separator />
                     <FormField control={form.control} name="welcomeBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Welcome Bonus</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                    {form.watch('welcomeBonusEnabled') && (<FormField control={form.control} name="welcomeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Welcome Bonus Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                    {form.watch('welcomeBonusEnabled') && (<FormField control={form.control} name="welcomeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Welcome Bonus Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />)}
                     <Separator />
                       <FormField control={form.control} name="referralBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Referral Bonus</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     {form.watch('referralBonusEnabled') && (
                       <>
-                          <FormField control={form.control} name="referrerBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referrer Bonus (Old User)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                          <FormField control={form.control} name="refereeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referee Bonus (New User)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={form.control} name="referrerBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referrer Bonus (Old User)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={form.control} name="refereeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referee Bonus (New User)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                       </>
                     )}
                     <Separator />
                     <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     <FormField control={form.control} name="promoPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Promotional Popup</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                    <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
+                    <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Section</Button>
                   </AccordionContent>
                 </AccordionItem>
 
@@ -973,18 +974,18 @@ export default function SettingsPage() {
                  <AccordionItem value="item-3">
                   <AccordionTrigger className="text-lg font-semibold">Support, Links & Amounts</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
-                      <FormField control={form.control} name="whatsappNumber" render={({ field }) => (<FormItem><FormLabel>WhatsApp Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="whatsappNumber" render={({ field }) => (<FormItem><FormLabel>WhatsApp Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="https://t.me/yourchannel" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                        <Separator/>
-                        <FormField control={form.control} name="appDownloadLink" render={({ field }) => (<FormItem><FormLabel>App Download Link</FormLabel><FormControl><Input placeholder="https://example.com/app.apk" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="appDownloadLink" render={({ field }) => (<FormItem><FormLabel>App Download Link</FormLabel><FormControl><Input placeholder="https://example.com/app.apk" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                        <Separator/>
-                       <FormField control={form.control} name="minimumDepositAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Deposit Amount</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                       <FormField control={form.control} name="minimumWithdrawalAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Withdrawal Amount</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name="minimumDepositAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Deposit Amount</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name="minimumWithdrawalAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Withdrawal Amount</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                       <Separator/>
                       <FormField control={form.control} name="noticeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Enable Notice</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="noticeText" render={({ field }) => (<FormItem><FormLabel>Notice Text</FormLabel><FormControl><Textarea placeholder="Enter notice text for home page." {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
+                      <FormField control={form.control} name="noticeText" render={({ field }) => (<FormItem><FormLabel>Notice Text</FormLabel><FormControl><Textarea placeholder="Enter notice text for home page." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Section</Button>
                   </AccordionContent>
                 </AccordionItem>
                 
@@ -1019,7 +1020,7 @@ export default function SettingsPage() {
                         </div>
                       )}
                       <FormField control={form.control} name="downloadPageImage" render={() => (<FormItem><FormLabel>{existingDownloadImageUrl ? 'New Download Page Image' : 'Upload Download Page Image'}</FormLabel><FormControl><Input type="file" {...downloadPageImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
+                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Section</Button>
                   </AccordionContent>
                 </AccordionItem>
 
@@ -1027,8 +1028,8 @@ export default function SettingsPage() {
                 <AccordionItem value="item-5">
                   <AccordionTrigger className="text-lg font-semibold">Payment Details</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
-                      <FormField control={form.control} name="upiId" render={({ field }) => (<FormItem><FormLabel>UPI ID</FormLabel><FormControl><Input placeholder="e.g., yourname@upi" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="bankDetails" render={({ field }) => (<FormItem><FormLabel>Bank Account Details</FormLabel><FormControl><Textarea placeholder="Enter full bank account details..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="upiId" render={({ field }) => (<FormItem><FormLabel>UPI ID</FormLabel><FormControl><Input placeholder="e.g., yourname@upi" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="bankDetails" render={({ field }) => (<FormItem><FormLabel>Bank Account Details</FormLabel><FormControl><Textarea placeholder="Enter full bank account details..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                       <Separator />
                       <div className="p-4 border rounded-lg space-y-4 bg-slate-50 dark:bg-slate-900/40">
                           <FormField control={form.control} name="gpayEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel className="font-bold">Enable GPay</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
@@ -1044,7 +1045,7 @@ export default function SettingsPage() {
                       </div>
                       <Separator />
                       <FormField control={form.control} name="qrCodeImage" render={() => (<FormItem><FormLabel>Upload New QR Code</FormLabel><FormControl><Input type="file" {...qrCodeImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
+                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Section</Button>
                   </AccordionContent>
                 </AccordionItem>
                 
@@ -1052,8 +1053,8 @@ export default function SettingsPage() {
                  <AccordionItem value="item-7">
                       <AccordionTrigger className="text-lg font-semibold">Market Time Settings</AccordionTrigger>
                       <AccordionContent className="space-y-4 pt-4">
-                            <FormField control={form.control} name="globalMarketOpenTime" render={({ field }) => (<FormItem><FormLabel>Global Market Open Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
+                            <FormField control={form.control} name="globalMarketOpenTime" render={({ field }) => (<FormItem><FormLabel>Global Market Open Time</FormLabel><FormControl><Input type="time" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Section</Button>
                       </AccordionContent>
                  </AccordionItem>
 
@@ -1063,28 +1064,28 @@ export default function SettingsPage() {
                       <AccordionContent className="space-y-4 pt-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField control={form.control} name="singleDigitPrize" render={({ field }) => (
-                                    <FormItem><FormLabel>Single Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Single Digit Prize</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="jodiDigitPrize" render={({ field }) => (
-                                    <FormItem><FormLabel>Jodi Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Jodi Digit Prize</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="singlePanaPrize" render={({ field }) => (
-                                    <FormItem><FormLabel>Single Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Single Pana Prize</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="doublePanaPrize" render={({ field }) => (
-                                    <FormItem><FormLabel>Double Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Double Pana Prize</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="triplePanaPrize" render={({ field }) => (
-                                    <FormItem><FormLabel>Triple Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Triple Pana Prize</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="halfSangamPrize" render={({ field }) => (
-                                    <FormItem><FormLabel>Half Sangam Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Half Sangam Prize</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="fullSangamPrize" render={({ field }) => (
-                                    <FormItem><FormLabel>Full Sangam Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Full Sangam Prize</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                                 )} />
                             </div>
-                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
+                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Section</Button>
                       </AccordionContent>
                  </AccordionItem>
 
