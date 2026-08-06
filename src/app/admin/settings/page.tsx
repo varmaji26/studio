@@ -31,14 +31,14 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 
 const settingsSchema = z.object({
   appEnabled: z.boolean().default(true),
-  goldenAnk: z.string().optional(),
-  whatsappNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
-  callSupportNumber: z.string().min(10, 'Please enter a valid mobile number with country code.').regex(/^\d+$/, 'Mobile number must contain only digits.'),
+  goldenAnk: z.string().optional().or(z.literal('')),
+  whatsappNumber: z.string().optional().or(z.literal('')),
+  callSupportNumber: z.string().optional().or(z.literal('')),
   telegramLink: z.string().optional().or(z.literal('')),
   appDownloadLink: z.string().optional().or(z.literal('')),
-  upiId: z.string().optional(),
-  bankDetails: z.string().optional(),
-  paytmNumber: z.string().optional(),
+  upiId: z.string().optional().or(z.literal('')),
+  bankDetails: z.string().optional().or(z.literal('')),
+  paytmNumber: z.string().optional().or(z.literal('')),
   qrCodeImage: z.any()
     .optional()
     .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
@@ -84,10 +84,10 @@ const settingsSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
-  marqueeTitle: z.string().optional(),
-  marqueeText: z.string().optional(),
-  marqueeBackgroundColor: z.string().optional(),
-  marqueeTextColor: z.string().optional(),
+  marqueeTitle: z.string().optional().or(z.literal('')),
+  marqueeText: z.string().optional().or(z.literal('')),
+  marqueeBackgroundColor: z.string().optional().or(z.literal('')),
+  marqueeTextColor: z.string().optional().or(z.literal('')),
   marqueeLogo: z.any()
     .optional()
     .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
@@ -97,56 +97,56 @@ const settingsSchema = z.object({
     ),
   marqueeLogoSize: z.preprocess(
     (val) => (String(val).trim() === '' ? undefined : Number(val)),
-    z.number().min(10, 'Minimum size is 10px.').optional()
+    z.number().min(10).optional()
   ),
   marqueeTitleSize: z.preprocess(
     (val) => (String(val).trim() === '' ? undefined : Number(val)),
-    z.number().min(10, 'Minimum size is 10px.').optional()
+    z.number().min(10).optional()
   ),
   marqueeTextSize: z.preprocess(
      (val) => (String(val).trim() === '' ? undefined : Number(val)),
-    z.number().min(8, 'Minimum size is 8px.').optional()
+    z.number().min(8).optional()
   ),
-  noticeText: z.string().optional(),
+  noticeText: z.string().optional().or(z.literal('')),
   noticeEnabled: z.boolean().default(true),
   bonusEnabled: z.boolean().default(false),
   bonusPercentage: z.preprocess(
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
-    z.number().min(0, 'Percentage cannot be negative.').max(100, 'Percentage cannot exceed 100.')
+    z.number().min(0).max(100)
   ),
   bonusPopupEnabled: z.boolean().default(false),
   bonusPopupImage: z.any().optional(),
-  bonusPopupLink: z.string().optional(),
+  bonusPopupLink: z.string().optional().or(z.literal('')),
   promoPopupEnabled: z.boolean().default(false),
   promoPopupImage: z.any().optional(),
-  promoPopupLink: z.string().optional(),
+  promoPopupLink: z.string().optional().or(z.literal('')),
   welcomeBonusEnabled: z.boolean().default(false),
   welcomeBonusAmount: z.preprocess(
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
-    z.number().min(0, 'Bonus amount cannot be negative.')
+    z.number().min(0)
   ),
   referralBonusEnabled: z.boolean().default(false),
   referrerBonusAmount: z.preprocess(
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
-    z.number().min(0, 'Bonus amount cannot be negative.')
+    z.number().min(0)
   ),
   refereeBonusAmount: z.preprocess(
     (val) => (String(val).trim() === '' ? 0 : Number(val)),
-    z.number().min(0, 'Bonus amount cannot be negative.')
+    z.number().min(0)
   ),
   minimumDepositAmount: z.preprocess(
     (val) => (String(val).trim() === '' ? 100 : Number(val)),
-    z.number().min(1, 'Minimum deposit must be at least 1.')
+    z.number().min(1)
   ),
    minimumWithdrawalAmount: z.preprocess(
     (val) => (String(val).trim() === '' ? 1000 : Number(val)),
-    z.number().min(1, 'Minimum withdrawal must be at least 1.')
+    z.number().min(1)
   ),
-  globalMarketOpenTime: z.string().optional(),
-  depositStartTime: z.string().optional(),
-  depositEndTime: z.string().optional(),
-  withdrawalStartTime: z.string().optional(),
-  withdrawalEndTime: z.string().optional(),
+  globalMarketOpenTime: z.string().optional().or(z.literal('')),
+  depositStartTime: z.string().optional().or(z.literal('')),
+  depositEndTime: z.string().optional().or(z.literal('')),
+  withdrawalStartTime: z.string().optional().or(z.literal('')),
+  withdrawalEndTime: z.string().optional().or(z.literal('')),
   singleDigitPrize: z.preprocess((val) => Number(val), z.number().min(0)),
   jodiDigitPrize: z.preprocess((val) => Number(val), z.number().min(0)),
   singlePanaPrize: z.preprocess((val) => Number(val), z.number().min(0)),
@@ -155,38 +155,14 @@ const settingsSchema = z.object({
   halfSangamPrize: z.preprocess((val) => Number(val), z.number().min(0)),
   fullSangamPrize: z.preprocess((val) => Number(val), z.number().min(0)),
   betAmountSettings: z.object({
-    singleDigit: z.object({
-      min: z.preprocess((val) => Number(val), z.number().min(1)),
-      max: z.preprocess((val) => Number(val), z.number().min(1)),
-    }),
-    jodiDigit: z.object({
-      min: z.preprocess((val) => Number(val), z.number().min(1)),
-      max: z.preprocess((val) => Number(val), z.number().min(1)),
-    }),
-    singlePana: z.object({
-      min: z.preprocess((val) => Number(val), z.number().min(1)),
-      max: z.preprocess((val) => Number(val), z.number().min(1)),
-    }),
-    doublePana: z.object({
-      min: z.preprocess((val) => Number(val), z.number().min(1)),
-      max: z.preprocess((val) => Number(val), z.number().min(1)),
-    }),
-    triplePana: z.object({
-      min: z.preprocess((val) => Number(val), z.number().min(1)),
-      max: z.preprocess((val) => Number(val), z.number().min(1)),
-    }),
-    halfSangam: z.object({
-      min: z.preprocess((val) => Number(val), z.number().min(1)),
-      max: z.preprocess((val) => Number(val), z.number().min(1)),
-    }),
-    halfSangamDigit: z.object({
-      min: z.preprocess((val) => Number(val), z.number().min(1)),
-      max: z.preprocess((val) => Number(val), z.number().min(1)),
-    }),
-    fullSangam: z.object({
-      min: z.preprocess((val) => Number(val), z.number().min(1)),
-      max: z.preprocess((val) => Number(val), z.number().min(1)),
-    }),
+    singleDigit: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
+    jodiDigit: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
+    singlePana: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
+    doublePana: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
+    triplePana: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
+    halfSangam: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
+    halfSangamDigit: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
+    fullSangam: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
   }).optional(),
 });
 
@@ -667,12 +643,6 @@ export default function SettingsPage() {
 
         if (qrCodeData) {
             dataToSave.paymentDetails['Scan QR Code'] = qrCodeData;
-        } else {
-            if (!qrFile && dataToSave.paymentDetails['Scan QR Code']) {
-                // Keep the existing one
-            } else if (!qrFile) {
-                delete dataToSave.paymentDetails['Scan QR Code'];
-            }
         }
         
         await setDoc(settingsDocRef, dataToSave, { merge: true });
@@ -869,7 +839,7 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">MKING Settings</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">MKING Settings</h1>
         <p className="text-muted-foreground">Manage global app status and configuration.</p>
       </div>
       <div>
@@ -879,7 +849,17 @@ export default function SettingsPage() {
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form 
+                onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                    console.error("Form Validation Errors:", errors);
+                    toast({
+                        variant: 'destructive',
+                        title: 'Save Failed',
+                        description: 'Please check all sections for errors. Ensure numbers and required fields are correct.',
+                    });
+                })} 
+                className="space-y-6"
+            >
               
               {/* MASTER APP CONTROL SECTION */}
               <Card className="border-red-500 bg-red-50 dark:bg-red-950/10">
@@ -937,7 +917,9 @@ export default function SettingsPage() {
                     {existingMarqueeLogoUrl && (
                       <div className="flex flex-col items-center gap-4">
                         <p className="text-sm text-muted-foreground">Current Logo:</p>
-                        <Image src={existingMarqueeLogoUrl} alt="Marquee Logo" width={48} height={48} className="rounded-md border p-1 bg-white" />
+                        <div className="relative h-12 w-12 border p-1 bg-white rounded-md">
+                            <Image src={existingMarqueeLogoUrl} alt="Marquee Logo" fill className="object-contain" />
+                        </div>
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Logo</Button></AlertDialogTrigger>
                           <AlertDialogContent>
@@ -959,7 +941,7 @@ export default function SettingsPage() {
                       <FormField control={form.control} name="marqueeTitleSize" render={({ field }) => (<FormItem><FormLabel>Title Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="marqueeTextSize" render={({ field }) => (<FormItem><FormLabel>Text Size</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
-                     <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                     <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
                   </AccordionContent>
                 </AccordionItem>
                 
@@ -983,7 +965,7 @@ export default function SettingsPage() {
                     <Separator />
                     <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     <FormField control={form.control} name="promoPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Promotional Popup</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                    <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                    <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
                   </AccordionContent>
                 </AccordionItem>
 
@@ -1002,7 +984,7 @@ export default function SettingsPage() {
                       <Separator/>
                       <FormField control={form.control} name="noticeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Enable Notice</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                       <FormField control={form.control} name="noticeText" render={({ field }) => (<FormItem><FormLabel>Notice Text</FormLabel><FormControl><Textarea placeholder="Enter notice text for home page." {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
                   </AccordionContent>
                 </AccordionItem>
                 
@@ -1010,12 +992,34 @@ export default function SettingsPage() {
                  <AccordionItem value="item-4">
                   <AccordionTrigger className="text-lg font-semibold">App Images</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
-                      {existingWelcomeBannerUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Welcome Banner:</p><Image src={existingWelcomeBannerUrl} alt="Welcome Banner" width={400} height={133} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Banner</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteWelcomeBanner}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                      {existingWelcomeBannerUrl && (
+                        <div className="flex flex-col items-center gap-4">
+                            <p className="text-sm text-muted-foreground">Current Welcome Banner:</p>
+                            <div className="relative w-full aspect-[3/1] border p-1 rounded-md">
+                                <Image src={existingWelcomeBannerUrl} alt="Welcome Banner" fill className="object-cover rounded-md" />
+                            </div>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Banner</Button></AlertDialogTrigger>
+                                <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteWelcomeBanner}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                      )}
                       <FormField control={form.control} name="welcomeBannerImage" render={() => (<FormItem><FormLabel>{existingWelcomeBannerUrl ? 'New Welcome Banner' : 'Upload Welcome Banner'}</FormLabel><FormControl><Input type="file" {...welcomeBannerImageRef} /></FormControl><FormMessage /></FormItem>)} />
                       <Separator/>
-                      {existingDownloadImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Download Page Image:</p><Image src={existingDownloadImageUrl} alt="Download Page Image" width={200} height={266} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteDownloadImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                      {existingDownloadImageUrl && (
+                        <div className="flex flex-col items-center gap-4">
+                            <p className="text-sm text-muted-foreground">Current Download Page Image:</p>
+                            <div className="relative w-40 aspect-[3/4] border p-1 rounded-md">
+                                <Image src={existingDownloadImageUrl} alt="Download Page Image" fill className="object-cover rounded-md" />
+                            </div>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger>
+                                <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteDownloadImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                      )}
                       <FormField control={form.control} name="downloadPageImage" render={() => (<FormItem><FormLabel>{existingDownloadImageUrl ? 'New Download Page Image' : 'Upload Download Page Image'}</FormLabel><FormControl><Input type="file" {...downloadPageImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
                   </AccordionContent>
                 </AccordionItem>
 
@@ -1026,21 +1030,21 @@ export default function SettingsPage() {
                       <FormField control={form.control} name="upiId" render={({ field }) => (<FormItem><FormLabel>UPI ID</FormLabel><FormControl><Input placeholder="e.g., yourname@upi" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="bankDetails" render={({ field }) => (<FormItem><FormLabel>Bank Account Details</FormLabel><FormControl><Textarea placeholder="Enter full bank account details..." {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <Separator />
-                      <div className="p-4 border rounded-lg space-y-4">
-                          <FormField control={form.control} name="gpayEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable GPay</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <div className="p-4 border rounded-lg space-y-4 bg-slate-50 dark:bg-slate-900/40">
+                          <FormField control={form.control} name="gpayEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel className="font-bold">Enable GPay</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                           <FormField control={form.control} name="gpayImage" render={() => (<FormItem><FormLabel>Upload GPay Logo</FormLabel><FormControl><Input type="file" {...gpayImageRef} /></FormControl><FormMessage /></FormItem>)}/>
                       </div>
-                      <div className="p-4 border rounded-lg space-y-4">
-                          <FormField control={form.control} name="paytmEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable Paytm</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <div className="p-4 border rounded-lg space-y-4 bg-slate-50 dark:bg-slate-900/40">
+                          <FormField control={form.control} name="paytmEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel className="font-bold">Enable Paytm</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                           <FormField control={form.control} name="paytmImage" render={() => (<FormItem><FormLabel>Upload Paytm Logo</FormLabel><FormControl><Input type="file" {...paytmImageRef} /></FormControl><FormMessage /></FormItem>)}/>
                       </div>
-                      <div className="p-4 border rounded-lg space-y-4">
-                          <FormField control={form.control} name="phonepeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable PhonePe</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <div className="p-4 border rounded-lg space-y-4 bg-slate-50 dark:bg-slate-900/40">
+                          <FormField control={form.control} name="phonepeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel className="font-bold">Enable PhonePe</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                           <FormField control={form.control} name="phonepeImage" render={() => (<FormItem><FormLabel>Upload PhonePe Logo</FormLabel><FormControl><Input type="file" {...phonepeImageRef} /></FormControl><FormMessage /></FormItem>)}/>
                       </div>
                       <Separator />
                       <FormField control={form.control} name="qrCodeImage" render={() => (<FormItem><FormLabel>Upload New QR Code</FormLabel><FormControl><Input type="file" {...qrCodeImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                      <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
                   </AccordionContent>
                 </AccordionItem>
                 
@@ -1049,7 +1053,7 @@ export default function SettingsPage() {
                       <AccordionTrigger className="text-lg font-semibold">Market Time Settings</AccordionTrigger>
                       <AccordionContent className="space-y-4 pt-4">
                             <FormField control={form.control} name="globalMarketOpenTime" render={({ field }) => (<FormItem><FormLabel>Global Market Open Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
                       </AccordionContent>
                  </AccordionItem>
 
@@ -1058,15 +1062,29 @@ export default function SettingsPage() {
                       <AccordionTrigger className="text-lg font-semibold">Game Rate Settings</AccordionTrigger>
                       <AccordionContent className="space-y-4 pt-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <FormField control={form.control} name="singleDigitPrize" render={({ field }) => (<FormItem><FormLabel>Single Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="jodiDigitPrize" render={({ field }) => (<FormItem><FormLabel>Jodi Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="singlePanaPrize" render={({ field }) => (<FormItem><FormLabel>Single Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="doublePanaPrize" render={({ field }) => (<FormItem><FormLabel>Double Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="triplePanaPrize" render={({ field }) => (<FormItem><FormLabel>Triple Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="halfSangamPrize" render={({ field }) => (<FormItem><FormLabel>Half Sangam Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="fullSangamPrize" render={({ field }) => (<FormItem><FormLabel>Full Sangam Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="singleDigitPrize" render={({ field }) => (
+                                    <FormItem><FormLabel>Single Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name="jodiDigitPrize" render={({ field }) => (
+                                    <FormItem><FormLabel>Jodi Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name="singlePanaPrize" render={({ field }) => (
+                                    <FormItem><FormLabel>Single Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name="doublePanaPrize" render={({ field }) => (
+                                    <FormItem><FormLabel>Double Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name="triplePanaPrize" render={({ field }) => (
+                                    <FormItem><FormLabel>Triple Pana Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name="halfSangamPrize" render={({ field }) => (
+                                    <FormItem><FormLabel>Half Sangam Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name="fullSangamPrize" render={({ field }) => (
+                                    <FormItem><FormLabel>Full Sangam Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
                             </div>
-                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
+                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white">Save Changes</Button>
                       </AccordionContent>
                  </AccordionItem>
 
@@ -1101,7 +1119,7 @@ export default function SettingsPage() {
               {isSubmitting && uploadProgress !== null && (
                   <div className="space-y-2 mt-4">
                       <Progress value={uploadProgress} className="w-full" />
-                      <p className="text-sm text-center text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
+                      <p className="text-sm text-center text-muted-foreground font-bold">Saving... {Math.round(uploadProgress)}%</p>
                   </div>
               )}
             </form>
@@ -1119,7 +1137,7 @@ export default function SettingsPage() {
                 <Input type="password" placeholder="Master Password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} className="text-center text-lg tracking-widest" onKeyDown={(e) => e.key === 'Enter' && handlePasswordVerify()} />
                 <div className="flex gap-2">
                     <Button variant="outline" className="flex-1" onClick={() => setIsPasswordDialogOpen(false)}>Cancel</Button>
-                    <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={handlePasswordVerify}>Verify & Proceed</Button>
+                    <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handlePasswordVerify}>Verify & Proceed</Button>
                 </div>
             </div>
         </DialogContent>
