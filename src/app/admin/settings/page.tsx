@@ -344,6 +344,28 @@ export default function SettingsPage() {
     });
 };
 
+  const handleCleanUserData = async () => {
+    setIsCleaning(true);
+    try {
+        const result = await cleanAllUserData(10);
+        if (result.success) {
+            toast({
+                title: "Success!",
+                description: `${result.deletedBidsCount} bids, ${result.deletedDepositsCount} deposits, and ${result.deletedWithdrawalsCount} withdrawals have been deleted.`,
+            });
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: error.message || 'Failed to clean user data.'
+        });
+    } finally {
+        setIsCleaning(false);
+    }
+  };
 
   const onSubmit = async (values: SettingsFormValues) => {
     setIsSubmitting(true);
