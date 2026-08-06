@@ -199,7 +199,6 @@ export default function SettingsPage() {
   const [isCleaning, setIsCleaning] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   
-  // New state for Maintenance Mode
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [pendingAppEnabled, setPendingAppEnabled] = useState<boolean | null>(null);
@@ -240,8 +239,8 @@ export default function SettingsPage() {
       phonepeEnabled: true,
       marqueeTitle: 'MKING',
       marqueeText: '',
-      marqueeBackgroundColor: '#b91c1c', // default red-700
-      marqueeTextColor: '#ffffff', // default white
+      marqueeBackgroundColor: '#b91c1c',
+      marqueeTextColor: '#ffffff',
       marqueeLogoSize: 24,
       marqueeTitleSize: 20,
       marqueeTextSize: 12,
@@ -400,11 +399,7 @@ export default function SettingsPage() {
         }
       } catch (error) {
         console.error("Error fetching settings: ", error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to fetch settings.',
-        });
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch settings.' });
       } finally {
         setLoading(false);
       }
@@ -425,9 +420,7 @@ export default function SettingsPage() {
     }
     const storagePath = `${path}/${Date.now()}_${file.name}`;
     const storageRef = ref(storage, storagePath);
-    const metadata = {
-        contentType: file.type
-    };
+    const metadata = { contentType: file.type };
     const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
     return new Promise((resolve, reject) => {
@@ -518,11 +511,7 @@ export default function SettingsPage() {
         const qrFile = values.qrCodeImage?.[0];
         if (qrFile) {
             const { downloadURL, storagePath } = await uploadFile(qrFile, 'qrcodes', existingQrStoragePath);
-            qrCodeData = {
-                title: 'Scan QR Code',
-                imageUrl: downloadURL,
-                storagePath: storagePath,
-            };
+            qrCodeData = { title: 'Scan QR Code', imageUrl: downloadURL, storagePath: storagePath };
             setExistingQrUrl(downloadURL);
             setExistingQrStoragePath(storagePath);
         }
@@ -546,11 +535,7 @@ export default function SettingsPage() {
         const phonepeFile = values.phonepeImage?.[0];
         if (phonepeFile) {
             const { downloadURL, storagePath } = await uploadFile(phonepeFile, 'payment-logos', existingPhonepeImageStoragePath);
-            phonepeData = {
-                ...phonepeData,
-                imageUrl: downloadURL,
-                storagePath: storagePath,
-            };
+            phonepeData = { ...phonepeData, imageUrl: downloadURL, storagePath: storagePath };
             setExistingPhonepeImageUrl(downloadURL);
             setExistingPhonepeImageStoragePath(storagePath);
         }
@@ -558,10 +543,7 @@ export default function SettingsPage() {
         const welcomeBannerFile = values.welcomeBannerImage?.[0];
         if (welcomeBannerFile) {
             const { downloadURL, storagePath } = await uploadFile(welcomeBannerFile, 'welcome-banners', existingWelcomeBannerStoragePath);
-            welcomeBannerData = {
-                imageUrl: downloadURL,
-                storagePath: storagePath,
-            };
+            welcomeBannerData = { imageUrl: downloadURL, storagePath: storagePath };
             setExistingWelcomeBannerUrl(downloadURL);
             setExistingWelcomeBannerStoragePath(storagePath);
         }
@@ -569,10 +551,7 @@ export default function SettingsPage() {
         const downloadPageImageFile = values.downloadPageImage?.[0];
         if (downloadPageImageFile) {
             const { downloadURL, storagePath } = await uploadFile(downloadPageImageFile, 'download-page', existingDownloadImageStoragePath);
-            downloadPageImageData = {
-                imageUrl: downloadURL,
-                storagePath: storagePath,
-            };
+            downloadPageImageData = { imageUrl: downloadURL, storagePath: storagePath };
             setExistingDownloadImageUrl(downloadURL);
             setExistingDownloadImageStoragePath(storagePath);
         }
@@ -580,10 +559,7 @@ export default function SettingsPage() {
         const marqueeLogoFile = values.marqueeLogo?.[0];
         if (marqueeLogoFile) {
             const { downloadURL, storagePath } = await uploadFile(marqueeLogoFile, 'marquee-logos', existingMarqueeLogoStoragePath);
-            marqueeLogoData = {
-                imageUrl: downloadURL,
-                storagePath: storagePath,
-            };
+            marqueeLogoData = { imageUrl: downloadURL, storagePath: storagePath };
             setExistingMarqueeLogoUrl(downloadURL);
             setExistingMarqueeLogoStoragePath(storagePath);
         }
@@ -692,7 +668,6 @@ export default function SettingsPage() {
         if (qrCodeData) {
             dataToSave.paymentDetails['Scan QR Code'] = qrCodeData;
         } else {
-            // Check if 'Scan QR Code' exists and if there is no new file, to prevent deleting it.
             if (!qrFile && dataToSave.paymentDetails['Scan QR Code']) {
                 // Keep the existing one
             } else if (!qrFile) {
@@ -702,20 +677,12 @@ export default function SettingsPage() {
         
         await setDoc(settingsDocRef, dataToSave, { merge: true });
 
-        toast({
-            title: 'Success!',
-            description: 'Settings have been saved.',
-        });
-
+        toast({ title: 'Success!', description: 'Settings have been saved.' });
         form.reset({ ...values, qrCodeImage: undefined, gpayImage: undefined, paytmImage: undefined, phonepeImage: undefined, welcomeBannerImage: undefined, downloadPageImage: undefined, marqueeLogo: undefined, bonusPopupImage: undefined, promoPopupImage: undefined });
         
     } catch (error: any) {
       console.error('Error updating settings: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to update settings. Please try again.',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to update settings.' });
     } finally {
       setIsSubmitting(false);
       setUploadProgress(null);
@@ -738,7 +705,7 @@ export default function SettingsPage() {
                 form.setValue('appEnabled', pendingAppEnabled);
                 toast({
                     title: 'Status Updated',
-                    description: `App is now ${pendingAppEnabled ? 'ENABLED' : 'CLOSED'}.`
+                    description: `App is now ${pendingAppEnabled ? 'ENABLED (OPEN)' : 'CLOSED'}. User panel will sync immediately.`
                 });
             } catch (error) {
                 toast({ variant: 'destructive', title: 'Error', description: 'Failed to update status.' });
@@ -751,62 +718,31 @@ export default function SettingsPage() {
 
   const handleDeleteWelcomeBanner = async () => {
     if (!existingWelcomeBannerStoragePath) return;
-
     try {
-      // Delete from Storage
       const storageRef = ref(storage, existingWelcomeBannerStoragePath);
       await deleteObject(storageRef);
-
-      // Delete from Firestore
       const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, {
-        welcomeBanner: null
-      });
-
-      // Update local state
+      await updateDoc(settingsDocRef, { welcomeBanner: null });
       setExistingWelcomeBannerUrl(null);
       setExistingWelcomeBannerStoragePath(null);
-
-      toast({
-        title: 'Success!',
-        description: 'Welcome banner has been deleted.',
-      });
+      toast({ title: 'Success!', description: 'Welcome banner deleted.' });
     } catch (error) {
-      console.error("Error deleting welcome banner: ", error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to delete the welcome banner.',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete banner.' });
     }
   };
   
   const handleDeleteDownloadImage = async () => {
     if (!existingDownloadImageStoragePath) return;
-
     try {
       const storageRef = ref(storage, existingDownloadImageStoragePath);
       await deleteObject(storageRef);
-
       const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, {
-        downloadPageImage: null
-      });
-
+      await updateDoc(settingsDocRef, { downloadPageImage: null });
       setExistingDownloadImageUrl(null);
       setExistingDownloadImageStoragePath(null);
-
-      toast({
-        title: 'Success!',
-        description: 'Download page image has been deleted.',
-      });
+      toast({ title: 'Success!', description: 'Download image deleted.' });
     } catch (error) {
-      console.error("Error deleting download page image: ", error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to delete the image.',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete image.' });
     }
   };
 
@@ -821,46 +757,28 @@ export default function SettingsPage() {
       setExistingMarqueeLogoStoragePath(null);
       toast({ title: 'Success!', description: 'Marquee logo deleted.' });
     } catch (error) {
-       console.error("Error deleting marquee logo: ", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete marquee logo.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete logo.' });
     }
   };
 
   const handleDeleteQrCode = async () => {
     if (!existingQrStoragePath) return;
-    
     setIsSubmitting(true);
     try {
-      // Delete from Storage
       const storageRef = ref(storage, existingQrStoragePath);
       await deleteObject(storageRef);
-      
-      // Delete from Firestore
       const settingsDocRef = doc(db, 'settings', 'app-settings');
       const settingsDoc = await getDoc(settingsDocRef);
       if(settingsDoc.exists()) {
         const currentPaymentDetails = settingsDoc.data().paymentDetails || {};
         delete currentPaymentDetails['Scan QR Code'];
-        await updateDoc(settingsDocRef, {
-            paymentDetails: currentPaymentDetails
-        });
+        await updateDoc(settingsDocRef, { paymentDetails: currentPaymentDetails });
       }
-
-      // Update local state
       setExistingQrUrl(null);
       setExistingQrStoragePath(null);
-
-      toast({
-        title: 'Success!',
-        description: 'QR Code has been deleted.',
-      });
+      toast({ title: 'Success!', description: 'QR Code deleted.' });
     } catch (error) {
-      console.error("Error deleting QR Code: ", error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to delete the QR Code.',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete QR Code.' });
     } finally {
         setIsSubmitting(false);
     }
@@ -872,23 +790,12 @@ export default function SettingsPage() {
     try {
       const storageRef = ref(storage, existingGpayImageStoragePath);
       await deleteObject(storageRef);
-      
       const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 
-          'paymentDetails.GPay.imageUrl': null,
-          'paymentDetails.GPay.storagePath': null,
-       });
-
+      await updateDoc(settingsDocRef, { 'paymentDetails.GPay.imageUrl': null, 'paymentDetails.GPay.storagePath': null });
       setExistingGpayImageUrl(null);
-      setExistingGpayImageStoragePath(old => null);
-
+      setExistingGpayImageStoragePath(null);
       toast({ title: 'Success!', description: 'GPay image deleted.' });
-    } catch (error) {
-       console.error("Error deleting GPay image: ", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete GPay image.' });
-    } finally {
-        setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
 
   const handleDeletePaytmImage = async () => {
@@ -897,25 +804,13 @@ export default function SettingsPage() {
     try {
       const storageRef = ref(storage, existingPaytmImageStoragePath);
       await deleteObject(storageRef);
-      
       const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 
-          'paymentDetails.Paytm.imageUrl': null,
-          'paymentDetails.Paytm.storagePath': null,
-       });
-
+      await updateDoc(settingsDocRef, { 'paymentDetails.Paytm.imageUrl': null, 'paymentDetails.Paytm.storagePath': null });
       setExistingPaytmImageUrl(null);
       setExistingPaytmImageStoragePath(null);
-
       toast({ title: 'Success!', description: 'Paytm image deleted.' });
-    } catch (error) {
-       console.error("Error deleting Paytm image: ", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete Paytm image.' });
-    } finally {
-        setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
-
 
   const handleDeletePhonepeImage = async () => {
     if (!existingPhonepeImageStoragePath) return;
@@ -923,25 +818,13 @@ export default function SettingsPage() {
     try {
       const storageRef = ref(storage, existingPhonepeImageStoragePath);
       await deleteObject(storageRef);
-      
       const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 
-          'paymentDetails.PhonePe.imageUrl': null,
-          'paymentDetails.PhonePe.storagePath': null,
-       });
-
+      await updateDoc(settingsDocRef, { 'paymentDetails.PhonePe.imageUrl': null, 'paymentDetails.PhonePe.storagePath': null });
       setExistingPhonepeImageUrl(null);
       setExistingPhonepeImageStoragePath(null);
-
       toast({ title: 'Success!', description: 'PhonePe image deleted.' });
-    } catch (error) {
-       console.error("Error deleting PhonePe image: ", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete PhonePe image.' });
-    } finally {
-        setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
-
 
   const handleDeleteBonusPopupImage = async () => {
     if (!existingBonusPopupStoragePath) return;
@@ -949,17 +832,11 @@ export default function SettingsPage() {
       const storageRef = ref(storage, existingBonusPopupStoragePath);
       await deleteObject(storageRef);
       const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 
-          'bonusPopup.imageUrl': null,
-          'bonusPopup.storagePath': null,
-       });
+      await updateDoc(settingsDocRef, { 'bonusPopup.imageUrl': null, 'bonusPopup.storagePath': null });
       setExistingBonusPopupUrl(null);
       setExistingBonusPopupStoragePath(null);
       toast({ title: 'Success!', description: 'Bonus popup image deleted.' });
-    } catch (error) {
-       console.error("Error deleting bonus popup image: ", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete bonus popup image.' });
-    }
+    } catch (error) { toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete.' }); }
   };
 
   const handleDeletePromoPopupImage = async () => {
@@ -968,41 +845,23 @@ export default function SettingsPage() {
       const storageRef = ref(storage, existingPromoPopupStoragePath);
       await deleteObject(storageRef);
       const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 
-          'promoPopup.imageUrl': null,
-          'promoPopup.storagePath': null,
-       });
+      await updateDoc(settingsDocRef, { 'promoPopup.imageUrl': null, 'promoPopup.storagePath': null });
       setExistingPromoPopupUrl(null);
       setExistingPromoPopupStoragePath(null);
       toast({ title: 'Success!', description: 'Promotional popup image deleted.' });
-    } catch (error) {
-       console.error("Error deleting promo popup image: ", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete promo popup image.' });
-    }
+    } catch (error) { toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete.' }); }
   };
-
 
   const handleCleanUserData = async () => {
     setIsCleaning(true);
     try {
         const result = await cleanAllUserData(10);
          if (result.success) {
-            toast({
-                title: "Success!",
-                description: `${result.deletedBidsCount} bids, ${result.deletedDepositsCount} deposits, and ${result.deletedWithdrawalsCount} withdrawals deleted.`,
-            });
-        } else {
-            throw new Error(result.message);
-        }
+            toast({ title: "Success!", description: `${result.deletedBidsCount} bids, ${result.deletedDepositsCount} deposits, and ${result.deletedWithdrawalsCount} withdrawals deleted.` });
+        } else { throw new Error(result.message); }
     } catch (error: any) {
-         toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: error.message || 'Failed to clean old user data.'
-        });
-    } finally {
-        setIsCleaning(false);
-    }
+         toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to clean data.' });
+    } finally { setIsCleaning(false); }
   }
 
   const isAppClosed = !form.watch('appEnabled');
@@ -1010,8 +869,8 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Application Settings</h1>
-        <p className="text-muted-foreground">Update application-wide settings here.</p>
+        <h1 className="text-2xl font-bold">MKING Settings</h1>
+        <p className="text-muted-foreground">Manage global app status and configuration.</p>
       </div>
       <div>
         {loading ? (
@@ -1030,7 +889,7 @@ export default function SettingsPage() {
                         Master App Control
                     </CardTitle>
                     <CardDescription className="text-red-500/80">
-                        Easily Close or Open the entire application instantly.
+                        When CLOSED, the application is blocked for all users. OPEN it to allow betting.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1039,7 +898,7 @@ export default function SettingsPage() {
                             <Label className="text-base font-bold">App Status</Label>
                             <p className="text-xs text-muted-foreground">
                                 {form.watch('appEnabled') 
-                                    ? "Application is currently ONLINE" 
+                                    ? "Application is currently ONLINE (OPEN)" 
                                     : "Application is currently CLOSED"}
                             </p>
                         </div>
@@ -1070,9 +929,6 @@ export default function SettingsPage() {
                           <FormControl>
                             <Input placeholder="e.g., 4-9-2-7" {...field} />
                           </FormControl>
-                          <FormDescriptionComponent>
-                            Enter the lucky numbers separated by dashes.
-                          </FormDescriptionComponent>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -1085,23 +941,13 @@ export default function SettingsPage() {
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Logo</Button></AlertDialogTrigger>
                           <AlertDialogContent>
-                              <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the logo.</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader>
                               <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteMarqueeLogo}>Delete</AlertDialogAction></AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
                     )}
-                    <FormField
-                      control={form.control}
-                      name="marqueeLogo"
-                      render={() => (
-                        <FormItem>
-                          <FormLabel>{existingMarqueeLogoUrl ? 'New Logo' : 'Upload Logo'}</FormLabel>
-                          <FormControl><Input type="file" {...marqueeLogoRef} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <FormField control={form.control} name="marqueeLogo" render={() => (<FormItem><FormLabel>{existingMarqueeLogoUrl ? 'New Logo' : 'Upload Logo'}</FormLabel><FormControl><Input type="file" {...marqueeLogoRef} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="marqueeTitle" render={({ field }) => (<FormItem><FormLabel>Marquee Title</FormLabel><FormControl><Input placeholder="e.g., MKING" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="marqueeText" render={({ field }) => (<FormItem><FormLabel>Marquee Text</FormLabel><FormControl><Input placeholder="Sub-line text" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <div className="grid grid-cols-2 gap-4">
@@ -1121,66 +967,25 @@ export default function SettingsPage() {
                 <AccordionItem value="item-2">
                   <AccordionTrigger className="text-lg font-semibold">Bonus & Promotion Settings</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
-                    <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel><FormDescriptionComponent>Give users a bonus on deposits.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    <FormField control={form.control} name="bonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Deposit Bonus</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     {form.watch('bonusEnabled') && (<FormField control={form.control} name="bonusPercentage" render={({ field }) => (<FormItem><FormLabel>Bonus Percentage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
                     <Separator />
-                    <FormField control={form.control} name="welcomeBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Welcome Bonus</FormLabel><FormDescriptionComponent>Give new users a bonus on signup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    <FormField control={form.control} name="welcomeBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Welcome Bonus</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     {form.watch('welcomeBonusEnabled') && (<FormField control={form.control} name="welcomeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Welcome Bonus Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
                     <Separator />
-                      <FormField control={form.control} name="referralBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Referral Bonus</FormLabel><FormDescriptionComponent>Reward users for referring new players.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="referralBonusEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Referral Bonus</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     {form.watch('referralBonusEnabled') && (
                       <>
-                          <FormField control={form.control} name="referrerBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referrer Bonus (Old User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the person who referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                          <FormField control={form.control} name="refereeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referee Bonus (New User)</FormLabel><FormControl><Input type="number" placeholder="Amount for the new user who was referred" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={form.control} name="referrerBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referrer Bonus (Old User)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={form.control} name="refereeBonusAmount" render={({ field }) => (<FormItem><FormLabel>Referee Bonus (New User)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       </>
                     )}
-
                     <Separator />
-                    <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel><FormDescriptionComponent>Show a bonus offer popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                    {form.watch('bonusPopupEnabled') && (
-                      <div className="space-y-4">
-                          {existingBonusPopupUrl && (
-                              <div className="flex flex-col items-center gap-4">
-                              <p className="text-sm text-muted-foreground">Current Image:</p>
-                              <Image src={existingBonusPopupUrl} alt="Bonus Popup" width={200} height={200} className="rounded-md border p-1" />
-                              <AlertDialog>
-                                  <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the image.</AlertDialogDescription></AlertDialogHeader>
-                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteBonusPopupImage}>Delete</AlertDialogAction></AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialog>
-                              </div>
-                          )}
-                          <FormField control={form.control} name="bonusPopupImage" render={() => (<FormItem><FormLabel>{existingBonusPopupUrl ? 'New Image' : 'Upload Image'}</FormLabel><FormControl><Input type="file" {...bonusPopupImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                          <FormField control={form.control} name="bonusPopupLink" render={({ field }) => (<FormItem><FormLabel>Popup Button Link</FormLabel><FormControl><Input placeholder="/add-fund" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      </div>
-                    )}
-                    <Separator />
-                     <FormField control={form.control} name="promoPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Promotional Popup</FormLabel><FormDescriptionComponent>Show a general promotional popup.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                    {form.watch('promoPopupEnabled') && (
-                      <div className="space-y-4">
-                          {existingPromoPopupUrl && (
-                              <div className="flex flex-col items-center gap-4">
-                              <p className="text-sm text-muted-foreground">Current Image:</p>
-                              <Image src={existingPromoPopupUrl} alt="Promotional Popup" width={200} height={200} className="rounded-md border p-1" />
-                              <AlertDialog>
-                                  <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the image.</AlertDialogDescription></AlertDialogHeader>
-                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePromoPopupImage}>Delete</AlertDialogAction></AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialog>
-                              </div>
-                          )}
-                          <FormField control={form.control} name="promoPopupImage" render={() => (<FormItem><FormLabel>{existingPromoPopupUrl ? 'New Image' : 'Upload Image'}</FormLabel><FormControl><Input type="file" {...promoPopupImageRef} /></FormControl><FormMessage /></FormItem>)} />
-                          <FormField control={form.control} name="promoPopupLink" render={({ field }) => (<FormItem><FormLabel>Popup Button Link</FormLabel><FormControl><Input placeholder="/" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      </div>
-                    )}
+                    <FormField control={form.control} name="bonusPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Bonus Popup</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    <FormField control={form.control} name="promoPopupEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3"><div className="space-y-0.5"><FormLabel>Enable Promotional Popup</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                   </AccordionContent>
                 </AccordionItem>
-
 
                 {/* Support & Notice Section */}
                  <AccordionItem value="item-3">
@@ -1190,27 +995,12 @@ export default function SettingsPage() {
                       <FormField control={form.control} name="callSupportNumber" render={({ field }) => (<FormItem><FormLabel>Call Support Number</FormLabel><FormControl><Input placeholder="e.g., 919876543210" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="telegramLink" render={({ field }) => (<FormItem><FormLabel>Telegram Link</FormLabel><FormControl><Input placeholder="https://t.me/yourchannel" {...field} /></FormControl><FormMessage /></FormItem>)} />
                        <Separator/>
-                        <FormField
-                            control={form.control}
-                            name="appDownloadLink"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>App Download Link</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="https://example.com/app.apk" {...field} />
-                                    </FormControl>
-                                     <FormDescriptionComponent>
-                                        This link will be used for the "Update Now" button on the download page.
-                                    </FormDescriptionComponent>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <FormField control={form.control} name="appDownloadLink" render={({ field }) => (<FormItem><FormLabel>App Download Link</FormLabel><FormControl><Input placeholder="https://example.com/app.apk" {...field} /></FormControl><FormMessage /></FormItem>)} />
                        <Separator/>
-                       <FormField control={form.control} name="minimumDepositAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Deposit Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                       <FormField control={form.control} name="minimumWithdrawalAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Withdrawal Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 1000" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name="minimumDepositAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Deposit Amount</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name="minimumWithdrawalAmount" render={({ field }) => (<FormItem><FormLabel>Minimum Withdrawal Amount</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <Separator/>
-                      <FormField control={form.control} name="noticeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Enable Notice</FormLabel><FormDescriptionComponent>Show the notice board on the home page.</FormDescriptionComponent></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="noticeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Enable Notice</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                       <FormField control={form.control} name="noticeText" render={({ field }) => (<FormItem><FormLabel>Notice Text</FormLabel><FormControl><Textarea placeholder="Enter notice text for home page." {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                   </AccordionContent>
@@ -1220,10 +1010,10 @@ export default function SettingsPage() {
                  <AccordionItem value="item-4">
                   <AccordionTrigger className="text-lg font-semibold">App Images</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
-                      {existingWelcomeBannerUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Welcome Banner:</p><Image src={existingWelcomeBannerUrl} alt="Welcome Banner" width={400} height={133} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Banner</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the banner.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteWelcomeBanner}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                      {existingWelcomeBannerUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Welcome Banner:</p><Image src={existingWelcomeBannerUrl} alt="Welcome Banner" width={400} height={133} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Banner</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteWelcomeBanner}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
                       <FormField control={form.control} name="welcomeBannerImage" render={() => (<FormItem><FormLabel>{existingWelcomeBannerUrl ? 'New Welcome Banner' : 'Upload Welcome Banner'}</FormLabel><FormControl><Input type="file" {...welcomeBannerImageRef} /></FormControl><FormMessage /></FormItem>)} />
                       <Separator/>
-                      {existingDownloadImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Download Page Image:</p><Image src={existingDownloadImageUrl} alt="Download Page Image" width={200} height={266} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the image.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteDownloadImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
+                      {existingDownloadImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Download Page Image:</p><Image src={existingDownloadImageUrl} alt="Download Page Image" width={200} height={266} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteDownloadImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
                       <FormField control={form.control} name="downloadPageImage" render={() => (<FormItem><FormLabel>{existingDownloadImageUrl ? 'New Download Page Image' : 'Upload Download Page Image'}</FormLabel><FormControl><Input type="file" {...downloadPageImageRef} /></FormControl><FormMessage /></FormItem>)} />
                       <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                   </AccordionContent>
@@ -1238,22 +1028,18 @@ export default function SettingsPage() {
                       <Separator />
                       <div className="p-4 border rounded-lg space-y-4">
                           <FormField control={form.control} name="gpayEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable GPay</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                          {existingGpayImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current GPay Image:</p><Image src={existingGpayImageUrl} alt="GPay Image" width={100} height={100} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteGpayImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                          <FormField control={form.control} name="gpayImage" render={() => (<FormItem><FormLabel>{existingGpayImageUrl ? 'New GPay Image' : 'Upload GPay Image'}</FormLabel><FormControl><Input type="file" {...gpayImageRef} /></FormControl><FormMessage /></FormItem>)}/>
+                          <FormField control={form.control} name="gpayImage" render={() => (<FormItem><FormLabel>Upload GPay Logo</FormLabel><FormControl><Input type="file" {...gpayImageRef} /></FormControl><FormMessage /></FormItem>)}/>
                       </div>
-                       <div className="p-4 border rounded-lg space-y-4">
+                      <div className="p-4 border rounded-lg space-y-4">
                           <FormField control={form.control} name="paytmEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable Paytm</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                          {existingPaytmImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current Paytm Image:</p><Image src={existingPaytmImageUrl} alt="Paytm Image" width={100} height={100} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePaytmImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                          <FormField control={form.control} name="paytmImage" render={() => (<FormItem><FormLabel>{existingPaytmImageUrl ? 'New Paytm Image' : 'Upload Paytm Image'}</FormLabel><FormControl><Input type="file" {...paytmImageRef} /></FormControl><FormMessage /></FormItem>)}/>
+                          <FormField control={form.control} name="paytmImage" render={() => (<FormItem><FormLabel>Upload Paytm Logo</FormLabel><FormControl><Input type="file" {...paytmImageRef} /></FormControl><FormMessage /></FormItem>)}/>
                       </div>
                       <div className="p-4 border rounded-lg space-y-4">
                           <FormField control={form.control} name="phonepeEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Enable PhonePe</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                          {existingPhonepeImageUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current PhonePe Image:</p><Image src={existingPhonepeImageUrl} alt="PhonePe Image" width={100} height={100} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeletePhonepeImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                          <FormField control={form.control} name="phonepeImage" render={() => (<FormItem><FormLabel>{existingPhonepeImageUrl ? 'New PhonePe Image' : 'Upload PhonePe Image'}</FormLabel><FormControl><Input type="file" {...phonepeImageRef} /></FormControl><FormMessage /></FormItem>)}/>
+                          <FormField control={form.control} name="phonepeImage" render={() => (<FormItem><FormLabel>Upload PhonePe Logo</FormLabel><FormControl><Input type="file" {...phonepeImageRef} /></FormControl><FormMessage /></FormItem>)}/>
                       </div>
                       <Separator />
-                      {existingQrUrl && (<div className="flex flex-col items-center gap-4"><p className="text-sm text-muted-foreground">Current QR Code:</p><Image src={existingQrUrl} alt="QR Code" width={150} height={150} className="rounded-md border p-1" /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete QR</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteQrCode}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>)}
-                      <FormField control={form.control} name="qrCodeImage" render={() => (<FormItem><FormLabel>{existingQrUrl ? 'New QR Code' : 'Upload QR Code'}</FormLabel><FormControl><Input type="file" {...qrCodeImageRef} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="qrCodeImage" render={() => (<FormItem><FormLabel>Upload New QR Code</FormLabel><FormControl><Input type="file" {...qrCodeImageRef} /></FormControl><FormMessage /></FormItem>)} />
                       <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                   </AccordionContent>
                 </AccordionItem>
@@ -1262,86 +1048,7 @@ export default function SettingsPage() {
                  <AccordionItem value="item-7">
                       <AccordionTrigger className="text-lg font-semibold">Market Time Settings</AccordionTrigger>
                       <AccordionContent className="space-y-4 pt-4">
-                            <FormField
-                                control={form.control}
-                                name="globalMarketOpenTime"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Global Market Open Time</FormLabel>
-                                        <FormControl>
-                                            <Input type="time" {...field} />
-                                        </FormControl>
-                                        <FormDescriptionComponent>
-                                            Set a global time for all markets to start. Bets can only be placed after this time.
-                                        </FormDescriptionComponent>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                           <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
-                      </AccordionContent>
-                 </AccordionItem>
-
-                 {/* Transaction Time Settings Section */}
-                 <AccordionItem value="item-8">
-                      <AccordionTrigger className="text-lg font-semibold">Transaction Time Settings</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="depositStartTime"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Deposit Start Time</FormLabel>
-                                            <FormControl>
-                                                <Input type="time" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="depositEndTime"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Deposit End Time</FormLabel>
-                                            <FormControl>
-                                                <Input type="time" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="withdrawalStartTime"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Withdrawal Start Time</FormLabel>
-                                            <FormControl>
-                                                <Input type="time" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="withdrawalEndTime"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Withdrawal End Time</FormLabel>
-                                            <FormControl>
-                                                <Input type="time" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                            <FormField control={form.control} name="globalMarketOpenTime" render={({ field }) => (<FormItem><FormLabel>Global Market Open Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)} />
                            <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
                       </AccordionContent>
                  </AccordionItem>
@@ -1350,7 +1057,6 @@ export default function SettingsPage() {
                  <AccordionItem value="item-9">
                       <AccordionTrigger className="text-lg font-semibold">Game Rate Settings</AccordionTrigger>
                       <AccordionContent className="space-y-4 pt-4">
-                            <p className="text-sm text-muted-foreground">Set the winning prize for a ₹10 bet for each game type.</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField control={form.control} name="singleDigitPrize" render={({ field }) => (<FormItem><FormLabel>Single Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="jodiDigitPrize" render={({ field }) => (<FormItem><FormLabel>Jodi Digit Prize</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -1364,42 +1070,6 @@ export default function SettingsPage() {
                       </AccordionContent>
                  </AccordionItem>
 
-                 {/* Bet Amount Settings Section */}
-                 <AccordionItem value="item-10">
-                    <AccordionTrigger className="text-lg font-semibold">Bet Amount Settings</AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-4">
-                          <p className="text-sm text-muted-foreground">Set the minimum and maximum bet amount for each game type.</p>
-                          {Object.keys(form.getValues().betAmountSettings || {}).map((key) => (
-                              <div key={key} className="grid grid-cols-2 gap-4 border-b pb-2">
-                                   <p className="col-span-2 text-md font-semibold text-primary">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
-                                  <FormField
-                                      control={form.control}
-                                      name={`betAmountSettings.${key}.min` as any}
-                                      render={({ field }) => (
-                                          <FormItem>
-                                              <FormLabel>Min Bet</FormLabel>
-                                              <FormControl><Input type="number" {...field} /></FormControl>
-                                              <FormMessage />
-                                          </FormItem>
-                                      )}
-                                  />
-                                  <FormField
-                                      control={form.control}
-                                      name={`betAmountSettings.${key}.max` as any}
-                                      render={({ field }) => (
-                                          <FormItem>
-                                              <FormLabel>Max Bet</FormLabel>
-                                              <FormControl><Input type="number" {...field} /></FormControl>
-                                              <FormMessage />
-                                          </FormItem>
-                                      )}
-                                  />
-                              </div>
-                          ))}
-                         <Button type="submit" disabled={isSubmitting} className="w-full mt-4">Save Section</Button>
-                    </AccordionContent>
-               </AccordionItem>
-                
                 {/* Data Management Section */}
                  <AccordionItem value="item-6">
                       <AccordionTrigger className="text-lg font-semibold">Data Management</AccordionTrigger>
@@ -1407,9 +1077,7 @@ export default function SettingsPage() {
                           <Card className="bg-destructive/10 border-destructive">
                               <CardHeader>
                                   <CardTitle className="text-destructive">Clean User Data</CardTitle>
-                                  <CardDescription className="text-destructive/80">
-                                      This will permanently delete all bids, deposits, and withdrawal records older than 10 days for ALL users. This action is irreversible and helps keep the app running smoothly.
-                                  </CardDescription>
+                                  <CardDescription className="text-destructive/80">Delete old bids and transactions (irrevocable).</CardDescription>
                               </CardHeader>
                               <CardContent>
                                   <AlertDialog>
@@ -1420,16 +1088,8 @@ export default function SettingsPage() {
                                           </Button>
                                       </AlertDialogTrigger>
                                       <AlertDialogContent>
-                                          <AlertDialogHeader>
-                                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                              <AlertDialogDescription>
-                                                  You are about to delete all bids, deposits, and withdrawals older than 10 days for every user. This action cannot be undone.
-                                              </AlertDialogDescription>
-                                          </AlertDialogHeader>
-                                          <AlertDialogFooter>
-                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                              <AlertDialogAction onClick={handleCleanUserData}>I understand, delete the data</AlertDialogAction>
-                                          </AlertDialogFooter>
+                                          <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle></AlertDialogHeader>
+                                          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleCleanUserData}>Delete Data</AlertDialogAction></AlertDialogFooter>
                                       </AlertDialogContent>
                                   </AlertDialog>
                               </CardContent>
@@ -1449,27 +1109,14 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Password Dialog for App Status Toggle */}
       <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5 text-red-500" />
-                    Security Verification
-                </DialogTitle>
-                <UIDialogDescription>
-                    Please enter the Master Password to {pendingAppEnabled ? 'OPEN' : 'CLOSE'} the application.
-                </UIDialogDescription>
+                <DialogTitle className="flex items-center gap-2"><Lock className="h-5 w-5 text-red-500" />Security Verification</DialogTitle>
+                <UIDialogDescription>Enter Master Password to {pendingAppEnabled ? 'OPEN' : 'CLOSE'} the application.</UIDialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-                <Input 
-                    type="password" 
-                    placeholder="Master Password" 
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    className="text-center text-lg tracking-widest"
-                    onKeyDown={(e) => e.key === 'Enter' && handlePasswordVerify()}
-                />
+                <Input type="password" placeholder="Master Password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} className="text-center text-lg tracking-widest" onKeyDown={(e) => e.key === 'Enter' && handlePasswordVerify()} />
                 <div className="flex gap-2">
                     <Button variant="outline" className="flex-1" onClick={() => setIsPasswordDialogOpen(false)}>Cancel</Button>
                     <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={handlePasswordVerify}>Verify & Proceed</Button>

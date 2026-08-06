@@ -1,11 +1,9 @@
-
 'use client';
 
 import React from 'react';
 import {
   Home,
   Users,
-  Building,
   Gamepad,
   CheckCircle,
   XCircle,
@@ -20,7 +18,6 @@ import {
   CreditCard,
   Settings,
   ImageIcon,
-  AreaChart,
   Eye,
   ChevronDown,
   MailQuestion,
@@ -53,8 +50,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
@@ -75,7 +70,7 @@ export default function AdminLayout({
   const [newUsersCount, setNewUsersCount] = React.useState(0);
   const [theme, setTheme] = React.useState('light');
   
-  // Verification States
+  // Verification States for Sidebar Access
   const [isVerified, setIsVerified] = React.useState(false);
   const [isUserPassDialogOpen, setIsUserPassDialogOpen] = React.useState(false);
   const [userPassInput, setUserPassInput] = React.useState('');
@@ -99,7 +94,6 @@ export default function AdminLayout({
             document.documentElement.classList.remove('light', 'dark');
             document.documentElement.classList.add(currentTheme);
         } catch (error) {
-            console.error("Failed to parse theme from localStorage", error);
             setTheme('light');
             document.documentElement.classList.add('light');
         }
@@ -108,7 +102,7 @@ export default function AdminLayout({
         document.documentElement.classList.add('light');
     }
 
-    // Check session verification
+    // Check session verification for admin navigation
     const verified = sessionStorage.getItem('admin_verified') === 'true';
     setIsVerified(verified);
   }, []);
@@ -217,10 +211,7 @@ export default function AdminLayout({
 
       handleLinkClick();
     } else {
-      toast({
-        variant: 'destructive',
-        title: 'Incorrect Password',
-      });
+      toast({ variant: 'destructive', title: 'Incorrect Password' });
       setUserPassInput('');
     }
   };

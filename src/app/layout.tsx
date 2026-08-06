@@ -67,10 +67,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     const isForgotPasswordPage = pathname === '/forgot-password';
     const isAdminPage = pathname.startsWith('/admin');
     
-    // Exempt both Settings and Registered Users from the maintenance screen
+    // Exempt both Settings and Registered Users from the maintenance screen so admin can open the app
     const isMaintenanceExempt = pathname === '/admin/settings' || pathname === '/admin/manage-users';
 
-    // Maintenance Mode Check
+    // Maintenance Mode Check (Crucial: Instantly reacts to settings.appEnabled)
     const isAppClosed = settings.appEnabled === false;
 
     const showBottomNav = 
@@ -88,8 +88,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         }
         
         const isProtectedRoute = !isPublicPage && !isForgotPasswordPage && pathname !== '/download';
-
-        // Only redirect to home if user is FULLY registered
         const isFullyRegistered = user && user.email;
 
         if (!user && isProtectedRoute) {
@@ -109,7 +107,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // Maintenance Mode Overlay (Allows only admin/settings and manage-users)
+    // Maintenance Mode Overlay: Blocks everything if CLOSED, except the exemption paths for admin
     if (isAppClosed && !isMaintenanceExempt) {
         return (
             <div className="flex h-screen w-full flex-col items-center justify-center bg-background p-6 text-center text-foreground">
@@ -126,7 +124,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                     <div className="flex flex-col gap-3 w-full max-w-xs">
                         <Link href="/admin/settings">
                             <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold px-8 rounded-full shadow-lg shadow-red-600/20">
-                                Admin: Access Settings
+                                Admin: Access Settings to Open App
                             </Button>
                         </Link>
                     </div>
@@ -135,6 +133,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         );
     }
 
+    // When isAppClosed is false (OPEN), the normal UI is returned immediately
     return (
       <>
         <main>
