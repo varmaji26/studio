@@ -64,8 +64,8 @@ export default function AdminLayout({
 
   // Menu Expansion States
   const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(false);
-  const [isRequestsMenuOpen, setRequestsMenuOpen] = React.useState(false);
-  const [isPaymentHistoryMenuOpen, setPaymentHistoryMenuOpen] = React.useState(false);
+  const [isRequestsMenuOpen, setIsRequestsMenuOpen] = React.useState(false);
+  const [isPaymentHistoryMenuOpen, setIsPaymentHistoryMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -254,7 +254,7 @@ export default function AdminLayout({
                 </Link>
               </SidebarMenuItem>
 
-               <Collapsible open={isRequestsMenuOpen} onOpenChange={setRequestsMenuOpen}>
+               <Collapsible open={isRequestsMenuOpen} onOpenChange={setIsRequestsMenuOpen}>
                   <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                          <SidebarMenuButton 
