@@ -29,7 +29,6 @@ import { cn } from '@/lib/utils';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
 
-// Extremely loose schema to ensure saving never fails due to minor validation issues
 const settingsSchema = z.object({
   appEnabled: z.boolean().default(true),
   goldenAnk: z.string().optional().nullable().or(z.literal('')),
@@ -136,7 +135,7 @@ export default function SettingsPage() {
       gpayEnabled: true,
       paytmEnabled: true,
       phonepeEnabled: true,
-      marqueeTitle: 'MKING',
+      marqueeTitle: 'KALYAN777',
       marqueeText: '',
       marqueeBackgroundColor: '#b91c1c',
       marqueeTextColor: '#ffffff',
@@ -214,7 +213,7 @@ export default function SettingsPage() {
             gpayEnabled: data.paymentDetails?.GPay?.enabled ?? true,
             paytmEnabled: data.paymentDetails?.Paytm?.enabled ?? true,
             phonepeEnabled: data.paymentDetails?.PhonePe?.enabled ?? true,
-            marqueeTitle: data.marquee?.title || 'MKING',
+            marqueeTitle: data.marquee?.title || 'KALYAN777',
             marqueeText: data.marquee?.text || '',
             marqueeBackgroundColor: data.marquee?.backgroundColor || '#b91c1c',
             marqueeTextColor: data.marquee?.textColor || '#ffffff',
@@ -704,7 +703,7 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">MKING Settings</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">KALYAN777 Settings</h1>
         <p className="text-muted-foreground">Manage global app status and configuration.</p>
       </div>
       <div>
@@ -795,7 +794,7 @@ export default function SettingsPage() {
                       </div>
                     )}
                     <FormField control={form.control} name="marqueeLogo" render={() => (<FormItem><FormLabel>{existingMarqueeLogoUrl ? 'New Logo' : 'Upload Logo'}</FormLabel><FormControl><Input type="file" {...marqueeLogoRef} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="marqueeTitle" render={({ field }) => (<FormItem><FormLabel>Marquee Title</FormLabel><FormControl><Input placeholder="e.g., MKING" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="marqueeTitle" render={({ field }) => (<FormItem><FormLabel>Marquee Title</FormLabel><FormControl><Input placeholder="e.g., KALYAN777" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="marqueeText" render={({ field }) => (<FormItem><FormLabel>Marquee Text</FormLabel><FormControl><Input placeholder="Sub-line text" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <div className="grid grid-cols-2 gap-4">
                       <FormField control={form.control} name="marqueeBackgroundColor" render={({ field }) => (<FormItem><FormLabel>BG Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? '#000000'} /></FormControl><FormMessage /></FormItem>)} />
@@ -865,7 +864,10 @@ export default function SettingsPage() {
                             </div>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Banner</Button></AlertDialogTrigger>
-                                <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteWelcomeBanner}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader>
+                                  <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteWelcomeBanner}>Delete</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
                             </AlertDialog>
                         </div>
                       )}
@@ -879,7 +881,10 @@ export default function SettingsPage() {
                             </div>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" />Delete Image</Button></AlertDialogTrigger>
-                                <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteDownloadImage}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle></AlertDialogHeader>
+                                  <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteDownloadImage}>Delete</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
                             </AlertDialog>
                         </div>
                       )}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
@@ -76,7 +75,7 @@ function PaymentQRContent() {
     
     useEffect(() => {
         if (settings && settings.upiId && amount && user) {
-            const payeeName = "Matka King";
+            const payeeName = "KALYAN777";
             const upiUrl = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
             QRCode.toDataURL(upiUrl)
                 .then(url => setQrCodeDataUrl(url))
@@ -139,8 +138,8 @@ function PaymentQRContent() {
     
     const getUpiUrl = (app: 'gpay' | 'paytm' | 'phonepe') => {
         if (settings?.upiId && amount) {
-            const payeeName = "Matka King";
-            const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=Payment for Matka King`;
+            const payeeName = "KALYAN777";
+            const baseParams = `pa=${settings.upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=Payment for KALYAN777`;
 
             const upiUrls = {
                 gpay: `gpay://upi/pay?${baseParams}`,
@@ -274,7 +273,7 @@ function PaymentQRContent() {
                         
                         <div className="bg-yellow-100 text-yellow-800 text-sm p-2 rounded-md flex items-center justify-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>This session is valid for: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}</span>
+                            <span>This session is valid for: {timeLeft > 0 ? `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}` : "Expired"}</span>
                         </div>
                         
                         {hasPendingDeposit ? (

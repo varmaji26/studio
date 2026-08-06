@@ -44,17 +44,17 @@ export default function DownloadPage() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
         <header className="w-full p-4 bg-black text-white flex justify-between items-center">
-             <h1 className="text-2xl font-bold">Matka King</h1>
+             <h1 className="text-2xl font-bold">KALYAN777</h1>
              <div className="flex flex-col items-center">
-                 <Image src="https://placehold.co/40x40.png" alt="Matka King Logo" width={32} height={32} data-ai-hint="crown logo" priority />
-                 <span className="text-xs">MATKA KING</span>
+                 <Image src="https://placehold.co/40x40.png" alt="KALYAN777 Logo" width={32} height={32} data-ai-hint="crown logo" priority />
+                 <span className="text-xs">KALYAN777</span>
              </div>
         </header>
 
       <main className="flex flex-col items-center">
         <div className="w-full text-center py-4 bg-[#E0F7FA]">
            <h1 className="text-5xl font-bold text-blue-800">
-            MATKA <span className="text-white bg-gradient-to-r from-orange-500 to-red-600 px-3 rounded-lg shadow-md">KING</span>
+            KALYAN <span className="text-white bg-gradient-to-r from-orange-500 to-red-600 px-3 rounded-lg shadow-md">777</span>
           </h1>
         </div>
         
@@ -66,7 +66,7 @@ export default function DownloadPage() {
             ) : (
                 <Image
                     src={settings.downloadPageImage?.imageUrl || "https://placehold.co/600x800.png"}
-                    alt="Matka King App"
+                    alt="KALYAN777 App"
                     width={600}
                     height={800}
                     className="w-full h-auto"

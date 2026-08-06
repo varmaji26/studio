@@ -248,7 +248,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       <div id="auth-recaptcha-anchor" className="absolute top-0 left-0 h-0 w-0 pointer-events-none opacity-0"></div>
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold text-white">
-          {mode === 'login' ? 'Welcome Back' : 'Join Matka King'}
+          {mode === 'login' ? 'Welcome Back' : 'Join KALYAN777'}
         </CardTitle>
         <CardDescription className="text-gray-400">
           {mode === 'login' ? 'Sign in using mobile number' : 'Create your secure account'}
@@ -305,7 +305,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             )}
           </CardContent>
           <CardFooter className="flex flex-col text-sm text-gray-400 pb-8 gap-2">
-            <p>{mode === 'login' ? "New to Matka King?" : 'Already have an account?'} <Link href={mode === 'login' ? '/signup' : '/login'} className="text-orange-400 font-bold hover:underline">{mode === 'login' ? 'Register Now' : 'Login Here'}</Link></p>
+            <p>{mode === 'login' ? "New to KALYAN777?" : 'Already have an account?'} <Link href={mode === 'login' ? '/signup' : '/login'} className="text-orange-400 font-bold hover:underline">{mode === 'login' ? 'Register Now' : 'Login Here'}</Link></p>
             {mode === 'login' && <Link href="/forgot-password"><span className="text-orange-400 hover:underline cursor-pointer">Forgot Password?</span></Link>}
           </CardFooter>
         </form>

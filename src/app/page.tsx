@@ -472,7 +472,7 @@ export default function Home() {
                         <SheetHeader className="p-6 flex flex-row justify-between items-center">
                             <SheetTitle className="text-primary text-2xl flex items-center gap-2">
                                 <Crown className="h-7 w-7" />
-                                MATKA KING
+                                KALYAN777
                             </SheetTitle>
                         </SheetHeader>
                         <div className="py-4">
@@ -548,7 +548,7 @@ export default function Home() {
                 <div className="flex items-center gap-1">
                     <Crown className="h-4 w-4 text-primary" />
                     <span className="font-bold text-base text-foreground">
-                        MATKA KING
+                        KALYAN777
                     </span>
                 </div>
             </div>

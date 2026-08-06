@@ -153,8 +153,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>MKING</title>
-        <meta name="description" content="MKING App" />
+        <title>KALYAN777</title>
+        <meta name="description" content="KALYAN777 App" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
       <body className={`${inter.className} font-body antialiased`}>
