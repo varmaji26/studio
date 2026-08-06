@@ -44,15 +44,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { Loader } from '@/components/loader';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-
 
 export default function AdminLayout({
   children,
@@ -64,26 +55,17 @@ export default function AdminLayout({
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [pendingDepositsCount, setPendingDepositsCount] = React.useState(0);
   const [pendingWithdrawalsCount, setPendingWithdrawalsCount] = React.useState(0);
   const [newUsersCount, setNewUsersCount] = React.useState(0);
   const [theme, setTheme] = React.useState('light');
   
-  // Verification States for Sidebar Access
-  const [isVerified, setIsVerified] = React.useState(false);
-  const [isUserPassDialogOpen, setIsUserPassDialogOpen] = React.useState(false);
-  const [userPassInput, setUserPassInput] = React.useState('');
-  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
-  const [pendingMenuSetter, setPendingMenuSetter] = React.useState<{ setter: (open: boolean) => void, val: boolean } | null>(null);
-
   const isActive = (path: string) => pathname === path;
 
   // Menu Expansion States
   const [isLoadMenuOpen, setIsLoadMenuOpen] = React.useState(false);
   const [isRequestsMenuOpen, setRequestsMenuOpen] = React.useState(false);
   const [isPaymentHistoryMenuOpen, setPaymentHistoryMenuOpen] = React.useState(false);
-
 
   React.useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -101,10 +83,6 @@ export default function AdminLayout({
         setTheme('light');
         document.documentElement.classList.add('light');
     }
-
-    // Check session verification for admin navigation
-    const verified = sessionStorage.getItem('admin_verified') === 'true';
-    setIsVerified(verified);
   }, []);
   
   const toggleTheme = () => {
@@ -150,69 +128,12 @@ export default function AdminLayout({
     };
   }, []);
 
-  const handleLinkClick = () => {
-    if (isSidebarOpen) {
-      setIsSidebarOpen(false);
-    }
-  };
-
   const handleLogout = async () => {
     try {
-      sessionStorage.removeItem('admin_verified');
       await auth.signOut();
       router.replace('/login');
     } catch (error) {
       console.error('Logout failed', error);
-    }
-  };
-
-  // Helper to handle password-protected navigation
-  const handleProtectedNav = (path: string) => {
-    if (isVerified) {
-      router.push(path);
-      handleLinkClick();
-    } else {
-      setPendingPath(path);
-      setIsUserPassDialogOpen(true);
-    }
-  };
-
-  // Helper for password-protected collapsible menus
-  const handleProtectedMenuToggle = (isOpen: boolean, setter: (open: boolean) => void) => {
-      if (isVerified) {
-          setter(isOpen);
-      } else {
-          setPendingMenuSetter({ setter, val: isOpen });
-          setIsUserPassDialogOpen(true);
-      }
-  };
-
-  const handleVerification = () => {
-    if (userPassInput === '2426@password') {
-      setIsVerified(true);
-      sessionStorage.setItem('admin_verified', 'true');
-      setIsUserPassDialogOpen(false);
-      setUserPassInput('');
-      
-      if (pendingPath) {
-        router.push(pendingPath);
-        if (pendingPath.includes('manage-users')) {
-           localStorage.setItem('lastViewedUsersTimestamp', Date.now().toString());
-           window.dispatchEvent(new Event('storage'));
-           setNewUsersCount(0);
-        }
-        setPendingPath(null);
-      }
-
-      if (pendingMenuSetter) {
-          pendingMenuSetter.setter(pendingMenuSetter.val);
-          setPendingMenuSetter(null);
-      }
-
-      handleLinkClick();
-    } else {
-      toast({ variant: 'destructive', title: 'Incorrect Password' });
-      setUserPassInput('');
     }
   };
 
@@ -238,15 +159,15 @@ export default function AdminLayout({
           <SidebarContent className="p-2">
             <SidebarMenu>
               <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin')}>
+                <Link href="/admin">
                   <SidebarMenuButton isActive={pathname === '/admin'} tooltip={{children: "Dashboard"}}>
                     <Home />
                     <span>Dashboard</span>
                   </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
-               <Collapsible open={isLoadMenuOpen} onOpenChange={(open) => handleProtectedMenuToggle(open, setIsLoadMenuOpen)}>
+               <Collapsible open={isLoadMenuOpen} onOpenChange={setIsLoadMenuOpen}>
                   <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                          <SidebarMenuButton 
@@ -263,31 +184,35 @@ export default function AdminLayout({
                   </SidebarMenuItem>
                   <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
                      <SidebarMenuItem>
-                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/view-open-load')}>
+                        <Link href="/admin/view-open-load">
                           <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-open-load')}>                        
                               <span>View Open Load</span>
                             </SidebarMenuButton>
-                        </div>
+                        </Link>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/view-close-load')}>
+                        <Link href="/admin/view-close-load">
                           <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-close-load')}>                        
                               <span>View Close Load</span>
                             </SidebarMenuButton>
-                        </div>
+                        </Link>
                       </SidebarMenuItem>
                        <SidebarMenuItem>
-                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/view-gametype-load')}>
+                        <Link href="/admin/view-gametype-load">
                           <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/view-gametype-load')}>
                             <span>View Game-Type wise Load</span>
                           </SidebarMenuButton>
-                        </div>
+                        </Link>
                       </SidebarMenuItem>
                   </CollapsibleContent>
                </Collapsible>
 
               <SidebarMenuItem>
-                 <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/manage-users')}>
+                 <Link href="/admin/manage-users" onClick={() => {
+                    localStorage.setItem('lastViewedUsersTimestamp', Date.now().toString());
+                    window.dispatchEvent(new Event('storage'));
+                    setNewUsersCount(0);
+                 }}>
                     <SidebarMenuButton isActive={isActive('/admin/manage-users')} tooltip={{children: "Registered Users"}}>
                       <div className="flex items-center gap-2">
                         <Users />
@@ -299,37 +224,37 @@ export default function AdminLayout({
                         </span>
                      )}
                     </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
                <SidebarMenuItem>
-                 <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/user-list')}>
+                 <Link href="/admin/user-list">
                     <SidebarMenuButton isActive={isActive('/admin/user-list')} tooltip={{children: "User List"}}>
                         <List />
                         <span>User List</span>
                     </SidebarMenuButton>
-                 </div>
+                 </Link>
               </SidebarMenuItem>
 
                <SidebarMenuItem>
-                 <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/manage-games')}>
+                 <Link href="/admin/manage-games">
                     <SidebarMenuButton isActive={isActive('/admin/manage-games')} tooltip={{children: "Add New Game"}}>
                         <Gamepad />
                         <span>Add New Game</span>
                     </SidebarMenuButton>
-                 </div>
+                 </Link>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/manage-banners')}>
+                <Link href="/admin/manage-banners">
                     <SidebarMenuButton isActive={isActive('/admin/manage-banners')} tooltip={{children: "Manage Banners"}}>
                         <ImageIcon />
                         <span>Manage Banners</span>
                     </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
-               <Collapsible open={isRequestsMenuOpen} onOpenChange={(open) => handleProtectedMenuToggle(open, setRequestsMenuOpen)}>
+               <Collapsible open={isRequestsMenuOpen} onOpenChange={setRequestsMenuOpen}>
                   <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                          <SidebarMenuButton 
@@ -346,7 +271,7 @@ export default function AdminLayout({
                   </SidebarMenuItem>
                   <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
                      <SidebarMenuItem>
-                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/deposit-requests')}>
+                        <Link href="/admin/deposit-requests">
                           <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/deposit-requests')}>                        
                               <div className="flex items-center justify-between w-full">
                                   <span>Deposit Requests</span>
@@ -357,10 +282,10 @@ export default function AdminLayout({
                                   )}
                               </div>
                             </SidebarMenuButton>
-                        </div>
+                        </Link>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                        <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/withdrawal-requests')}>
+                        <Link href="/admin/withdrawal-requests">
                           <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/withdrawal-requests')}>                        
                                <div className="flex items-center justify-between w-full">
                                   <span>Withdrawal Requests</span>
@@ -371,79 +296,79 @@ export default function AdminLayout({
                                   )}
                               </div>
                             </SidebarMenuButton>
-                        </div>
+                        </Link>
                       </SidebarMenuItem>
                   </CollapsibleContent>
                </Collapsible>
 
                <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/notifications')}>
+                <Link href="/admin/notifications">
                   <SidebarMenuButton isActive={isActive('/admin/notifications')} tooltip={{children: "Send Notifications"}}>
                     <BellRing />
                     <span>Notifications</span>
                   </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/update-results')}>
+                <Link href="/admin/update-results">
                   <SidebarMenuButton isActive={isActive('/admin/update-results')} tooltip={{children: "Update Result (Open)"}}>
                     <CheckCircle />
                     <span>Update Result (Open)</span>
                   </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
                <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/update-results-close')}>
+                <Link href="/admin/update-results-close">
                     <SidebarMenuButton isActive={isActive('/admin/update-results-close')} tooltip={{children: "Update Result (Close)"}}>
                         <XCircle />
                         <span>Update Result (Close)</span>
                     </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
                <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/market-load')}>
+                <Link href="/admin/market-load">
                     <SidebarMenuButton isActive={isActive('/admin/market-load')} tooltip={{children: "Market-wise Load"}}>
                       <LineChart />
                       <span>Market-wise Load</span>
                     </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
                 <SidebarMenuItem>
-                  <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/bid-history?viewed=true')}>
+                  <Link href="/admin/bid-history?viewed=true">
                     <SidebarMenuButton isActive={isActive('/admin/bid-history')} tooltip={{children: "Bid History"}}>
                       <div className="flex items-center gap-2">
                         <History />
                         <span>Bid History</span>
                       </div>
                     </SidebarMenuButton>
-                  </div>
+                  </Link>
               </SidebarMenuItem>
 
                <SidebarMenuItem>
-                  <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/win-history?viewed=true')}>
+                  <Link href="/admin/win-history?viewed=true">
                     <SidebarMenuButton isActive={isActive('/admin/win-history')} tooltip={{children: "Win History"}}>
                       <div className="flex items-center gap-2">
                         <Trophy />
                         <span>Win History</span>
                       </div>
                     </SidebarMenuButton>
-                  </div>
+                  </Link>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/bonus-history')}>
+                <Link href="/admin/bonus-history">
                     <SidebarMenuButton isActive={isActive('/admin/bonus-history')} tooltip={{children: "Bonus History"}}>
                       <Gift />
                       <span>Bonus History</span>
                     </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
-                <Collapsible open={isPaymentHistoryMenuOpen} onOpenChange={(open) => handleProtectedMenuToggle(open, setPaymentHistoryMenuOpen)}>
+                <Collapsible open={isPaymentHistoryMenuOpen} onOpenChange={setIsPaymentHistoryMenuOpen}>
                     <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                             <SidebarMenuButton
@@ -460,66 +385,66 @@ export default function AdminLayout({
                     </SidebarMenuItem>
                     <CollapsibleContent className="space-y-1 ml-6 mt-1 border-l border-muted pl-4">
                         <SidebarMenuItem>
-                            <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/deposit-history')}>
+                            <Link href="/admin/deposit-history">
                                 <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/deposit-history')}>
                                     <ArrowUpCircle className="h-4 w-4" />
                                     <span>Deposit History</span>
                                 </SidebarMenuButton>
-                            </div>
+                            </Link>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
-                            <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/withdrawal-history')}>
+                            <Link href="/admin/withdrawal-history">
                                 <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/withdrawal-history')}>
                                     <ArrowDownCircle className="h-4 w-4" />
                                     <span>Withdrawal History</span>
                                 </SidebarMenuButton>
-                            </div>
+                            </Link>
                         </SidebarMenuItem>
                          <SidebarMenuItem>
-                            <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/monthly-report')}>
+                            <Link href="/admin/monthly-report">
                                 <SidebarMenuButton size="sm" variant="default" isActive={isActive('/admin/monthly-report')}>
                                     <PieChart className="h-4 w-4" />
                                     <span>Monthly Report</span>
                                 </SidebarMenuButton>
-                            </div>
+                            </Link>
                         </SidebarMenuItem>
                     </CollapsibleContent>
                 </Collapsible>
 
                <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/jodi-panel')}>
+                <Link href="/admin/jodi-panel">
                     <SidebarMenuButton isActive={isActive('/admin/jodi-panel')} tooltip={{children: "Manage Jodi Chart"}}>
                     <ClipboardList />
                     <span>Manage Jodi Chart</span>
                     </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/panel-chart')}>
+                <Link href="/admin/panel-chart">
                     <SidebarMenuButton isActive={isActive('/admin/panel-chart')} tooltip={{children: "Manage Panel Chart"}}>
                     <ClipboardList />
                     <span>Manage Panel Chart</span>
                     </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/global-bet-control')}>
+                <Link href="/admin/global-bet-control">
                   <SidebarMenuButton isActive={isActive('/admin/global-bet-control')} tooltip={{children: "Global Bet Control"}}>
                     <ShieldOff />
                     <span>Global Bet Control</span>
                   </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
 
                <SidebarMenuItem>
-                <div className="w-full cursor-pointer" onClick={() => handleProtectedNav('/admin/settings')}>
+                <Link href="/admin/settings">
                   <SidebarMenuButton isActive={isActive('/admin/settings')} tooltip={{children: "Settings"}}>
                     <Settings />
                     <span>Settings</span>
                   </SidebarMenuButton>
-                </div>
+                </Link>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
@@ -555,46 +480,17 @@ export default function AdminLayout({
                   Go to User Panel
                 </Button>
               </Link>
-              <div className="cursor-pointer" onClick={() => handleProtectedNav('/admin/settings')}>
+              <Link href="/admin/settings">
                   <Button variant="default" size="icon">
                     <Settings />
                   </Button>
-              </div>
+              </Link>
             </div>
         </header>
         <div className="p-4 sm:p-6">
             {children}
         </div>
       </main>
-
-      {/* Access Verification Password Dialog */}
-      <Dialog open={isUserPassDialogOpen} onOpenChange={setIsUserPassDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5 text-primary" />
-                    Access Verification
-                </DialogTitle>
-                <DialogDescription>
-                    Please enter the password to access this section.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                <Input 
-                    type="password" 
-                    placeholder="Enter Password" 
-                    value={userPassInput}
-                    onChange={(e) => setUserPassInput(e.target.value)}
-                    className="text-center text-lg"
-                    onKeyDown={(e) => e.key === 'Enter' && handleVerification()}
-                />
-                <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1" onClick={() => setIsUserPassDialogOpen(false)}>Cancel</Button>
-                    <Button className="flex-1 bg-primary text-white" onClick={handleVerification}>Verify</Button>
-                </div>
-            </div>
-        </DialogContent>
-      </Dialog>
     </LayoutProvider>
   );
 }
