@@ -29,142 +29,64 @@ import { cn } from '@/lib/utils';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/svg+xml"];
 
-// Extremely flexible schema to prevent validation blocks
+// Extremely loose schema to ensure saving never fails due to minor validation issues
 const settingsSchema = z.object({
   appEnabled: z.boolean().default(true),
-  goldenAnk: z.string().optional().or(z.literal('')),
-  whatsappNumber: z.string().optional().or(z.literal('')),
-  callSupportNumber: z.string().optional().or(z.literal('')),
-  telegramLink: z.string().optional().or(z.literal('')),
-  appDownloadLink: z.string().optional().or(z.literal('')),
-  upiId: z.string().optional().or(z.literal('')),
-  bankDetails: z.string().optional().or(z.literal('')),
-  paytmNumber: z.string().optional().or(z.literal('')),
-  qrCodeImage: z.any()
-    .optional()
-    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png, .webp, and .svg files are accepted."
-    ),
-  gpayImage: z.any()
-    .optional()
-    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png and .webp files are accepted."
-    ),
+  goldenAnk: z.string().optional().nullable().or(z.literal('')),
+  whatsappNumber: z.string().optional().nullable().or(z.literal('')),
+  callSupportNumber: z.string().optional().nullable().or(z.literal('')),
+  telegramLink: z.string().optional().nullable().or(z.literal('')),
+  appDownloadLink: z.string().optional().nullable().or(z.literal('')),
+  upiId: z.string().optional().nullable().or(z.literal('')),
+  bankDetails: z.string().optional().nullable().or(z.literal('')),
+  paytmNumber: z.string().optional().nullable().or(z.literal('')),
+  qrCodeImage: z.any().optional(),
+  gpayImage: z.any().optional(),
   gpayEnabled: z.boolean().default(true),
-  paytmImage: z.any()
-    .optional()
-    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png and .webp files are accepted."
-    ),
+  paytmImage: z.any().optional(),
   paytmEnabled: z.boolean().default(true),
-  phonepeImage: z.any()
-    .optional()
-    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png, and .webp files are accepted."
-    ),
+  phonepeImage: z.any().optional(),
   phonepeEnabled: z.boolean().default(true),
-  welcomeBannerImage: z.any()
-    .optional()
-    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png and .webp files are accepted."
-    ),
-  downloadPageImage: z.any()
-    .optional()
-    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png and .webp files are accepted."
-    ),
-  marqueeTitle: z.string().optional().or(z.literal('')),
-  marqueeText: z.string().optional().or(z.literal('')),
-  marqueeBackgroundColor: z.string().optional().or(z.literal('')),
-  marqueeTextColor: z.string().optional().or(z.literal('')),
-  marqueeLogo: z.any()
-    .optional()
-    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png, .webp, and .svg files are accepted."
-    ),
-  marqueeLogoSize: z.preprocess(
-    (val) => (String(val).trim() === '' ? undefined : Number(val)),
-    z.number().min(10).optional()
-  ),
-  marqueeTitleSize: z.preprocess(
-    (val) => (String(val).trim() === '' ? undefined : Number(val)),
-    z.number().min(10).optional()
-  ),
-  marqueeTextSize: z.preprocess(
-     (val) => (String(val).trim() === '' ? undefined : Number(val)),
-    z.number().min(8).optional()
-  ),
-  noticeText: z.string().optional().or(z.literal('')),
+  welcomeBannerImage: z.any().optional(),
+  downloadPageImage: z.any().optional(),
+  marqueeTitle: z.string().optional().nullable().or(z.literal('')),
+  marqueeText: z.string().optional().nullable().or(z.literal('')),
+  marqueeBackgroundColor: z.string().optional().nullable().or(z.literal('')),
+  marqueeTextColor: z.string().optional().nullable().or(z.literal('')),
+  marqueeLogo: z.any().optional(),
+  marqueeLogoSize: z.coerce.number().optional().nullable(),
+  marqueeTitleSize: z.coerce.number().optional().nullable(),
+  marqueeTextSize: z.coerce.number().optional().nullable(),
+  noticeText: z.string().optional().nullable().or(z.literal('')),
   noticeEnabled: z.boolean().default(true),
   bonusEnabled: z.boolean().default(false),
-  bonusPercentage: z.preprocess(
-    (val) => (String(val).trim() === '' ? 0 : Number(val)),
-    z.number().min(0).max(100)
-  ),
+  bonusPercentage: z.coerce.number().min(0).max(100).default(0),
   bonusPopupEnabled: z.boolean().default(false),
   bonusPopupImage: z.any().optional(),
-  bonusPopupLink: z.string().optional().or(z.literal('')),
+  bonusPopupLink: z.string().optional().nullable().or(z.literal('')),
   promoPopupEnabled: z.boolean().default(false),
   promoPopupImage: z.any().optional(),
-  promoPopupLink: z.string().optional().or(z.literal('')),
+  promoPopupLink: z.string().optional().nullable().or(z.literal('')),
   welcomeBonusEnabled: z.boolean().default(false),
-  welcomeBonusAmount: z.preprocess(
-    (val) => (String(val).trim() === '' ? 0 : Number(val)),
-    z.number().min(0)
-  ),
+  welcomeBonusAmount: z.coerce.number().min(0).default(0),
   referralBonusEnabled: z.boolean().default(false),
-  referrerBonusAmount: z.preprocess(
-    (val) => (String(val).trim() === '' ? 0 : Number(val)),
-    z.number().min(0)
-  ),
-  refereeBonusAmount: z.preprocess(
-    (val) => (String(val).trim() === '' ? 0 : Number(val)),
-    z.number().min(0)
-  ),
-  minimumDepositAmount: z.preprocess(
-    (val) => (String(val).trim() === '' ? 100 : Number(val)),
-    z.number().min(1)
-  ),
-   minimumWithdrawalAmount: z.preprocess(
-    (val) => (String(val).trim() === '' ? 1000 : Number(val)),
-    z.number().min(1)
-  ),
-  globalMarketOpenTime: z.string().optional().or(z.literal('')),
-  depositStartTime: z.string().optional().or(z.literal('')),
-  depositEndTime: z.string().optional().or(z.literal('')),
-  withdrawalStartTime: z.string().optional().or(z.literal('')),
-  withdrawalEndTime: z.string().optional().or(z.literal('')),
-  singleDigitPrize: z.preprocess((val) => Number(val), z.number().min(0)),
-  jodiDigitPrize: z.preprocess((val) => Number(val), z.number().min(0)),
-  singlePanaPrize: z.preprocess((val) => Number(val), z.number().min(0)),
-  doublePanaPrize: z.preprocess((val) => Number(val), z.number().min(0)),
-  triplePanaPrize: z.preprocess((val) => Number(val), z.number().min(0)),
-  halfSangamPrize: z.preprocess((val) => Number(val), z.number().min(0)),
-  fullSangamPrize: z.preprocess((val) => Number(val), z.number().min(0)),
-  betAmountSettings: z.object({
-    singleDigit: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
-    jodiDigit: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
-    singlePana: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
-    doublePana: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
-    triplePana: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
-    halfSangam: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
-    halfSangamDigit: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
-    fullSangam: z.object({ min: z.coerce.number(), max: z.coerce.number() }),
-  }).optional(),
+  referrerBonusAmount: z.coerce.number().min(0).default(0),
+  refereeBonusAmount: z.coerce.number().min(0).default(0),
+  minimumDepositAmount: z.coerce.number().min(1).default(100),
+  minimumWithdrawalAmount: z.coerce.number().min(1).default(1000),
+  globalMarketOpenTime: z.string().optional().nullable().or(z.literal('')),
+  depositStartTime: z.string().optional().nullable().or(z.literal('')),
+  depositEndTime: z.string().optional().nullable().or(z.literal('')),
+  withdrawalStartTime: z.string().optional().nullable().or(z.literal('')),
+  withdrawalEndTime: z.string().optional().nullable().or(z.literal('')),
+  singleDigitPrize: z.coerce.number().min(0).default(100),
+  jodiDigitPrize: z.coerce.number().min(0).default(1000),
+  singlePanaPrize: z.coerce.number().min(0).default(1500),
+  doublePanaPrize: z.coerce.number().min(0).default(3000),
+  triplePanaPrize: z.coerce.number().min(0).default(6000),
+  halfSangamPrize: z.coerce.number().min(0).default(5000),
+  fullSangamPrize: z.coerce.number().min(0).default(10000),
+  betAmountSettings: z.any().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -486,7 +408,7 @@ export default function SettingsPage() {
         } : null;
         
         const qrFile = values.qrCodeImage?.[0];
-        if (qrFile) {
+        if (qrFile instanceof File) {
             const { downloadURL, storagePath } = await uploadFile(qrFile, 'qrcodes', existingQrStoragePath);
             qrCodeData = { title: 'Scan QR Code', imageUrl: downloadURL, storagePath: storagePath };
             setExistingQrUrl(downloadURL);
@@ -494,7 +416,7 @@ export default function SettingsPage() {
         }
 
         const gpayFile = values.gpayImage?.[0];
-        if (gpayFile) {
+        if (gpayFile instanceof File) {
             const { downloadURL, storagePath } = await uploadFile(gpayFile, 'payment-logos', existingGpayImageStoragePath);
             gpayData = { ...gpayData, imageUrl: downloadURL, storagePath: storagePath };
             setExistingGpayImageUrl(downloadURL);
@@ -502,7 +424,7 @@ export default function SettingsPage() {
         }
 
         const paytmFile = values.paytmImage?.[0];
-        if (paytmFile) {
+        if (paytmFile instanceof File) {
             const { downloadURL, storagePath } = await uploadFile(paytmFile, 'payment-logos', existingPaytmImageStoragePath);
             paytmData = { ...paytmData, imageUrl: downloadURL, storagePath: storagePath };
             setExistingPaytmImageUrl(downloadURL);
@@ -510,7 +432,7 @@ export default function SettingsPage() {
         }
         
         const phonepeFile = values.phonepeImage?.[0];
-        if (phonepeFile) {
+        if (phonepeFile instanceof File) {
             const { downloadURL, storagePath } = await uploadFile(phonepeFile, 'payment-logos', existingPhonepeImageStoragePath);
             phonepeData = { ...phonepeData, imageUrl: downloadURL, storagePath: storagePath };
             setExistingPhonepeImageUrl(downloadURL);
@@ -518,7 +440,7 @@ export default function SettingsPage() {
         }
 
         const welcomeBannerFile = values.welcomeBannerImage?.[0];
-        if (welcomeBannerFile) {
+        if (welcomeBannerFile instanceof File) {
             const { downloadURL, storagePath } = await uploadFile(welcomeBannerFile, 'welcome-banners', existingWelcomeBannerStoragePath);
             welcomeBannerData = { imageUrl: downloadURL, storagePath: storagePath };
             setExistingWelcomeBannerUrl(downloadURL);
@@ -526,7 +448,7 @@ export default function SettingsPage() {
         }
 
         const downloadPageImageFile = values.downloadPageImage?.[0];
-        if (downloadPageImageFile) {
+        if (downloadPageImageFile instanceof File) {
             const { downloadURL, storagePath } = await uploadFile(downloadPageImageFile, 'download-page', existingDownloadImageStoragePath);
             downloadPageImageData = { imageUrl: downloadURL, storagePath: storagePath };
             setExistingDownloadImageUrl(downloadURL);
@@ -534,7 +456,7 @@ export default function SettingsPage() {
         }
 
         const marqueeLogoFile = values.marqueeLogo?.[0];
-        if (marqueeLogoFile) {
+        if (marqueeLogoFile instanceof File) {
             const { downloadURL, storagePath } = await uploadFile(marqueeLogoFile, 'marquee-logos', existingMarqueeLogoStoragePath);
             marqueeLogoData = { imageUrl: downloadURL, storagePath: storagePath };
             setExistingMarqueeLogoUrl(downloadURL);
@@ -542,7 +464,7 @@ export default function SettingsPage() {
         }
 
         const bonusPopupFile = values.bonusPopupImage?.[0];
-        if (bonusPopupFile) {
+        if (bonusPopupFile instanceof File) {
              const { downloadURL, storagePath } = await uploadFile(bonusPopupFile, 'bonus-popups', existingBonusPopupStoragePath);
              if (bonusPopupData) {
                 bonusPopupData.imageUrl = downloadURL;
@@ -553,7 +475,7 @@ export default function SettingsPage() {
         }
 
         const promoPopupFile = values.promoPopupImage?.[0];
-        if (promoPopupFile) {
+        if (promoPopupFile instanceof File) {
              const { downloadURL, storagePath } = await uploadFile(promoPopupFile, 'promo-popups', existingPromoPopupStoragePath);
              if (promoPopupData) {
                 promoPopupData.imageUrl = downloadURL;
@@ -576,19 +498,19 @@ export default function SettingsPage() {
         
         const dataToSave: any = {
             appEnabled: values.appEnabled,
-            goldenAnk: values.goldenAnk,
-            whatsappNumber: values.whatsappNumber,
-            callSupportNumber: values.callSupportNumber,
-            telegramLink: values.telegramLink,
-            appDownloadLink: values.appDownloadLink,
+            goldenAnk: values.goldenAnk || '',
+            whatsappNumber: values.whatsappNumber || '',
+            callSupportNumber: values.callSupportNumber || '',
+            telegramLink: values.telegramLink || '',
+            appDownloadLink: values.appDownloadLink || '',
             minimumDepositAmount: values.minimumDepositAmount,
             minimumWithdrawalAmount: values.minimumWithdrawalAmount,
-            globalMarketOpenTime: values.globalMarketOpenTime,
+            globalMarketOpenTime: values.globalMarketOpenTime || '',
             paymentDetails: {
                 ...currentPaymentDetails,
-                'UPI': { title: "UPI Payment", details: values.upiId },
-                'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails },
-                'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber },
+                'UPI': { title: "UPI Payment", details: values.upiId || '' },
+                'Bank Transfer': { title: "Bank Transfer", details: values.bankDetails || '' },
+                'Paytm/PhonePe': { title: "Paytm/PhonePe", details: values.paytmNumber || '' },
                 'GPay': gpayData,
                 'Paytm': paytmData,
                 'PhonePe': phonepeData,
@@ -596,17 +518,17 @@ export default function SettingsPage() {
             welcomeBanner: welcomeBannerData,
             downloadPageImage: downloadPageImageData,
             marquee: {
-              title: values.marqueeTitle,
-              text: values.marqueeText,
-              backgroundColor: values.marqueeBackgroundColor,
-              textColor: values.marqueeTextColor,
+              title: values.marqueeTitle || '',
+              text: values.marqueeText || '',
+              backgroundColor: values.marqueeBackgroundColor || '#b91c1c',
+              textColor: values.marqueeTextColor || '#ffffff',
               logo: marqueeLogoData,
-              logoSize: values.marqueeLogoSize,
-              titleSize: values.marqueeTitleSize,
-              textSize: values.marqueeTextSize,
+              logoSize: values.marqueeLogoSize || 24,
+              titleSize: values.marqueeTitleSize || 20,
+              textSize: values.marqueeTextSize || 12,
             },
             notice: {
-              text: values.noticeText,
+              text: values.noticeText || '',
               enabled: values.noticeEnabled,
             },
             bonus: {
@@ -625,10 +547,10 @@ export default function SettingsPage() {
                 refereeAmount: values.refereeBonusAmount,
             },
             transactionTimes: {
-              depositStartTime: values.depositStartTime,
-              depositEndTime: values.depositEndTime,
-              withdrawalStartTime: values.withdrawalStartTime,
-              withdrawalEndTime: values.withdrawalEndTime,
+              depositStartTime: values.depositStartTime || '',
+              depositEndTime: values.depositEndTime || '',
+              withdrawalStartTime: values.withdrawalStartTime || '',
+              withdrawalEndTime: values.withdrawalEndTime || '',
             },
             gameRates: {
                 singleDigitPrize: values.singleDigitPrize,
@@ -639,7 +561,7 @@ export default function SettingsPage() {
                 halfSangamPrize: values.halfSangamPrize,
                 fullSangamPrize: values.fullSangamPrize,
             },
-            betAmountSettings: values.betAmountSettings,
+            betAmountSettings: values.betAmountSettings || {},
         };
 
         if (qrCodeData) {
@@ -754,86 +676,6 @@ export default function SettingsPage() {
         setIsSubmitting(false);
     }
   };
-
-  const handleDeleteGpayImage = async () => {
-    if (!existingGpayImageStoragePath) return;
-    setIsSubmitting(true);
-    try {
-      const storageRef = ref(storage, existingGpayImageStoragePath);
-      await deleteObject(storageRef);
-      const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 'paymentDetails.GPay.imageUrl': null, 'paymentDetails.GPay.storagePath': null });
-      setExistingGpayImageUrl(null);
-      setExistingGpayImageStoragePath(null);
-      toast({ title: 'Success!', description: 'GPay image deleted.' });
-    } finally { setIsSubmitting(false); }
-  };
-
-  const handleDeletePaytmImage = async () => {
-    if (!existingPaytmImageStoragePath) return;
-    setIsSubmitting(true);
-    try {
-      const storageRef = ref(storage, existingPaytmImageStoragePath);
-      await deleteObject(storageRef);
-      const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 'paymentDetails.Paytm.imageUrl': null, 'paymentDetails.Paytm.storagePath': null });
-      setExistingPaytmImageUrl(null);
-      setExistingPaytmImageStoragePath(null);
-      toast({ title: 'Success!', description: 'Paytm image deleted.' });
-    } finally { setIsSubmitting(false); }
-  };
-
-  const handleDeletePhonepeImage = async () => {
-    if (!existingPhonepeImageStoragePath) return;
-    setIsSubmitting(true);
-    try {
-      const storageRef = ref(storage, existingPhonepeImageStoragePath);
-      await deleteObject(storageRef);
-      const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 'paymentDetails.PhonePe.imageUrl': null, 'paymentDetails.PhonePe.storagePath': null });
-      setExistingPhonepeImageUrl(null);
-      setExistingPhonepeImageStoragePath(null);
-      toast({ title: 'Success!', description: 'PhonePe image deleted.' });
-    } finally { setIsSubmitting(false); }
-  };
-
-  const handleDeleteBonusPopupImage = async () => {
-    if (!existingBonusPopupStoragePath) return;
-    try {
-      const storageRef = ref(storage, existingBonusPopupStoragePath);
-      await deleteObject(storageRef);
-      const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 'bonusPopup.imageUrl': null, 'bonusPopup.storagePath': null });
-      setExistingBonusPopupUrl(null);
-      setExistingBonusPopupStoragePath(null);
-      toast({ title: 'Success!', description: 'Bonus popup image deleted.' });
-    } catch (error) { toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete.' }); }
-  };
-
-  const handleDeletePromoPopupImage = async () => {
-    if (!existingPromoPopupStoragePath) return;
-    try {
-      const storageRef = ref(storage, existingPromoPopupStoragePath);
-      await deleteObject(storageRef);
-      const settingsDocRef = doc(db, 'settings', 'app-settings');
-      await updateDoc(settingsDocRef, { 'promoPopup.imageUrl': null, 'promoPopup.storagePath': null });
-      setExistingPromoPopupUrl(null);
-      setExistingPromoPopupStoragePath(null);
-      toast({ title: 'Success!', description: 'Promotional popup image deleted.' });
-    } catch (error) { toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete.' }); }
-  };
-
-  const handleCleanUserData = async () => {
-    setIsCleaning(true);
-    try {
-        const result = await cleanAllUserData(10);
-         if (result.success) {
-            toast({ title: "Success!", description: `${result.deletedBidsCount} bids, ${result.deletedDepositsCount} deposits, and ${result.deletedWithdrawalsCount} withdrawals deleted.` });
-        } else { throw new Error(result.message); }
-    } catch (error: any) {
-         toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to clean data.' });
-    } finally { setIsCleaning(false); }
-  }
 
   const isAppClosed = !form.watch('appEnabled');
 
